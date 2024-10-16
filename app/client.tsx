@@ -6,4 +6,8 @@ import { createRouter } from "./router";
 
 const router = createRouter();
 
-hydrateRoot(document.getElementById("root")!, <StartClient router={router} />);
+const App = () => <StartClient router={router} />;
+
+hydrateRoot(document.getElementById("root")!, <App />);
+
+export default App;

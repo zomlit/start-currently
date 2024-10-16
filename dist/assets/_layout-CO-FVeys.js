@@ -1,0 +1,1 @@
+import{j as t,O as o}from"./client-Cohd0s-V.js";import{C as r,N as i}from"./Navigation-CRfqHYFO.js";import"./button-ChIMJgpe.js";import"./index-CtKhhn2-.js";import"./utils-DvkvUfV5.js";import"./createLucideIcon-Djzpup-l.js";import"./index-4PomGbPO.js";const u=function(){return t.jsxs(r,{children:[t.jsx(i,{}),t.jsx(o,{})]})};export{u as component};
