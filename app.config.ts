@@ -1,13 +1,24 @@
-// app.config.ts
 import { defineConfig } from "@tanstack/start/config";
-import viteTsConfigPaths from "vite-tsconfig-paths";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
+import { config } from "vinxi/plugins/config";
+import { visualizer } from "rollup-plugin-visualizer";
+import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+  server: {
+    preset: "bun",
+  },
   vite: {
     plugins: [
-      // this is the plugin that enables path aliases
-      viteTsConfigPaths({
+      tsConfigPaths({
         projects: ["./tsconfig.json"],
+      }),
+      TanStackRouterVite({
+        autoCodeSplitting: true,
+      }) as any,
+      visualizer({
+        emitFile: true,
+        filename: "test",
       }),
     ],
   },
