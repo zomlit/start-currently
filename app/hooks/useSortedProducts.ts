@@ -1,7 +1,7 @@
 // hooks/useSortedProducts.ts
 import { useMemo } from "react";
 import Stripe from "stripe";
-import { ProductWithPrices } from "../types/checkout";
+import { ProductWithPrices } from "@/types/checkout";
 
 export function useSortedProducts(products: ProductWithPrices[]) {
   return useMemo(() => {

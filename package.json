@@ -1,5 +1,5 @@
 {
-  "name": "currently-start",
+  "name": "start-currently",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -44,9 +44,9 @@
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
     "lucide-react": "^0.452.0",
-    "react": "^18.3.1",
+    "react": "^19.0.0-rc-83825814-20241015",
     "react-beautiful-dnd": "^13.1.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.0.0-rc-83825814-20241015",
     "redaxios": "^0.5.1",
     "sonner": "^1.5.0",
     "stripe": "^17.2.0",
@@ -54,9 +54,12 @@
     "tailwind-scrollbar-hide": "^1.1.7",
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-spring": "^1.0.1",
+    "usehooks-ts": "^3.1.0",
     "vinxi": "0.4.3",
     "vite-plugin-svgr": "^4.2.0",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite-tsconfig-paths": "^5.0.1",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

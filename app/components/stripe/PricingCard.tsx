@@ -1,14 +1,14 @@
 // components/PricingCard.tsx
 import React from "react";
 import { motion, AnimatePresence, animate } from "framer-motion";
-import { MagicCard } from "../../components/ui/magic-card";
-import BlurFade from "../../components/ui/blur-fade";
-import { AnimatedLink } from "../../components/ui/animated-link";
-import { FeatureList } from "../../components/FeatureList";
-import { SkeletonCard } from "../../components/SkeletonCard";
-import { formatPrice } from "../../lib/stripe";
+import { MagicCard } from "@/components/ui/magic-card";
+import BlurFade from "@/components/ui/blur-fade";
+import { AnimatedLink } from "@/components/ui/animated-link";
+import { FeatureList } from "@/components/FeatureList";
+import { SkeletonCard } from "@/components/SkeletonCard";
+import { formatPrice } from "@/lib/stripe";
 
-import { ProductWithPrices, PricingTierFrequency } from "../../types/checkout";
+import { ProductWithPrices, PricingTierFrequency } from "@/types/checkout";
 import Stripe from "stripe";
 import { Link } from "@tanstack/react-router";
 

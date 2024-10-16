@@ -1,10 +1,10 @@
 // components/FrequencySelector.tsx
 import React, { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Label } from "../ui/label";
-import { cn } from "../../lib/utils";
-import { ProductWithPrices, PricingTierFrequency } from "../../types/checkout";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { ProductWithPrices, PricingTierFrequency } from "@/types/checkout";
 
 interface FrequencySelectorProps {
   frequencies: readonly PricingTierFrequency[];

@@ -14,7 +14,7 @@
     --card-foreground: 20 14.3% 4.1%;
     --border: 20 5.9% 90%;
     --input: 20 5.9% 90%;
-    --primary: 24 9.8% 10%;
+    --primary: var(--primary-color, #6d28d9);
     --primary-foreground: 60 9.1% 97.8%;
     --secondary: 60 4.8% 95.9%;
     --secondary-foreground: 24 9.8% 10%;

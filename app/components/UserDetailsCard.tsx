@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth, useUser } from "@clerk/tanstack-start";
 import { CircleUser, Copy, Handshake } from "lucide-react";
-import { toast } from "../utils/toast";
+import { toast } from "@/utils/toast";
 
 const UserDetailsCard = () => {
   const { user } = useUser();

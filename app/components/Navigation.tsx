@@ -9,9 +9,9 @@ import {
   useUser,
 } from "@clerk/tanstack-start";
 import { ModeToggle } from "./ThemeToggle";
-import { useScrollPosition } from "../hooks/useScrollPosition";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { CircleDot } from "./icons";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -63,6 +63,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
             <NavLink to="/posts">Posts</NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
             <NavLink to="/pricing">Pricing</NavLink>
+            <NavLink to="/dashboard/widgets">Widgets</NavLink>
             <NavLink to="/teampicker">Team Picker</NavLink>
           </div>
           <div className="flex items-center space-x-4">

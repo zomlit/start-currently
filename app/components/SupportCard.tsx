@@ -6,7 +6,7 @@ import BlurFade from "./ui/blur-fade";
 import { AnimatedLink } from "./ui/animated-link";
 import { CircleCheckBig } from "lucide-react";
 import { SmartDollarInput } from "./stripe/SmartDollarInput";
-import { ProductWithPrices } from "../types/checkout";
+import { ProductWithPrices } from "@/types/checkout";
 
 type SupportCardProps = {
   product: ProductWithPrices;

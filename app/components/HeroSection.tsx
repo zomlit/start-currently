@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { AnimatedLink } from "../components/ui/animated-link";
-import { Spinner } from "../components/ui/spinner";
-import { useUser } from "@clerk/clerk-react";
+import { AnimatedLink } from "@/components/ui/animated-link";
+import { Spinner } from "@/components/ui/spinner";
+import { useUser } from "@clerk/tanstack-start";
 
 export default function HeroSection() {
   const { isLoaded, isSignedIn, user } = useUser();

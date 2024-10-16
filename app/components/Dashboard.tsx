@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { useOrganization, useUser } from "@clerk/clerk-react";
+import { useOrganization, OrganizationSwitcher } from "@clerk/tanstack-start";
 import DashboardHeader from "./DashboardHeader";
-import Container from "./layout/Container";
-import { OrganizationSwitcher } from "@clerk/clerk-react";
+import { Container } from "./layout/Container";
 import AnimatedCard from "./AnimatedCard";
 import UserDetailsCard from "./UserDetailsCard";
 import { useSession } from "@clerk/tanstack-start";
@@ -140,7 +139,6 @@ export function Dashboard() {
 
   return (
     <>
-      <DashboardNavigation />
       <Container isDashboard maxWidth="7xl">
         <DashboardHeader
           category="Widgets"

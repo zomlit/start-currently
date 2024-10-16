@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSupabase } from "../hooks/useSupabase";
+import { useSupabase } from "@/hooks/useSupabase";
 import { useUser } from "@clerk/tanstack-start";
 // Import other necessary components and utilities
 

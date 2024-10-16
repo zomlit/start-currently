@@ -1,23 +1,23 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useAuth } from '@clerk/clerk-react'
-import { useState } from 'react'
+import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@clerk/tanstack-start";
+import { useState } from "react";
 
-export const Route = createFileRoute('/_app/checkout/$productId')({
+export const Route = createFileRoute("/_app/checkout/$productId")({
   component: CheckoutComponent,
-})
+});
 
 function CheckoutComponent() {
-  const { productId } = Route.useParams()
-  const { frequency } = Route.useSearch()
-  const { userId, user } = useAuth()
-  const [error, setError] = useState('')
+  const { productId } = Route.useParams();
+  const { frequency } = Route.useSearch();
+  const { userId, user } = useAuth();
+  const [error, setError] = useState("");
 
   const handleCheckout = async () => {
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
+      const response = await fetch("/api/checkout", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           productId,
@@ -25,20 +25,20 @@ function CheckoutComponent() {
           userId,
           userEmail: user?.primaryEmailAddress?.emailAddress,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Checkout failed')
+        throw new Error("Checkout failed");
       }
 
-      const data = await response.json()
+      const data = await response.json();
       // Handle successful checkout (e.g., redirect to Stripe Checkout)
-      console.log('Checkout successful:', data)
+      console.log("Checkout successful:", data);
     } catch (error) {
-      setError('An error occurred during checkout. Please try again.')
-      console.error('Checkout error:', error)
+      setError("An error occurred during checkout. Please try again.");
+      console.error("Checkout error:", error);
     }
-  }
+  };
 
   return (
     <div>
@@ -47,5 +47,5 @@ function CheckoutComponent() {
       {error && <p className="text-red-500">{error}</p>}
       <button onClick={handleCheckout}>Complete Checkout</button>
     </div>
-  )
+  );
 }

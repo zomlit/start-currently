@@ -5,9 +5,9 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "../components/ui/hover-card";
+} from "@/components/ui/hover-card";
 import { UserButton, useUser } from "@clerk/tanstack-start";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   {
@@ -99,7 +99,7 @@ const DashboardNavigation: React.FC = () => {
               to="/dashboard"
               className="group flex items-center gap-x-3 text-lg font-semibold text-gray-800 transition-transform dark:text-gray-200"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem] spring-bounce-60 spring-duration-300 spring-sproing">
                 <CircleDot
                   className={cn("w-8 fill-violet-500", {
                     "animate-spin": !isLoaded,
@@ -126,7 +126,7 @@ const DashboardNavigation: React.FC = () => {
                           navItem.isActive
                             ? "text-gray-800 dark:text-white"
                             : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-black/25"
-                        } `}
+                        } spring-bounce-60 spring-duration-300 spring-sproing`}
                       >
                         <span className="ml-2 inline-flex transition-colors duration-300 ease-linear">
                           {navItem.text}
@@ -170,7 +170,7 @@ const DashboardNavigation: React.FC = () => {
       >
         <button
           onClick={toggleSidebar}
-          className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none"
+          className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none spring-bounce-60 spring-duration-300 spring-sproing"
         >
           <span className="sr-only">toggle sidebar</span>
           <span
