@@ -14,6 +14,7 @@ import { CircleDot } from "./icons";
 import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
 import { Button } from "./ui/button";
+import { ColorPicker } from "./ThemeProvider";
 
 interface NavigationProps {
   isDashboard?: boolean;
@@ -68,6 +69,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
           </div>
           <div className="flex items-center space-x-4">
             <ModeToggle />
+            <ColorPicker />
             <div className="relative">
               <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300 cursor-pointer" />
               <div className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></div>
