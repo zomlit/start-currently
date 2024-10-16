@@ -31,7 +31,11 @@ function PricingRoute() {
 
   if (!loaderData) {
     console.error("Loader data is undefined");
-    return <Spinner className="w-8 fill-violet-300 text-white" />;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spinner className="w-8 fill-violet-300 text-white" />
+      </div>
+    );
   }
 
   const { products, error } = loaderData as {

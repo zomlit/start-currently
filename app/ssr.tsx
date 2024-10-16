@@ -14,4 +14,7 @@ const handler = createStartHandler({
 
 const clerkHandler = createClerkHandler(handler);
 
-export default clerkHandler(defaultStreamHandler);
+export default async (req: Request, res: Response) => {
+  const ReactDOMServer = await import("react-dom/server");
+  return clerkHandler(defaultStreamHandler)(req, res);
+};
