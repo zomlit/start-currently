@@ -4,7 +4,6 @@ import {
   createRootRoute,
   useRouter,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import {
   Body,
   Head,
@@ -13,24 +12,19 @@ import {
   Scripts,
   createServerFn,
 } from "@tanstack/start";
-import "@fontsource-variable/sofia-sans-condensed";
 import * as React from "react";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { seo } from "../utils/seo";
 import { getAuth } from "@clerk/tanstack-start/server";
 import appCss from "../styles/app.css?url";
+import globalCss from "../styles/global.css?url";
 import { CustomClerkProvider } from "../contexts/ClerkContext";
-
-const coreCSS = `
-  body {
-    background-color: hsl(20 14.3% 4.1%);
-  }
-`;
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
-  const user = await getAuth(ctx.request);
-  return { user };
+  const auth = await getAuth(ctx.request);
+  return { auth };
 });
 
 export const Route = createRootRoute({
@@ -38,13 +32,12 @@ export const Route = createRootRoute({
     { charSet: "utf-8" },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
     ...seo({
-      title:
-        "TanStack Start | Type-Safe, Client-First, Full-Stack React Framework",
-      description:
-        "TanStack Start is a type-safe, client-first, full-stack React framework.",
+      title: "Currently | Modern Tools for the Modern Streamer.",
+      description: "Currently is a streaming platform for the modern streamer.",
     }),
   ],
   links: () => [
+    { rel: "stylesheet", href: globalCss },
     { rel: "stylesheet", href: appCss },
     {
       rel: "apple-touch-icon",
@@ -65,10 +58,11 @@ export const Route = createRootRoute({
     },
     { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
     { rel: "icon", href: "/favicon.ico" },
+    // { rel: "preload", href: "/images/hero-bg.webp", as: "image" },
   ],
-  beforeLoad: async () => {
-    const { user } = await fetchClerkAuth();
-    return { user };
+  beforeLoad: async ({ context }) => {
+    const { auth } = await fetchClerkAuth();
+    return { auth };
   },
   errorComponent: (props) => (
     <RootDocument>
@@ -80,22 +74,17 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const router = useRouter();
-
   return (
-    <CustomClerkProvider navigate={(to) => router.navigate(to)}>
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
-    </CustomClerkProvider>
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <Html className="bg-red-500">
+    <Html>
       <Head>
-        {/* <style dangerouslySetInnerHTML={{ __html: coreCSS }} /> */}
         <Meta />
       </Head>
       <Body>

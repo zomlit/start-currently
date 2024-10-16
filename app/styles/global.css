@@ -1,0 +1,42 @@
+@import "@fontsource-variable/sofia-sans-condensed";
+
+:root {
+  --background-color: hsl(20 14.3% 4.1%);
+  --text-color: #ffffff;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family:
+    "Sofia Sans Condensed Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Roboto",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
+}
+
+.app-wrapper {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.app-wrapper.loaded {
+  opacity: 1;
+}

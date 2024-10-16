@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '@clerk/clerk-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/checkout/$productId')({
+export const Route = createFileRoute('/_app/checkout/$productId')({
   component: CheckoutComponent,
 })
 

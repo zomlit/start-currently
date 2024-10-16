@@ -11,38 +11,31 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as PricingImport } from './routes/pricing'
 import { Route as LayoutImport } from './routes/_layout'
-import { Route as AuthedImport } from './routes/_authed'
 import { Route as AppImport } from './routes/_app'
-import { Route as IndexImport } from './routes/index'
-import { Route as SignUpSplatImport } from './routes/sign-up.$'
-import { Route as SignInSplatImport } from './routes/sign-in.$'
-import { Route as CheckoutProductIdImport } from './routes/checkout.$productId'
+import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as LayoutLayout2Import } from './routes/_layout/_layout-2'
-import { Route as AuthedPostsImport } from './routes/_authed/posts'
 import { Route as AppTestImport } from './routes/_app/test'
-import { Route as AuthedPostsIndexImport } from './routes/_authed/posts.index'
+import { Route as AppPostsImport } from './routes/_app/posts'
+import { Route as AppAuthedImport } from './routes/_app/_authed'
+import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
+import { Route as AppPricingIndexImport } from './routes/_app/pricing/index'
+import { Route as AppPostsIndexImport } from './routes/_app/posts.index'
 import { Route as LayoutLayout2LayoutBImport } from './routes/_layout/_layout-2/layout-b'
 import { Route as LayoutLayout2LayoutAImport } from './routes/_layout/_layout-2/layout-a'
-import { Route as AuthedProfileSplatImport } from './routes/_authed/profile.$'
-import { Route as AuthedPostsPostIdImport } from './routes/_authed/posts.$postId'
+import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
+import { Route as AppSignUpSplatImport } from './routes/_app/sign-up.$'
+import { Route as AppSignInSplatImport } from './routes/_app/sign-in.$'
+import { Route as AppPostsPostIdImport } from './routes/_app/posts.$postId'
+import { Route as AppCheckoutSuccessImport } from './routes/_app/checkout.success'
+import { Route as AppCheckoutProductIdImport } from './routes/_app/checkout.$productId'
 import { Route as AppAuthedDashboardImport } from './routes/_app/_authed/dashboard'
+import { Route as AppPostsPostIdDeepImport } from './routes/_app/posts_.$postId.deep'
 
 // Create/Update Routes
 
-const PricingRoute = PricingImport.update({
-  path: '/pricing',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const LayoutRoute = LayoutImport.update({
   id: '/_layout',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const AuthedRoute = AuthedImport.update({
-  id: '/_authed',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -51,24 +44,9 @@ const AppRoute = AppImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexRoute = IndexImport.update({
+const AppIndexRoute = AppIndexImport.update({
   path: '/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const SignUpSplatRoute = SignUpSplatImport.update({
-  path: '/sign-up/$',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const SignInSplatRoute = SignInSplatImport.update({
-  path: '/sign-in/$',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const CheckoutProductIdRoute = CheckoutProductIdImport.update({
-  path: '/checkout/$productId',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AppRoute,
 } as any)
 
 const LayoutLayout2Route = LayoutLayout2Import.update({
@@ -76,19 +54,34 @@ const LayoutLayout2Route = LayoutLayout2Import.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
-const AuthedPostsRoute = AuthedPostsImport.update({
-  path: '/posts',
-  getParentRoute: () => AuthedRoute,
-} as any)
-
 const AppTestRoute = AppTestImport.update({
   path: '/test',
   getParentRoute: () => AppRoute,
 } as any)
 
-const AuthedPostsIndexRoute = AuthedPostsIndexImport.update({
+const AppPostsRoute = AppPostsImport.update({
+  path: '/posts',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppAuthedRoute = AppAuthedImport.update({
+  id: '/_authed',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppTeampickerIndexRoute = AppTeampickerIndexImport.update({
+  path: '/teampicker/',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppPricingIndexRoute = AppPricingIndexImport.update({
+  path: '/pricing/',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppPostsIndexRoute = AppPostsIndexImport.update({
   path: '/',
-  getParentRoute: () => AuthedPostsRoute,
+  getParentRoute: () => AppPostsRoute,
 } as any)
 
 const LayoutLayout2LayoutBRoute = LayoutLayout2LayoutBImport.update({
@@ -101,18 +94,43 @@ const LayoutLayout2LayoutARoute = LayoutLayout2LayoutAImport.update({
   getParentRoute: () => LayoutLayout2Route,
 } as any)
 
-const AuthedProfileSplatRoute = AuthedProfileSplatImport.update({
-  path: '/profile/$',
-  getParentRoute: () => AuthedRoute,
+const AppTeampickerBracketIdRoute = AppTeampickerBracketIdImport.update({
+  path: '/teampicker/$bracketId',
+  getParentRoute: () => AppRoute,
 } as any)
 
-const AuthedPostsPostIdRoute = AuthedPostsPostIdImport.update({
+const AppSignUpSplatRoute = AppSignUpSplatImport.update({
+  path: '/sign-up/$',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppSignInSplatRoute = AppSignInSplatImport.update({
+  path: '/sign-in/$',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppPostsPostIdRoute = AppPostsPostIdImport.update({
   path: '/$postId',
-  getParentRoute: () => AuthedPostsRoute,
+  getParentRoute: () => AppPostsRoute,
+} as any)
+
+const AppCheckoutSuccessRoute = AppCheckoutSuccessImport.update({
+  path: '/checkout/success',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppCheckoutProductIdRoute = AppCheckoutProductIdImport.update({
+  path: '/checkout/$productId',
+  getParentRoute: () => AppRoute,
 } as any)
 
 const AppAuthedDashboardRoute = AppAuthedDashboardImport.update({
   path: '/dashboard',
+  getParentRoute: () => AppAuthedRoute,
+} as any)
+
+const AppPostsPostIdDeepRoute = AppPostsPostIdDeepImport.update({
+  path: '/posts/$postId/deep',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -120,25 +138,11 @@ const AppAuthedDashboardRoute = AppAuthedDashboardImport.update({
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AppImport
-      parentRoute: typeof rootRoute
-    }
-    '/_authed': {
-      id: '/_authed'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthedImport
       parentRoute: typeof rootRoute
     }
     '/_layout': {
@@ -148,12 +152,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutImport
       parentRoute: typeof rootRoute
     }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingImport
-      parentRoute: typeof rootRoute
+    '/_app/_authed': {
+      id: '/_app/_authed'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AppAuthedImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/posts': {
+      id: '/_app/posts'
+      path: '/posts'
+      fullPath: '/posts'
+      preLoaderRoute: typeof AppPostsImport
+      parentRoute: typeof AppImport
     }
     '/_app/test': {
       id: '/_app/test'
@@ -162,13 +173,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTestImport
       parentRoute: typeof AppImport
     }
-    '/_authed/posts': {
-      id: '/_authed/posts'
-      path: '/posts'
-      fullPath: '/posts'
-      preLoaderRoute: typeof AuthedPostsImport
-      parentRoute: typeof AuthedImport
-    }
     '/_layout/_layout-2': {
       id: '/_layout/_layout-2'
       path: ''
@@ -176,47 +180,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayout2Import
       parentRoute: typeof LayoutImport
     }
-    '/checkout/$productId': {
-      id: '/checkout/$productId'
-      path: '/checkout/$productId'
-      fullPath: '/checkout/$productId'
-      preLoaderRoute: typeof CheckoutProductIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/sign-in/$': {
-      id: '/sign-in/$'
-      path: '/sign-in/$'
-      fullPath: '/sign-in/$'
-      preLoaderRoute: typeof SignInSplatImport
-      parentRoute: typeof rootRoute
-    }
-    '/sign-up/$': {
-      id: '/sign-up/$'
-      path: '/sign-up/$'
-      fullPath: '/sign-up/$'
-      preLoaderRoute: typeof SignUpSplatImport
-      parentRoute: typeof rootRoute
+    '/_app/': {
+      id: '/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppIndexImport
+      parentRoute: typeof AppImport
     }
     '/_app/_authed/dashboard': {
       id: '/_app/_authed/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppAuthedDashboardImport
+      parentRoute: typeof AppAuthedImport
+    }
+    '/_app/checkout/$productId': {
+      id: '/_app/checkout/$productId'
+      path: '/checkout/$productId'
+      fullPath: '/checkout/$productId'
+      preLoaderRoute: typeof AppCheckoutProductIdImport
       parentRoute: typeof AppImport
     }
-    '/_authed/posts/$postId': {
-      id: '/_authed/posts/$postId'
+    '/_app/checkout/success': {
+      id: '/_app/checkout/success'
+      path: '/checkout/success'
+      fullPath: '/checkout/success'
+      preLoaderRoute: typeof AppCheckoutSuccessImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/posts/$postId': {
+      id: '/_app/posts/$postId'
       path: '/$postId'
       fullPath: '/posts/$postId'
-      preLoaderRoute: typeof AuthedPostsPostIdImport
-      parentRoute: typeof AuthedPostsImport
+      preLoaderRoute: typeof AppPostsPostIdImport
+      parentRoute: typeof AppPostsImport
     }
-    '/_authed/profile/$': {
-      id: '/_authed/profile/$'
-      path: '/profile/$'
-      fullPath: '/profile/$'
-      preLoaderRoute: typeof AuthedProfileSplatImport
-      parentRoute: typeof AuthedImport
+    '/_app/sign-in/$': {
+      id: '/_app/sign-in/$'
+      path: '/sign-in/$'
+      fullPath: '/sign-in/$'
+      preLoaderRoute: typeof AppSignInSplatImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/sign-up/$': {
+      id: '/_app/sign-up/$'
+      path: '/sign-up/$'
+      fullPath: '/sign-up/$'
+      preLoaderRoute: typeof AppSignUpSplatImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/teampicker/$bracketId': {
+      id: '/_app/teampicker/$bracketId'
+      path: '/teampicker/$bracketId'
+      fullPath: '/teampicker/$bracketId'
+      preLoaderRoute: typeof AppTeampickerBracketIdImport
+      parentRoute: typeof AppImport
     }
     '/_layout/_layout-2/layout-a': {
       id: '/_layout/_layout-2/layout-a'
@@ -232,56 +250,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayout2LayoutBImport
       parentRoute: typeof LayoutLayout2Import
     }
-    '/_authed/posts/': {
-      id: '/_authed/posts/'
+    '/_app/posts/': {
+      id: '/_app/posts/'
       path: '/'
       fullPath: '/posts/'
-      preLoaderRoute: typeof AuthedPostsIndexImport
-      parentRoute: typeof AuthedPostsImport
+      preLoaderRoute: typeof AppPostsIndexImport
+      parentRoute: typeof AppPostsImport
+    }
+    '/_app/pricing/': {
+      id: '/_app/pricing/'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AppPricingIndexImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/teampicker/': {
+      id: '/_app/teampicker/'
+      path: '/teampicker'
+      fullPath: '/teampicker'
+      preLoaderRoute: typeof AppTeampickerIndexImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/posts/$postId/deep': {
+      id: '/_app/posts/$postId/deep'
+      path: '/posts/$postId/deep'
+      fullPath: '/posts/$postId/deep'
+      preLoaderRoute: typeof AppPostsPostIdDeepImport
+      parentRoute: typeof AppImport
     }
   }
 }
 
 // Create and export the route tree
 
-interface AppRouteChildren {
-  AppTestRoute: typeof AppTestRoute
+interface AppAuthedRouteChildren {
   AppAuthedDashboardRoute: typeof AppAuthedDashboardRoute
 }
 
-const AppRouteChildren: AppRouteChildren = {
-  AppTestRoute: AppTestRoute,
+const AppAuthedRouteChildren: AppAuthedRouteChildren = {
   AppAuthedDashboardRoute: AppAuthedDashboardRoute,
 }
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
-
-interface AuthedPostsRouteChildren {
-  AuthedPostsPostIdRoute: typeof AuthedPostsPostIdRoute
-  AuthedPostsIndexRoute: typeof AuthedPostsIndexRoute
-}
-
-const AuthedPostsRouteChildren: AuthedPostsRouteChildren = {
-  AuthedPostsPostIdRoute: AuthedPostsPostIdRoute,
-  AuthedPostsIndexRoute: AuthedPostsIndexRoute,
-}
-
-const AuthedPostsRouteWithChildren = AuthedPostsRoute._addFileChildren(
-  AuthedPostsRouteChildren,
+const AppAuthedRouteWithChildren = AppAuthedRoute._addFileChildren(
+  AppAuthedRouteChildren,
 )
 
-interface AuthedRouteChildren {
-  AuthedPostsRoute: typeof AuthedPostsRouteWithChildren
-  AuthedProfileSplatRoute: typeof AuthedProfileSplatRoute
+interface AppPostsRouteChildren {
+  AppPostsPostIdRoute: typeof AppPostsPostIdRoute
+  AppPostsIndexRoute: typeof AppPostsIndexRoute
 }
 
-const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedPostsRoute: AuthedPostsRouteWithChildren,
-  AuthedProfileSplatRoute: AuthedProfileSplatRoute,
+const AppPostsRouteChildren: AppPostsRouteChildren = {
+  AppPostsPostIdRoute: AppPostsPostIdRoute,
+  AppPostsIndexRoute: AppPostsIndexRoute,
 }
 
-const AuthedRouteWithChildren =
-  AuthedRoute._addFileChildren(AuthedRouteChildren)
+const AppPostsRouteWithChildren = AppPostsRoute._addFileChildren(
+  AppPostsRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppAuthedRoute: typeof AppAuthedRouteWithChildren
+  AppPostsRoute: typeof AppPostsRouteWithChildren
+  AppTestRoute: typeof AppTestRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppCheckoutProductIdRoute: typeof AppCheckoutProductIdRoute
+  AppCheckoutSuccessRoute: typeof AppCheckoutSuccessRoute
+  AppSignInSplatRoute: typeof AppSignInSplatRoute
+  AppSignUpSplatRoute: typeof AppSignUpSplatRoute
+  AppTeampickerBracketIdRoute: typeof AppTeampickerBracketIdRoute
+  AppPricingIndexRoute: typeof AppPricingIndexRoute
+  AppTeampickerIndexRoute: typeof AppTeampickerIndexRoute
+  AppPostsPostIdDeepRoute: typeof AppPostsPostIdDeepRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAuthedRoute: AppAuthedRouteWithChildren,
+  AppPostsRoute: AppPostsRouteWithChildren,
+  AppTestRoute: AppTestRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppCheckoutProductIdRoute: AppCheckoutProductIdRoute,
+  AppCheckoutSuccessRoute: AppCheckoutSuccessRoute,
+  AppSignInSplatRoute: AppSignInSplatRoute,
+  AppSignUpSplatRoute: AppSignUpSplatRoute,
+  AppTeampickerBracketIdRoute: AppTeampickerBracketIdRoute,
+  AppPricingIndexRoute: AppPricingIndexRoute,
+  AppTeampickerIndexRoute: AppTeampickerIndexRoute,
+  AppPostsPostIdDeepRoute: AppPostsPostIdDeepRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface LayoutLayout2RouteChildren {
   LayoutLayout2LayoutARoute: typeof LayoutLayout2LayoutARoute
@@ -309,133 +367,139 @@ const LayoutRouteWithChildren =
   LayoutRoute._addFileChildren(LayoutRouteChildren)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '': typeof LayoutLayout2RouteWithChildren
-  '/pricing': typeof PricingRoute
+  '/posts': typeof AppPostsRouteWithChildren
   '/test': typeof AppTestRoute
-  '/posts': typeof AuthedPostsRouteWithChildren
-  '/checkout/$productId': typeof CheckoutProductIdRoute
-  '/sign-in/$': typeof SignInSplatRoute
-  '/sign-up/$': typeof SignUpSplatRoute
+  '/': typeof AppIndexRoute
   '/dashboard': typeof AppAuthedDashboardRoute
-  '/posts/$postId': typeof AuthedPostsPostIdRoute
-  '/profile/$': typeof AuthedProfileSplatRoute
+  '/checkout/$productId': typeof AppCheckoutProductIdRoute
+  '/checkout/success': typeof AppCheckoutSuccessRoute
+  '/posts/$postId': typeof AppPostsPostIdRoute
+  '/sign-in/$': typeof AppSignInSplatRoute
+  '/sign-up/$': typeof AppSignUpSplatRoute
+  '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/layout-a': typeof LayoutLayout2LayoutARoute
   '/layout-b': typeof LayoutLayout2LayoutBRoute
-  '/posts/': typeof AuthedPostsIndexRoute
+  '/posts/': typeof AppPostsIndexRoute
+  '/pricing': typeof AppPricingIndexRoute
+  '/teampicker': typeof AppTeampickerIndexRoute
+  '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '': typeof LayoutLayout2RouteWithChildren
-  '/pricing': typeof PricingRoute
   '/test': typeof AppTestRoute
-  '/checkout/$productId': typeof CheckoutProductIdRoute
-  '/sign-in/$': typeof SignInSplatRoute
-  '/sign-up/$': typeof SignUpSplatRoute
+  '/': typeof AppIndexRoute
   '/dashboard': typeof AppAuthedDashboardRoute
-  '/posts/$postId': typeof AuthedPostsPostIdRoute
-  '/profile/$': typeof AuthedProfileSplatRoute
+  '/checkout/$productId': typeof AppCheckoutProductIdRoute
+  '/checkout/success': typeof AppCheckoutSuccessRoute
+  '/posts/$postId': typeof AppPostsPostIdRoute
+  '/sign-in/$': typeof AppSignInSplatRoute
+  '/sign-up/$': typeof AppSignUpSplatRoute
+  '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/layout-a': typeof LayoutLayout2LayoutARoute
   '/layout-b': typeof LayoutLayout2LayoutBRoute
-  '/posts': typeof AuthedPostsIndexRoute
+  '/posts': typeof AppPostsIndexRoute
+  '/pricing': typeof AppPricingIndexRoute
+  '/teampicker': typeof AppTeampickerIndexRoute
+  '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/_authed': typeof AuthedRouteWithChildren
   '/_layout': typeof LayoutRouteWithChildren
-  '/pricing': typeof PricingRoute
+  '/_app/_authed': typeof AppAuthedRouteWithChildren
+  '/_app/posts': typeof AppPostsRouteWithChildren
   '/_app/test': typeof AppTestRoute
-  '/_authed/posts': typeof AuthedPostsRouteWithChildren
   '/_layout/_layout-2': typeof LayoutLayout2RouteWithChildren
-  '/checkout/$productId': typeof CheckoutProductIdRoute
-  '/sign-in/$': typeof SignInSplatRoute
-  '/sign-up/$': typeof SignUpSplatRoute
+  '/_app/': typeof AppIndexRoute
   '/_app/_authed/dashboard': typeof AppAuthedDashboardRoute
-  '/_authed/posts/$postId': typeof AuthedPostsPostIdRoute
-  '/_authed/profile/$': typeof AuthedProfileSplatRoute
+  '/_app/checkout/$productId': typeof AppCheckoutProductIdRoute
+  '/_app/checkout/success': typeof AppCheckoutSuccessRoute
+  '/_app/posts/$postId': typeof AppPostsPostIdRoute
+  '/_app/sign-in/$': typeof AppSignInSplatRoute
+  '/_app/sign-up/$': typeof AppSignUpSplatRoute
+  '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/_layout/_layout-2/layout-a': typeof LayoutLayout2LayoutARoute
   '/_layout/_layout-2/layout-b': typeof LayoutLayout2LayoutBRoute
-  '/_authed/posts/': typeof AuthedPostsIndexRoute
+  '/_app/posts/': typeof AppPostsIndexRoute
+  '/_app/pricing/': typeof AppPricingIndexRoute
+  '/_app/teampicker/': typeof AppTeampickerIndexRoute
+  '/_app/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | ''
-    | '/pricing'
-    | '/test'
     | '/posts'
+    | '/test'
+    | '/'
+    | '/dashboard'
     | '/checkout/$productId'
+    | '/checkout/success'
+    | '/posts/$postId'
     | '/sign-in/$'
     | '/sign-up/$'
-    | '/dashboard'
-    | '/posts/$postId'
-    | '/profile/$'
+    | '/teampicker/$bracketId'
     | '/layout-a'
     | '/layout-b'
     | '/posts/'
+    | '/pricing'
+    | '/teampicker'
+    | '/posts/$postId/deep'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | ''
-    | '/pricing'
     | '/test'
+    | '/'
+    | '/dashboard'
     | '/checkout/$productId'
+    | '/checkout/success'
+    | '/posts/$postId'
     | '/sign-in/$'
     | '/sign-up/$'
-    | '/dashboard'
-    | '/posts/$postId'
-    | '/profile/$'
+    | '/teampicker/$bracketId'
     | '/layout-a'
     | '/layout-b'
     | '/posts'
+    | '/pricing'
+    | '/teampicker'
+    | '/posts/$postId/deep'
   id:
     | '__root__'
-    | '/'
     | '/_app'
-    | '/_authed'
     | '/_layout'
-    | '/pricing'
+    | '/_app/_authed'
+    | '/_app/posts'
     | '/_app/test'
-    | '/_authed/posts'
     | '/_layout/_layout-2'
-    | '/checkout/$productId'
-    | '/sign-in/$'
-    | '/sign-up/$'
+    | '/_app/'
     | '/_app/_authed/dashboard'
-    | '/_authed/posts/$postId'
-    | '/_authed/profile/$'
+    | '/_app/checkout/$productId'
+    | '/_app/checkout/success'
+    | '/_app/posts/$postId'
+    | '/_app/sign-in/$'
+    | '/_app/sign-up/$'
+    | '/_app/teampicker/$bracketId'
     | '/_layout/_layout-2/layout-a'
     | '/_layout/_layout-2/layout-b'
-    | '/_authed/posts/'
+    | '/_app/posts/'
+    | '/_app/pricing/'
+    | '/_app/teampicker/'
+    | '/_app/posts/$postId/deep'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  AuthedRoute: typeof AuthedRouteWithChildren
   LayoutRoute: typeof LayoutRouteWithChildren
-  PricingRoute: typeof PricingRoute
-  CheckoutProductIdRoute: typeof CheckoutProductIdRoute
-  SignInSplatRoute: typeof SignInSplatRoute
-  SignUpSplatRoute: typeof SignUpSplatRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  AuthedRoute: AuthedRouteWithChildren,
   LayoutRoute: LayoutRouteWithChildren,
-  PricingRoute: PricingRoute,
-  CheckoutProductIdRoute: CheckoutProductIdRoute,
-  SignInSplatRoute: SignInSplatRoute,
-  SignUpSplatRoute: SignUpSplatRoute,
 }
 
 export const routeTree = rootRoute
@@ -450,31 +514,25 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/",
         "/_app",
-        "/_authed",
-        "/_layout",
-        "/pricing",
-        "/checkout/$productId",
-        "/sign-in/$",
-        "/sign-up/$"
+        "/_layout"
       ]
-    },
-    "/": {
-      "filePath": "index.tsx"
     },
     "/_app": {
       "filePath": "_app.tsx",
       "children": [
+        "/_app/_authed",
+        "/_app/posts",
         "/_app/test",
-        "/_app/_authed/dashboard"
-      ]
-    },
-    "/_authed": {
-      "filePath": "_authed.tsx",
-      "children": [
-        "/_authed/posts",
-        "/_authed/profile/$"
+        "/_app/",
+        "/_app/checkout/$productId",
+        "/_app/checkout/success",
+        "/_app/sign-in/$",
+        "/_app/sign-up/$",
+        "/_app/teampicker/$bracketId",
+        "/_app/pricing/",
+        "/_app/teampicker/",
+        "/_app/posts/$postId/deep"
       ]
     },
     "/_layout": {
@@ -483,20 +541,24 @@ export const routeTree = rootRoute
         "/_layout/_layout-2"
       ]
     },
-    "/pricing": {
-      "filePath": "pricing.tsx"
+    "/_app/_authed": {
+      "filePath": "_app/_authed.tsx",
+      "parent": "/_app",
+      "children": [
+        "/_app/_authed/dashboard"
+      ]
+    },
+    "/_app/posts": {
+      "filePath": "_app/posts.tsx",
+      "parent": "/_app",
+      "children": [
+        "/_app/posts/$postId",
+        "/_app/posts/"
+      ]
     },
     "/_app/test": {
       "filePath": "_app/test.tsx",
       "parent": "/_app"
-    },
-    "/_authed/posts": {
-      "filePath": "_authed/posts.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/posts/$postId",
-        "/_authed/posts/"
-      ]
     },
     "/_layout/_layout-2": {
       "filePath": "_layout/_layout-2.tsx",
@@ -506,26 +568,37 @@ export const routeTree = rootRoute
         "/_layout/_layout-2/layout-b"
       ]
     },
-    "/checkout/$productId": {
-      "filePath": "checkout.$productId.tsx"
-    },
-    "/sign-in/$": {
-      "filePath": "sign-in.$.tsx"
-    },
-    "/sign-up/$": {
-      "filePath": "sign-up.$.tsx"
+    "/_app/": {
+      "filePath": "_app/index.tsx",
+      "parent": "/_app"
     },
     "/_app/_authed/dashboard": {
       "filePath": "_app/_authed/dashboard.tsx",
+      "parent": "/_app/_authed"
+    },
+    "/_app/checkout/$productId": {
+      "filePath": "_app/checkout.$productId.tsx",
       "parent": "/_app"
     },
-    "/_authed/posts/$postId": {
-      "filePath": "_authed/posts.$postId.tsx",
-      "parent": "/_authed/posts"
+    "/_app/checkout/success": {
+      "filePath": "_app/checkout.success.tsx",
+      "parent": "/_app"
     },
-    "/_authed/profile/$": {
-      "filePath": "_authed/profile.$.tsx",
-      "parent": "/_authed"
+    "/_app/posts/$postId": {
+      "filePath": "_app/posts.$postId.tsx",
+      "parent": "/_app/posts"
+    },
+    "/_app/sign-in/$": {
+      "filePath": "_app/sign-in.$.tsx",
+      "parent": "/_app"
+    },
+    "/_app/sign-up/$": {
+      "filePath": "_app/sign-up.$.tsx",
+      "parent": "/_app"
+    },
+    "/_app/teampicker/$bracketId": {
+      "filePath": "_app/teampicker/$bracketId.tsx",
+      "parent": "/_app"
     },
     "/_layout/_layout-2/layout-a": {
       "filePath": "_layout/_layout-2/layout-a.tsx",
@@ -535,9 +608,21 @@ export const routeTree = rootRoute
       "filePath": "_layout/_layout-2/layout-b.tsx",
       "parent": "/_layout/_layout-2"
     },
-    "/_authed/posts/": {
-      "filePath": "_authed/posts.index.tsx",
-      "parent": "/_authed/posts"
+    "/_app/posts/": {
+      "filePath": "_app/posts.index.tsx",
+      "parent": "/_app/posts"
+    },
+    "/_app/pricing/": {
+      "filePath": "_app/pricing/index.tsx",
+      "parent": "/_app"
+    },
+    "/_app/teampicker/": {
+      "filePath": "_app/teampicker/index.tsx",
+      "parent": "/_app"
+    },
+    "/_app/posts/$postId/deep": {
+      "filePath": "_app/posts_.$postId.deep.tsx",
+      "parent": "/_app"
     }
   }
 }

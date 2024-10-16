@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { cn } from "../../lib/utils";
 import { motion } from "framer-motion";
@@ -7,7 +5,7 @@ import { mainTransitionProps } from "../PageTransition";
 
 interface ContainerProps {
   children: React.ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "7xl" | "full";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "5xl" | "7xl" | "full";
   padded?: boolean;
   paddingTop?: "sm" | "md" | "lg" | "xl";
   sidebarOffset?: boolean;
@@ -32,9 +30,10 @@ const Container: React.FC<ContainerProps> = ({
       "max-w-lg": maxWidth === "lg",
       "max-w-xl": maxWidth === "xl",
       "max-w-2xl": maxWidth === "2xl",
+      "max-w-5xl": maxWidth === "5xl",
       "max-w-7xl": maxWidth === "7xl",
       "max-w-full": maxWidth === "full",
-      "": padded,
+      "px-4": padded, // Add horizontal padding when padded is true
       "md:pl-28": sidebarOffset || isDashboard,
     },
     className

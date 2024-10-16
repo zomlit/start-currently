@@ -37,6 +37,7 @@ export default function HeroSection() {
                 focusBoxShadow="shadow-none"
                 focusVisibleBoxShadow="shadow-none"
                 className="uppercase focus:outline-none"
+                glowOpacity={0.5}
               />
             ) : (
               <AnimatedLink
@@ -51,6 +52,7 @@ export default function HeroSection() {
                 focusVisibleRingOffsetWidth="ring-offset-0"
                 focusBoxShadow="shadow-none"
                 focusVisibleBoxShadow="shadow-none"
+                glowOpacity={0.5}
                 className="uppercase focus:outline-none"
               />
             )}

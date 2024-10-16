@@ -1,14 +1,28 @@
+/// <reference types="vite-plugin-svgr/client" />
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import svgr from "vite-plugin-svgr";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import path from "path";
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [TanStackRouterVite(), react()],
+  plugins: [
+    react(),
+    TanStackRouterVite(),
+    svgr({
+      svgrOptions: {
+        plugins: ["@svgr/plugin-svgo", "@svgr/plugin-jsx"],
+      },
+    }),
+  ],
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "./app"),
+      "@": "/app",
     },
+  },
+  publicDir: "public",
+  ssr: {
+    noExternal: ["@clerk/clerk-react"],
   },
 });

@@ -1,7 +1,7 @@
-import React from 'react'
+import React from "react";
 
 interface LogoProps {
-  className?: string
+  className?: string;
 }
 
 export const CopyIcon: React.FC<LogoProps> = ({ className }) => {
@@ -22,8 +22,8 @@ export const CopyIcon: React.FC<LogoProps> = ({ className }) => {
         strokeLinejoin="round"
       />
     </svg>
-  )
-}
+  );
+};
 
 export const Dot: React.FC<LogoProps> = ({ className }) => {
   return (
@@ -37,8 +37,8 @@ export const Dot: React.FC<LogoProps> = ({ className }) => {
     >
       <circle cx="3.3335" cy="3" r="3" fill="#12B76A" />
     </svg>
-  )
-}
+  );
+};
 
 export const LstLogo: React.FC<LogoProps> = ({ className }) => {
   return (
@@ -51,8 +51,8 @@ export const LstLogo: React.FC<LogoProps> = ({ className }) => {
     >
       <path d="M1495 2869c-688-6-671-5-845-69-164-59-297-159-391-294-59-84-101-190-128-323-20-98-21-132-21-1080V125l32 2c18 1 126 2 240 2l207 1 4 952c2 845 5 959 19 1006 44 143 140 228 313 279 55 16 137 18 920 21 889 3 943 1 1031-37 56-25 112-84 142-149 20-44 25-72 26-141 2-147-48-240-157-294-98-48-115-49-647-57-502-7-506-7-602-33-283-76-461-245-529-502-27-102-37-323-19-433 52-326 259-532 600-596 64-13 216-15 856-16l779-2 3 241 2 241h-732c-790 0-813 2-900 53-51 30-102 98-120 161-15 56-15 172 1 221 31 93 111 163 216 190 48 12 130 15 435 15 569 0 729 19 906 108 252 126 369 310 392 612 24 323-64 574-256 725-109 87-278 153-432 169-87 9-661 12-1345 5z" />
     </svg>
-  )
-}
+  );
+};
 
 export const CircleDot: React.FC<LogoProps> = ({ className }) => {
   return (
@@ -61,11 +61,11 @@ export const CircleDot: React.FC<LogoProps> = ({ className }) => {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 180 180"
     >
-      <path d="M179.99 83.74c.07 6.88-.01 7-6.25 7.02-8.03.03-16.08-.1-24.11.04-3.6.07-4.94-1.27-5.25-4.9-2.41-28.17-24.83-49.48-52.52-50.15-28.56-.68-52.08 19.17-56.23 47.46-4.37 29.83 19 58.97 49.24 61.03 4.68.32 6 2 5.85 6.4-.28 8.15-.23 16.32-.01 24.47.1 4.03-1.34 5.02-5.3 4.88-42.26-1.52-79.47-35.62-84.7-77.81C-5.55 51.43 29.95 6.33 80.72.53c44.72-5.1 88.68 26.92 97.36 70.94.77 3.91 1.27 7.88 1.92 12.27Z" />{' '}
+      <path d="M179.99 83.74c.07 6.88-.01 7-6.25 7.02-8.03.03-16.08-.1-24.11.04-3.6.07-4.94-1.27-5.25-4.9-2.41-28.17-24.83-49.48-52.52-50.15-28.56-.68-52.08 19.17-56.23 47.46-4.37 29.83 19 58.97 49.24 61.03 4.68.32 6 2 5.85 6.4-.28 8.15-.23 16.32-.01 24.47.1 4.03-1.34 5.02-5.3 4.88-42.26-1.52-79.47-35.62-84.7-77.81C-5.55 51.43 29.95 6.33 80.72.53c44.72-5.1 88.68 26.92 97.36 70.94.77 3.91 1.27 7.88 1.92 12.27Z" />{" "}
       <circle cx="152" cy="152" r="28" />
     </svg>
-  )
-}
+  );
+};
 export const CircleFull: React.FC<LogoProps> = ({ className }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 180 180">
@@ -82,8 +82,8 @@ export const CircleFull: React.FC<LogoProps> = ({ className }) => {
         d="M151.79 179.94a28.07 28.07 0 0 0 28.15-28 28.07 28.07 0 0 0-28.15-27.98 28.07 28.07 0 0 0-28.14 27.99 28.07 28.07 0 0 0 28.14 27.99Z"
       />
     </svg>
-  )
-}
+  );
+};
 export const CircleFullRounded: React.FC<LogoProps> = ({ className }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 180 180">
@@ -96,8 +96,8 @@ export const CircleFullRounded: React.FC<LogoProps> = ({ className }) => {
         d="M.01 96.26c-.07-6.88.01-7 6.25-7.02 8.03-.03 16.08.1 24.11-.04 3.6-.07 4.94 1.27 5.25 4.9 2.41 28.17 24.83 49.48 52.52 50.15 28.56.68 52.08-19.17 56.23-47.46 4.37-29.83-19-58.97-49.24-61.03-4.68-.32-6-2-5.85-6.4.28-8.15.23-16.32.01-24.47C89.2.86 90.63-.13 94.6 0c42.26 1.52 79.47 35.62 84.7 77.8 6.26 50.76-29.24 95.86-80 101.66-44.73 5.1-88.69-26.92-97.37-70.94-.77-3.91-1.27-7.88-1.92-12.27h.01Z"
       />
     </svg>
-  )
-}
+  );
+};
 export const CircleHalfRounded: React.FC<LogoProps> = ({ className }) => {
   return (
     <svg
@@ -119,8 +119,8 @@ export const CircleHalfRounded: React.FC<LogoProps> = ({ className }) => {
         </clipPath>
       </defs>
     </svg>
-  )
-}
+  );
+};
 
 export const Twitter: React.FC<LogoProps> = ({ className }) => {
   return (
@@ -137,8 +137,8 @@ export const Twitter: React.FC<LogoProps> = ({ className }) => {
         fill="#47ACDF"
       />
     </svg>
-  )
-}
+  );
+};
 
 export const Discord: React.FC<LogoProps> = ({ className }) => {
   return (
@@ -172,8 +172,8 @@ export const Discord: React.FC<LogoProps> = ({ className }) => {
         </linearGradient>
       </defs>
     </svg>
-  )
-}
+  );
+};
 
 export const AnimatedGradient: React.FC<LogoProps> = ({ className }) => {
   return (
@@ -225,5 +225,5 @@ export const AnimatedGradient: React.FC<LogoProps> = ({ className }) => {
         fill="url(#animated-gradient)"
       />
     </svg>
-  )
-}
+  );
+};

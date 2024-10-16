@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import Stripe from "stripe";
 import GenericHeader from "../../components/GenericHeader";
