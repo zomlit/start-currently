@@ -1,1 +1,0 @@
-import{a as t,r as s,j as e,x as o}from"./client-Ddpp9KjH.js";import{u as c}from"./useSupabase-CKRXdBKc.js";const n=({bracketId:r})=>(c(),t(),s.useState(null),s.useEffect(()=>{},[r]),e.jsx("div",{children:e.jsx("h1",{children:"Shared Team Picker"})})),m=function(){const{bracketId:a}=o.useParams();return e.jsx(n,{bracketId:a})};export{m as component};
