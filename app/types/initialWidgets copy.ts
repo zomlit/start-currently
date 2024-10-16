@@ -1,5 +1,7 @@
 import { WidgetType, WidgetProfile, WidgetSettings } from "@/types";
-import { v4 as uuidv4 } from "uuid";
+
+// Remove this import
+// import { v4 as uuidv4 } from "uuid";
 
 export type Widget = {
   profiles: WidgetProfile[];
@@ -51,7 +53,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   visualizer: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Visualizer",
         widgetType: "visualizer",
         settings: {
@@ -67,7 +69,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   chat: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Chat",
         widgetType: "chat",
         settings: {
@@ -83,7 +85,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   alerts: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Alerts",
         widgetType: "alerts",
         settings: {
@@ -99,7 +101,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   game_stats: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Game Stats",
         widgetType: "game_stats",
         settings: {
@@ -115,7 +117,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   game_overlay: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Game Overlay",
         widgetType: "game_overlay",
         settings: {
@@ -131,7 +133,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   gamepad: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Gamepad",
         widgetType: "gamepad",
         settings: {
@@ -147,7 +149,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   timer: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Timer",
         widgetType: "timer",
         settings: {
@@ -163,7 +165,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   configure: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Configure",
         widgetType: "configure",
         settings: {
@@ -179,7 +181,7 @@ export const initialWidgets: Record<WidgetType, Widget> = {
   freeform: {
     profiles: [
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         name: "Default Freeform",
         widgetType: "freeform",
         settings: {

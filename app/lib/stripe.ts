@@ -1,10 +1,17 @@
 // lib/stripe.ts
-import Stripe from "stripe";
 import { getStripeSecretKey } from "@/lib/environment";
 
-const stripe = new Stripe(getStripeSecretKey(), {
-  apiVersion: "2024-09-30.acacia",
-});
+let stripe: any;
+
+async function getStripe() {
+  if (!stripe) {
+    const Stripe = (await import("stripe")).default;
+    stripe = new Stripe(getStripeSecretKey(), {
+      apiVersion: "2024-09-30.acacia",
+    });
+  }
+  return stripe;
+}
 
 export interface ProductWithPrices
   extends Omit<Stripe.Product, "default_price"> {
@@ -15,6 +22,7 @@ export interface ProductWithPrices
 
 export async function getProducts(): Promise<ProductWithPrices[]> {
   try {
+    const stripe = await getStripe();
     const products = await stripe.products.list({
       limit: 10,
       expand: ["data.default_price"],
@@ -46,6 +54,7 @@ export async function getProductById(
   productId: string
 ): Promise<ProductWithPrices | null> {
   try {
+    const stripe = await getStripe();
     const product = await stripe.products.retrieve(productId, {
       expand: ["default_price"],
     });
@@ -67,7 +76,7 @@ export async function getProductById(
   }
 }
 
-export const formatPrice = (price: Stripe.Price | null | undefined): string => {
+export const formatPrice = (price: any): string => {
   if (!price || typeof price.unit_amount !== "number") return "N/A";
   const amount = price.unit_amount / 100;
   return new Intl.NumberFormat("en-US", {
