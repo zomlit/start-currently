@@ -1,6 +1,6 @@
 import { SignIn } from "@clerk/tanstack-start";
 import { createFileRoute } from "@tanstack/react-router";
-import { CircleDot } from "../../components/icons";
+import { CircleDot } from "@/components/icons";
 
 export const Route = createFileRoute("/_app/sign-in/$")({
   component: SignInPage,

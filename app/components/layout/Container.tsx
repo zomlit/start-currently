@@ -1,7 +1,7 @@
 import React from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { mainTransitionProps } from "../PageTransition";
+import { mainTransitionProps } from "@/components/PageTransition";
 
 interface ContainerProps {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ interface ContainerProps {
   className?: string;
 }
 
-const Container: React.FC<ContainerProps> = ({
+export const Container: React.FC<ContainerProps> = ({
   children,
   maxWidth = "",
   padded = true,
@@ -45,5 +45,3 @@ const Container: React.FC<ContainerProps> = ({
     </div>
   );
 };
-
-export default Container;

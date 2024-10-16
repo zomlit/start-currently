@@ -1,8 +1,7 @@
 import {
   Outlet,
   ScrollRestoration,
-  createRootRoute,
-  useRouter,
+  createRootRouteWithContext,
 } from "@tanstack/react-router";
 import {
   Body,
@@ -13,21 +12,34 @@ import {
   createServerFn,
 } from "@tanstack/start";
 import * as React from "react";
-import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
-import { NotFound } from "../components/NotFound";
-import { seo } from "../utils/seo";
+import type { QueryClient } from "@tanstack/react-query";
+import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
+import { NotFound } from "@/components/NotFound";
+import { seo } from "@/utils/seo";
 import { getAuth } from "@clerk/tanstack-start/server";
-import appCss from "../styles/app.css?url";
-import globalCss from "../styles/global.css?url";
-import { CustomClerkProvider } from "../contexts/ClerkContext";
+import appCss from "@/styles/app.css?url";
+import globalCss from "@/styles/global.css?url";
+import {
+  ClerkProvider,
+  SignInButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/tanstack-start";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
-  const auth = await getAuth(ctx.request);
-  return { auth };
+  const user = await getAuth(ctx.request);
+
+  return {
+    user,
+  };
 });
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   meta: () => [
     { charSet: "utf-8" },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -60,9 +72,12 @@ export const Route = createRootRoute({
     { rel: "icon", href: "/favicon.ico" },
     // { rel: "preload", href: "/images/hero-bg.webp", as: "image" },
   ],
-  beforeLoad: async ({ context }) => {
-    const { auth } = await fetchClerkAuth();
-    return { auth };
+  beforeLoad: async () => {
+    const { user } = await fetchClerkAuth();
+
+    return {
+      user,
+    };
   },
   errorComponent: (props) => (
     <RootDocument>
@@ -75,9 +90,11 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
+    <ClerkProvider>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    </ClerkProvider>
   );
 }
 
@@ -91,6 +108,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <TanStackRouterDevtools position="bottom-right" />
+        <ReactQueryDevtools buttonPosition="bottom-left" />
         <Scripts />
       </Body>
     </Html>

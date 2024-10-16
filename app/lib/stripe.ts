@@ -1,6 +1,6 @@
 // lib/stripe.ts
 import Stripe from "stripe";
-import { getStripeSecretKey } from "../lib/environment";
+import { getStripeSecretKey } from "@/lib/environment";
 
 const stripe = new Stripe(getStripeSecretKey(), {
   apiVersion: "2024-09-30.acacia",

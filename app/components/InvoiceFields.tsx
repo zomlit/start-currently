@@ -1,12 +1,12 @@
-import * as React from 'react'
-import type { Invoice } from '../utils/mockTodos'
+import * as React from "react";
+import type { Invoice } from "@/utils/mockTodos";
 
 export function InvoiceFields({
   invoice,
   disabled,
 }: {
-  invoice: Invoice
-  disabled?: boolean
+  invoice: Invoice;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -30,5 +30,5 @@ export function InvoiceFields({
         />
       </div>
     </div>
-  )
+  );
 }

@@ -5,18 +5,17 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/start";
-import PricingPage from "../../components/stripe/Pricing";
-import { getProducts, ProductWithPrices } from "../../lib/stripe";
-import { useAuth } from "@clerk/clerk-react";
-import GenericHeader from "../../components/GenericHeader";
-import Container from "../../components/layout/Container";
+import PricingPage from "@/components/stripe/Pricing";
+import { getProducts, ProductWithPrices } from "@/lib/stripe";
+import GenericHeader from "@/components/GenericHeader";
+import { Container } from "@/components/layout/Container";
 import { motion } from "framer-motion";
-import { mainTransitionProps } from "../../components/PageTransition";
-import { CircleDot } from "../../components/icons";
+import { mainTransitionProps } from "@/components/PageTransition";
+import { CircleDot } from "@/components/icons";
 import { useUser } from "@clerk/tanstack-start";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
-const iconRender = (val) => {
+const iconRender = (val: string) => {
   switch (val) {
     case "cross":
       return (

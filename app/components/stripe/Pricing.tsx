@@ -1,16 +1,16 @@
 import { useState } from "react";
 import Stripe from "stripe";
-import GenericHeader from "../../components/GenericHeader";
+import GenericHeader from "@/components/GenericHeader";
 import { FrequencySelector } from "./FrequencySelector";
 import { PricingCard } from "./PricingCard";
-import { SupportCard } from "../../components/SupportCard";
+import { SupportCard } from "@/components/SupportCard";
 import {
   PricingTierFrequency,
   ProductWithPrices,
   frequencies,
-} from "../../types/checkout";
-import { useSortedProducts } from "../../hooks/useSortedProducts";
-import { cn } from "../../lib/utils";
+} from "@/types/checkout";
+import { useSortedProducts } from "@/hooks/useSortedProducts";
+import { cn } from "@/lib/utils";
 
 export default function PricingPage({
   products,

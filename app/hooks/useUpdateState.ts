@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import debounce from "lodash/debounce";
 
 export function useUpdateState(bracketId: string) {
   const queryClient = useQueryClient();

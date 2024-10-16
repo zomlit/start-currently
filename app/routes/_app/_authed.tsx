@@ -1,25 +1,21 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-import DashboardNavigation from "../../components/DashboardNavigation";
+import { createFileRoute } from '@tanstack/react-router'
+import { SignIn } from '@clerk/tanstack-start'
 
-export const Route = createFileRoute("/_app/_authed")({
-  component: AuthedLayout,
+export const Route = createFileRoute('/_app/_authed')({
   beforeLoad: ({ context }) => {
-    if (!context.auth?.userId) {
-      throw redirect({
-        to: "/sign-in/$",
-        search: {
-          redirect: location.pathname + location.search,
-        },
-      });
+    if (!context.user.userId) {
+      throw new Error('Not authenticated')
     }
   },
-});
+  errorComponent: ({ error }) => {
+    if (error.message === 'Not authenticated') {
+      return (
+        <div className="flex items-center justify-center p-12">
+          <SignIn routing="hash" forceRedirectUrl={window.location.href} />
+        </div>
+      )
+    }
 
-function AuthedLayout() {
-  return (
-    <>
-      <DashboardNavigation />
-      <Outlet />
-    </>
-  );
-}
+    throw error
+  },
+})

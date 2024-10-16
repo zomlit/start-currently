@@ -11,15 +11,15 @@ import {
   DialogContent,
   DialogTitle,
   DialogClose,
-} from "../components/ui/dialog";
-import { Switch } from "../components/ui/switch";
-import { Label } from "../components/ui/label";
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../components/ui/tooltip";
+} from "@/components/ui/tooltip";
 import {
   Trash2,
   X,
@@ -38,7 +38,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { ScrollArea } from "../components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
   ROCKET_LEAGUE_RANKS,
@@ -48,20 +48,20 @@ import {
   getRankColor,
   abbreviateRank,
   sortPlayersByRank,
-} from "../utils/rankUtils";
+} from "@/utils/rankUtils";
 import {
   createBrackets,
   updateWinnersBracket,
   updateLosersBracket,
   findNextOpenSlotInLosersBracket,
-} from "../utils/bracketUtils";
+} from "@/utils/bracketUtils";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 
 import DashboardHeader from "./DashboardHeader";
 import BackgroundImage from "./ui/background-image";
-import Container from "./layout/Container";
+import { Container } from "./layout/Container";
 import { Spinner } from "./ui/spinner";
-import { useUpdateState } from "../hooks/useUpdateState";
+import { useUpdateState } from "@/hooks/useUpdateState";
 import {
   Select,
   SelectContent,
@@ -72,8 +72,8 @@ import {
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { useSupabase } from "../hooks/useSupabase";
-import { toast } from "../utils/toast";
+import { useSupabase } from "@/hooks/useSupabase";
+import { toast } from "@/utils/toast";
 
 const RankSelect = ({ value, onChange, color, iconUrl }) => {
   const [isOpen, setIsOpen] = useState(false);

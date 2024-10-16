@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CircleDot } from "../../components/icons";
+import { CircleDot } from "@/components/icons";
 
 interface SpinnerProps {
   className?: string;

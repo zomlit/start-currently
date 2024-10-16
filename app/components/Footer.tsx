@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useUser } from "@clerk/tanstack-start";
 import { LstLogo, CircleDot } from "./icons";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 export const Footer = () => {
   const { isLoaded } = useUser();

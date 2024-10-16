@@ -22,7 +22,4 @@ export default defineConfig({
     },
   },
   publicDir: "public",
-  ssr: {
-    noExternal: ["@clerk/clerk-react"],
-  },
 });

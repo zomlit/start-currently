@@ -27,6 +27,7 @@ import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/
 import { Route as AppSignUpSplatImport } from './routes/_app/sign-up.$'
 import { Route as AppSignInSplatImport } from './routes/_app/sign-in.$'
 import { Route as AppPostsPostIdImport } from './routes/_app/posts.$postId'
+import { Route as AppDashboardWidgetsImport } from './routes/_app/dashboard.widgets'
 import { Route as AppCheckoutSuccessImport } from './routes/_app/checkout.success'
 import { Route as AppCheckoutProductIdImport } from './routes/_app/checkout.$productId'
 import { Route as AppAuthedDashboardImport } from './routes/_app/_authed/dashboard'
@@ -112,6 +113,11 @@ const AppSignInSplatRoute = AppSignInSplatImport.update({
 const AppPostsPostIdRoute = AppPostsPostIdImport.update({
   path: '/$postId',
   getParentRoute: () => AppPostsRoute,
+} as any)
+
+const AppDashboardWidgetsRoute = AppDashboardWidgetsImport.update({
+  path: '/dashboard/widgets',
+  getParentRoute: () => AppRoute,
 } as any)
 
 const AppCheckoutSuccessRoute = AppCheckoutSuccessImport.update({
@@ -206,6 +212,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout/success'
       fullPath: '/checkout/success'
       preLoaderRoute: typeof AppCheckoutSuccessImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/dashboard/widgets': {
+      id: '/_app/dashboard/widgets'
+      path: '/dashboard/widgets'
+      fullPath: '/dashboard/widgets'
+      preLoaderRoute: typeof AppDashboardWidgetsImport
       parentRoute: typeof AppImport
     }
     '/_app/posts/$postId': {
@@ -316,6 +329,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppCheckoutProductIdRoute: typeof AppCheckoutProductIdRoute
   AppCheckoutSuccessRoute: typeof AppCheckoutSuccessRoute
+  AppDashboardWidgetsRoute: typeof AppDashboardWidgetsRoute
   AppSignInSplatRoute: typeof AppSignInSplatRoute
   AppSignUpSplatRoute: typeof AppSignUpSplatRoute
   AppTeampickerBracketIdRoute: typeof AppTeampickerBracketIdRoute
@@ -331,6 +345,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppCheckoutProductIdRoute: AppCheckoutProductIdRoute,
   AppCheckoutSuccessRoute: AppCheckoutSuccessRoute,
+  AppDashboardWidgetsRoute: AppDashboardWidgetsRoute,
   AppSignInSplatRoute: AppSignInSplatRoute,
   AppSignUpSplatRoute: AppSignUpSplatRoute,
   AppTeampickerBracketIdRoute: AppTeampickerBracketIdRoute,
@@ -374,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppAuthedDashboardRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
+  '/dashboard/widgets': typeof AppDashboardWidgetsRoute
   '/posts/$postId': typeof AppPostsPostIdRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
@@ -393,6 +409,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppAuthedDashboardRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
+  '/dashboard/widgets': typeof AppDashboardWidgetsRoute
   '/posts/$postId': typeof AppPostsPostIdRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
@@ -417,6 +434,7 @@ export interface FileRoutesById {
   '/_app/_authed/dashboard': typeof AppAuthedDashboardRoute
   '/_app/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/_app/checkout/success': typeof AppCheckoutSuccessRoute
+  '/_app/dashboard/widgets': typeof AppDashboardWidgetsRoute
   '/_app/posts/$postId': typeof AppPostsPostIdRoute
   '/_app/sign-in/$': typeof AppSignInSplatRoute
   '/_app/sign-up/$': typeof AppSignUpSplatRoute
@@ -439,6 +457,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/checkout/$productId'
     | '/checkout/success'
+    | '/dashboard/widgets'
     | '/posts/$postId'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -457,6 +476,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/checkout/$productId'
     | '/checkout/success'
+    | '/dashboard/widgets'
     | '/posts/$postId'
     | '/sign-in/$'
     | '/sign-up/$'
@@ -479,6 +499,7 @@ export interface FileRouteTypes {
     | '/_app/_authed/dashboard'
     | '/_app/checkout/$productId'
     | '/_app/checkout/success'
+    | '/_app/dashboard/widgets'
     | '/_app/posts/$postId'
     | '/_app/sign-in/$'
     | '/_app/sign-up/$'
@@ -527,6 +548,7 @@ export const routeTree = rootRoute
         "/_app/",
         "/_app/checkout/$productId",
         "/_app/checkout/success",
+        "/_app/dashboard/widgets",
         "/_app/sign-in/$",
         "/_app/sign-up/$",
         "/_app/teampicker/$bracketId",
@@ -582,6 +604,10 @@ export const routeTree = rootRoute
     },
     "/_app/checkout/success": {
       "filePath": "_app/checkout.success.tsx",
+      "parent": "/_app"
+    },
+    "/_app/dashboard/widgets": {
+      "filePath": "_app/dashboard.widgets.tsx",
       "parent": "/_app"
     },
     "/_app/posts/$postId": {
