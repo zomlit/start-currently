@@ -1,49 +1,37 @@
+import React from 'react'
 import {
   createFileRoute,
   useLoaderData,
   useRouter,
 } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/start'
-import PricingPage from '../components/stripe/Pricing'
-import { getProducts, ProductWithPrices } from '../lib/stripe'
+import PricingPage from '@/components/stripe/Pricing'
+import { getProducts, ProductWithPrices } from '@/lib/stripe'
 import { useAuth } from '@clerk/clerk-react'
-import GenericHeader from '../components/GenericHeader'
-import Container from '../components/layout/Container'
-import { motion } from 'framer-motion'
-import { mainTransitionProps } from '../components/PageTransition'
+import Container from '@/components/layout/Container'
+import { Spinner } from '@/components/ui/spinner'
 
-const fetchProducts = createServerFn('GET', async () => {
-  console.log('Fetching products from server')
+const getProductsFn = createServerFn('GET', async () => {
   const products = await getProducts()
-  console.log('Products fetched:', products)
   return products
 })
 
-export const Route = createFileRoute('/pricing')({
+export const Route = createFileRoute('/_app/pricing/')({
   loader: async () => {
-    console.log('Pricing loader started')
-    try {
-      const products = await fetchProducts()
-      console.log('Products fetched in loader:', products)
-      return { products }
-    } catch (error) {
-      console.error('Error in pricing loader:', error)
-      return { products: [], error: 'Failed to fetch products' }
-    }
+    const products = await getProductsFn()
+    return { products }
   },
   component: PricingRoute,
 })
 
 function PricingRoute() {
   const router = useRouter()
-  const loaderData = useLoaderData({ from: '/pricing' })
+  const loaderData = useLoaderData({ from: '/_app/pricing/' })
   const { userId } = useAuth()
-
-  console.log('Loader data in PricingRoute:', loaderData)
 
   if (!loaderData) {
     console.error('Loader data is undefined')
-    return <div>Error: Failed to load pricing data</div>
+    return <Spinner className="w-8 fill-violet-300 text-white" />
   }
 
   const { products, error } = loaderData as {

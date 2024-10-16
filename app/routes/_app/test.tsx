@@ -1,5 +1,6 @@
 import {
   createFileRoute,
+  Link,
   useLoaderData,
   useRouter,
 } from "@tanstack/react-router";
@@ -11,6 +12,9 @@ import GenericHeader from "../../components/GenericHeader";
 import Container from "../../components/layout/Container";
 import { motion } from "framer-motion";
 import { mainTransitionProps } from "../../components/PageTransition";
+import { CircleDot } from "../../components/icons";
+import { useUser } from "@clerk/tanstack-start";
+import { cn } from "../../lib/utils";
 
 const iconRender = (val) => {
   switch (val) {
@@ -200,34 +204,42 @@ const Features = () => {
   );
 };
 
-const Footer = () => {
-  return (
-    <footer className="bg-gray-100 dark:bg-gray-800 py-8">
-      <Container>
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-300">
-            © 2023 Your Company. All rights reserved.
-          </p>
-        </div>
-      </Container>
-    </footer>
-  );
-};
-
 export const Route = createFileRoute("/_app/test")({
   component: TestRoute,
 });
 
 function TestRoute() {
   return (
-    <Container>
-      <GenericHeader
-        category="Test Page"
-        title="Welcome to the Test Page"
-        description="This is a clean empty page template with a header and footer."
-      />
-      <Features />
-      <Footer />
-    </Container>
+    <div>
+      <Container maxWidth="5xl">
+        <GenericHeader
+          category="Test Page"
+          title="Welcome to the Test Page"
+          description="This is a clean empty page template with a header and footer."
+        />
+        <button
+          className="inline-flex items-center justify-center gap-1.5 rounded border border-gray-200 bg-white px-5 py-3 text-gray-900 transition hover:text-gray-700 focus:outline-none focus:ring"
+          type="button"
+        >
+          <span className="text-sm font-medium"> View Website </span>
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="size-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            ></path>
+          </svg>
+        </button>{" "}
+        <Features />
+      </Container>
+    </div>
   );
 }

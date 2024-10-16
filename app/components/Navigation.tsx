@@ -1,56 +1,126 @@
 import React from "react";
+import { useLocation } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import {
   SignInButton,
   SignedIn,
   SignedOut,
   UserButton,
+  useUser,
 } from "@clerk/tanstack-start";
+import { ModeToggle } from "./ThemeToggle";
+import { useScrollPosition } from "../hooks/useScrollPosition";
+import { CircleDot } from "./icons";
+import { cn } from "../lib/utils";
+import { Bell } from "lucide-react";
+import { Button } from "./ui/button";
 
-export function Navigation() {
+interface NavigationProps {
+  isDashboard?: boolean;
+}
+
+export function Navigation({ isDashboard }: NavigationProps) {
+  const location = useLocation();
+  const { isLoaded } = useUser();
+  const isScrolled = useScrollPosition();
+
   return (
-    <div className="p-2 flex gap-2 text-lg relative z-10">
-      <Link
-        to="/"
-        activeProps={{
-          className: "font-bold",
-        }}
-        activeOptions={{ exact: true }}
-      >
-        Home
-      </Link>{" "}
-      <Link
-        to="/posts"
-        activeProps={{
-          className: "font-bold",
-        }}
-      >
-        Posts
-      </Link>
-      <Link
-        to="/dashboard"
-        activeProps={{
-          className: "font-bold",
-        }}
-      >
-        Dashboard
-      </Link>
-      <Link
-        to="/pricing"
-        activeProps={{
-          className: "font-bold",
-        }}
-      >
-        Pricing
-      </Link>
-      <div className="ml-auto">
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-        <SignedOut>
-          <SignInButton mode="modal" />
-        </SignedOut>
+    <nav
+      className={cn(
+        "fixed left-0 right-0 top-0 z-40 transition-all duration-300 shadow-sm shadow-violet-900/20",
+        {
+          // "md:pl-28": location.pathname.includes("/dashboard"),
+        },
+        isScrolled
+          ? "bg-white/80 !backdrop-blur-2xl dark:bg-gray-900/20 shadow-violet-900/20"
+          : "bg-transparent"
+      )}
+    >
+      <div className="container max-w-7xl px-4 md:pl-28">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex-shrink-0 flex items-center">
+            <Link
+              to="/"
+              className="flex items-center text-xl font-semibold text-gray-900 dark:text-white"
+            >
+              <CircleDot
+                className={cn(
+                  "w-6 h-6 text-gray-900 dark:text-white dark:fill-white mr-4 hidden md:visible",
+                  {
+                    "animate-spin": !isLoaded,
+                  }
+                )}
+              />
+              <span className="ml-6 md:ml-0 tracking-widest !text-black dark:!text-white hidden uppercase sm:inline-block prose dark:font-extralight">
+                Currently
+              </span>
+            </Link>
+          </div>
+          <div className="hidden md:flex items-center space-x-8">
+            <NavLink to="/" exact>
+              Home
+            </NavLink>
+            <NavLink to="/posts">Posts</NavLink>
+            <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/pricing">Pricing</NavLink>
+            <NavLink to="/teampicker">Team Picker</NavLink>
+          </div>
+          <div className="flex items-center space-x-4">
+            <ModeToggle />
+            <div className="relative">
+              <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300 cursor-pointer" />
+              <div className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></div>
+            </div>
+            <SignedIn>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-6 h-6",
+                  },
+                }}
+              />
+            </SignedIn>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <Button
+                  variant="outline"
+                  className="text-sm font-medium bg-transparent hover:bg-gradient/10 border-0 backdrop-blur-none"
+                >
+                  Sign In
+                </Button>
+              </SignInButton>
+            </SignedOut>
+          </div>
+        </div>
       </div>
-    </div>
+    </nav>
+  );
+}
+
+function NavLink({
+  to,
+  children,
+  exact = false,
+}: {
+  to: string;
+  children: React.ReactNode;
+  exact?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      activeProps={{
+        className: "text-violet-600 dark:text-violet-400",
+      }}
+      inactiveProps={{
+        className:
+          "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white",
+      }}
+      activeOptions={{ exact }}
+      className="text-sm font-medium transition duration-150 ease-in-out"
+    >
+      {children}
+    </Link>
   );
 }

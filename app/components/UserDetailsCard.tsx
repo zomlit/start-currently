@@ -42,11 +42,11 @@ const UserDetailsCard = () => {
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <p className="text-gray-400">Last Sign In:</p>
+        <p className="text-gray-800 dark:text-gray-200">Last Sign In:</p>
         <p className="text-purple-200">{formatDate(user.lastSignInAt!)}</p>
-        <p className="text-gray-400">Joined On:</p>
+        <p className="text-gray-800 dark:text-gray-200">Joined On:</p>
         <p className="text-purple-200">{formatDate(user.createdAt!)}</p>
-        <p className="text-gray-400">User ID:</p>
+        <p className="text-gray-800 dark:text-gray-200">User ID:</p>
         <div className="flex items-center justify-between rounded bg-gray-700 px-2 py-1">
           <p className="line-clamp-1 font-mono text-xs text-gray-300 blur-[1.8px]">
             {user.id}

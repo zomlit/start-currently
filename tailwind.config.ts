@@ -6,11 +6,8 @@ import plugin from "tailwindcss/plugin";
 
 const config = {
   darkMode: ["class"],
-  content: [
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-  ],
+  content: ["./components/**/*.{ts,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
+
   prefix: "",
   theme: {
     container: {
@@ -21,6 +18,9 @@ const config = {
       },
     },
     extend: {
+      height: {
+        footer: "var(--footer-height, 300px)", // Default to 300px if not set
+      },
       fontFamily: {
         sofia: ["Sofia Sans Condensed Variable", "sans-serif"],
         sans: ["var(--font-sans)", ...fontFamily.sans],
@@ -131,6 +131,7 @@ const config = {
     require("tailwindcss-animate"),
     require("tailwind-scrollbar-hide"),
     require("tailwindcss-spring"),
+    require("@tailwindcss/typography"),
     addVariablesForColors,
     plugin(function ({ addUtilities, theme }) {
       const opacityValues = theme("opacity") as Record<string, string>;

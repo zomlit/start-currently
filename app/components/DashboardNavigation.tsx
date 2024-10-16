@@ -1,8 +1,6 @@
-"use client";
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useRouteContext } from "@tanstack/react-router";
-import { LstLogo, CircleDot } from "./icons";
-
+import { Link, useLocation } from "@tanstack/react-router";
+import { CircleDot } from "./icons";
 import {
   HoverCard,
   HoverCardContent,
@@ -14,10 +12,8 @@ import { cn } from "../lib/utils";
 const navItems = [
   {
     id: 1,
-    // icon: <IconChartColumn className="w-34 h-4" />,
-    link: "/dashboard/widgets/visualizer/",
-    text: "Visualizer",
-    isActive: false,
+    link: "/dashboard",
+    text: "Dashboard",
   },
   {
     id: 2,
@@ -55,18 +51,16 @@ const navItems = [
     text: "Timer",
     isActive: false,
   },
+  {
+    id: 8,
+    link: "/teampicker",
+    text: "Team Picker",
+  },
 ];
 
-interface SidebarToggleProps {
-  toggleSidebar: () => void;
-  sidebarToggled: boolean;
-}
-
 const DashboardNavigation: React.FC = () => {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const [sidebarResized, setSidebarResized] = useState(true);
+  const { isLoaded } = useUser();
   const [sidebarToggled, setSidebarToggled] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const { pathname } = useLocation();
 
@@ -80,58 +74,43 @@ const DashboardNavigation: React.FC = () => {
   }, []);
 
   const toggleSidebar = () => {
-    setSidebarToggled((sidebarToggled) => !sidebarToggled);
+    setSidebarToggled((prev) => !prev);
   };
-
-  useEffect(() => {
-    const activeItem = navItems.findIndex(
-      (navItem) => navItem.link === pathname
-    );
-    setActiveIndex(activeItem !== -1 ? activeItem : 0);
-
-    if (sidebarToggled) {
-      setSidebarToggled(false);
-    }
-  }, [pathname]);
 
   const updatedNavItems = navItems.map((navItem) => ({
     ...navItem,
-    isActive: navItem.link === pathname,
+    isActive:
+      pathname === navItem.link ||
+      (navItem.link !== "/dashboard" && pathname.startsWith(navItem.link)),
   }));
 
   return (
     <div>
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-[100dvh] w-full max-w-[18rem] flex-col justify-between overflow-visible px-4 shadow-2xl shadow-purple-500/20 !backdrop-blur-2xl transition-all dark:bg-black/10 md:transition-[width] ${
-          sidebarToggled ? "" : "-translate-x-full md:-translate-x-0"
-        } ${sidebarResized ? "md:w-20" : ""}`}
+        className={`fixed left-0 top-0 z-40 flex h-[100dvh] w-full max-w-[18rem] flex-col justify-between overflow-visible px-4 shadow-2xl shadow-purple-500/20 !backdrop-blur-2xl transition-all duration-300 ease-in-out ${
+          sidebarToggled
+            ? "md:w-[18rem]"
+            : "-translate-x-full md:-translate-x-0 md:w-20"
+        }`}
       >
         <div>
           <div className="border-b border-b-gray-200 py-3 dark:border-b-zinc-800">
             <Link
-              href="/dashboard/"
-              data-logo-box
+              to="/dashboard"
               className="group flex items-center gap-x-3 text-lg font-semibold text-gray-800 transition-transform dark:text-gray-200"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform spring-bounce-70 spring-duration-500 hover:rotate-[-42deg] md:min-w-[3rem]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem]">
                 <CircleDot
                   className={cn("w-8 fill-violet-500", {
                     "animate-spin": !isLoaded,
                   })}
                 />
-                <div className="z-5 lock h-full" />
               </div>
             </Link>
           </div>
           <nav className="relative h-full">
-            <div
-              className={`absolute left-0 mt-1 h-11 w-full rounded-md transition-transform duration-300 ${
-                pathname === "/dashboard" ? "hidden" : ""
-              }`}
-              style={{ transform: `translateY(${activeIndex * 48}px)` }}
-            ></div>
             <ul className="relative z-10 text-gray-700 dark:text-gray-300">
-              {updatedNavItems.map((navItem, index) => (
+              {updatedNavItems.map((navItem) => (
                 <li
                   className="place-items-left grid w-full md:place-items-center"
                   key={navItem.id}
@@ -139,7 +118,7 @@ const DashboardNavigation: React.FC = () => {
                   <HoverCard openDelay={50} closeDelay={50}>
                     <HoverCardTrigger asChild>
                       <Link
-                        href={navItem.link}
+                        to={navItem.link}
                         onClick={() => {
                           if (sidebarToggled) toggleSidebar();
                         }}
@@ -149,17 +128,11 @@ const DashboardNavigation: React.FC = () => {
                             : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-black/25"
                         } `}
                       >
-                        <div className="">{navItem.icon}</div>
-                        <span
-                          className={`ml-2 inline-flex transition-colors duration-300 ease-linear ${
-                            sidebarResized ? "md:hidden" : ""
-                          } `}
-                        >
+                        <span className="ml-2 inline-flex transition-colors duration-300 ease-linear">
                           {navItem.text}
                         </span>
                       </Link>
                     </HoverCardTrigger>
-
                     <HoverCardContent
                       sticky="always"
                       className="invisible max-w-max border-0 lg:visible"
@@ -174,10 +147,7 @@ const DashboardNavigation: React.FC = () => {
             </ul>
           </nav>
         </div>
-        {/* UserButton placed at the bottom */}
-        <div
-          className={`z-50 mb-4 transition-all duration-300 ${sidebarResized ? "md:flex md:justify-center" : ""}`}
-        >
+        <div className="z-50 mb-4 transition-all duration-300 md:flex md:justify-center">
           <UserButton
             afterSignOutUrl="/"
             appearance={{
@@ -189,26 +159,36 @@ const DashboardNavigation: React.FC = () => {
         </div>
       </aside>
 
-      <div>
-        <div
-          className={`fixed right-2 z-50 flex p-[5px] transition-all duration-300 ease-in-out md:hidden ${isScrolled ? "top-3" : "top-9"} `}
+      {/* Mobile sidebar toggle button */}
+      <div
+        className={`fixed left-0 z-50 flex p-[5px] transition-all duration-300 ease-in-out md:hidden ${
+          isScrolled ? "top-[10px]" : "top-[10px]"
+        }`}
+        style={{
+          transform: sidebarToggled ? "translateX(240px)" : "translateX(0)",
+        }}
+      >
+        <button
+          onClick={toggleSidebar}
+          className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none"
         >
-          <button
-            onClick={toggleSidebar}
-            className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none"
-          >
-            <span className="sr-only">toggle sidebar</span>
-            <span
-              className={`h-0.5 w-5 rounded-full bg-gray-300 transition-transform duration-100 ease-linear ${sidebarToggled ? "translate-y-1.5 rotate-[40deg]" : ""} `}
-            />
-            <span
-              className={`mt-1 h-0.5 w-5 origin-center rounded-full bg-gray-300 transition-all duration-100 ease-linear ${sidebarToggled ? "scale-x-0 opacity-0" : ""} `}
-            />
-            <span
-              className={`mt-1 h-0.5 w-5 rounded-full bg-gray-300 transition-all duration-100 ease-linear ${sidebarToggled ? "-translate-y-1.5 -rotate-[40deg]" : ""} `}
-            />
-          </button>
-        </div>
+          <span className="sr-only">toggle sidebar</span>
+          <span
+            className={`h-0.5 w-4 rounded-full bg-gray-300 transition-transform duration-100 ease-linear ${
+              sidebarToggled ? "translate-y-1.5 rotate-[40deg]" : ""
+            }`}
+          />
+          <span
+            className={`mt-1 h-0.5 w-4 origin-center rounded-full bg-gray-300 transition-all duration-100 ease-linear ${
+              sidebarToggled ? "scale-x-0 opacity-0" : ""
+            }`}
+          />
+          <span
+            className={`mt-1 h-0.5 w-4 rounded-full bg-gray-300 transition-all duration-100 ease-linear ${
+              sidebarToggled ? "-translate-y-1.5 -rotate-[40deg]" : ""
+            }`}
+          />
+        </button>
       </div>
     </div>
   );

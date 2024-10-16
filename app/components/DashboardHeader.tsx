@@ -17,7 +17,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   return (
     <>
-      <header className="relative z-10 mt-24">
+      <header className="relative z-10 mt-44">
         <p className="mb-2 text-sm font-semibold text-blue-600">{category}</p>
         <h1 className="block text-4xl font-black capitalize dark:text-white md:text-6xl">
           {title}
