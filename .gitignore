@@ -9,7 +9,7 @@ yarn.lock
 .vercel
 .output
 .vinxi
-.dist
+dist
 
 /build/
 /api/
