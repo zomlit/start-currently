@@ -143,7 +143,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
                 borderRadius="rounded-lg"
                 width="w-full"
                 display="flex"
-                className="my-10 w-full"
+                className="my-10 w-full bg-primary"
               />
               <FeatureList features={product.marketing_features} />
             </div>

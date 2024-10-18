@@ -85,8 +85,7 @@ const ConnectedAccountsCard = () => {
 
   return (
     <div className="">
-      <div>test</div>
-      <h2 className="mb-2 flex items-center text-lg font-bold text-purple-400">
+      <h2 className="mb-2 flex items-center text-lg font-bold text-primary">
         <svg
           className="mr-2 h-5 w-5"
           fill="none"
@@ -139,6 +138,7 @@ export function Dashboard() {
 
   return (
     <>
+      <DashboardNavigation />
       <Container isDashboard maxWidth="7xl">
         <DashboardHeader
           category="Widgets"

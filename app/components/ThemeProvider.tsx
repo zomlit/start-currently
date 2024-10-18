@@ -1,12 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import React, { createContext, useContext, useEffect } from "react";
+import { useThemeStore } from "@/store/themeStore";
 
 type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
-  storageKey?: string;
 };
 
 type ThemeProviderState = {
@@ -16,27 +15,16 @@ type ThemeProviderState = {
   setPrimaryColor: (color: string) => void;
 };
 
-const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
-  primaryColor: "#6D28D9", // Default purple color
-  setPrimaryColor: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
+  undefined
+);
 
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "app-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-  const [primaryColor, setPrimaryColor] = useLocalStorage(
-    "app-primary-color",
-    "#6D28D9"
-  );
-  const [isMounted, setIsMounted] = useState(false);
+  const { theme, setTheme, primaryColor, setPrimaryColor } = useThemeStore();
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -52,27 +40,30 @@ export function ThemeProvider({
       root.classList.add(theme);
     }
 
-    // Apply the primary color to CSS custom property
-    root.style.setProperty("--primary-color", primaryColor);
+    // Apply the primary color directly as a hex value
+    root.style.setProperty("--primary", primaryColor);
+    root.style.setProperty(
+      "--primary-foreground",
+      getContrastColor(primaryColor)
+    );
   }, [theme, primaryColor]);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (defaultTheme && theme === "system") {
+      setTheme(defaultTheme);
+    }
+  }, [defaultTheme, theme, setTheme]);
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
-    },
+    setTheme,
     primaryColor,
     setPrimaryColor,
   };
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
-      {isMounted ? children : null}
+      {children}
     </ThemeProviderContext.Provider>
   );
 }
@@ -85,7 +76,7 @@ export const useTheme = () => {
   return context;
 };
 
-// New component for color picker
+// ColorPicker component
 export const ColorPicker: React.FC = () => {
   const { primaryColor, setPrimaryColor } = useTheme();
 
@@ -104,3 +95,17 @@ export const ColorPicker: React.FC = () => {
     </div>
   );
 };
+
+// Helper function to get contrast color
+function getContrastColor(hexColor: string) {
+  // Convert hex to RGB
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // Return black for light colors, white for dark colors
+  return luminance > 0.5 ? "#000000" : "#ffffff";
+}

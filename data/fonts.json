@@ -1,0 +1,20 @@
+[
+  {
+    "family": "Roboto",
+    "variants": [
+      { "weight": "300", "style": "normal", "path": "/fonts/Roboto-Light.woff2" },
+      { "weight": "400", "style": "normal", "path": "/fonts/Roboto-Regular.woff2" },
+      { "weight": "500", "style": "normal", "path": "/fonts/Roboto-Medium.woff2" },
+      { "weight": "700", "style": "normal", "path": "/fonts/Roboto-Bold.woff2" }
+    ]
+  },
+  {
+    "family": "Open Sans",
+    "variants": [
+      { "weight": "300", "style": "normal", "path": "/fonts/OpenSans-Light.woff2" },
+      { "weight": "400", "style": "normal", "path": "/fonts/OpenSans-Regular.woff2" },
+      { "weight": "600", "style": "normal", "path": "/fonts/OpenSans-SemiBold.woff2" },
+      { "weight": "700", "style": "normal", "path": "/fonts/OpenSans-Bold.woff2" }
+    ]
+  }
+]

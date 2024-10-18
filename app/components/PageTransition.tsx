@@ -22,6 +22,13 @@ export const createMainTransitionProps = (
     },
   }) as const;
 
+const fadeTransition = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.3 },
+};
+
 export const mainTransitionProps = createMainTransitionProps();
 
 export const postTransitionProps = {

@@ -19,10 +19,4 @@ export default defineConfig({
     },
   },
   publicDir: "public",
-  ssr: {
-    noExternal: ["stripe", "react-dom", "react-dom/server"],
-  },
-  optimizeDeps: {
-    include: ["react-dom"],
-  },
 });
