@@ -1,12 +1,12 @@
 import React, {
   createContext,
   useContext,
-  useOptimistic,
-  useTransition,
   useState,
   useEffect,
+  useMemo,
 } from "react";
 import { ProfileSettings } from "@/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 type OptimisticProfileSettingsContextType = {
   currentProfileSettings: ProfileSettings;
@@ -17,8 +17,6 @@ type OptimisticProfileSettingsContextType = {
     value: any
   ) => void;
   setCurrentProfileSettings: (settings: ProfileSettings) => void;
-  setSupabaseResponse: (response: any) => void;
-  supabaseResponse: any | null;
 };
 
 const OptimisticProfileSettingsContext = createContext<
@@ -28,92 +26,58 @@ const OptimisticProfileSettingsContext = createContext<
 export function OptimisticProfileSettingsProvider({
   children,
   initialProfileSettings,
-  initialSupabaseResponse = null,
 }: {
   children: React.ReactNode;
   initialProfileSettings: ProfileSettings;
-  initialSupabaseResponse?: any | null;
 }) {
   const [currentProfileSettings, setCurrentProfileSettings] = useState(
     initialProfileSettings
   );
-  const [optimisticProfileSettings, setOptimisticProfileSettings] =
-    useOptimistic(
-      currentProfileSettings,
-      (
-        currentSettings,
-        newSetting: {
-          settingType: keyof ProfileSettings;
-          fieldName: string;
-          value: any;
-        }
-      ) => ({
-        ...currentSettings,
-        [newSetting.settingType]: {
-          ...currentSettings[newSetting.settingType],
-          [newSetting.fieldName]: newSetting.value,
-        },
-      })
-    );
-
-  const [supabaseResponse, setSupabaseResponse] = useState(
-    initialSupabaseResponse
+  const [optimisticProfileSettings, setOptimisticProfileSettings] = useState(
+    initialProfileSettings
   );
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setCurrentProfileSettings(initialProfileSettings);
+    setOptimisticProfileSettings(initialProfileSettings);
   }, [initialProfileSettings]);
 
-  useEffect(() => {
-    if (
-      supabaseResponse &&
-      supabaseResponse.data &&
-      supabaseResponse.data.settings
-    ) {
-      setCurrentProfileSettings(supabaseResponse.data.settings);
-      setOptimisticProfileSettings(supabaseResponse.data.settings);
-    }
-  }, [supabaseResponse]);
+  const updateProfileSetting = (
+    settingType: keyof ProfileSettings,
+    fieldName: string,
+    value: any
+  ) => {
+    setOptimisticProfileSettings((prevSettings) => ({
+      ...prevSettings,
+      [settingType]: {
+        ...prevSettings[settingType],
+        [fieldName]: value,
+      },
+    }));
 
-  const [isPending, startTransition] = useTransition();
+    // Here you would typically update the server and then update the actual settings
+    // For now, we'll just update the current settings immediately
+    setCurrentProfileSettings((prevSettings) => ({
+      ...prevSettings,
+      [settingType]: {
+        ...prevSettings[settingType],
+        [fieldName]: value,
+      },
+    }));
 
-  const updateProfileSetting = React.useCallback(
-    (settingType: keyof ProfileSettings, fieldName: string, value: any) => {
-      startTransition(() => {
-        setOptimisticProfileSettings((prevSettings) => ({
-          ...prevSettings,
-          [settingType]: {
-            ...prevSettings[settingType],
-            [fieldName]: value,
-          },
-        }));
-        setCurrentProfileSettings((prevSettings) => ({
-          ...prevSettings,
-          [settingType]: {
-            ...prevSettings[settingType],
-            [fieldName]: value,
-          },
-        }));
-      });
-    },
-    [setOptimisticProfileSettings, setCurrentProfileSettings]
-  );
+    // Invalidate relevant queries
+    queryClient.invalidateQueries({ queryKey: ["profiles"] });
+  };
 
-  const contextValue = React.useMemo(
+  const contextValue = useMemo(
     () => ({
       currentProfileSettings,
       optimisticProfileSettings,
       updateProfileSetting,
       setCurrentProfileSettings,
-      setSupabaseResponse,
-      supabaseResponse,
     }),
-    [
-      currentProfileSettings,
-      optimisticProfileSettings,
-      updateProfileSetting,
-      supabaseResponse,
-    ]
+    [currentProfileSettings, optimisticProfileSettings]
   );
 
   return (
@@ -123,7 +87,6 @@ export function OptimisticProfileSettingsProvider({
   );
 }
 
-// Hook to use the context
 export function useOptimisticProfileSettings() {
   const context = useContext(OptimisticProfileSettingsContext);
   if (context === undefined) {

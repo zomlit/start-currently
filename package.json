@@ -55,10 +55,10 @@
     "framer-motion": "^11.11.9",
     "lucide-react": "^0.452.0",
     "node-vibrant": "^3.2.1-alpha.1",
-    "react": "^19.0.0-rc-fb9a90fa48-20240614",
+    "react": "^19.0.0-rc-b8ae38f8-20241018",
     "react-beautiful-dnd": "^13.1.1",
     "react-best-gradient-color-picker": "^3.0.10",
-    "react-dom": "^19.0.0-rc-fb9a90fa48-20240614",
+    "react-dom": "^19.0.0-rc-b8ae38f8-20241018",
     "react-hook-form": "^7.53.0",
     "react-resizable-panels": "^2.1.4",
     "redaxios": "^0.5.1",
@@ -78,10 +78,6 @@
     "ws": "^8.18.0",
     "zod": "^3.23.8",
     "zustand": "^5.0.0"
-  },
-  "overrides": {
-    "@types/react": "npm:types-react@rc",
-    "@types/react-dom": "npm:types-react-dom@rc"
   },
   "devDependencies": {
     "@types/node": "^22.7.6",

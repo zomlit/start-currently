@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useReducer } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import WidgetControls from "@/components/widget-controls";
 import { WidgetConfiguratorForm } from "@/components/widget-configurator-form";
 // import { WidgetPreview } from "@/components/widget-preview";
@@ -33,7 +34,6 @@ import { defaultCommonSettings } from "@/types/initialWidgets";
 import { createClient } from "@supabase/supabase-js";
 import { useSupabase } from "@/hooks/useSupabase";
 import { WidgetPreview } from "./widget-preview";
-import { useOptimisticProfileSettings } from "@/contexts/OptimisticProfileSettingsContext";
 import { Spinner } from "./ui/spinner";
 
 type WidgetState = {
@@ -92,12 +92,44 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
   });
   const { user } = useUser();
   const supabase = useSupabase();
-  const { optimisticProfileSettings, updateProfileSetting } =
-    useOptimisticProfileSettings();
+  const queryClient = useQueryClient();
+
+  // Add this line to declare the isLoading state
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Use React Query to fetch profiles
+  const { data: profiles, isLoading: profilesLoading } = useQuery({
+    queryKey: ["profiles", user?.id],
+    queryFn: () => loadProfiles(user?.id || ""),
+  });
+
+  // Use React Query for optimistic updates
+  const updateProfileMutation = useMutation({
+    mutationFn: (updates: Partial<WidgetProfile>) =>
+      updateProfile(updates.id, updates),
+    onMutate: async (newProfile) => {
+      await queryClient.cancelQueries({ queryKey: ["profiles", user?.id] });
+      const previousProfiles = queryClient.getQueryData(["profiles", user?.id]);
+      queryClient.setQueryData(["profiles", user?.id], (old: WidgetProfile[]) =>
+        old.map((profile) =>
+          profile.id === newProfile.id ? { ...profile, ...newProfile } : profile
+        )
+      );
+      return { previousProfiles };
+    },
+    onError: (err, newProfile, context) => {
+      queryClient.setQueryData(
+        ["profiles", user?.id],
+        context.previousProfiles
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles", user?.id] });
+    },
+  });
 
   const { subscribeToTable, unsubscribeFromTable, currentTrack } =
     useDatabaseStore();
-  const [isLoading, setIsLoading] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   const transformProfilesToWidgets = useCallback(
@@ -240,6 +272,7 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
     [updateProfile, refreshData, user?.id, state.selectedWidget]
   );
 
+  // Replace updateWidgetSettings function
   const updateWidgetSettings = useCallback(
     async (
       widgetType: WidgetType,
@@ -247,22 +280,12 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
       updatedSettings: Partial<ProfileSettings>
     ) => {
       try {
-        console.log("Updating widget settings:", {
-          widgetType,
-          profileId,
-          updatedSettings,
-        });
-        const currentProfile = state.widgets[widgetType].profiles.find(
+        const currentProfile = profiles?.find(
           (profile) => profile.id === profileId
         );
         if (!currentProfile)
           throw new Error("Profile not found in local state");
 
-        console.log("Updating profile:", profileId);
-        console.log("Current profile:", currentProfile);
-        console.log("Updated settings:", updatedSettings);
-
-        // Deep merge the updated settings with the current settings
         const mergedSettings = {
           commonSettings: {
             ...currentProfile.settings.commonSettings,
@@ -274,48 +297,18 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
           },
         };
 
-        console.log("Merged settings before Supabase update:", mergedSettings);
-
-        // Update the profile in the database
-        const { data, error } = await supabase
-          .from("Profiles")
-          .update({ settings: mergedSettings })
-          .eq("id", profileId)
-          .select();
-
-        console.log("Supabase update result:", { data, error });
-
-        if (error) {
-          console.error("Supabase error:", error);
-          throw new Error(`Supabase error: ${error.message}`);
-        }
-
-        if (!data || data.length === 0) {
-          console.error("No data returned from Supabase");
-          throw new Error("Profile not found in database");
-        }
-
-        const updatedProfile = data[0];
-        console.log("Profile updated successfully:", updatedProfile);
-
-        // Update local state
-        dispatch({
-          type: "UPDATE_PROFILE",
-          payload: {
-            widgetType,
-            profile: updatedProfile,
-          },
+        await updateProfileMutation.mutateAsync({
+          id: profileId,
+          settings: mergedSettings,
         });
 
-        // Return the updated data
-        return { data: updatedProfile, status: 200 };
+        return { data: currentProfile, status: 200 };
       } catch (error) {
         console.error("Error updating widget settings:", error);
-        // Return the error and a 500 status
         return { error: error.message || "Unknown error", status: 500 };
       }
     },
-    [state.widgets, supabase, dispatch]
+    [profiles, updateProfileMutation]
   );
 
   const addProfile = async (name: string, widgetType: WidgetType) => {
@@ -625,7 +618,8 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
               selectedWidget={state.selectedWidget}
               initialTrack={currentTrack as SpotifyTrack}
               userId={user.id}
-              optimisticSettings={optimisticProfileSettings}
+              // Pass the current profile data instead of optimisticProfileSettings
+              optimisticSettings={currentProfile.settings}
             />
           )}
         </ResizablePanel>
