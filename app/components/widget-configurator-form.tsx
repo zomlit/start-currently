@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";

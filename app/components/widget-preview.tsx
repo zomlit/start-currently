@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import Vibrant from "node-vibrant";
 import { WidgetType, WidgetProfile, ProfileSettings } from "@/types";

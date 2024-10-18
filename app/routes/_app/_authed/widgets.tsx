@@ -27,5 +27,5 @@ function WidgetsRoute() {
     });
   }
 
-  return <DashboardWidgets />;
+  return <DashboardWidgets userId={user.id} />;
 }

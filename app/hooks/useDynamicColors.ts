@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import Vibrant from "node-vibrant";
 import { SpotifyTrack } from "@/types/spotify";
