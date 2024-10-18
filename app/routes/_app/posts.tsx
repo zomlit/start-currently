@@ -30,7 +30,7 @@ function PostsComponent() {
   };
 
   return (
-    <Container maxWidth="7xl" paddingTop="lg">
+    <Container maxWidth="7xl" paddingTop="lg" isDashboard>
       <GenericHeader
         title="Posts"
         category={""}
