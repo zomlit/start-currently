@@ -7,11 +7,10 @@ import {
   ChevronRight,
   Crown,
 } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
-import Container from "@/components/Container";
+import { useUser } from "@clerk/tanstack-start";
+import { Container } from "@/components/layout/Container";
 import DashboardHeader from "@/components/DashboardHeader";
-import LoadingOverlay from "@/components/LoadingOverlay";
-import BackgroundImage from "@/components/BackgroundImage";
+import { Spinner } from "@/components/ui/spinner";
 import { RANK_ORDER, sortPlayersByRank } from "@/utils/rankUtils";
 import { useSupabase } from "@/hooks/useSupabase";
 
@@ -319,14 +318,8 @@ const SharedTeamPicker: React.FC<SharedTeamPickerProps> = ({ bracketId }) => {
 
   return (
     <Container maxWidth="full">
-      {!isLoaded && <LoadingOverlay />}
-      <BackgroundImage
-        src="/images/hero-bg.webp"
-        alt="Description of your image"
-        opacity={0.4}
-        zIndex={-5}
-        className=""
-      />
+      {!isLoaded && <Spinner />}
+
       <DashboardHeader
         category="Tournaments"
         title="Team Picker (Shared)"
@@ -337,7 +330,7 @@ const SharedTeamPicker: React.FC<SharedTeamPickerProps> = ({ bracketId }) => {
         backText=""
       />
       {loading ? (
-        <LoadingOverlay />
+        <Spinner className="w-8 fill-violet-300 text-white" />
       ) : error ? (
         <div>Error: {error}</div>
       ) : state ? (
