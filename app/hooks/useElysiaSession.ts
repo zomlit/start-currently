@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/tanstack-start";
 import { useCombinedStore } from "@/store";
 import { toast } from "@/utils/toast";
 import debounce from "lodash/debounce";
@@ -9,7 +9,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
   const { getToken, userId, sessionId } = useAuth();
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isServerAvailable, setIsServerAvailable] = useState(false);
-  const { oauthTokens, fetchSpotifyAccessTokenFromSupabase } = useCombinedStore();
+  const { oauthTokens, fetchSpotifyAccessTokenFromSupabase } =
+    useCombinedStore();
   const lastSessionStartAttempt = useRef(0);
   const sessionStartCooldown = 5000; // 5 seconds cooldown
   const setCurrentUserId = useDatabaseStore((state) => state.setCurrentUserId);
@@ -26,7 +27,9 @@ export const useElysiaSession = (broadcastChannel: string) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_ELYSIA_API_URL;
       if (!apiUrl) {
-        console.warn("NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set");
+        console.warn(
+          "NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set"
+        );
         setIsServerAvailable(false);
         return false;
       }
@@ -100,7 +103,9 @@ export const useElysiaSession = (broadcastChannel: string) => {
       const apiUrl = process.env.NEXT_PUBLIC_ELYSIA_API_URL;
 
       if (!apiUrl) {
-        throw new Error("NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set");
+        throw new Error(
+          "NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set"
+        );
       }
 
       const fullUrl = new URL("/start-session", apiUrl);
@@ -120,7 +125,9 @@ export const useElysiaSession = (broadcastChannel: string) => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Server response:", response.status, errorText);
-        throw new Error(`Failed to start session: ${response.status} - ${errorText}`);
+        throw new Error(
+          `Failed to start session: ${response.status} - ${errorText}`
+        );
       }
 
       const responseData = await response.json();
@@ -134,7 +141,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
       console.error("Failed to start session:", error);
       toast.error({
         title: "Failed to start session",
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   }, [
@@ -151,7 +159,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
     debounce(() => {
       startSession();
     }, 1000),
-    [startSession],
+    [startSession]
   );
 
   const stopSession = useCallback(async () => {
@@ -160,7 +168,9 @@ export const useElysiaSession = (broadcastChannel: string) => {
       const clerkToken = await getValidClerkToken();
       const apiUrl = process.env.NEXT_PUBLIC_ELYSIA_API_URL;
       if (!apiUrl) {
-        throw new Error("NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set");
+        throw new Error(
+          "NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set"
+        );
       }
       const fullUrl = new URL("/stop-session", apiUrl).toString();
 
@@ -174,7 +184,9 @@ export const useElysiaSession = (broadcastChannel: string) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to stop session: ${response.status}`);
+        throw new Error(
+          errorData.error || `Failed to stop session: ${response.status}`
+        );
       }
 
       setIsSessionActive(false);
@@ -185,7 +197,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
       console.error("Failed to stop session:", error);
       toast.error({
         title: "Failed to stop session",
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   }, [getValidClerkToken, userId]);
@@ -205,15 +218,31 @@ export const useElysiaSession = (broadcastChannel: string) => {
     const twitchToken = oauthTokens.twitch?.[0]?.token;
     const spotifyRefreshToken = oauthTokens.spotify?.refreshToken;
 
-    if (twitchToken && spotifyRefreshToken && userId && sessionId && !isSessionActive) {
+    if (
+      twitchToken &&
+      spotifyRefreshToken &&
+      userId &&
+      sessionId &&
+      !isSessionActive
+    ) {
       console.log("All conditions met, attempting to start session");
       debouncedStartSession();
-    } else if ((!twitchToken || !spotifyRefreshToken || !userId || !sessionId) && isSessionActive) {
+    } else if (
+      (!twitchToken || !spotifyRefreshToken || !userId || !sessionId) &&
+      isSessionActive
+    ) {
       console.log("Conditions not met, stopping session");
       stopSession();
     } else {
     }
-  }, [oauthTokens, userId, sessionId, isSessionActive, debouncedStartSession, stopSession]);
+  }, [
+    oauthTokens,
+    userId,
+    sessionId,
+    isSessionActive,
+    debouncedStartSession,
+    stopSession,
+  ]);
 
   useEffect(() => {
     if (userId) {
@@ -229,7 +258,9 @@ export const useElysiaSession = (broadcastChannel: string) => {
     const checkAvailability = async () => {
       const available = await checkServerAvailability();
       if (!available) {
-        console.warn("The Elysia server is currently unavailable. Some features may not work.");
+        console.warn(
+          "The Elysia server is currently unavailable. Some features may not work."
+        );
       }
     };
     checkAvailability();

@@ -21,7 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSupabase } from "@/hooks/useSupabase";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/tanstack-start";
 
 import GradientColorPicker from "@/components/GradientColorPicker";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -67,35 +67,37 @@ export default function ChatSettingsForm({
     form.reset(settings);
   }, [settings, form]);
 
-  const { data: twitchAccounts, isLoading: isTwitchAccountsLoading } = useQuery({
-    queryKey: ["twitchAccounts", user?.id],
-    queryFn: async () => {
-      if (!user?.id) {
-        console.warn("User ID is null, skipping Twitch accounts fetch");
-        return [];
-      }
-      try {
-        const response = await fetch("/api/clerk/getTwitchAccounts");
-        if (!response.ok) {
-          throw new Error("Failed to fetch Twitch accounts");
+  const { data: twitchAccounts, isLoading: isTwitchAccountsLoading } = useQuery(
+    {
+      queryKey: ["twitchAccounts", user?.id],
+      queryFn: async () => {
+        if (!user?.id) {
+          console.warn("User ID is null, skipping Twitch accounts fetch");
+          return [];
         }
-        const data = await response.json();
-        return data.matchedTokens || [];
-      } catch (error) {
-        console.error("Error fetching Twitch accounts:", error);
-        toast.error({
-          title: "Failed to fetch Twitch accounts",
-        });
-        return [];
-      }
-    },
-    enabled: !!user?.id,
-    staleTime: Infinity, // Set to Infinity to prevent automatic refetches
-    cacheTime: 1000 * 60 * 60, // 1 hour
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
+        try {
+          const response = await fetch("/api/clerk/getTwitchAccounts");
+          if (!response.ok) {
+            throw new Error("Failed to fetch Twitch accounts");
+          }
+          const data = await response.json();
+          return data.matchedTokens || [];
+        } catch (error) {
+          console.error("Error fetching Twitch accounts:", error);
+          toast.error({
+            title: "Failed to fetch Twitch accounts",
+          });
+          return [];
+        }
+      },
+      enabled: !!user?.id,
+      staleTime: Infinity, // Set to Infinity to prevent automatic refetches
+      cacheTime: 1000 * 60 * 60, // 1 hour
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    }
+  );
 
   const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -117,7 +119,9 @@ export default function ChatSettingsForm({
     refetchOnReconnect: false,
   });
 
-  const handleFormChange = (field: keyof z.infer<typeof chatSettingsSchema>) => {
+  const handleFormChange = (
+    field: keyof z.infer<typeof chatSettingsSchema>
+  ) => {
     return (value: any) => {
       form.setValue(field, value);
       if (field === "broadcastChannel" && onBroadcastChannelChange) {
@@ -136,7 +140,10 @@ export default function ChatSettingsForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Broadcast Channel</FormLabel>
-              <Select onValueChange={handleFormChange("broadcastChannel")} value={field.value}>
+              <Select
+                onValueChange={handleFormChange("broadcastChannel")}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select broadcast channel" />
@@ -147,18 +154,28 @@ export default function ChatSettingsForm({
                     <SelectItem value="loading">Loading...</SelectItem>
                   ) : twitchAccounts && twitchAccounts.length > 0 ? (
                     twitchAccounts.map((account) => (
-                      <SelectItem key={account.providerUserId} value={account.label}>
+                      <SelectItem
+                        key={account.providerUserId}
+                        value={account.label}
+                      >
                         <div className="flex items-center">
                           <Avatar className="mr-2 h-6 w-6">
-                            <AvatarImage src={account.avatar} alt={account.label} />
-                            <AvatarFallback>{account.label[0].toUpperCase()}</AvatarFallback>
+                            <AvatarImage
+                              src={account.avatar}
+                              alt={account.label}
+                            />
+                            <AvatarFallback>
+                              {account.label[0].toUpperCase()}
+                            </AvatarFallback>
                           </Avatar>
                           {account.label}
                         </div>
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="no-accounts">No Twitch accounts found</SelectItem>
+                    <SelectItem value="no-accounts">
+                      No Twitch accounts found
+                    </SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -173,7 +190,10 @@ export default function ChatSettingsForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Broadcast Account (Custom Bot)</FormLabel>
-              <Select onValueChange={handleFormChange("selectedUsername")} value={field.value}>
+              <Select
+                onValueChange={handleFormChange("selectedUsername")}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select broadcast account" />
@@ -181,11 +201,19 @@ export default function ChatSettingsForm({
                 </FormControl>
                 <SelectContent>
                   {twitchAccounts?.map((account) => (
-                    <SelectItem key={account.providerUserId} value={account.label}>
+                    <SelectItem
+                      key={account.providerUserId}
+                      value={account.label}
+                    >
                       <div className="flex items-center">
                         <Avatar className="mr-2 h-6 w-6">
-                          <AvatarImage src={account.avatar} alt={account.label} />
-                          <AvatarFallback>{account.label[0].toUpperCase()}</AvatarFallback>
+                          <AvatarImage
+                            src={account.avatar}
+                            alt={account.label}
+                          />
+                          <AvatarFallback>
+                            {account.label[0].toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
                         {account.label}
                       </div>
@@ -205,10 +233,15 @@ export default function ChatSettingsForm({
             <FormItem className="flex flex-row items-center justify-between rounded-lg bg-white/10 p-4">
               <div className="space-y-0.5">
                 <FormLabel className="text-base">Show Avatars</FormLabel>
-                <FormDescription>Display user avatars next to chat messages.</FormDescription>
+                <FormDescription>
+                  Display user avatars next to chat messages.
+                </FormDescription>
               </div>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={handleFormChange("showAvatars")} />
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleFormChange("showAvatars")}
+                />
               </FormControl>
             </FormItem>
           )}
@@ -221,10 +254,15 @@ export default function ChatSettingsForm({
             <FormItem className="flex flex-row items-center justify-between rounded-lg bg-white/10 p-4">
               <div className="space-y-0.5">
                 <FormLabel className="text-base">Show Badges</FormLabel>
-                <FormDescription>Display user badges next to usernames.</FormDescription>
+                <FormDescription>
+                  Display user badges next to usernames.
+                </FormDescription>
               </div>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={handleFormChange("showBadges")} />
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleFormChange("showBadges")}
+                />
               </FormControl>
             </FormItem>
           )}
@@ -237,10 +275,15 @@ export default function ChatSettingsForm({
             <FormItem className="flex flex-row items-center justify-between rounded-lg p-4">
               <div className="space-y-0.5">
                 <FormLabel className="text-base">Show Platform</FormLabel>
-                <FormDescription>Display the platform icon next to usernames.</FormDescription>
+                <FormDescription>
+                  Display the platform icon next to usernames.
+                </FormDescription>
               </div>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={handleFormChange("showPlatform")} />
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleFormChange("showPlatform")}
+                />
               </FormControl>
             </FormItem>
           )}
@@ -252,7 +295,10 @@ export default function ChatSettingsForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Chat Skin</FormLabel>
-              <Select onValueChange={handleFormChange("chatSkin")} value={field.value}>
+              <Select
+                onValueChange={handleFormChange("chatSkin")}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a chat skin" />
@@ -282,7 +328,9 @@ export default function ChatSettingsForm({
                   }}
                 />
               </FormControl>
-              <FormDescription>Choose the color or gradient for chat bubbles</FormDescription>
+              <FormDescription>
+                Choose the color or gradient for chat bubbles
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
