@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useUser } from "@clerk/tanstack-start";
 import { Button } from "@/components/ui/button";
@@ -244,7 +242,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
             <TabsTrigger
               key={widgetType}
               value={widgetType as WidgetType}
-              className="flex-1 rounded transition-all text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-violet-700/10 data-[state=active]:text-black dark:data-[state=active]:text-white"
+              className="flex-1 rounded transition-all text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-black dark:data-[state=active]:text-white"
             >
               {getWidgetDisplayName(widgetType as WidgetType)}
             </TabsTrigger>
@@ -261,7 +259,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
               >
                 <SelectTrigger
                   id="profile"
-                  className="w-full border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 dark:focus:ring-primary-400 focus-visible:ring-primary-500 dark:focus-visible:ring-primary-400 sm:w-[200px]"
+                  className="w-full bg-white dark:bg-white/10 text-gray-900 dark:text-gray-100 sm:w-[200px] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
                 >
                   <SelectValue placeholder="Select a profile" />
                 </SelectTrigger>
@@ -279,7 +277,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                 <Input
                   value={publicUrl}
                   readOnly
-                  className="flex-grow rounded-r-none border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus-visible:ring-primary-500 dark:focus-visible:ring-primary-400"
+                  className="focus-visible:ring-0 focus-visible:outline-none flex-grow rounded-r-none dark:bg-white/10 bg-white/50 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 border-none focus:border-none hover:border-none active:border-none"
                   placeholder="Public URL"
                   onFocus={handleUrlInputFocus}
                 />
@@ -290,18 +288,17 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                         onClick={handleCopyPublicUrl}
                         size="icon"
                         variant="ghost"
-                        className="!mr-4 rounded-l-none bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        className="!mr-4 rounded-l-none bg-white dark:bg-white/10 text-gray-700 dark:text-gray-300 "
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent
-                      className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                      className=" bg-white dark:bg-black"
                       align="center"
                       side="top"
                       arrowPadding={8}
                     >
-                      <TooltipArrow className="fill-white dark:fill-gray-800" />
                       <p className="text-gray-900 dark:text-gray-100">
                         Copy public URL
                       </p>
@@ -317,7 +314,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                         onClick={() => setIsAddDialogOpen(true)}
                         size="icon"
                         variant="ghost"
-                        className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700/50"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -334,7 +331,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                         onClick={handleDuplicateProfile}
                         size="icon"
                         variant="ghost"
-                        className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700/50"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -351,7 +348,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                         onClick={() => setDeleteConfirmOpen(true)}
                         size="icon"
                         variant="ghost"
-                        className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700/50"
                         disabled={widgets[selectedWidget].profiles.length <= 1}
                       >
                         <Trash className="h-4 w-4" />
@@ -370,7 +367,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      className="text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700/50"
                       onClick={() => {
                         const currentProfile = widgets[
                           selectedWidget
@@ -434,7 +431,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                         onClick={exportConfig}
                         size="icon"
                         variant="ghost"
-                        className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700/50"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -453,7 +450,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                         }
                         size="icon"
                         variant="ghost"
-                        className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700/50"
                       >
                         <Upload className="h-4 w-4" />
                       </Button>

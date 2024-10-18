@@ -606,7 +606,7 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
       />
       <ResizablePanelGroup
         direction={isDesktop ? "horizontal" : "vertical"}
-        className="!overflow-visible"
+        className="!overflow-visible !h-auto"
       >
         <ResizablePanel
           defaultSize={isDesktop ? 72 : 100}
@@ -626,7 +626,7 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
         {isDesktop && <ResizableHandle withHandle />}
         <ResizablePanel
           defaultSize={isDesktop ? 28 : 100}
-          className="min-w-[20rem] !overflow-visible rounded-br-3xl bg-background/50 min-h-[calc(100vh-200px)]"
+          className="min-w-[20rem] !overflow-visible rounded-br-3xl bg-background/50"
         >
           {state.selectedProfile && (
             <WidgetConfiguratorForm

@@ -7,7 +7,7 @@ export const Footer = () => {
   const { isLoaded } = useUser();
 
   return (
-    <footer className="bg-black/15 backdrop-blur-sm text-white w-full h-footer">
+    <footer className="backdrop-blur-sm text-white w-full h-footer mt-20">
       <div className="mx-auto w-full max-w-screen-xl p-4 py-6 lg:py-8">
         <div className="md:flex md:justify-between">
           <div className="mb-6 md:mb-0">

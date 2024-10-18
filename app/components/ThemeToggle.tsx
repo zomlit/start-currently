@@ -1,4 +1,3 @@
-"use client";
 import { Sun, Moon, Computer } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "./ThemeProvider";

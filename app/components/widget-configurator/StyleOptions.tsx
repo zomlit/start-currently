@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getFontVariants } from "@/utils/fonts";
-import { useOptimistic } from "react";
 import { WidgetProfile, WidgetSettings, ProfileSettings } from "@/types";
 import { useDebouncedCallback } from "use-debounce";
 import { startTransition } from "react";
@@ -70,12 +69,8 @@ const StyleOptions: React.FC<StyleOptionsProps> = ({
     initialOptimisticSettings.commonSettings?.fontFamily || ""
   );
 
-  const [optimisticSettings, setOptimisticSettings] = useOptimistic(
-    initialOptimisticSettings,
-    (state, newValue: Partial<ProfileSettings>) => ({
-      ...state,
-      ...newValue,
-    })
+  const [optimisticSettings, setOptimisticSettings] = useState(
+    initialOptimisticSettings
   );
 
   const [localColorSyncEnabled, setLocalColorSyncEnabled] =
@@ -85,9 +80,20 @@ const StyleOptions: React.FC<StyleOptionsProps> = ({
     setLocalColorSyncEnabled(colorSyncEnabled);
   }, [colorSyncEnabled]);
 
+  useEffect(() => {
+    setOptimisticSettings(initialOptimisticSettings);
+  }, [initialOptimisticSettings]);
+
   const handleOptimisticChange = useCallback(
     (settingType: keyof ProfileSettings, fieldName: string, value: any) => {
       if (value !== undefined) {
+        setOptimisticSettings((prevSettings) => ({
+          ...prevSettings,
+          [settingType]: {
+            ...prevSettings[settingType],
+            [fieldName]: value,
+          },
+        }));
         updateProfileSettingProp(settingType, fieldName, value);
         onPreviewUpdate({ [settingType]: { [fieldName]: value } });
       }
