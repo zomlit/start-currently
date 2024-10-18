@@ -52,7 +52,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
                   }
                 )}
               />
-              <span className="ml-6 md:ml-0 tracking-widest !text-black dark:!text-white hidden uppercase sm:inline-block prose dark:font-extralight">
+              <span className="ml-6 md:ml-0 tracking-widest !text-black dark:!text-white uppercase sm:inline-block prose dark:font-extralight">
                 Currently
               </span>
             </Link>

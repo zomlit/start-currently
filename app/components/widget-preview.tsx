@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Vibrant from "node-vibrant";
 import { WidgetType, WidgetProfile, ProfileSettings } from "@/types";
-// import SkinRounded from "@/app/(app)/dashboard/widgets/skins/visualizer/skin-rounded";
+import SkinRounded from "@/components/skins/visualizer/skin-rounded";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { useDynamicColors } from "@/hooks/useDynamicColors";
 // import Tiptap from "@/components/Tiptap";
@@ -55,6 +55,7 @@ export function WidgetPreview({
   const [previewSettings, setPreviewSettings] = useState(
     currentProfile.settings
   );
+  const [isProfilesLoading, setIsProfilesLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(
     initialTrack || null
   );
@@ -69,6 +70,12 @@ export function WidgetPreview({
     colorSyncEnabled,
     isReady,
   } = useDynamicColors(trackToUse, optimisticSettings?.specificSettings || {});
+
+  useEffect(() => {
+    if (currentProfile) {
+      setIsProfilesLoading(false);
+    }
+  }, [currentProfile]);
 
   useEffect(() => {
     if (trackToUse?.album?.images?.[0]?.url) {
@@ -194,8 +201,24 @@ export function WidgetPreview({
     console.log("isLoading:", isLoading);
     console.log("trackToUse:", trackToUse);
 
+    if (isProfilesLoading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <Spinner
+            className="w-8 fill-violet-300 text-white"
+            message="Loading profiles..."
+          />
+        </div>
+      );
+    }
+
     if (isLoading) {
-      return <Spinner className="w-8 fill-violet-300 text-white" />;
+      return (
+        <Spinner
+          className="w-8 fill-violet-300 text-white"
+          message="Loading widget..."
+        />
+      );
     }
 
     try {
@@ -260,7 +283,13 @@ export function WidgetPreview({
       return null;
     } catch (error) {
       console.error("Error rendering preview:", error);
-      return <div>Error: Failed to render preview</div>;
+      return (
+        <div className="text-foreground">
+          <pre className="text-red-500">
+            Error: {(error as Error).message || "Failed to render preview"}
+          </pre>
+        </div>
+      );
     }
   };
 

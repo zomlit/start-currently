@@ -34,6 +34,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useSupabase } from "@/hooks/useSupabase";
 import { WidgetPreview } from "./widget-preview";
 import { useOptimisticProfileSettings } from "@/contexts/OptimisticProfileSettingsContext";
+import { Spinner } from "./ui/spinner";
 
 type WidgetState = {
   widgets: Record<WidgetType, Widget>;
@@ -583,10 +584,6 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
     (p) => p.id === state.selectedProfile
   );
 
-  if (!currentProfile) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <Container isDashboard maxWidth="7xl" className="mb-20">
       <DashboardHeader
@@ -635,7 +632,7 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
         {isDesktop && <ResizableHandle withHandle />}
         <ResizablePanel
           defaultSize={isDesktop ? 28 : 100}
-          className="min-w-[20rem] !overflow-visible rounded-br-3xl bg-background/50"
+          className="min-w-[20rem] !overflow-visible rounded-br-3xl bg-background/50 min-h-[calc(100vh-200px)]"
         >
           {state.selectedProfile && (
             <WidgetConfiguratorForm

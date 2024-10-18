@@ -142,23 +142,23 @@ export const WidgetConfiguratorForm = React.memo(
           <div className="">
             <Card className="border-0 p-0">
               <CardContent className="border-0 p-0">
-                <Tabs defaultValue="style" className="ml-[1px] w-full">
-                  <TabsList className="duration-2000 grid w-full grid-cols-3 !rounded-none bg-gradient/10">
+                <Tabs defaultValue="style">
+                  <TabsList className="duration-2000 grid w-full grid-cols-3 !rounded-none bg-gradient/10 shadow-lg">
                     <TabsTrigger
                       value="style"
-                      className="data-[state=active]:bg-white/10"
+                      className="data-[state=active]:dark:bg-white/10"
                     >
                       Style
                     </TabsTrigger>
                     <TabsTrigger
                       value="options"
-                      className="data-[state=active]:bg-white/10"
+                      className="data-[state=active]:dark:bg-white/10"
                     >
                       Options
                     </TabsTrigger>
                     <TabsTrigger
                       value="chat"
-                      className="data-[state=active]:bg-white/10"
+                      className="data-[state=active]:dark:bg-white/10"
                     >
                       Chat
                     </TabsTrigger>
@@ -195,6 +195,7 @@ export const WidgetConfiguratorForm = React.memo(
                       handleFinalChange={handleFinalChange}
                       optimisticProfileSettings={optimisticProfileSettings}
                       updateProfileSetting={updateProfileSetting}
+                      className="min-h-screen"
                     />
                   </TabsContent>
                 </Tabs>

@@ -239,12 +239,12 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
         onValueChange={(value) => handleWidgetChange(value as WidgetType)}
         className="mb-4"
       >
-        <TabsList className="w-full rounded-lg p-1 bg-gray-100 dark:bg-gray-800">
+        <TabsList className="w-full rounded-lg p-1 bg-zinc-100/80 dark:bg-zinc-800/30 shadow-lg">
           {Object.entries(widgets).map(([widgetType, widget]) => (
             <TabsTrigger
               key={widgetType}
               value={widgetType as WidgetType}
-              className="flex-1 rounded py-2 transition-all text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-black dark:data-[state=active]:text-white"
+              className="flex-1 rounded transition-all text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-violet-700/10 data-[state=active]:text-black dark:data-[state=active]:text-white"
             >
               {getWidgetDisplayName(widgetType as WidgetType)}
             </TabsTrigger>

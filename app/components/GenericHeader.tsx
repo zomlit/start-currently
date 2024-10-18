@@ -15,7 +15,7 @@ const GenericHeader: React.FC<HeaderProps> = ({
   className = "",
 }) => {
   return (
-    <header className={`relative z-10 mt-44 ${className}`}>
+    <header className={`relative z-10 mt-44 mb-10 ${className}`}>
       <p className="mb-2 text-sm font-semibold text-blue-600">{category}</p>
       <h1 className="font-boldtext-3xl block text-4xl md:text-6xl">{title}</h1>
       <p className="mt-2 text-lg dark:text-gray-400 font-light">

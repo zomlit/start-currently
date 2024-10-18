@@ -5,56 +5,54 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "../components/ui/hover-card";
 import { UserButton, useUser } from "@clerk/tanstack-start";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
+import {
+  LayoutDashboard,
+  MessageCircle,
+  Bell,
+  Gamepad2,
+  Clock,
+  Users,
+} from "lucide-react";
 
 const navItems = [
   {
     id: 1,
     link: "/dashboard",
     text: "Dashboard",
+    icon: LayoutDashboard,
   },
   {
     id: 2,
-    // icon: <IconMessageCircle2 className="h-4 w-4" />,
     link: "/dashboard/widgets/chat/",
     text: "Chat",
-    isActive: false,
+    icon: MessageCircle,
   },
   {
     id: 3,
-    // icon: <IconBellRinging className="h-4 w-4" />,
     link: "/dashboard/widgets/alerts/",
     text: "Alerts",
-    isActive: false,
+    icon: Bell,
   },
-  // {
-  //   id: 4,
-  //   icon: <GameStats className="h-4 w-4 fill-white stroke-white text-white" />,
-  //   link: '/dashboard/widgets/game-stats/',
-  //   text: 'Game Stats',
-  //   isActive: false,
-  // },
-
   {
     id: 6,
-    // icon: <IconDeviceGamepad2 className="h-4 w-4" />,
     link: "/dashboard/widgets/gamepad/",
     text: "Gamepad",
-    isActive: false,
+    icon: Gamepad2,
   },
   {
     id: 7,
-    // icon: <IconClock className="h-4 w-4" />,
     link: "/dashboard/widgets/timer/",
     text: "Timer",
-    isActive: false,
+    icon: Clock,
   },
   {
     id: 8,
     link: "/teampicker",
     text: "Team Picker",
+    icon: Users,
   },
 ];
 
@@ -99,7 +97,7 @@ const DashboardNavigation: React.FC = () => {
               to="/dashboard"
               className="group flex items-center gap-x-3 text-lg font-semibold text-gray-800 transition-transform dark:text-gray-200"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem] spring-bounce-60 spring-duration-300">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem]">
                 <CircleDot
                   className={cn("w-8 fill-violet-500", {
                     "animate-spin": !isLoaded,
@@ -122,13 +120,14 @@ const DashboardNavigation: React.FC = () => {
                         onClick={() => {
                           if (sidebarToggled) toggleSidebar();
                         }}
-                        className={`relative z-10 flex rounded-md p-3 lg:w-auto ${
+                        className={`relative z-10 flex items-center rounded-md p-3 lg:w-auto ${
                           navItem.isActive
                             ? "text-gray-800 dark:text-white"
                             : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-black/25"
-                        } spring-bounce-60 spring-duration-300 spring-sproing`}
+                        } `}
                       >
-                        <span className="ml-2 inline-flex transition-colors duration-300 ease-linear">
+                        {navItem.icon && <navItem.icon className="h-4 w-4" />}
+                        <span className="visible md:hidden transition-colors duration-300 ease-linear">
                           {navItem.text}
                         </span>
                       </Link>
@@ -170,7 +169,7 @@ const DashboardNavigation: React.FC = () => {
       >
         <button
           onClick={toggleSidebar}
-          className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none spring-bounce-60 spring-duration-300 spring-sproing"
+          className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none"
         >
           <span className="sr-only">toggle sidebar</span>
           <span
