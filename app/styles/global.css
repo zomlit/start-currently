@@ -5,6 +5,14 @@
   --text-color: #ffffff;
 }
 
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {

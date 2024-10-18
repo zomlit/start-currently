@@ -59,7 +59,7 @@ export const FrequencySelector: React.FC<FrequencySelectorProps> = ({
           x: selectedFrequency.value === "month" ? 0 : containerWidth / 2 - 4,
           width: containerWidth / 2 - 4,
         }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
       />
       {frequencies.map((option) => {
         const lowestPrice = getLowestPriceForInterval(option.value);

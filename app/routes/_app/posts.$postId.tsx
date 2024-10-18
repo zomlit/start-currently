@@ -3,20 +3,18 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { postQueryOptions } from "@/utils/posts";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { NotFound } from "@/components/NotFound";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/_app/posts/$postId")({
   loader: async ({ params: { postId }, context }) => {
     const data = await context.queryClient.ensureQueryData(
       postQueryOptions(postId)
     );
-
-    return {
-      title: data.title,
-    };
+    return { data };
   },
   meta: ({ loaderData }) => [
     {
-      title: loaderData.title,
+      title: loaderData?.data?.title || "Post Details",
     },
   ],
   errorComponent: PostErrorComponent as any,
@@ -33,6 +31,14 @@ export function PostErrorComponent({ error }: ErrorComponentProps) {
 function PostComponent() {
   const { postId } = Route.useParams();
   const postQuery = useSuspenseQuery(postQueryOptions(postId));
+
+  if (postQuery.isLoading) {
+    return <Spinner className="w-8 fill-violet-300 text-white" />;
+  }
+
+  if (!postQuery.data) {
+    return <NotFound>Post not found</NotFound>;
+  }
 
   return (
     <div className="space-y-2">

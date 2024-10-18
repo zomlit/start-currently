@@ -79,6 +79,7 @@ export const Route = createRootRouteWithContext<{
       user,
     };
   },
+
   errorComponent: (props) => (
     <RootDocument>
       <DefaultCatchBoundary {...props} />
@@ -90,27 +91,27 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   return (
-    <ClerkProvider>
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
-    </ClerkProvider>
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <Html>
-      <Head>
-        <Meta />
-      </Head>
-      <Body>
-        {children}
-        <ScrollRestoration />
-        <TanStackRouterDevtools position="bottom-right" />
-        <ReactQueryDevtools buttonPosition="bottom-left" />
-        <Scripts />
-      </Body>
-    </Html>
+    <ClerkProvider>
+      <Html>
+        <Head>
+          <Meta />
+        </Head>
+        <Body>
+          {children}
+          <ScrollRestoration />
+          <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-left" />
+          <Scripts />
+        </Body>
+      </Html>
+    </ClerkProvider>
   );
 }

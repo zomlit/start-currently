@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useUser } from '@clerk/tanstack-start'
-import { UserButton, SignInButton } from '@clerk/tanstack-start'
-import { Spinner } from './ui/spinner'
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useUser } from "@clerk/tanstack-start";
+import { UserButton, SignInButton } from "@clerk/tanstack-start";
+import { Spinner } from "./ui/spinner";
 
 export function UserAvatarLoader() {
-  const { isLoaded, isSignedIn } = useUser()
-  const avatarRef = useRef<HTMLDivElement>(null)
+  const { isLoaded, isSignedIn } = useUser();
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative w-10 h-10">
@@ -37,5 +37,5 @@ export function UserAvatarLoader() {
       </AnimatePresence>
       {isLoaded && !isSignedIn && <SignInButton mode="modal" />}
     </div>
-  )
+  );
 }

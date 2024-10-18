@@ -64,12 +64,11 @@ export function Navigation({ isDashboard }: NavigationProps) {
             <NavLink to="/posts">Posts</NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
             <NavLink to="/pricing">Pricing</NavLink>
-            <NavLink to="/dashboard/widgets">Widgets</NavLink>
+            <NavLink to="/widgets">Widgets</NavLink>
             <NavLink to="/teampicker">Team Picker</NavLink>
           </div>
           <div className="flex items-center space-x-4">
             <ModeToggle />
-            <ColorPicker />
             <div className="relative">
               <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300 cursor-pointer" />
               <div className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></div>

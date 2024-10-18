@@ -1,21 +1,29 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { SignIn } from '@clerk/tanstack-start'
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { SignIn, useUser } from "@clerk/tanstack-start";
+import { Spinner } from "@/components/ui/spinner";
 
-export const Route = createFileRoute('/_app/_authed')({
-  beforeLoad: ({ context }) => {
-    if (!context.user.userId) {
-      throw new Error('Not authenticated')
-    }
-  },
-  errorComponent: ({ error }) => {
-    if (error.message === 'Not authenticated') {
-      return (
-        <div className="flex items-center justify-center p-12">
-          <SignIn routing="hash" forceRedirectUrl={window.location.href} />
-        </div>
-      )
-    }
+export const Route = createFileRoute("/_app/_authed")({
+  component: AuthedLayout,
+});
 
-    throw error
-  },
-})
+function AuthedLayout() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner className="w-8 fill-violet-300 text-white" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <SignIn routing="hash" />
+      </div>
+    );
+  }
+
+  return <Outlet />;
+}

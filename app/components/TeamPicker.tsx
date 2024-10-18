@@ -116,9 +116,8 @@ const RankSelect = ({ value, onChange, color, iconUrl }) => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-20 items-center justify-between px-2 py-1 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex w-20 items-center justify-between px-2 py-1 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent dark:bg-transparent"
         style={{
-          backgroundColor: "rgba(0, 0, 0, 0)",
           borderLeft: `1px solid ${color}`,
         }}
       >
@@ -128,12 +127,14 @@ const RankSelect = ({ value, onChange, color, iconUrl }) => {
             alt={value}
             className="mr-1 h-4 w-4"
           />
-          <span className="text-zinc-100">{displayRank(value)}</span>
+          <span className="text-gray-900 dark:text-gray-100">
+            {displayRank(value)}
+          </span>
         </div>
-        <ChevronDown className="h-4 w-4 text-zinc-400" />
+        <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
       </button>
       {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 max-h-60 w-32 overflow-y-auto rounded-md border border-zinc-700 bg-zinc-800 shadow-lg">
+        <div className="absolute right-0 z-10 mt-1 max-h-60 w-32 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
           {ROCKET_LEAGUE_RANKS.map((rank) => (
             <button
               key={rank.name}
@@ -141,7 +142,7 @@ const RankSelect = ({ value, onChange, color, iconUrl }) => {
                 onChange(rank.name);
                 setIsOpen(false);
               }}
-              className="flex w-full items-center px-2 py-1 text-left text-sm text-zinc-100 hover:bg-zinc-700"
+              className="flex w-full items-center px-2 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <img
                 src={rank.iconUrl}
@@ -1464,7 +1465,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                 : "0",
                           }}
                         >
-                          <div className="w-72 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 shadow-lg">
+                          <div className="w-72 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-lg">
                             {[match.team1, match.team2].map(
                               (team, teamIndex) => (
                                 <Draggable
@@ -1505,14 +1506,14 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                           )}
                                       </div>
                                       <div
-                                        className={`flex-grow truncate text-zinc-200 ${team?.disqualified ? "line-through" : ""}`}
+                                        className={`flex-grow truncate text-gray-900 dark:text-gray-100 ${team?.disqualified ? "line-through" : ""}`}
                                       >
                                         {team?.isBye
                                           ? "BYE"
                                           : team?.name || "TBD"}
                                       </div>
                                       <div className="w-8 text-right">
-                                        <span className="m-0 rounded bg-zinc-700/50 px-2 py-1 text-sm text-zinc-300">
+                                        <span className="m-0 rounded bg-gray-700 dark:bg-gray-700/50 px-2 py-1 text-sm text-gray-300 dark:text-gray-400">
                                           {team?.isBye
                                             ? "-"
                                             : team?.score || "0"}
@@ -1540,7 +1541,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                         matchIndex
                                       )
                                     }
-                                    className="rounded bg-blue-600 px-3 py-1 text-xs text-zinc-200 transition-colors duration-200 hover:bg-blue-700"
+                                    className="rounded bg-blue-600 px-3 py-1 text-xs text-gray-100 transition-colors duration-200 hover:bg-blue-700"
                                   >
                                     Enter Scores
                                   </button>
@@ -1550,7 +1551,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                           {roundIndex < bracket.length - 1 && (
                             <div className="absolute -right-5 top-1/2 -translate-y-1/2 transform">
                               <ChevronRight
-                                className="text-zinc-500"
+                                className="text-gray-400 dark:text-gray-500"
                                 size={20}
                               />
                             </div>
@@ -1595,7 +1596,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                           : "0",
                     }}
                   >
-                    <div className="w-72 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 shadow-lg">
+                    <div className="w-72 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-lg">
                       {[match.team1, match.team2].map((team, teamIndex) => (
                         <div
                           key={`loser-${roundIndex}-${matchIndex}-${teamIndex}`}
@@ -1615,12 +1616,12 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                             )}
                           </div>
                           <div
-                            className={`flex-grow truncate text-zinc-200 ${team?.disqualified ? "line-through" : ""}`}
+                            className={`flex-grow truncate text-gray-900 dark:text-gray-100 ${team?.disqualified ? "line-through" : ""}`}
                           >
                             {team?.name || "TBD"}
                           </div>
                           <div className="w-8 text-right">
-                            <span className="rounded bg-zinc-700/50 px-2 py-1 text-sm text-zinc-300">
+                            <span className="rounded bg-gray-700 dark:bg-gray-700/50 px-2 py-1 text-sm text-gray-300 dark:text-gray-400">
                               {team?.score || "0"}
                             </span>
                           </div>
@@ -1641,7 +1642,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                 true
                               )
                             }
-                            className="rounded bg-blue-600 px-3 py-1 text-xs text-zinc-200 transition-colors duration-200 hover:bg-blue-700"
+                            className="rounded bg-blue-600 px-3 py-1 text-xs text-gray-100 transition-colors duration-200 hover:bg-blue-700"
                           >
                             Enter Scores
                           </button>
@@ -1650,7 +1651,10 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     </div>
                     {roundIndex < losersBracket.length - 1 && (
                       <div className="absolute -right-5 top-1/2 -translate-y-1/2 transform">
-                        <ChevronRight className="text-zinc-500" size={20} />
+                        <ChevronRight
+                          className="text-gray-400 dark:text-gray-500"
+                          size={20}
+                        />
                       </div>
                     )}
                   </div>
@@ -1678,7 +1682,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
     <Button
       onClick={generateShareableUrl}
       variant="default"
-      className="rounded-lg border border-zinc-700 bg-green-600 text-zinc-200 transition-colors duration-200 hover:bg-green-500"
+      className="rounded-lg border border-gray-200 dark:border-gray-700 bg-green-600 text-gray-100 transition-colors duration-200 hover:bg-green-500"
     >
       <Share className="mr-2 h-4 w-4" />
       Share View
@@ -1741,23 +1745,23 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
         />
 
         <Tabs defaultValue="tournament" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 rounded-lg border border-zinc-700 bg-zinc-800/50 p-1">
+          <TabsList className="grid w-full grid-cols-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <TabsTrigger
               value="tournament"
-              className="rounded-md data-[state=active]:bg-zinc-700"
+              className="rounded-md data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700 text-gray-700 dark:text-gray-300"
             >
               Tournament
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="rounded-md data-[state=active]:bg-zinc-700"
+              className="rounded-md data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700 text-gray-700 dark:text-gray-300"
             >
               Settings
             </TabsTrigger>
           </TabsList>
           <TabsContent value="tournament">
-            <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-6">
-              <h3 className="mb-4 text-lg font-semibold text-white">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                 Tournament Management
               </h3>
               <div className="space-y-4">
@@ -1766,10 +1770,10 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     onValueChange={handleBracketSelect}
                     value={selectedBracketId || undefined}
                   >
-                    <SelectTrigger className="w-[200px] rounded-lg border border-zinc-700 bg-zinc-800/50">
+                    <SelectTrigger className="w-[200px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700">
                       <SelectValue placeholder="Select a tournament" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-lg border border-zinc-700 bg-zinc-900/75">
+                    <SelectContent className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       {isBracketsLoading ? (
                         <SelectItem value="loading" disabled>
                           Loading...
@@ -1791,7 +1795,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     onClick={createNewTournament}
                     variant="outline"
                     size="sm"
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+                    className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                   >
                     New Tournament
                   </Button>
@@ -1799,7 +1803,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     onClick={saveTournament}
                     variant="default"
                     size="sm"
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+                    className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                   >
                     Save Tournament
                   </Button>
@@ -1809,7 +1813,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                         onClick={() => handleOpenTournament(selectedBracketId)}
                         variant="outline"
                         size="sm"
-                        className="rounded-lg border bg-blue-600/50 bg-zinc-800/50 text-zinc-200 transition-colors duration-200 hover:bg-blue-500/50"
+                        className="rounded-lg border bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         Open <ExternalLink className="ml-2 h-4 w-4" />
                       </Button>
@@ -1817,7 +1821,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                         onClick={() => deleteBracket(selectedBracketId)}
                         variant="destructive"
                         size="sm"
-                        className="rounded-lg border border-red-700 bg-red-900 text-zinc-200 hover:bg-red-800"
+                        className="rounded-lg border border-red-700 bg-red-900 text-white hover:bg-red-800"
                       >
                         Delete
                       </Button>
@@ -1827,7 +1831,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                 <div>
                   <label
                     htmlFor="tournament-name"
-                    className="mb-1 block text-sm font-medium text-zinc-400"
+                    className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400"
                   >
                     Tournament Name
                   </label>
@@ -1836,7 +1840,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     type="text"
                     value={tournamentName}
                     onChange={(e) => setTournamentName(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-sm text-zinc-100 placeholder-zinc-500"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -1844,19 +1848,22 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
           </TabsContent>
           <TabsContent value="settings">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-6">
-                <h3 className="mb-4 text-lg font-semibold text-white">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                   Game Settings
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
-                    <div className="rounded-full bg-zinc-700/50 p-2">
-                      <Users size={24} className="text-zinc-300" />
+                    <div className="rounded-full bg-gray-200 dark:bg-gray-700 p-2">
+                      <Users
+                        size={24}
+                        className="text-gray-600 dark:text-gray-300"
+                      />
                     </div>
                     <div>
                       <label
                         htmlFor="team-size"
-                        className="mb-1 block text-sm font-medium text-zinc-400"
+                        className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400"
                       >
                         Team Size
                       </label>
@@ -1871,18 +1878,21 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                           );
                           setTeamSize(newSize);
                         }}
-                        className="w-20 rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-sm text-zinc-100 placeholder-zinc-500"
+                        className="w-20 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="rounded-full bg-zinc-700/50 p-2">
-                      <Settings size={24} className="text-zinc-300" />
+                    <div className="rounded-full bg-gray-200 dark:bg-gray-700 p-2">
+                      <Settings
+                        size={24}
+                        className="text-gray-600 dark:text-gray-300"
+                      />
                     </div>
                     <div>
                       <label
                         htmlFor="num-captains"
-                        className="mb-1 block text-sm font-medium text-zinc-400"
+                        className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400"
                       >
                         Captains
                       </label>
@@ -1897,27 +1907,33 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                           );
                           setNumCaptains(newNumCaptains);
                         }}
-                        className="w-20 rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-sm text-zinc-100 placeholder-zinc-500"
+                        className="w-20 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-6">
-                <h3 className="mb-4 text-lg font-semibold text-white">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
                   Mode Settings
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
-                    <div className="rounded-full bg-zinc-700/50 p-2">
+                    <div className="rounded-full bg-gray-200 dark:bg-gray-700 p-2">
                       {isOnlineMode ? (
-                        <Wifi size={24} className="text-zinc-300" />
+                        <Wifi
+                          size={24}
+                          className="text-gray-600 dark:text-gray-300"
+                        />
                       ) : (
-                        <WifiOff size={24} className="text-zinc-300" />
+                        <WifiOff
+                          size={24}
+                          className="text-gray-600 dark:text-gray-300"
+                        />
                       )}
                     </div>
                     <div>
-                      <span className="mb-1 block text-sm font-medium text-zinc-400">
+                      <span className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
                         Mode
                       </span>
                       <div className="flex items-center space-x-2">
@@ -1928,7 +1944,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                         />
                         <Label
                           htmlFor="online-mode"
-                          className="text-sm text-zinc-400"
+                          className="text-sm text-gray-600 dark:text-gray-400"
                         >
                           {isOnlineMode ? "Online" : "Offline"}
                         </Label>
@@ -1936,13 +1952,16 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="rounded-full bg-zinc-700/50 p-2">
-                      <Trophy size={24} className="text-zinc-300" />
+                    <div className="rounded-full bg-gray-200 dark:bg-gray-700 p-2">
+                      <Trophy
+                        size={24}
+                        className="text-gray-600 dark:text-gray-300"
+                      />
                     </div>
                     <div>
                       <Label
                         htmlFor="game-mode"
-                        className="mb-1 block text-sm font-medium text-zinc-400"
+                        className="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400"
                       >
                         Game Mode
                       </Label>
@@ -1950,10 +1969,10 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                         value={selectedGameMode}
                         onValueChange={handleGameModeChange}
                       >
-                        <SelectTrigger className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-sm text-zinc-100">
+                        <SelectTrigger className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-sm text-gray-900 dark:text-gray-100">
                           <SelectValue placeholder="Select a game mode" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                           <SelectItem value="Ranked Duel 1v1">
                             Ranked Duel 1v1
                           </SelectItem>
@@ -1993,7 +2012,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
           <Button
             onClick={populateTestData}
             variant="secondary"
-            className="rounded-lg border border-zinc-700 bg-purple-800/50 text-zinc-200 transition-colors duration-200 hover:bg-purple-700/50"
+            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-purple-800 text-gray-100 transition-colors duration-200 hover:bg-purple-700"
           >
             <Database className="mr-2 h-4 w-4" />
             Populate Test Data
@@ -2002,7 +2021,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
             <Button
               onClick={pickTeams}
               variant="default"
-              className="rounded-lg border border-zinc-700 bg-blue-600 text-zinc-200 transition-colors duration-200 hover:bg-blue-500"
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-blue-600 text-gray-100 transition-colors duration-200 hover:bg-blue-500"
             >
               <Shuffle className="mr-2 h-4 w-4" />
               Pick Teams
@@ -2011,7 +2030,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
           <Button
             onClick={generateShareableUrl}
             variant="default"
-            className="rounded-lg border border-zinc-700 bg-green-600 text-zinc-200 transition-colors duration-200 hover:bg-green-500"
+            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-green-600 text-gray-100 transition-colors duration-200 hover:bg-green-500"
           >
             <Share className="mr-2 h-4 w-4" />
             Share View
@@ -2020,8 +2039,8 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
 
         {/* Add Player or Captain */}
         {tournamentCreated && (
-          <div className="mt-6 rounded-lg border border-zinc-700 bg-zinc-800/50 p-6">
-            <h3 className="mb-4 text-lg font-semibold text-white">
+          <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
               Add Player or Captain
             </h3>
             <div className="flex items-end space-x-4">
@@ -2033,7 +2052,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Enter name"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-sm text-zinc-100 placeholder-zinc-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <div className="flex space-x-2">
@@ -2042,7 +2061,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     onClick={() => addItem("captain")}
                     disabled={loading}
                     variant="outline"
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+                    className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                   >
                     Add Captain
                   </Button>
@@ -2051,7 +2070,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     onClick={() => addItem("player")}
                     disabled={loading}
                     variant="default"
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+                    className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                   >
                     Add Player
                   </Button>
@@ -2063,13 +2082,15 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                         onClick={clearAllData}
                         variant="destructive"
                         size="icon"
-                        className="rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+                        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Clear all data</p>
+                    <TooltipContent className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                      <p className="text-gray-900 dark:text-gray-100">
+                        Clear all data
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -2090,10 +2111,12 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className="flex flex-col rounded-lg border border-zinc-700 bg-zinc-800/50"
+                    className="flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                   >
                     <div className="p-4">
-                      <h2 className={`text-xl text-white`}>Players</h2>
+                      <h2 className={`text-xl text-gray-900 dark:text-white`}>
+                        Players
+                      </h2>
                     </div>
                     <ScrollArea className="flex flex-grow flex-col">
                       <div className="space-y-2 pb-4 pl-4 pr-4">
@@ -2111,7 +2134,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`group relative flex items-center justify-between rounded-md border border-zinc-700 text-white shadow transition-colors duration-200 hover:bg-zinc-600/50 ${
+                                  className={`group relative flex items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 ${
                                     isStandalone
                                       ? "cursor-default"
                                       : "cursor-grab"
@@ -2127,13 +2150,13 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                         e.stopPropagation();
                                         removePlayer(player.id);
                                       }}
-                                      className="absolute left-0 top-1/2 flex h-8 w-8 -translate-y-1/2 transform items-center justify-center rounded-full p-0 text-zinc-400 opacity-0 transition-colors duration-200 hover:text-red-100 group-hover:opacity-100"
+                                      className="absolute left-0 top-1/2 flex h-8 w-8 -translate-y-1/2 transform items-center justify-center rounded-full p-0 text-gray-400 dark:text-gray-500 opacity-0 transition-colors duration-200 hover:text-red-500 group-hover:opacity-100"
                                     >
                                       <X className="h-4 w-4" />
                                     </button>
                                   )}
                                   <div
-                                    className="flex flex-grow cursor-grab items-center overflow-visible rounded-md text-white shadow transition-colors duration-200 hover:bg-zinc-700/50"
+                                    className="flex flex-grow cursor-grab items-center overflow-visible rounded-md text-gray-900 dark:text-gray-100 shadow transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700"
                                     style={{
                                       paddingLeft: "2rem",
                                     }}
@@ -2152,7 +2175,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                               handlePlayerNameSave();
                                             }
                                           }}
-                                          className="w-full border-none bg-transparent p-2 text-zinc-100 focus:outline-none focus:ring-0"
+                                          className="w-full border-none bg-transparent p-2 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0"
                                           autoFocus
                                         />
                                       ) : (
@@ -2198,9 +2221,9 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className={`overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800/50 ${captain.players.length >= teamSize ? "opacity-50" : ""}`}
+                      className={`overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${captain.players.length >= teamSize ? "opacity-50" : ""}`}
                     >
-                      <div className="flex flex-row items-center justify-between border-b border-zinc-700 bg-zinc-800/70 p-4 text-xl">
+                      <div className="flex flex-row items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 p-4 text-xl">
                         <div className="flex items-center">
                           {reorderingTeam === captainIndex ? (
                             <div className="mr-2 flex items-center">
@@ -2233,7 +2256,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                     setReorderingTeam(null);
                                   }
                                 }}
-                                className="w-12 rounded-lg border border-zinc-700 bg-zinc-800/50 p-1 text-center text-sm text-zinc-100"
+                                className="w-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-1 text-center text-sm text-gray-900 dark:text-gray-100"
                                 autoFocus
                               />
                               <div className="ml-1 flex flex-col">
@@ -2241,7 +2264,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                   onMouseDown={(e) =>
                                     handleTeamNumberChange(captainIndex, -1, e)
                                   }
-                                  className="text-zinc-400 hover:text-zinc-100"
+                                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                                 >
                                   <ChevronUp className="h-4 w-4" />
                                 </button>
@@ -2249,7 +2272,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                   onMouseDown={(e) =>
                                     handleTeamNumberChange(captainIndex, 1, e)
                                   }
-                                  className="text-zinc-400 hover:text-zinc-100"
+                                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                                 >
                                   <ChevronDown className="h-4 w-4" />
                                 </button>
@@ -2257,7 +2280,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                             </div>
                           ) : (
                             <span
-                              className="mr-2 inline-block w-12 cursor-pointer text-center font-semibold text-zinc-400"
+                              className="mr-2 inline-block w-12 cursor-pointer text-center font-semibold text-gray-600 dark:text-gray-400"
                               onDoubleClick={() => {
                                 setReorderingTeam(captainIndex);
                                 setReorderingValue(String(captainIndex + 1));
@@ -2276,20 +2299,20 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                   handleTeamNameSave();
                                 }
                               }}
-                              className="w-full border-none bg-transparent text-zinc-100 focus:outline-none focus:ring-0"
+                              className="w-full border-none bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0"
                               autoFocus
                             />
                           ) : (
                             <h3
-                              className={`flex cursor-pointer items-center text-lg text-white`}
+                              className={`flex cursor-pointer items-center text-lg text-gray-900 dark:text-white`}
                               onDoubleClick={() =>
                                 handleTeamDoubleClick(captain.id)
                               }
                             >
-                              <span className="mr-2 text-xl font-semibold text-zinc-400">
+                              <span className="mr-2 text-xl font-semibold text-gray-600 dark:text-gray-400">
                                 Team:
                               </span>
-                              <span className="text-xl text-white">
+                              <span className="text-xl text-gray-900 dark:text-white">
                                 {captain.name}
                               </span>
                             </h3>
@@ -2297,12 +2320,12 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                         </div>
                         <button
                           onClick={() => removeCaptain(captain.id)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full p-0 text-zinc-400 transition-colors duration-200 hover:text-red-100"
+                          className="flex h-6 w-6 items-center justify-center rounded-full p-0 text-gray-600 dark:text-gray-400 transition-colors duration-200 hover:text-red-500"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
-                      <div className="space-y-2 bg-zinc-800/30 p-4">
+                      <div className="space-y-2 bg-gray-50 dark:bg-gray-700/50 p-4">
                         {captain.players
                           .filter((player) => player && player.id)
                           .map((player, index) => (
@@ -2317,12 +2340,11 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`rounded-md p-2 shadow ${index === 0 ? "cursor-default" : "cursor-grab"} flex items-center justify-between text-white transition-colors duration-200 hover:bg-zinc-600/50`}
+                                  className={`rounded-md p-2 shadow ${index === 0 ? "cursor-default" : "cursor-grab"} flex items-center justify-between text-gray-900 dark:text-gray-100 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700`}
                                   style={{
                                     ...provided.draggableProps.style,
                                     backgroundColor: player.color,
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.1)",
+                                    border: "1px solid rgba(0, 0, 0, 0.1)",
                                   }}
                                   onDoubleClick={() =>
                                     index !== 0 &&
@@ -2345,7 +2367,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                               alt={player.rank}
                                               className="mb-1 h-8 w-8"
                                             />
-                                            <span className="text-xs text-zinc-100">
+                                            <span className="text-xs text-gray-900 dark:text-gray-100">
                                               {player.abbreviatedRank}
                                             </span>
                                           </div>
@@ -2356,20 +2378,20 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                                                 alt={`Peak: ${player.peakRank}`}
                                                 className="mb-1 h-8 w-8"
                                               />
-                                              <span className="text-xs text-zinc-400">
+                                              <span className="text-xs text-gray-600 dark:text-gray-400">
                                                 {player.peakRank}
                                               </span>
                                             </div>
                                           )}
                                         </div>
                                       </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>
+                                      <TooltipContent className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                                        <p className="text-gray-900 dark:text-gray-100">
                                           Current: {player.rank} (
                                           {player.ratingDisplayValue || "N/A"})
                                         </p>
                                         {player.peakRankFull && (
-                                          <p>
+                                          <p className="text-gray-900 dark:text-gray-100">
                                             Peak: {player.peakRankFull} (
                                             {player.peakRatingDisplayValue ||
                                               "N/A"}
@@ -2397,7 +2419,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
           <div className="mt-8 flex items-center space-x-4">
             <Button
               onClick={generateBracket}
-              className="flex items-center rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2 text-sm text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+              className="flex items-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
             >
               <Trophy className="mr-2 h-4 w-4" />
               Generate Tournament Bracket
@@ -2411,7 +2433,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
               />
               <Label
                 htmlFor="showLosersBracket"
-                className="ml-2 text-sm text-zinc-300"
+                className="ml-2 text-sm text-gray-600 dark:text-gray-400"
               >
                 Include Losers Bracket
               </Label>
@@ -2424,15 +2446,15 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
         {showLosersBracket && renderLosersBracket()}
 
         <Dialog open={scoreDialogOpen} onOpenChange={setScoreDialogOpen}>
-          <DialogContent className="w-96 rounded-lg border border-zinc-700 bg-zinc-900 p-6">
-            <DialogTitle className="mb-4 text-lg font-semibold text-zinc-100">
+          <DialogContent className="w-96 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+            <DialogTitle className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
               Enter Match Scores
             </DialogTitle>
             <div className="space-y-4">
               <div>
                 <Label
                   htmlFor="team1Score"
-                  className="mb-1 block text-zinc-300"
+                  className="mb-1 block text-gray-600 dark:text-gray-400"
                 >
                   Team Blue Score
                 </Label>
@@ -2443,13 +2465,13 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                   onChange={(e) => setTeam1Score(e.target.value)}
                   placeholder="Enter Team Blue score"
                   min="0"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-zinc-100 placeholder-zinc-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <div>
                 <Label
                   htmlFor="team2Score"
-                  className="mb-1 block text-zinc-300"
+                  className="mb-1 block text-gray-600 dark:text-gray-400"
                 >
                   Team Orange Score
                 </Label>
@@ -2460,20 +2482,20 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
                   onChange={(e) => setTeam2Score(e.target.value)}
                   placeholder="Enter Team Orange score"
                   min="0"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 p-2 text-zinc-100 placeholder-zinc-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
             </div>
             <div className="mt-6 flex justify-end">
               <Button
                 onClick={handleScoreSubmit}
-                className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2 text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-700 dark:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 Submit Scores
               </Button>
             </div>
             <DialogClose asChild>
-              <button className="absolute right-2 top-2 text-zinc-400 hover:text-zinc-100">
+              <button className="absolute right-2 top-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                 <X className="h-4 w-4" />
               </button>
             </DialogClose>

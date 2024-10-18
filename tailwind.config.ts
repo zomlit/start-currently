@@ -19,7 +19,7 @@ const config = {
     },
     extend: {
       height: {
-        footer: "var(--footer-height, 300px)", // Default to 300px if not set
+        footer: "var(--footer-height, 300px)",
       },
       fontFamily: {
         sofia: ["Sofia Sans Condensed Variable", "sans-serif"],
@@ -32,8 +32,8 @@ const config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",

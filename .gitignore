@@ -19,3 +19,4 @@ dist
 # Sentry Config File
 .env.sentry-build-plugin
 
+app.config.timestamp_*

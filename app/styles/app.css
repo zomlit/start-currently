@@ -14,8 +14,8 @@
     --card-foreground: 20 14.3% 4.1%;
     --border: 20 5.9% 90%;
     --input: 20 5.9% 90%;
-    --primary: var(--primary-color, #6d28d9);
-    --primary-foreground: 60 9.1% 97.8%;
+    --primary: #6d28d9; /* Default purple color */
+    --primary-foreground: #ffffff;
     --secondary: 60 4.8% 95.9%;
     --secondary-foreground: 24 9.8% 10%;
     --accent: 60 4.8% 95.9%;
@@ -50,8 +50,8 @@
     --border: 12 6.5% 15.1%;
     --input: 12 6.5% 15.1%;
 
-    --primary: 60 9.1% 97.8%;
-    --primary-foreground: 24 9.8% 10%;
+    --primary: #6d28d9; /* Keep the same default for dark mode */
+    --primary-foreground: #ffffff;
 
     --secondary: 12 6.5% 15.1%;
     --secondary-foreground: 60 9.1% 97.8%;
@@ -74,6 +74,13 @@
 
     --chart-5: 340 75% 55%;
   }
+}
+
+body {
+  @apply spring-bounce-40 spring-duration-300;
+  transition:
+    all 0.3s ease,
+    color 0.3s ease;
 }
 
 @layer base {
@@ -102,7 +109,7 @@
 
 /* Clerk Shadcn */
 .cl-formButtonPrimary {
-  @apply inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-primary px-3  font-medium text-primary-foreground !shadow-none ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  @apply inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-primary px-3  font-medium text-primary-foreground !shadow-none ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
 }
 
 .cl-card,
@@ -154,6 +161,10 @@
   p[data-localization-key="userProfile.emailAddressPage.emailCode.formHint"],
 p[data-localization-key="userProfile.profilePage.successMessage"] {
   @apply text-muted-foreground;
+}
+
+.cl-userButtonPopoverActionButton {
+  @apply border border-white;
 }
 
 .cl-dividerLine {
@@ -317,3 +328,17 @@ h1[data-localization-key="userProfile.navbar.title"] {
 .cl-userButtonPopoverMain {
   @apply rounded-lg border-input bg-background;
 }
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.border-primary {
+  border-color: var(--primary);
+}
+
+/* Add any other utility classes that use the primary color */
