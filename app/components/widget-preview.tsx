@@ -13,6 +13,8 @@ import { Spinner } from "@/components/ui/spinner";
 
 import type { Database } from "@/types/supabase";
 import { useSupabase } from "@/hooks/useSupabase";
+import { useQuery } from "@tanstack/react-query";
+import { loadProfile } from "@/utils/widgetDbOperations";
 
 interface WidgetPreviewProps {
   currentProfile: WidgetProfile;
@@ -20,16 +22,7 @@ interface WidgetPreviewProps {
   isPublicView?: boolean;
   userId?: string;
   initialTrack?: SpotifyTrack;
-  optimisticSettings?: {
-    commonSettings?: ProfileSettings["commonSettings"];
-    specificSettings?: ProfileSettings["specificSettings"];
-  };
 }
-
-const defaultSettings = {
-  commonSettings: {},
-  specificSettings: {},
-};
 
 export function WidgetPreview({
   currentProfile,
@@ -37,8 +30,13 @@ export function WidgetPreview({
   isPublicView = false,
   userId,
   initialTrack,
-  optimisticSettings,
 }: WidgetPreviewProps) {
+  const { data: optimisticSettings } = useQuery({
+    queryKey: ["profiles", userId, currentProfile.id],
+    queryFn: () => loadProfile(userId!, selectedWidget, currentProfile.id),
+    initialData: currentProfile,
+  });
+
   console.log("WidgetPreview props:", {
     currentProfile,
     selectedWidget,
@@ -69,7 +67,10 @@ export function WidgetPreview({
     isLoading,
     colorSyncEnabled,
     isReady,
-  } = useDynamicColors(trackToUse, optimisticSettings?.specificSettings || {});
+  } = useDynamicColors(
+    trackToUse,
+    optimisticSettings?.settings?.specificSettings || {}
+  );
 
   useEffect(() => {
     if (currentProfile) {
@@ -139,19 +140,12 @@ export function WidgetPreview({
     }
   }, [currentProfile]);
 
-  useEffect(() => {
-    setPreviewSettings((prevSettings) => ({
-      ...prevSettings,
-      ...optimisticSettings,
-    }));
-  }, [optimisticSettings]);
-
   const commonSettings =
-    optimisticSettings?.commonSettings ||
+    optimisticSettings?.settings?.commonSettings ||
     currentProfile.settings.commonSettings ||
     {};
   const specificSettings =
-    optimisticSettings?.specificSettings ||
+    optimisticSettings?.settings?.specificSettings ||
     currentProfile.settings.specificSettings ||
     {};
 

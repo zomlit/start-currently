@@ -11,6 +11,8 @@ import StyleOptions from "@/components/widget-configurator/StyleOptions";
 import WidgetOptions from "./widget-configurator/WidgetOptions";
 import ChatOptions from "./widget-configurator/ChatOptions";
 import { useOptimisticProfileSettings } from "@/contexts/OptimisticProfileSettingsContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/utils/toast";
 
 type SettingType = "commonSettings" | "specificSettings";
 
@@ -35,11 +37,10 @@ export const WidgetConfiguratorForm = React.memo(
       settings: any
     ) => Promise<any>;
   }) => {
-    const {
-      optimisticProfileSettings,
-      updateProfileSetting,
-      setSupabaseResponse,
-    } = useOptimisticProfileSettings();
+    const { optimisticProfileSettings, updateProfileSetting } =
+      useOptimisticProfileSettings();
+    const queryClient = useQueryClient();
+    const form = useForm();
 
     const currentProfile = useMemo(() => {
       return widgets[selectedWidget]?.profiles.find(
@@ -48,13 +49,13 @@ export const WidgetConfiguratorForm = React.memo(
     }, [widgets, selectedWidget, selectedProfile]);
 
     const { palette, colorSyncEnabled } = useDynamicColors(
-      {} as any, // Type assertion to avoid the error
+      {} as any,
       currentProfile?.settings?.specificSettings || {}
     );
 
-    const form = useForm({
-      defaultValues: currentProfile?.settings || {},
-    });
+    const [previewSettings, setPreviewSettings] = useState<PreviewSettings>(
+      currentProfile?.settings || { commonSettings: {}, specificSettings: {} }
+    );
 
     useEffect(() => {
       if (currentProfile?.settings) {
@@ -71,8 +72,48 @@ export const WidgetConfiguratorForm = React.memo(
       [currentProfile, updateProfileSetting]
     );
 
+    const updateSettingsMutation = useMutation({
+      mutationFn: (data: any) =>
+        updateWidgetSettings(selectedWidget, selectedProfile, data),
+      onMutate: async (newData) => {
+        await queryClient.cancelQueries({
+          queryKey: ["profiles", selectedProfile],
+        });
+        const previousData = queryClient.getQueryData([
+          "profiles",
+          selectedProfile,
+        ]);
+        queryClient.setQueryData(["profiles", selectedProfile], (old: any) => ({
+          ...old,
+          settings: {
+            ...old?.settings,
+            ...newData,
+          },
+        }));
+        return { previousData };
+      },
+      onError: (err, newData, context: any) => {
+        if (context?.previousData) {
+          queryClient.setQueryData(
+            ["profiles", selectedProfile],
+            context.previousData
+          );
+        }
+        console.error("Error updating widget settings:", err);
+        toast.error({
+          title: "Failed to update settings",
+          description: "Please try again later.",
+        });
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["profiles", selectedProfile],
+        });
+      },
+    });
+
     const handleFinalChange = useCallback(
-      (settingType: keyof ProfileSettings, fieldName: string, value: any) => {
+      async (settingType: SettingType, fieldName: string, value: any) => {
         if (!currentProfile) return;
 
         const updatedSettings = {
@@ -83,33 +124,22 @@ export const WidgetConfiguratorForm = React.memo(
           },
         };
 
-        updateWidgetSettings(selectedWidget, selectedProfile, {
-          settings: updatedSettings,
-        })
-          .then((response) => {
-            console.log("Supabase update response:", response);
-            if (response.status === 200) {
-              setSupabaseResponse(response);
-            } else {
-              console.error("Unexpected status code:", response.status);
-            }
-          })
-          .catch((error) => {
-            console.error("Error updating widget settings:", error);
-            setSupabaseResponse({ status: 500, statusText: "Error", error });
+        try {
+          const response = await updateSettingsMutation.mutateAsync({
+            settings: updatedSettings,
           });
+          if (response && response.status === 200) {
+            toast.success({ title: "Settings updated successfully" });
+          } else {
+            console.error("Unexpected response:", response);
+            toast.error({ title: "Failed to update settings" });
+          }
+        } catch (error) {
+          console.error("Error updating widget settings:", error);
+          // Error is now handled in the onError callback of the mutation
+        }
       },
-      [
-        currentProfile,
-        selectedWidget,
-        selectedProfile,
-        updateWidgetSettings,
-        setSupabaseResponse,
-      ]
-    );
-
-    const [previewSettings, setPreviewSettings] = useState<PreviewSettings>(
-      currentProfile?.settings || { commonSettings: {}, specificSettings: {} }
+      [currentProfile, updateSettingsMutation]
     );
 
     const handlePreviewUpdate = useCallback(
@@ -189,13 +219,9 @@ export const WidgetConfiguratorForm = React.memo(
                   </TabsContent>
                   <TabsContent value="chat" className="space-y-4 px-6 py-2">
                     <ChatOptions
-                      form={form}
                       currentProfile={currentProfile}
                       handleProfileChange={handleProfileChange}
                       handleFinalChange={handleFinalChange}
-                      optimisticProfileSettings={optimisticProfileSettings}
-                      updateProfileSetting={updateProfileSetting}
-                      className="min-h-screen"
                     />
                   </TabsContent>
                 </Tabs>

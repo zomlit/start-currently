@@ -7,7 +7,7 @@ export const Footer = () => {
   const { isLoaded } = useUser();
 
   return (
-    <footer className="sticky bottom-0 bg-black/80 backdrop-blur-sm text-white w-full h-footer">
+    <footer className="bg-black/15 backdrop-blur-sm text-white w-full h-footer">
       <div className="mx-auto w-full max-w-screen-xl p-4 py-6 lg:py-8">
         <div className="md:flex md:justify-between">
           <div className="mb-6 md:mb-0">
@@ -23,7 +23,7 @@ export const Footer = () => {
                   }
                 )}
               />
-              <span className="md:ml-0 tracking-widest !text-black dark:!text-white text-white uppercase sm:inline-block prose dark:font-extralight">
+              <span className="md:ml-0 tracking-widest  dark:!text-white uppercase sm:inline-block prose dark:font-extralight">
                 Currently
               </span>
             </Link>
