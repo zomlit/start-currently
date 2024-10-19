@@ -37,16 +37,19 @@ const AppRoute = AppImport.update({
 } as any)
 
 const AppIndexRoute = AppIndexImport.update({
+  id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppTestRoute = AppTestImport.update({
+  id: '/test',
   path: '/test',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppPostsRoute = AppPostsImport.update({
+  id: '/posts',
   path: '/posts',
   getParentRoute: () => AppRoute,
 } as any)
@@ -57,61 +60,73 @@ const AppAuthedRoute = AppAuthedImport.update({
 } as any)
 
 const AppTeampickerIndexRoute = AppTeampickerIndexImport.update({
+  id: '/teampicker/',
   path: '/teampicker/',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppPricingIndexRoute = AppPricingIndexImport.update({
+  id: '/pricing/',
   path: '/pricing/',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppTeampickerBracketIdRoute = AppTeampickerBracketIdImport.update({
+  id: '/teampicker/$bracketId',
   path: '/teampicker/$bracketId',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppSignUpSplatRoute = AppSignUpSplatImport.update({
+  id: '/sign-up/$',
   path: '/sign-up/$',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppSignInSplatRoute = AppSignInSplatImport.update({
+  id: '/sign-in/$',
   path: '/sign-in/$',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppPostsPostIdRoute = AppPostsPostIdImport.update({
+  id: '/$postId',
   path: '/$postId',
   getParentRoute: () => AppPostsRoute,
 } as any)
 
 const AppCheckoutSuccessRoute = AppCheckoutSuccessImport.update({
+  id: '/checkout/success',
   path: '/checkout/success',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppCheckoutProductIdRoute = AppCheckoutProductIdImport.update({
+  id: '/checkout/$productId',
   path: '/checkout/$productId',
   getParentRoute: () => AppRoute,
 } as any)
 
 const AppAuthedWidgetsRoute = AppAuthedWidgetsImport.update({
+  id: '/widgets',
   path: '/widgets',
   getParentRoute: () => AppAuthedRoute,
 } as any)
 
 const AppAuthedDashboardRoute = AppAuthedDashboardImport.update({
+  id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AppAuthedRoute,
 } as any)
 
 const AppAuthedBunRoute = AppAuthedBunImport.update({
+  id: '/bun',
   path: '/bun',
   getParentRoute: () => AppAuthedRoute,
 } as any)
 
 const AppPostsPostIdDeepRoute = AppPostsPostIdDeepImport.update({
+  id: '/posts_/$postId/deep',
   path: '/posts/$postId/deep',
   getParentRoute: () => AppRoute,
 } as any)
