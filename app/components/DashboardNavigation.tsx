@@ -97,7 +97,7 @@ const DashboardNavigation: React.FC = () => {
               to="/dashboard"
               className="group flex items-center gap-x-3 text-lg font-semibold text-gray-800 transition-transform dark:text-gray-200"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem]">
+              <div className="spring-bounce-60 spring-duration-300 flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem]">
                 <CircleDot
                   className={cn("w-8 fill-violet-500", {
                     "animate-spin": !isLoaded,
@@ -173,7 +173,7 @@ const DashboardNavigation: React.FC = () => {
         >
           <span className="sr-only">toggle sidebar</span>
           <span
-            className={`h-0.5 w-4 rounded-full bg-gray-300 transition-transform duration-100 ease-linear ${
+            className={`h-0.5 w-4 rounded-full bg-gray-300 transition-transform duration-100 ease-linear  ${
               sidebarToggled ? "translate-y-1.5 rotate-[40deg]" : ""
             }`}
           />

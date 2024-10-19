@@ -4,7 +4,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  server: { preset: "bun" },
+  server: { preset: "node-server" },
   vite: {
     plugins: [
       tsConfigPaths({

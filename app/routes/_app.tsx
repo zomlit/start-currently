@@ -34,3 +34,7 @@ function LayoutComponent() {
     </React.StrictMode>
   );
 }
+
+export default function AppLayout() {
+  return <div className="pr-scrollbar">{/* Your app content */}</div>;
+}

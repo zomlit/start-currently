@@ -259,11 +259,11 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
               >
                 <SelectTrigger
                   id="profile"
-                  className="w-full bg-white dark:bg-white/10 text-gray-900 dark:text-gray-100 sm:w-[200px] focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+                  className="w-[200px] bg-white dark:bg-white/10 text-gray-900 dark:text-gray-100 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
                 >
                   <SelectValue placeholder="Select a profile" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-[200px]">
                   {widgets[selectedWidget].profiles.map(
                     (profile: { id: string; name: string }) => (
                       <SelectItem key={profile.id} value={profile.id}>
