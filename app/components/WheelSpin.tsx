@@ -376,6 +376,12 @@ const Wheelspin: React.FC = () => {
                 fontSize={12}
                 textDistance={60}
                 perpendicularText={false}
+                pointerProps={{
+                    style: {
+                        transform: 'scale(0.5)',
+                        transformOrigin: 'left bottom',
+                    }
+                }}
               />
             </div>
 
