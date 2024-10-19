@@ -16,6 +16,7 @@ import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppTestImport } from './routes/_app/test'
 import { Route as AppPostsImport } from './routes/_app/posts'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
+import { Route as AppWheelspinIndexImport } from './routes/_app/wheelspin/index'
 import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
 import { Route as AppPricingIndexImport } from './routes/_app/pricing/index'
 import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
@@ -56,6 +57,12 @@ const AppPostsRoute = AppPostsImport.update({
 
 const AppAuthedRoute = AppAuthedImport.update({
   id: '/_authed',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppWheelspinIndexRoute = AppWheelspinIndexImport.update({
+  id: '/wheelspin/',
+  path: '/wheelspin/',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -247,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeampickerIndexImport
       parentRoute: typeof AppImport
     }
+    '/_app/wheelspin/': {
+      id: '/_app/wheelspin/'
+      path: '/wheelspin'
+      fullPath: '/wheelspin'
+      preLoaderRoute: typeof AppWheelspinIndexImport
+      parentRoute: typeof AppImport
+    }
     '/_app/posts/$postId/deep': {
       id: '/_app/posts/$postId/deep'
       path: '/posts/$postId/deep'
@@ -299,6 +313,7 @@ interface AppRouteChildren {
   AppTeampickerBracketIdRoute: typeof AppTeampickerBracketIdRoute
   AppPricingIndexRoute: typeof AppPricingIndexRoute
   AppTeampickerIndexRoute: typeof AppTeampickerIndexRoute
+  AppWheelspinIndexRoute: typeof AppWheelspinIndexRoute
   AppPostsPostIdDeepRoute: typeof AppPostsPostIdDeepRoute
 }
 
@@ -314,6 +329,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeampickerBracketIdRoute: AppTeampickerBracketIdRoute,
   AppPricingIndexRoute: AppPricingIndexRoute,
   AppTeampickerIndexRoute: AppTeampickerIndexRoute,
+  AppWheelspinIndexRoute: AppWheelspinIndexRoute,
   AppPostsPostIdDeepRoute: AppPostsPostIdDeepRoute,
 }
 
@@ -335,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/pricing': typeof AppPricingIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
+  '/wheelspin': typeof AppWheelspinIndexRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
@@ -354,6 +371,7 @@ export interface FileRoutesByTo {
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/pricing': typeof AppPricingIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
+  '/wheelspin': typeof AppWheelspinIndexRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
@@ -375,6 +393,7 @@ export interface FileRoutesById {
   '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/_app/pricing/': typeof AppPricingIndexRoute
   '/_app/teampicker/': typeof AppTeampickerIndexRoute
+  '/_app/wheelspin/': typeof AppWheelspinIndexRoute
   '/_app/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
@@ -396,6 +415,7 @@ export interface FileRouteTypes {
     | '/teampicker/$bracketId'
     | '/pricing'
     | '/teampicker'
+    | '/wheelspin'
     | '/posts/$postId/deep'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -414,6 +434,7 @@ export interface FileRouteTypes {
     | '/teampicker/$bracketId'
     | '/pricing'
     | '/teampicker'
+    | '/wheelspin'
     | '/posts/$postId/deep'
   id:
     | '__root__'
@@ -433,6 +454,7 @@ export interface FileRouteTypes {
     | '/_app/teampicker/$bracketId'
     | '/_app/pricing/'
     | '/_app/teampicker/'
+    | '/_app/wheelspin/'
     | '/_app/posts/$postId/deep'
   fileRoutesById: FileRoutesById
 }
@@ -474,6 +496,7 @@ export const routeTree = rootRoute
         "/_app/teampicker/$bracketId",
         "/_app/pricing/",
         "/_app/teampicker/",
+        "/_app/wheelspin/",
         "/_app/posts/$postId/deep"
       ]
     },
@@ -543,6 +566,10 @@ export const routeTree = rootRoute
     },
     "/_app/teampicker/": {
       "filePath": "_app/teampicker/index.tsx",
+      "parent": "/_app"
+    },
+    "/_app/wheelspin/": {
+      "filePath": "_app/wheelspin/index.tsx",
       "parent": "/_app"
     },
     "/_app/posts/$postId/deep": {
