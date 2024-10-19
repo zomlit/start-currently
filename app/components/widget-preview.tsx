@@ -25,16 +25,11 @@ interface WidgetPreviewProps {
 export function WidgetPreview({
   currentProfile,
   selectedWidget,
-  isPublicView = false,
+  isPublicView,
   userId,
   initialTrack,
+  optimisticSettings = defaultSettings,
 }: WidgetPreviewProps) {
-  const { data: optimisticSettings } = useQuery({
-    queryKey: ["profiles", userId, currentProfile.id],
-    queryFn: () => loadProfile(userId!, selectedWidget, currentProfile.id),
-    initialData: currentProfile,
-  });
-
   console.log("WidgetPreview props:", {
     currentProfile,
     selectedWidget,
@@ -51,7 +46,6 @@ export function WidgetPreview({
   const [previewSettings, setPreviewSettings] = useState(
     currentProfile.settings
   );
-  const [isProfilesLoading, setIsProfilesLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(
     initialTrack || null
   );
@@ -69,12 +63,6 @@ export function WidgetPreview({
     trackToUse,
     optimisticSettings?.settings?.specificSettings || {}
   );
-
-  useEffect(() => {
-    if (currentProfile) {
-      setIsProfilesLoading(false);
-    }
-  }, [currentProfile]);
 
   useEffect(() => {
     if (trackToUse?.album?.images?.[0]?.url) {
@@ -192,17 +180,6 @@ export function WidgetPreview({
     console.log("Rendering preview for widget:", selectedWidget);
     console.log("isLoading:", isLoading);
     console.log("trackToUse:", trackToUse);
-
-    if (isProfilesLoading) {
-      return (
-        <div className="flex justify-center items-center h-full">
-          <Spinner
-            className="w-8 fill-violet-300 text-white"
-            message="Loading profiles..."
-          />
-        </div>
-      );
-    }
 
     if (isLoading) {
       return (

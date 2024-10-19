@@ -14,7 +14,6 @@
 }
 
 body {
-  background-color: var(--background-color);
   color: var(--text-color);
   font-family:
     "Sofia Sans Condensed Variable",
