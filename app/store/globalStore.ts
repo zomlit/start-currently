@@ -120,7 +120,7 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
   setUser: (user) => set({ user }),
   setUserId: (userId) => {
     const currentUser = get().user;
-    console.log("currentUser", currentUser);
+
     if (currentUser) {
       set({ user: { ...currentUser, id: userId } });
     } else {

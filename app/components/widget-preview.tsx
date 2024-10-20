@@ -29,16 +29,7 @@ export function WidgetPreview({
   initialTrack,
   optimisticSettings = defaultSettings,
 }: WidgetPreviewProps) {
-  console.log("WidgetPreview props:", {
-    currentProfile,
-    selectedWidget,
-    isPublicView,
-    userId,
-    initialTrack,
-  });
-
   if (!currentProfile) {
-    console.error("currentProfile is undefined in WidgetPreview");
     return <div>Error: Profile data is missing</div>;
   }
 
@@ -72,7 +63,6 @@ export function WidgetPreview({
           .getPalette()
           .then((palette) => {
             // Handle the palette
-            console.log("Palette generated:", palette);
           })
           .catch((err) =>
             console.error("Error generating color palette:", err)
@@ -175,9 +165,6 @@ export function WidgetPreview({
 
   const renderPreview = () => {
     const { commonSettings, specificSettings } = previewSettings;
-    console.log("Rendering preview for widget:", selectedWidget);
-    console.log("isLoading:", isLoading);
-    console.log("trackToUse:", trackToUse);
 
     if (isLoading) {
       return (
@@ -190,7 +177,6 @@ export function WidgetPreview({
 
     try {
       if (selectedWidget === "visualizer") {
-        console.log("Rendering SkinRounded with track:", trackToUse);
         return (
           <SkinRounded
             track={trackToUse}
@@ -259,9 +245,6 @@ export function WidgetPreview({
       );
     }
   };
-
-  console.log("Final style:", style);
-  console.log("Rendering WidgetPreview");
 
   return (
     <div

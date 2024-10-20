@@ -77,9 +77,6 @@ export const ElysiaSessionProvider: React.FC<{
   const elysiaWsUrl = process.env.NEXT_PUBLIC_ELYSIA_WS_URL;
 
   useEffect(() => {
-    console.log("ElysiaSessionProvider mounted");
-    console.log("isServerAvailable:", isServerAvailable);
-    console.log("userId:", userId);
     if (!socketRef.current && isServerAvailable) {
       const newSocket = io(elysiaWsUrl || "http://localhost:3000", {
         reconnection: true,
@@ -220,7 +217,6 @@ export const ElysiaSessionProvider: React.FC<{
     setIsExpanded,
   };
 
-  console.log("Rendering ElysiaSessionProvider", value);
   return (
     <ElysiaSessionContext.Provider value={value}>
       {children}
