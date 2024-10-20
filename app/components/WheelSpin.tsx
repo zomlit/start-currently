@@ -79,6 +79,60 @@ const presets: PresetData = {
   ],
 };
 
+const confettiTypes = {
+  Basic: {
+    particleCount: 50,
+    spread: 360,
+    origin: { y: 0.6 },
+  },
+
+  Fireworks: {
+    duration: 5 * 1000,
+    animationEnd: 0,
+    defaults: { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 },
+  },
+  "Side Cannons": {
+    duration: 3 * 1000,
+    particleCount: 2,
+    angle: 60,
+    spread: 55,
+    startVelocity: 60,
+    colors: ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"],
+  },
+  Stars: {
+    duration: 200,
+    particleCount: 40,
+    spread: 360,
+    ticks: 50,
+    gravity: 0,
+    decay: 0.94,
+    startVelocity: 30,
+    colors: ["#FFE400", "#FFBD00", "#E89400", "#FFCA6C", "#FDFFB8"],
+    shapes: ["star"],
+  },
+  "Custom Shapes": {
+    duration: 200,
+    particleCount: 30,
+    spread: 360,
+    ticks: 60,
+    gravity: 0,
+    decay: 0.96,
+    startVelocity: 20,
+    scalar: 2,
+  },
+  Emoji: {
+    duration: 200,
+    particleCount: 30,
+    spread: 360,
+    ticks: 60,
+    gravity: 0,
+    decay: 0.96,
+    startVelocity: 20,
+    scalar: 2,
+    shapes: ["🦄"],
+  },
+};
+
 const WheelSpin: React.FC = () => {
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
@@ -98,6 +152,8 @@ const WheelSpin: React.FC = () => {
   const [isTwitchListening, setIsTwitchListening] = useState<boolean>(false);
   const clientRef = useRef<tmi.Client | null>(null);
   const [isTwitchPreset, setIsTwitchPreset] = useState<boolean>(false);
+  const [confettiType, setConfettiType] =
+    useState<keyof typeof confettiTypes>("Basic");
 
   const truncateText = (text: string, maxLength: number = 20): string => {
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
@@ -245,33 +301,80 @@ const WheelSpin: React.FC = () => {
   }, [selectedPreset, customPreset]);
 
   const triggerConfetti = () => {
-    const end = Date.now() + 3 * 1000;
-    const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
+    const config = confettiTypes[confettiType];
 
-    const frame = () => {
-      if (Date.now() > end) return;
+    switch (confettiType) {
+      case "Basic":
 
-      confetti({
-        particleCount: 2,
-        angle: 60,
-        spread: 55,
-        startVelocity: 60,
-        origin: { x: 0, y: 0.5 },
-        colors: colors,
-      });
-      confetti({
-        particleCount: 2,
-        angle: 120,
-        spread: 55,
-        startVelocity: 60,
-        origin: { x: 1, y: 0.5 },
-        colors: colors,
-      });
+      case "Fireworks":
+        const animationEnd = Date.now() + config.duration;
+        const defaults = config.defaults;
 
-      requestAnimationFrame(frame);
-    };
+        const randomInRange = (min: number, max: number) =>
+          Math.random() * (max - min) + min;
 
-    frame();
+        const interval = setInterval(() => {
+          const timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 50 * (timeLeft / config.duration);
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+          });
+        }, 250);
+        break;
+      case "Side Cannons":
+        const end = Date.now() + config.duration;
+
+        const frame = () => {
+          if (Date.now() > end) return;
+
+          confetti({
+            ...config,
+            origin: { x: 0, y: 0.5 },
+          });
+          confetti({
+            ...config,
+            origin: { x: 1, y: 0.5 },
+          });
+
+          requestAnimationFrame(frame);
+        };
+
+        frame();
+        break;
+      case "Stars":
+      case "Custom Shapes":
+      case "Emoji":
+        const shoot = () => {
+          confetti({
+            ...config,
+            shapes: config.shapes,
+          });
+
+          confetti({
+            ...config,
+            particleCount: 10,
+            scalar: config.scalar / 2,
+            shapes: ["circle"],
+          });
+        };
+
+        setTimeout(shoot, 0);
+        setTimeout(shoot, 100);
+        setTimeout(shoot, 200);
+        break;
+    }
   };
 
   return (
@@ -400,6 +503,25 @@ const WheelSpin: React.FC = () => {
                   <Label htmlFor="show-previous-picks">
                     Show previous picks
                   </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Select
+                    onValueChange={(value) =>
+                      setConfettiType(value as keyof typeof confettiTypes)
+                    }
+                    value={confettiType}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select confetti type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(confettiTypes).map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               {showPreviousPicks && previousPicks.length > 0 && (
