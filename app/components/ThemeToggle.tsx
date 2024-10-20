@@ -1,19 +1,14 @@
 import { Sun, Moon, Computer } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useTheme } from "./ThemeProvider";
+import { useEffect } from "react";
+import { useThemeStore } from "@/store/themeStore";
 
 type Theme = "light" | "dark" | "system";
 
 export function ModeToggle() {
-  const { theme, setTheme } = useTheme();
-  const [selectedTheme, setSelectedTheme] = useState<Theme>("system");
+  const { theme, setTheme } = useThemeStore();
 
-  useEffect(() => {
+  const handleChange = (selectedTheme: Theme) => {
     setTheme(selectedTheme);
-  }, [selectedTheme, setTheme]);
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedTheme(event.target.value as Theme);
   };
 
   return (
@@ -23,11 +18,7 @@ export function ModeToggle() {
           className="absolute w-6 h-6 bg-white rounded-full shadow transition-transform spring-bounce-40 spring-duration-300 duration-300 ease-in-out"
           style={{
             transform: `translateX(${
-              selectedTheme === "light"
-                ? "0"
-                : selectedTheme === "dark"
-                  ? "100%"
-                  : "200%"
+              theme === "light" ? "0" : theme === "dark" ? "100%" : "200%"
             })`,
           }}
         />
@@ -36,7 +27,7 @@ export function ModeToggle() {
             key={value}
             htmlFor={value}
             className={`relative z-10 flex items-center justify-center w-6 h-6 rounded-full cursor-pointer transition-colors duration-300 ${
-              selectedTheme === value ? "text-gray-800" : "text-gray-400"
+              theme === value ? "text-gray-800" : "text-gray-400"
             }`}
           >
             <input
@@ -44,8 +35,8 @@ export function ModeToggle() {
               id={value}
               name="theme"
               value={value}
-              checked={selectedTheme === value}
-              onChange={handleChange}
+              checked={theme === value}
+              onChange={() => handleChange(value as Theme)}
               className="sr-only"
             />
             {value === "light" && <Sun className="h-4 w-4" />}

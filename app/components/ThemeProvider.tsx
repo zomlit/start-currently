@@ -40,19 +40,12 @@ export function ThemeProvider({
       root.classList.add(theme);
     }
 
-    // Apply the primary color directly as a hex value
     root.style.setProperty("--primary", primaryColor);
     root.style.setProperty(
       "--primary-foreground",
       getContrastColor(primaryColor)
     );
   }, [theme, primaryColor]);
-
-  useEffect(() => {
-    if (defaultTheme && theme === "system") {
-      setTheme(defaultTheme);
-    }
-  }, [defaultTheme, theme, setTheme]);
 
   const value = {
     theme,
