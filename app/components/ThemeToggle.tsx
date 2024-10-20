@@ -1,15 +1,24 @@
-import { Sun, Moon, Computer } from "lucide-react";
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useThemeStore } from "@/store/themeStore";
+import { Sun, Moon, Computer } from "lucide-react";
 
 type Theme = "light" | "dark" | "system";
 
 export function ModeToggle() {
   const { theme, setTheme } = useThemeStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleChange = (selectedTheme: Theme) => {
     setTheme(selectedTheme);
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="relative flex cursor-default select-none justify-between items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors">
@@ -39,9 +48,11 @@ export function ModeToggle() {
               onChange={() => handleChange(value as Theme)}
               className="sr-only"
             />
-            {value === "light" && <Sun className="h-4 w-4" />}
-            {value === "dark" && <Moon className="h-4 w-4" />}
-            {value === "system" && <Computer className="h-4 w-4" />}
+            <span suppressHydrationWarning>
+              {value === "light" && <Sun className="h-4 w-4" />}
+              {value === "dark" && <Moon className="h-4 w-4" />}
+              {value === "system" && <Computer className="h-4 w-4" />}
+            </span>
           </label>
         ))}
       </div>

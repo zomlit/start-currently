@@ -9,14 +9,7 @@ import React, {
 import { useElysiaSession } from "@/hooks/useElysiaSession";
 import { useCombinedStore } from "@/store";
 import { useAuth } from "@clerk/tanstack-start";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronDown,
-  ChevronUp,
-  Unplug,
-  Plug2,
-  AlertTriangle,
-} from "lucide-react";
+
 import { supabase } from "@/utils/supabase/client";
 import type { Database } from "@/types/supabase";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";

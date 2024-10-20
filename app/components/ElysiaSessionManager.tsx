@@ -1,13 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronDown,
-  ChevronUp,
-  Unplug,
-  Plug2,
-  AlertTriangle,
-} from "lucide-react";
+// import {
+//   ChevronDown,
+//   ChevronUp,
+//   Unplug,
+//   Plug2,
+//   AlertTriangle,
+// } from "lucide-react";
 // import { IconBrandSpotify, IconBrandTwitch } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";
@@ -66,15 +66,6 @@ export const ElysiaSessionManager: React.FC = () => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center space-x-2">
-          {isServerAvailable ? (
-            isSessionActive ? (
-              <Plug2 className="h-3 w-3 text-emerald-400" />
-            ) : (
-              <Unplug className="h-3 w-3 text-yellow-500" />
-            )
-          ) : (
-            <AlertTriangle className="h-3 w-3 text-red-500" />
-          )}
           <span>
             Elysia:{" "}
             {isServerAvailable
@@ -86,11 +77,11 @@ export const ElysiaSessionManager: React.FC = () => {
         </div>
         {isApiUsageHigh && (
           <div className="flex items-center text-red-500">
-            <AlertTriangle className="mr-1 h-3 w-3" />
+            {/* <AlertTriangle className="mr-1 h-3 w-3" /> */}
             <span>High API Usage</span>
           </div>
         )}
-        {isExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+        {/* {isExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />} */}
       </div>
       <AnimatePresence>
         {isExpanded && (

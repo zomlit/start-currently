@@ -516,7 +516,7 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
         email: email,
         firstName: firstName,
         lastName: lastName,
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(), // Ensure this is always set
       };
 
       console.log(
