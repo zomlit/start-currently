@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import Vibrant from "node-vibrant";
+import * as Vibrant from "node-vibrant";
 import { SpotifyTrack } from "@/types/spotify";
 
 export function useDynamicColors(track: SpotifyTrack | null, settings: any) {
-  const [palette, setPalette] = useState<any>(null);
+  const [palette, setPalette] = useState<Vibrant.Palette | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
 

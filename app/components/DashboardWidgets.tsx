@@ -184,11 +184,8 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
       if (userId) {
         setIsLoading(true);
         try {
-          console.log("Fetching profiles for user:", userId);
           const data = await loadProfiles(userId);
-          console.log("Raw profile data:", data);
           const loadedWidgets = transformProfilesToWidgets(data);
-          console.log("Transformed widgets:", loadedWidgets);
 
           dispatch({ type: "SET_WIDGETS", payload: loadedWidgets });
 
@@ -206,8 +203,6 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
               payload: newSelectedProfile,
             });
           }
-
-          console.log("Profiles loaded:", loadedWidgets);
         } catch (error) {
           console.error("Error loading profiles:", error);
           toast.error({

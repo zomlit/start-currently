@@ -42,14 +42,6 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
   isPublicView = false,
   style,
 }) => {
-  console.log("SkinRounded props:", {
-    track,
-    commonSettings,
-    specificSettings,
-    isPublicView,
-    style,
-  });
-
   try {
     const { palette, colorSyncEnabled } = useDynamicColors(
       track,

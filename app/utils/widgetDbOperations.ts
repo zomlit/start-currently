@@ -64,7 +64,6 @@ const ensureDefaultProfiles = async (userId: string) => {
 export const loadProfiles = async (
   userId: string
 ): Promise<WidgetProfile[]> => {
-  console.log("Fetching profiles from Supabase for user:", userId);
   let { data, error } = await supabase
     .from("Profiles")
     .select("*")
@@ -74,8 +73,6 @@ export const loadProfiles = async (
     console.error("Supabase error:", error);
     throw error;
   }
-
-  console.log("Profiles fetched from Supabase:", data);
 
   // If no profiles are found, create default profiles
   if (!data || data.length === 0) {
