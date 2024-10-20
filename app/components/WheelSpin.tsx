@@ -85,7 +85,12 @@ const confettiTypes = {
     spread: 360,
     origin: { y: 0.6 },
   },
-
+  "Random Direction": {
+    particleCount: 50,
+    angle: () => Math.random() * 360,
+    spread: 360,
+    origin: { x: 0.5, y: 0.5 },
+  },
   Fireworks: {
     duration: 5 * 1000,
     animationEnd: 0,
@@ -305,7 +310,9 @@ const WheelSpin: React.FC = () => {
 
     switch (confettiType) {
       case "Basic":
-
+      case "Random Direction":
+        confetti(config);
+        break;
       case "Fireworks":
         const animationEnd = Date.now() + config.duration;
         const defaults = config.defaults;
