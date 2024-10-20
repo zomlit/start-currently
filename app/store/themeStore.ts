@@ -89,11 +89,7 @@ export const useThemeStore = create<ThemeStore>()(
       theme: "system",
       colors: lightColors,
       primaryColor: "#6D28D9",
-      setTheme: (theme) =>
-        set((state) => ({
-          theme,
-          colors: theme === "dark" ? darkColors : lightColors,
-        })),
+      setTheme: (theme) => set({ theme }),
       setPrimaryColor: (color) =>
         set((state) => ({
           primaryColor: color,
