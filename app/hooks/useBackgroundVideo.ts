@@ -13,7 +13,16 @@ export const useBackgroundVideo = (trackId: string | undefined) => {
     }
   }, [videoLink, isLoading, isError, trackId]);
 
-  if (isError) console.error("useBackgroundVideo ERROR:", error);
+  if (isError) {
+    console.error("useBackgroundVideo ERROR:", error);
+    console.error("Error details:", {
+      trackId,
+      isLoading,
+      isError,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  }
 
   return backgroundVideo;
 };

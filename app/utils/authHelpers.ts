@@ -1,9 +1,7 @@
 import { AuthApiError } from "@supabase/supabase-js";
-import { getAuthenticatedClient } from "@/utils/supabase/client";
+import { supabase } from "@/utils/supabase/client";
 
 export const ensureUserProfile = async (username: string) => {
-  const supabase = getAuthenticatedClient();
-
   try {
     // Fetch the current session
     const {

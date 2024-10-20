@@ -25,7 +25,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
     lastServerCheckAttempt.current = now;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_ELYSIA_API_URL;
+      const apiUrl = import.meta.env.VITE_PUBLIC_ELYSIA_API_URL;
       if (!apiUrl) {
         console.warn(
           "NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set"
@@ -100,7 +100,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
 
     try {
       const clerkToken = await getValidClerkToken();
-      const apiUrl = process.env.NEXT_PUBLIC_ELYSIA_API_URL;
+      const apiUrl = import.meta.env.VITE_PUBLIC_ELYSIA_API_URL;
 
       if (!apiUrl) {
         throw new Error(
@@ -166,7 +166,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
     console.log("Attempting to stop session");
     try {
       const clerkToken = await getValidClerkToken();
-      const apiUrl = process.env.NEXT_PUBLIC_ELYSIA_API_URL;
+      const apiUrl = import.meta.env.VITE_PUBLIC_ELYSIA_API_URL;
       if (!apiUrl) {
         throw new Error(
           "NEXT_PUBLIC_ELYSIA_API_URL environment variable is not set"

@@ -51,7 +51,10 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
   });
 
   try {
-    const { palette, colorSyncEnabled } = useDynamicColors(track, specificSettings);
+    const { palette, colorSyncEnabled } = useDynamicColors(
+      track,
+      specificSettings
+    );
     const videoLink = useBackgroundVideo(track?.id);
 
     const [isVideoAvailable, setIsVideoAvailable] = useState(false);
@@ -83,7 +86,9 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
       }
     }, [videoLink]);
 
-    const handleVideoLoad = (event: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const handleVideoLoad = (
+      event: React.SyntheticEvent<HTMLVideoElement, Event>
+    ) => {
       const video = event.currentTarget;
       setIsVideoTaller(video.videoHeight > video.videoWidth);
       setVideoError(null);
@@ -107,7 +112,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
       backgroundColor:
         specificSettings?.colorSync && palette?.DarkVibrant
           ? `${palette.DarkVibrant.hex}${Math.round(
-              (specificSettings?.backgroundOpacity || 0.6) * 255,
+              (specificSettings?.backgroundOpacity || 0.6) * 255
             )
               .toString(16)
               .padStart(2, "0")}`
@@ -120,12 +125,16 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
           ? palette.DarkVibrant.hex
           : commonSettings?.borderColor || "transparent",
       borderWidth: commonSettings?.borderWidth || 0,
-      borderStyle: (commonSettings?.borderStyle as React.CSSProperties["borderStyle"]) || "none",
+      borderStyle:
+        (commonSettings?.borderStyle as React.CSSProperties["borderStyle"]) ||
+        "none",
       borderRadius: `${commonSettings?.borderRadius || 0}px`,
       padding: `${commonSettings?.padding || 0}px`,
       lineHeight: commonSettings?.lineHeight || "normal",
       letterSpacing: `${commonSettings?.letterSpacing || 0}px`,
-      textAlign: (commonSettings?.textAlign as React.CSSProperties["textAlign"]) || "left",
+      textAlign:
+        (commonSettings?.textAlign as React.CSSProperties["textAlign"]) ||
+        "left",
       transformOrigin: "top left",
     };
 
@@ -183,7 +192,9 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
             {(!specificSettings?.hideOnDisabled || track?.isPlaying) && (
               <motion.div
                 key={track?.id || "default"}
-                style={{ fontWeight: commonSettings?.fontWeight + "200" || "normal" }}
+                style={{
+                  fontWeight: commonSettings?.fontWeight + "200" || "normal",
+                }}
                 className="relative z-0 transition"
                 variants={containerVariants}
                 initial="hidden"
@@ -211,9 +222,17 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                   transition={{ duration: 0.3 }}
                 >
                   <div
-                    className={cn("flex select-none flex-col", `gap-${commonSettings?.gap || 0}`)}
+                    className={cn(
+                      "flex select-none flex-col",
+                      `gap-${commonSettings?.gap || 0}`
+                    )}
                   >
-                    <div className={cn("flex w-full", `gap-${commonSettings?.gap || 0}`)}>
+                    <div
+                      className={cn(
+                        "flex w-full",
+                        `gap-${commonSettings?.gap || 0}`
+                      )}
+                    >
                       <div className="relative aspect-square h-full">
                         <div className="relative z-40">
                           <div className="aspect-square h-full min-w-[114px]">
@@ -232,7 +251,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                       crossOrigin="anonymous"
                                       className={cn(
                                         "absolute z-20 h-full w-full object-cover",
-                                        isVideoTaller && "animate-pan-video",
+                                        isVideoTaller && "animate-pan-video"
                                       )}
                                       style={{
                                         opacity: 1,
@@ -245,8 +264,13 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                       onLoadedMetadata={handleVideoLoad}
                                       onError={handleVideoError}
                                     >
-                                      <source ref={sourceRef} type="video/mp4" src={videoLink} />
-                                      Your browser does not support the video tag.
+                                      <source
+                                        ref={sourceRef}
+                                        type="video/mp4"
+                                        src={videoLink}
+                                      />
+                                      Your browser does not support the video
+                                      tag.
                                     </motion.video>
                                   )}
                                 {!isVideoAvailable &&
@@ -287,7 +311,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                       <div
                         className={cn(
                           "z-0 flex w-full min-w-0 flex-col",
-                          `gap-${commonSettings?.gap || 0}`,
+                          `gap-${commonSettings?.gap || 0}`
                         )}
                       >
                         {specificSettings?.canvasEnabled &&
@@ -295,7 +319,9 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                           videoLink && (
                             <DynamicBackground
                               videoLink={videoLink}
-                              opacity={specificSettings?.backgroundCanvasOpacity}
+                              opacity={
+                                specificSettings?.backgroundCanvasOpacity
+                              }
                             />
                           )}
                         <div
@@ -303,7 +329,8 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                           style={{
                             backgroundColor: specificSettings?.colorSync
                               ? palette?.DarkVibrant?.hex
-                              : commonSettings?.backgroundColor || "transparent",
+                              : commonSettings?.backgroundColor ||
+                                "transparent",
                             borderRadius: `${commonSettings?.borderRadius || 0}px`,
                           }}
                         >
@@ -314,9 +341,14 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                               fontWeight: "600",
                             }}
                           >
-                            {track?.title || "No track playing"}
+                            <span className="truncate ">
+                              {track?.title || "No track playing"}
+                            </span>
                           </p>
-                          <p className="artist-name relative z-10 truncate" style={textStyle}>
+                          <p
+                            className="artist-name relative z-10 truncate"
+                            style={textStyle}
+                          >
                             {track?.artist || "Artist N/A"}
                           </p>
                           {specificSettings?.micEnabled && (
@@ -332,7 +364,8 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                           style={{
                             backgroundColor: specificSettings?.colorSync
                               ? palette?.DarkVibrant?.hex
-                              : commonSettings?.backgroundColor || "transparent",
+                              : commonSettings?.backgroundColor ||
+                                "transparent",
                             borderRadius: `${commonSettings?.borderRadius || 0}px`,
                           }}
                         >
@@ -357,7 +390,8 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                         backgroundColor:
                           specificSettings?.colorSync && palette?.LightMuted
                             ? palette.LightMuted.hex
-                            : specificSettings?.progressBarBackgroundColor || "transparent",
+                            : specificSettings?.progressBarBackgroundColor ||
+                              "transparent",
                       }}
                     >
                       <div
@@ -367,7 +401,8 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                           backgroundColor:
                             specificSettings?.colorSync && palette?.Vibrant
                               ? palette.Vibrant.hex
-                              : specificSettings?.progressBarForegroundColor || "transparent",
+                              : specificSettings?.progressBarForegroundColor ||
+                                "transparent",
                         }}
                       />
                     </div>
@@ -385,9 +420,14 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
   }
 };
 
-function getFontWeight(baseFontWeight: string | number | undefined, increment: number): number {
+function getFontWeight(
+  baseFontWeight: string | number | undefined,
+  increment: number
+): number {
   const baseWeight =
-    typeof baseFontWeight === "number" ? baseFontWeight : parseInt(baseFontWeight || "400", 10);
+    typeof baseFontWeight === "number"
+      ? baseFontWeight
+      : parseInt(baseFontWeight || "400", 10);
 
   const newWeight = Math.min(Math.max(baseWeight + increment, 100), 900);
   return newWeight - (newWeight % 100);

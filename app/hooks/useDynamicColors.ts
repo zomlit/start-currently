@@ -12,9 +12,10 @@ export function useDynamicColors(track: SpotifyTrack | null, settings: any) {
   const colorSyncEnabled = colorSyncSetting && hasTrackImage;
 
   useEffect(() => {
-    if (colorSyncEnabled && track?.artwork) {
+    const currentArtwork = track?.artwork;
+    if (colorSyncEnabled && currentArtwork) {
       setIsLoading(true);
-      Vibrant.from(track.artwork)
+      Vibrant.from(currentArtwork)
         .getPalette()
         .then((extractedPalette) => {
           setPalette(extractedPalette);
@@ -31,7 +32,7 @@ export function useDynamicColors(track: SpotifyTrack | null, settings: any) {
       setIsReady(true);
       setPalette(null);
     }
-  }, [track, colorSyncEnabled]);
+  }, [track?.artwork, colorSyncEnabled]);
 
   return { palette, isLoading, colorSyncEnabled, isReady };
 }

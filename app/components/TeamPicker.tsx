@@ -72,7 +72,7 @@ import {
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/utils/supabase/client";
 import { toast } from "@/utils/toast";
 import DashboardNavigation from "./DashboardNavigation";
 
@@ -168,7 +168,6 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
   initialBracketId,
   isStandalone = false,
 }) => {
-  const supabase = useSupabase();
   const { user, isLoaded } = useUser();
   const queryClient = useQueryClient();
   const [captains, setCaptains] = useState([]);
@@ -696,7 +695,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/api/rocket-league/?platform=epic&username=${encodeURIComponent(username)}`
+        `${import.meta.env.VITE_PUBLIC_SITE_URL}/api/rocket-league/?platform=epic&username=${encodeURIComponent(username)}`
       );
       console.log("API response status:", response.status);
 

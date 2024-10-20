@@ -10,10 +10,9 @@ import { SpotifyTrack } from "@/types/spotify";
 import { Spinner } from "@/components/ui/spinner";
 
 import type { Database } from "@/types/supabase";
-import { useSupabase } from "@/hooks/useSupabase";
 import { useQuery } from "@tanstack/react-query";
 import { loadProfile } from "@/utils/widgetDbOperations";
-
+import { supabase } from "@/utils/supabase/client";
 interface WidgetPreviewProps {
   currentProfile: WidgetProfile;
   selectedWidget: WidgetType;
@@ -50,7 +49,6 @@ export function WidgetPreview({
     initialTrack || null
   );
   const { lastPlayedTrack } = useLastPlayedTrack(userId || "");
-  const supabase = useSupabase();
 
   const trackToUse = currentTrack || lastPlayedTrack || null;
 

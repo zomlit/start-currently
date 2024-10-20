@@ -12,7 +12,7 @@ import { Container } from "@/components/layout/Container";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Spinner } from "@/components/ui/spinner";
 import { RANK_ORDER, sortPlayersByRank } from "@/utils/rankUtils";
-import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/utils/supabase/client";
 
 interface BracketState {
   bracket: any[];
@@ -47,7 +47,6 @@ const SharedTeamPicker: React.FC<SharedTeamPickerProps> = ({ bracketId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, isLoaded } = useUser();
-  const supabase = useSupabase();
 
   const fetchBracketData = async () => {
     if (bracketId) {
