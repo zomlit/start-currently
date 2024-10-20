@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import WidgetControls from "@/components/widget-controls";
 import { WidgetConfiguratorForm } from "@/components/widget-configurator-form";
 // import { WidgetPreview } from "@/components/widget-preview";
-import BackgroundImage from "@/components/ui/background-image";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -26,15 +25,11 @@ import {
 } from "@/utils/widgetDbOperations";
 import { WidgetType, WidgetProfile, SpotifyTrack, Widget } from "@/types";
 import { initialWidgets } from "@/types/initialWidgets";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { Container } from "@/components/layout/Container";
 import { defaultCommonSettings } from "@/types/initialWidgets";
-import { createClient } from "@supabase/supabase-js";
-import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/utils/supabase/client";
 import { WidgetPreview } from "./widget-preview";
-import { Spinner } from "./ui/spinner";
 
 type WidgetState = {
   widgets: Record<WidgetType, Widget>;
@@ -91,7 +86,6 @@ function DashboardWidgets({ userId }: DashboardWidgetsProps) {
     selectedProfile: null,
   });
   const { user } = useUser();
-  const supabase = useSupabase();
   const queryClient = useQueryClient();
 
   // Add this line to declare the isLoading state

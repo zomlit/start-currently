@@ -1,4 +1,4 @@
-export const isProduction = process.env.NODE_ENV === "production";
+export const isProduction = import.meta.env.VITE_NODE_ENV === "production";
 
 export const getStripePublishableKey = () => {
   return isProduction

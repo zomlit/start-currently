@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Copy, Trash, Download, Upload, Edit2, Plus } from "lucide-react";
 
-import { useSupabase } from "@/hooks/useSupabase";
+import { supabase } from "@/utils/supabase/client";
 import { Database } from "@/types/supabase";
 import { WidgetType } from "@/types/Widget";
 import { toast } from "@/utils/toast";
@@ -77,7 +77,6 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
   importConfig,
   updateWidgetSettings,
 }) => {
-  const supabase = useSupabase();
   const { user } = useUser();
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -112,7 +111,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
     }));
 
     if (selectedProfile && user) {
-      const url = `${process.env.NEXT_PUBLIC_APP_URL}/${user.username}/${selectedWidget}/${selectedProfile}`;
+      const url = `${import.meta.env.VITE_PUBLIC_APP_URL}/${user.username}/${selectedWidget}/${selectedProfile}`;
       setPublicUrl(url);
     }
   }, [selectedWidget, selectedProfile, user]);

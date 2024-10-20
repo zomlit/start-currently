@@ -7,6 +7,9 @@ import { Footer } from "@/components/Footer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useThemeStore } from "@/store/themeStore";
 import { OptimisticProfileSettingsProvider } from "@/contexts/OptimisticProfileSettingsContext";
+import { AuthWrapper } from "@/components/AuthWrapper";
+import { ElysiaSessionProvider } from "@/contexts/ElysiaSessionContext";
+import { ElysiaSessionManager } from "@/components/ElysiaSessionManager";
 
 const queryClient = new QueryClient();
 
@@ -20,16 +23,24 @@ function LayoutComponent() {
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <OptimisticProfileSettingsProvider
-          initialProfileSettings={{ commonSettings: {}, specificSettings: {} }}
-        >
-          <ClientWrapper>
-            <Navigation />
-            <Outlet />
-            <Toaster theme={theme === "system" ? undefined : theme} />
-            <Footer />
-          </ClientWrapper>
-        </OptimisticProfileSettingsProvider>
+        <AuthWrapper>
+          <ElysiaSessionProvider broadcastChannel="your-broadcast-channel">
+            <OptimisticProfileSettingsProvider
+              initialProfileSettings={{
+                commonSettings: {},
+                specificSettings: {},
+              }}
+            >
+              <ClientWrapper>
+                <Navigation />
+                <Outlet />
+                <Toaster theme={theme === "system" ? undefined : theme} />
+                <Footer />
+              </ClientWrapper>
+            </OptimisticProfileSettingsProvider>
+            <ElysiaSessionManager />
+          </ElysiaSessionProvider>
+        </AuthWrapper>
       </QueryClientProvider>
     </React.StrictMode>
   );

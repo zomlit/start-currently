@@ -1,7 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-
+import { supabase } from "@/utils/supabase/client";
 interface SaveDataToSupabaseParams {
-  supabase: SupabaseClient;
   tableName: string;
   uniqueKey: string;
   uniqueValue: string | number;
@@ -12,7 +10,6 @@ interface SaveDataToSupabaseParams {
 }
 
 export const saveDataToSupabase = async ({
-  supabase,
   tableName,
   uniqueKey,
   uniqueValue,
@@ -20,7 +17,10 @@ export const saveDataToSupabase = async ({
   updateDescription,
   showToast = true,
   toastMessage = "",
-}: SaveDataToSupabaseParams): Promise<{ success: boolean; message: string }> => {
+}: SaveDataToSupabaseParams): Promise<{
+  success: boolean;
+  message: string;
+}> => {
   const upsertData = {
     [uniqueKey]: uniqueValue,
     ...data,
@@ -36,7 +36,8 @@ export const saveDataToSupabase = async ({
       message: `Error updating ${updateDescription}: ${error.message}`,
     };
   } else {
-    const message = toastMessage || `${updateDescription} updated successfully.`;
+    const message =
+      toastMessage || `${updateDescription} updated successfully.`;
     return { success: true, message };
   }
 };
@@ -83,7 +84,6 @@ export const handleFieldChange = async ({
 
   // Save updated data to Supabase
   await saveDataToSupabase({
-    supabase: useSupabase(),
     tableName,
     uniqueKey,
     uniqueValue,

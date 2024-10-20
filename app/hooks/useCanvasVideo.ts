@@ -13,19 +13,25 @@ export function useCanvasVideo(trackId: string | undefined) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/spotify/get-canvas?trackInfo=${id}`);
+      const response = await fetch(
+        `${import.meta.env.VITE_ELYSIA_API_URL}/spotify/get-canvas?trackInfo=${id}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
 
-      if (data.videoLink) {
+      if (data.success) {
         setVideoLink(data.videoLink);
-        setCanvasAvailable(true);
+        setCanvasAvailable(data.canvasAvailable);
       } else {
-        setVideoLink(null);
-        setCanvasAvailable(false);
+        throw new Error(data.error || "Failed to fetch canvas");
       }
     } catch (err) {
       setIsError(true);
-      setError(err as Error);
+      setError(
+        err instanceof Error ? err : new Error("An unknown error occurred")
+      );
       setVideoLink(null);
       setCanvasAvailable(false);
     } finally {

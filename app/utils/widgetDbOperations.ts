@@ -1,14 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/utils/supabase/client";
 import { Database } from "@/types/supabase";
 import { WidgetType, WidgetProfile, WidgetSettings } from "@/types";
 import { defaultCommonSettings } from "@/types/initialWidgets";
 import { v4 as uuidv4 } from "uuid";
-
-// Create a Supabase client
-const supabase = createClient<Database>(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const defaultProfiles: Partial<Record<WidgetType, WidgetProfile>> = {
   visualizer: {
