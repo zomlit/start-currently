@@ -51,7 +51,7 @@ export const ensureUserProfile = async (username: string) => {
         .update({
           username: username,
           displayName: displayName,
-          updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(), // Ensure this is always set
         })
         .eq("user_id", userId)
         .select()
@@ -69,7 +69,7 @@ export const ensureUserProfile = async (username: string) => {
           username: username,
           displayName: displayName,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(), // Ensure this is always set
         })
         .select()
         .single();
