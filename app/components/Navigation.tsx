@@ -63,7 +63,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
             </NavLink>
             <NavLink to="/posts">Posts</NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
-            <NavLink to="/widgets">Widgets</NavLink>
+            <NavLink to="/sections">Sections</NavLink>
             <NavLink to="/teampicker">Team Picker</NavLink>
           </div>
           <div className="flex items-center space-x-4">

@@ -10,7 +10,7 @@
     "start": "vinxi start",
     "lint": "prettier --check '**/*' --ignore-unknown && eslint --ext .ts,.tsx ./app",
     "format": "prettier --write '**/*' --ignore-unknown",
-    "hmr-watch": "node hmr-watcher.js"
+    "generate-types": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > app/types/supabase.ts"
   },
   "keywords": [],
   "author": "",

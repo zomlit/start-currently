@@ -409,68 +409,13 @@ export type Database = {
           },
         ]
       }
-      Profile: {
-        Row: {
-          color: string
-          commonSettings: Json
-          created_at: string
-          fontFamily: string | null
-          fontVariant: string | null
-          id: string
-          is_active: boolean
-          is_current: boolean
-          name: string
-          specificSettings: Json
-          updated_at: string
-          user_id: string
-          widgetType: string
-        }
-        Insert: {
-          color: string
-          commonSettings: Json
-          created_at?: string
-          fontFamily?: string | null
-          fontVariant?: string | null
-          id?: string
-          is_active?: boolean
-          is_current?: boolean
-          name: string
-          specificSettings: Json
-          updated_at: string
-          user_id?: string
-          widgetType: string
-        }
-        Update: {
-          color?: string
-          commonSettings?: Json
-          created_at?: string
-          fontFamily?: string | null
-          fontVariant?: string | null
-          id?: string
-          is_active?: boolean
-          is_current?: boolean
-          name?: string
-          specificSettings?: Json
-          updated_at?: string
-          user_id?: string
-          widgetType?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Profile_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "User"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       Profiles: {
         Row: {
           color: string | null
           created_at: string | null
           id: string
           is_active: boolean | null
+          is_current: boolean | null
           name: string
           settings: Json
           updated_at: string | null
@@ -482,6 +427,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_current?: boolean | null
           name: string
           settings: Json
           updated_at?: string | null
@@ -493,6 +439,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_current?: boolean | null
           name?: string
           settings?: Json
           updated_at?: string | null
@@ -500,6 +447,44 @@ export type Database = {
           widget_type?: string
         }
         Relationships: []
+      }
+      SectionProfiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          section_id: string
+          settings: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          section_id: string
+          settings?: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          section_id?: string
+          settings?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       SevenTVEmoteCache: {
         Row: {
@@ -696,6 +681,7 @@ export type Database = {
           s_access_token: string | null
           s_client_id: string | null
           s_client_secret: string | null
+          s_expires_at: string | null
           s_refresh_token: string | null
           selectedUsername: string | null
           selectedUsernameToken: string | null
@@ -720,6 +706,7 @@ export type Database = {
           s_access_token?: string | null
           s_client_id?: string | null
           s_client_secret?: string | null
+          s_expires_at?: string | null
           s_refresh_token?: string | null
           selectedUsername?: string | null
           selectedUsernameToken?: string | null
@@ -744,6 +731,7 @@ export type Database = {
           s_access_token?: string | null
           s_client_id?: string | null
           s_client_secret?: string | null
+          s_expires_at?: string | null
           s_refresh_token?: string | null
           selectedUsername?: string | null
           selectedUsernameToken?: string | null
@@ -948,4 +936,19 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
