@@ -1,4 +1,3 @@
-"use client";
 import React, {
   createContext,
   useContext,
@@ -30,7 +29,7 @@ interface ElysiaSessionContextType {
   stopSession: () => Promise<void>;
   lastPing: number | null;
   apiStats: ApiStats | null;
-  nowPlaying: any; // Replace 'any' with the correct type from your Database type
+  nowPlaying: any;
   twitchToken: string | undefined;
   spotifyRefreshToken: string | undefined;
   handleToggleSession: () => Promise<void>;
@@ -67,7 +66,7 @@ export const ElysiaSessionProvider: React.FC<{
   const { apiStats, setApiStats } = useChatStore();
   const [lastPing, setLastPing] = useState<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const elysiaWsUrl = process.env.NEXT_PUBLIC_ELYSIA_WS_URL;
+  const elysiaWsUrl = process.env.VITE_ELYSIA_WS_URL;
 
   useEffect(() => {
     if (!socketRef.current && isServerAvailable) {
