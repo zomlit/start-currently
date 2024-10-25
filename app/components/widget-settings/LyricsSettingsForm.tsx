@@ -60,6 +60,7 @@ export const lyricsSchema = z.object({
   glowEffect: z.boolean(),
   glowColor: z.string(),
   glowIntensity: z.number().min(0).max(20),
+  hideExplicitContent: z.boolean().default(false), // Add this line
 });
 
 export type LyricsSettings = z.infer<typeof lyricsSchema>;
@@ -95,9 +96,40 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     onSettingsChange({ [field]: value });
   };
 
+  const handleResetToDefaults = () => {
+    const defaultSettings: LyricsSettings = {
+      backgroundColor: "rgba(0, 0, 0, 1)",
+      textColor: "rgba(255, 255, 255, 1)",
+      currentTextColor: "rgba(220, 40, 220, 1)",
+      fontSize: 24,
+      padding: 20,
+      currentLineScale: 1.2,
+      showFade: true,
+      lineHeight: 1.5,
+      fontFamily: "Sofia Sans Condensed",
+      greenScreenMode: false,
+      colorSync: false,
+      showVideoCanvas: false,
+      videoCanvasOpacity: 0.2,
+      textAlign: "left",
+      textShadowColor: "rgba(0, 0, 0, 0.5)",
+      textShadowBlur: 2,
+      textShadowOffsetX: 1,
+      textShadowOffsetY: 1,
+      animationEasing: "ease-out",
+      animationSpeed: 300,
+      glowEffect: false,
+      glowColor: "rgba(255, 255, 255, 0.5)",
+      glowIntensity: 5,
+      hideExplicitContent: false,
+    };
+    form.reset(defaultSettings);
+    onSettingsChange(defaultSettings);
+  };
+
   return (
     <Form {...form}>
-      <form className="space-y-6">
+      <form className="space-y-4">
         <div className="flex items-center space-x-2 mb-6">
           <Input value={publicUrl} readOnly className="flex-grow" />
           <Button onClick={onCopyPublicUrl} size="icon" variant="outline">
@@ -330,7 +362,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="colorSync"
                 render={({ field }) => (
@@ -351,7 +383,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     </FormControl>
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name="showVideoCanvas"
@@ -593,41 +625,41 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
               />
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="content">
+            <AccordionTrigger>Content Settings</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="hideExplicitContent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Hide Explicit Content</FormLabel>
+                      <FormDescription>
+                        Replace explicit words with asterisks
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(value) =>
+                          handleSettingChange("hideExplicitContent", value)
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
 
         <Button
           type="button"
-          onClick={() => {
-            const defaultSettings: LyricsSettings = {
-              backgroundColor: "rgba(0, 0, 0, 1)",
-              textColor: "rgba(255, 255, 255, 1)",
-              currentTextColor: "rgba(220, 40, 220, 1)",
-              fontSize: 24,
-              padding: 20,
-              currentLineScale: 1.2,
-              showFade: true,
-              lineHeight: 1.5,
-              fontFamily: "Sofia Sans Condensed",
-              greenScreenMode: false,
-              colorSync: false,
-              showVideoCanvas: false,
-              videoCanvasOpacity: 0.2,
-              textAlign: "left",
-              textShadowColor: "rgba(0, 0, 0, 0.5)",
-              textShadowBlur: 2,
-              textShadowOffsetX: 1,
-              textShadowOffsetY: 1,
-              animationEasing: "ease-out",
-              animationSpeed: 300,
-              glowEffect: false,
-              glowColor: "rgba(255, 255, 255, 0.5)",
-              glowIntensity: 5,
-            };
-            form.reset(defaultSettings);
-            onSettingsChange(defaultSettings);
-          }}
+          onClick={handleResetToDefaults}
           variant="outline"
-          className="w-full"
+          className="w-full mt-4"
         >
           <RotateCcw className="mr-2 h-4 w-4" />
           Reset to Defaults

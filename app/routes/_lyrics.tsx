@@ -1,16 +1,12 @@
-import React from "react";
-import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { ClientWrapper } from "@/components/ClientWrapper";
-import { Navigation } from "@/components/Navigation";
-import { Toaster } from "sonner";
-import { Footer } from "@/components/Footer";
+import React, { useEffect } from "react";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useThemeStore } from "@/store/themeStore";
 import { OptimisticProfileSettingsProvider } from "@/contexts/OptimisticProfileSettingsContext";
 import { AuthWrapper } from "@/components/AuthWrapper";
 import { ElysiaSessionProvider } from "@/contexts/ElysiaSessionContext";
-import { ElysiaSessionManager } from "@/components/ElysiaSessionManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { useAuth } from "@clerk/tanstack-start";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +16,26 @@ export const Route = createFileRoute("/_lyrics")({
 
 function LyricsComponent() {
   const { theme } = useThemeStore();
+  const { userId, isLoaded } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded && !userId) {
+      // User is not logged in, redirect to sign-in or sign-up
+      navigate({ to: "/sign-in" });
+    }
+  }, [isLoaded, userId, navigate]);
+
+  if (!isLoaded || !userId) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <React.StrictMode>
@@ -33,11 +49,10 @@ function LyricsComponent() {
                   specificSettings: {},
                 }}
               >
-                {/* <ClientWrapper> */}
-                <Outlet />
-                {/* </ClientWrapper> */}
+                <div style={{ height: "100vh", overflow: "hidden" }}>
+                  <Outlet />
+                </div>
               </OptimisticProfileSettingsProvider>
-              {/* <ElysiaSessionManager /> */}
             </ElysiaSessionProvider>
           </AuthWrapper>
         </QueryClientProvider>
