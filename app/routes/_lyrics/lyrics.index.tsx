@@ -19,6 +19,7 @@ import {
   lyricsSchema,
 } from "@/components/widget-settings/LyricsSettingsForm";
 import { toast } from "@/utils/toast";
+import { profanity } from "@2toad/profanity";
 
 // Add this utility function at the top of your file
 const formatColor = (color: string) => {
@@ -34,6 +35,20 @@ const formatColor = (color: string) => {
   }
   return color; // Return as is if it's a named color
 };
+
+// Update the censorExplicitContent function to use @2toad/profanity
+const censorExplicitContent = (text: string): string => {
+  return profanity.censor(text);
+};
+
+// Add this CSS class to your global styles or a CSS module
+// .scrollbar-hide::-webkit-scrollbar {
+//     display: none;
+// }
+// .scrollbar-hide {
+//     -ms-overflow-style: none;
+//     scrollbar-width: none;
+// }
 
 export const Route = createFileRoute("/_lyrics/lyrics/")({
   component: LyricsPage,
@@ -53,9 +68,17 @@ function LyricsPage() {
   const [fontFamilies, setFontFamilies] = useState<string[]>([]);
   const [loadedFonts, setLoadedFonts] = useState<Set<string>>(new Set());
   const [isFontLoading, setIsFontLoading] = useState(false);
+  const [noLyricsAvailable, setNoLyricsAvailable] = useState(false);
 
   const { settings, updateSettings } = useLyricsStore();
   const videoLink = useBackgroundVideo(currentTrack?.id);
+
+  const { palette, isLoading: isPaletteLoading } = useDynamicColors(
+    currentTrack,
+    {
+      colorSync: settings.colorSync,
+    }
+  );
 
   const debouncedUpdateSettings = useDebouncedCallback(
     (newSettings: Partial<LyricsSettings>) => {
@@ -108,24 +131,30 @@ function LyricsPage() {
   const fetchLyrics = useCallback(async (trackId: string) => {
     setIsLyricsLoading(true);
     setLyricsError(null);
+    setNoLyricsAvailable(false); // Reset this state when fetching new lyrics
     try {
-      const response = await fetch(
-        `http://localhost:3001/v1/lyrics/${trackId}`
-      );
+      const response = await fetch(`http://localhost:9001/lyrics/${trackId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch lyrics: ${response.statusText}`);
       }
       const data = await response.json();
 
-      if (data.lyrics && Array.isArray(data.lyrics.lines)) {
+      if (
+        data.lyrics &&
+        Array.isArray(data.lyrics.lines) &&
+        data.lyrics.lines.length > 0
+      ) {
         setLyrics(data.lyrics.lines);
       } else {
-        throw new Error("Invalid lyrics format");
+        setNoLyricsAvailable(true);
+        setLyrics(null);
       }
     } catch (error) {
       setLyricsError(
         error instanceof Error ? error.message : "An error occurred"
       );
+      setNoLyricsAvailable(true);
+      setLyrics(null);
     } finally {
       setIsLyricsLoading(false);
     }
@@ -165,6 +194,9 @@ function LyricsPage() {
   useEffect(() => {
     if (currentTrack?.id) {
       fetchLyrics(currentTrack.id);
+    } else {
+      setNoLyricsAvailable(true);
+      setLyrics(null);
     }
   }, [currentTrack?.id, fetchLyrics]);
 
@@ -187,25 +219,88 @@ function LyricsPage() {
 
           if (currentLineElement) {
             const containerHeight = lyricsContainer.clientHeight;
-            const lineTop = currentLineElement.offsetTop;
             const lineHeight = currentLineElement.clientHeight;
 
+            // Calculate the position to center the current line
             const scrollPosition =
-              lineTop - containerHeight / 2 + lineHeight / 2;
+              currentLineElement.offsetTop -
+              containerHeight / 2 +
+              lineHeight / 2;
+
+            // Apply smooth scrolling only if it's not the first scroll
+            const scrollBehavior =
+              lyricsContainer.scrollTop === 0 ? "auto" : "smooth";
 
             lyricsContainer.scrollTo({
               top: scrollPosition,
-              behavior: "smooth",
+              behavior: scrollBehavior,
             });
           }
         }
       };
+
+      // Initial scroll to center the first lyric
+      scrollToCurrentLyric();
 
       const intervalId = setInterval(scrollToCurrentLyric, 100);
 
       return () => clearInterval(intervalId);
     }
   }, [lyrics, currentTrack]);
+
+  useEffect(() => {
+    if (settings.colorSync && palette && !isPaletteLoading) {
+      const backgroundColor =
+        palette.DarkMuted?.hex || settings.backgroundColor;
+      const textColor = palette.LightVibrant?.hex || settings.textColor;
+      const currentTextColor =
+        palette.Vibrant?.hex || settings.currentTextColor;
+
+      // Ensure text colors have enough contrast with the background
+      const ensureContrast = (color: string, bgColor: string) => {
+        const contrast = getContrast(color, bgColor);
+        if (contrast < 4.5) {
+          // WCAG AA standard for normal text
+          return palette.LightVibrant?.hex || "#FFFFFF";
+        }
+        return color;
+      };
+
+      const updatedTextColor = ensureContrast(textColor, backgroundColor);
+      const updatedCurrentTextColor = ensureContrast(
+        currentTextColor,
+        backgroundColor
+      );
+
+      debouncedUpdateSettings({
+        backgroundColor,
+        textColor: updatedTextColor,
+        currentTextColor: updatedCurrentTextColor,
+      });
+    }
+  }, [
+    palette,
+    isPaletteLoading,
+    currentTrack,
+    settings.colorSync,
+    debouncedUpdateSettings,
+  ]);
+
+  // Add this function to calculate contrast ratio
+  const getContrast = (foreground: string, background: string) => {
+    const getLuminance = (color: string) => {
+      const rgb = parseInt(color.slice(1), 16);
+      const r = (rgb >> 16) & 0xff;
+      const g = (rgb >> 8) & 0xff;
+      const b = (rgb >> 0) & 0xff;
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const luminance1 = getLuminance(foreground);
+    const luminance2 = getLuminance(background);
+    const brightest = Math.max(luminance1, luminance2);
+    const darkest = Math.min(luminance1, luminance2);
+    return (brightest + 0.05) / (darkest + 0.05);
+  };
 
   const handleCopyPublicUrl = useCallback(() => {
     const url = window.location.origin + window.location.pathname;
@@ -222,9 +317,18 @@ function LyricsPage() {
 
   const handleSettingChange = useCallback(
     (newSettings: Partial<LyricsSettings>) => {
-      debouncedUpdateSettings(newSettings);
+      // If it's a full settings object (i.e., from reset), update all settings
+      if (
+        Object.keys(newSettings).length ===
+        Object.keys(lyricsSchema.shape).length
+      ) {
+        updateSettings(newSettings as LyricsSettings);
+      } else {
+        // Otherwise, update individual settings
+        debouncedUpdateSettings(newSettings);
+      }
     },
-    [debouncedUpdateSettings]
+    [debouncedUpdateSettings, updateSettings]
   );
 
   const getTextStyle = (isCurrentLine: boolean) => ({
@@ -254,7 +358,7 @@ function LyricsPage() {
   });
 
   return (
-    <div className="h-screen w-full">
+    <div className="h-screen w-full overflow-hidden scrollbar-hide">
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={80} minSize={50}>
           <div
@@ -279,8 +383,22 @@ function LyricsPage() {
             )}
             {settings.showFade && !settings.greenScreenMode && (
               <>
-                <div className="absolute z-40 top-0 left-0 right-0 h-16 bg-gradient-to-b from-black to-transparent pointer-events-none" />
-                <div className="absolute z-40 bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+                <div
+                  className="absolute z-40 left-0 right-0 pointer-events-none"
+                  style={{
+                    top: `${settings.padding}px`,
+                    height: "64px",
+                    background: `linear-gradient(to bottom, ${formatColor(settings.backgroundColor)}, transparent)`,
+                  }}
+                />
+                <div
+                  className="absolute z-40 left-0 right-0 pointer-events-none"
+                  style={{
+                    bottom: `${settings.padding}px`,
+                    height: "64px",
+                    background: `linear-gradient(to top, ${formatColor(settings.backgroundColor)}, transparent)`,
+                  }}
+                />
               </>
             )}
             <div
@@ -294,43 +412,65 @@ function LyricsPage() {
                 <div className="flex items-center justify-center h-full">
                   <Spinner className="w-[30px] h-[30px]" />
                 </div>
-              ) : (
-                lyrics?.map((line, index, arr) => {
-                  const isCurrentLine =
-                    (currentTrack?.elapsed || 0) >= line.startTimeMs - 1000 &&
-                    (index === arr.length - 1 ||
-                      (currentTrack?.elapsed || 0) <
-                        arr[index + 1].startTimeMs - 1000);
+              ) : noLyricsAvailable ? (
+                <div className="flex items-center justify-center h-full text-center text-gray-500">
+                  No lyrics available for this track
+                </div>
+              ) : lyrics && lyrics.length > 0 ? (
+                <>
+                  <div style={{ height: "50vh" }}></div>
+                  {lyrics.map((line, index, arr) => {
+                    const isCurrentLine =
+                      (currentTrack?.elapsed || 0) >= line.startTimeMs - 1000 &&
+                      (index === arr.length - 1 ||
+                        (currentTrack?.elapsed || 0) <
+                          arr[index + 1].startTimeMs - 1000);
 
-                  return (
-                    <p
-                      key={index}
-                      className="transition-all duration-300"
-                      style={getTextStyle(isCurrentLine)}
-                    >
-                      {line.words}
-                    </p>
-                  );
-                })
-              )}
+                    const displayedText = settings.hideExplicitContent
+                      ? censorExplicitContent(line.words)
+                      : line.words;
+
+                    return (
+                      <p
+                        key={index}
+                        className="transition-all duration-300"
+                        style={getTextStyle(isCurrentLine)}
+                      >
+                        {displayedText}
+                      </p>
+                    );
+                  })}
+                  <div style={{ height: "50vh" }}></div>
+                </>
+              ) : null}
             </div>
           </div>
         </ResizablePanel>
         <ResizableHandle />
         {lyrics && (
-          <ResizablePanel defaultSize={20} minSize={15}>
-            <div className="h-full overflow-y-auto p-6 bg-white/10">
-              <h3 className="text-lg font-bold mb-6">Customize Lyrics Panel</h3>
-              <LyricsSettingsForm
-                settings={settings}
-                onSettingsChange={handleSettingChange}
-                publicUrl={publicUrl}
-                onCopyPublicUrl={handleCopyPublicUrl}
-                fontFamilies={fontFamilies}
-                isFontLoading={isFontLoading}
-                injectFont={injectFont}
-                isVideoAvailable={!!videoLink}
-              />
+          <ResizablePanel
+            defaultSize={20}
+            minSize={15}
+            className="flex flex-col"
+          >
+            <div className="flex-grow overflow-y-auto flex flex-col">
+              <h3 className="text-lg font-bold p-6 pb-2">
+                Customize Lyrics Panel
+              </h3>
+              <div className="flex-grow">
+                <div className="p-6 pt-2">
+                  <LyricsSettingsForm
+                    settings={settings}
+                    onSettingsChange={handleSettingChange}
+                    publicUrl={publicUrl}
+                    onCopyPublicUrl={handleCopyPublicUrl}
+                    fontFamilies={fontFamilies}
+                    isFontLoading={isFontLoading}
+                    injectFont={injectFont}
+                    isVideoAvailable={!!videoLink}
+                  />
+                </div>
+              </div>
             </div>
           </ResizablePanel>
         )}
