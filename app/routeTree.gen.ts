@@ -11,12 +11,15 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppTestImport } from './routes/_app/test'
 import { Route as AppSectionsImport } from './routes/_app/sections'
 import { Route as AppPostsImport } from './routes/_app/posts'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
+import { Route as usernameLyricsImport } from './routes/[username].lyrics'
+import { Route as LyricsLyricsIndexImport } from './routes/_lyrics/lyrics.index'
 import { Route as AppWheelspinIndexImport } from './routes/_app/wheelspin/index'
 import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
 import { Route as AppSectionsIndexImport } from './routes/_app/sections/index'
@@ -35,6 +38,11 @@ import { Route as AppAuthedDashboardImport } from './routes/_app/_authed/dashboa
 import { Route as AppPostsPostIdDeepImport } from './routes/_app/posts_.$postId.deep'
 
 // Create/Update Routes
+
+const LyricsRoute = LyricsImport.update({
+  id: '/_lyrics',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const AppRoute = AppImport.update({
   id: '/_app',
@@ -68,6 +76,18 @@ const AppPostsRoute = AppPostsImport.update({
 const AppAuthedRoute = AppAuthedImport.update({
   id: '/_authed',
   getParentRoute: () => AppRoute,
+} as any)
+
+const usernameLyricsRoute = usernameLyricsImport.update({
+  id: '/[username]/lyrics',
+  path: '/[username]/lyrics',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const LyricsLyricsIndexRoute = LyricsLyricsIndexImport.update({
+  id: '/lyrics/',
+  path: '/lyrics/',
+  getParentRoute: () => LyricsRoute,
 } as any)
 
 const AppWheelspinIndexRoute = AppWheelspinIndexImport.update({
@@ -175,6 +195,20 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AppImport
+      parentRoute: typeof rootRoute
+    }
+    '/_lyrics': {
+      id: '/_lyrics'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof LyricsImport
+      parentRoute: typeof rootRoute
+    }
+    '/[username]/lyrics': {
+      id: '/[username]/lyrics'
+      path: '/[username]/lyrics'
+      fullPath: '/[username]/lyrics'
+      preLoaderRoute: typeof usernameLyricsImport
       parentRoute: typeof rootRoute
     }
     '/_app/_authed': {
@@ -317,8 +351,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWheelspinIndexImport
       parentRoute: typeof AppImport
     }
-    '/_app/posts/$postId/deep': {
-      id: '/_app/posts/$postId/deep'
+    '/_lyrics/lyrics/': {
+      id: '/_lyrics/lyrics/'
+      path: '/lyrics'
+      fullPath: '/lyrics'
+      preLoaderRoute: typeof LyricsLyricsIndexImport
+      parentRoute: typeof LyricsImport
+    }
+    '/_app/posts_/$postId/deep': {
+      id: '/_app/posts_/$postId/deep'
       path: '/posts/$postId/deep'
       fullPath: '/posts/$postId/deep'
       preLoaderRoute: typeof AppPostsPostIdDeepImport
@@ -409,8 +450,20 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface LyricsRouteChildren {
+  LyricsLyricsIndexRoute: typeof LyricsLyricsIndexRoute
+}
+
+const LyricsRouteChildren: LyricsRouteChildren = {
+  LyricsLyricsIndexRoute: LyricsLyricsIndexRoute,
+}
+
+const LyricsRouteWithChildren =
+  LyricsRoute._addFileChildren(LyricsRouteChildren)
+
 export interface FileRoutesByFullPath {
   '': typeof AppAuthedRouteWithChildren
+  '/[username]/lyrics': typeof usernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/sections': typeof AppSectionsRouteWithChildren
   '/test': typeof AppTestRoute
@@ -430,11 +483,13 @@ export interface FileRoutesByFullPath {
   '/sections/': typeof AppSectionsIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
+  '/lyrics': typeof LyricsLyricsIndexRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesByTo {
   '': typeof AppAuthedRouteWithChildren
+  '/[username]/lyrics': typeof usernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/test': typeof AppTestRoute
   '/': typeof AppIndexRoute
@@ -453,12 +508,15 @@ export interface FileRoutesByTo {
   '/sections': typeof AppSectionsIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
+  '/lyrics': typeof LyricsLyricsIndexRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_app': typeof AppRouteWithChildren
+  '/_lyrics': typeof LyricsRouteWithChildren
+  '/[username]/lyrics': typeof usernameLyricsRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
   '/_app/posts': typeof AppPostsRouteWithChildren
   '/_app/sections': typeof AppSectionsRouteWithChildren
@@ -479,13 +537,15 @@ export interface FileRoutesById {
   '/_app/sections/': typeof AppSectionsIndexRoute
   '/_app/teampicker/': typeof AppTeampickerIndexRoute
   '/_app/wheelspin/': typeof AppWheelspinIndexRoute
-  '/_app/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
+  '/_lyrics/lyrics/': typeof LyricsLyricsIndexRoute
+  '/_app/posts_/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | ''
+    | '/[username]/lyrics'
     | '/posts'
     | '/sections'
     | '/test'
@@ -505,10 +565,12 @@ export interface FileRouteTypes {
     | '/sections/'
     | '/teampicker'
     | '/wheelspin'
+    | '/lyrics'
     | '/posts/$postId/deep'
   fileRoutesByTo: FileRoutesByTo
   to:
     | ''
+    | '/[username]/lyrics'
     | '/posts'
     | '/test'
     | '/'
@@ -527,10 +589,13 @@ export interface FileRouteTypes {
     | '/sections'
     | '/teampicker'
     | '/wheelspin'
+    | '/lyrics'
     | '/posts/$postId/deep'
   id:
     | '__root__'
     | '/_app'
+    | '/_lyrics'
+    | '/[username]/lyrics'
     | '/_app/_authed'
     | '/_app/posts'
     | '/_app/sections'
@@ -551,16 +616,21 @@ export interface FileRouteTypes {
     | '/_app/sections/'
     | '/_app/teampicker/'
     | '/_app/wheelspin/'
-    | '/_app/posts/$postId/deep'
+    | '/_lyrics/lyrics/'
+    | '/_app/posts_/$postId/deep'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  LyricsRoute: typeof LyricsRouteWithChildren
+  usernameLyricsRoute: typeof usernameLyricsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  LyricsRoute: LyricsRouteWithChildren,
+  usernameLyricsRoute: usernameLyricsRoute,
 }
 
 export const routeTree = rootRoute
@@ -575,7 +645,9 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/_app"
+        "/_app",
+        "/_lyrics",
+        "/[username]/lyrics"
       ]
     },
     "/_app": {
@@ -594,8 +666,17 @@ export const routeTree = rootRoute
         "/_app/pricing/",
         "/_app/teampicker/",
         "/_app/wheelspin/",
-        "/_app/posts/$postId/deep"
+        "/_app/posts_/$postId/deep"
       ]
+    },
+    "/_lyrics": {
+      "filePath": "_lyrics.tsx",
+      "children": [
+        "/_lyrics/lyrics/"
+      ]
+    },
+    "/[username]/lyrics": {
+      "filePath": "[username].lyrics.tsx"
     },
     "/_app/_authed": {
       "filePath": "_app/_authed.tsx",
@@ -690,7 +771,11 @@ export const routeTree = rootRoute
       "filePath": "_app/wheelspin/index.tsx",
       "parent": "/_app"
     },
-    "/_app/posts/$postId/deep": {
+    "/_lyrics/lyrics/": {
+      "filePath": "_lyrics/lyrics.index.tsx",
+      "parent": "/_lyrics"
+    },
+    "/_app/posts_/$postId/deep": {
       "filePath": "_app/posts_.$postId.deep.tsx",
       "parent": "/_app"
     }

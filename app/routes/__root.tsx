@@ -107,8 +107,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Body>
           {children}
           <ScrollRestoration />
-          <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-left" />
+          {/* <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-left" /> */}
           <Scripts />
         </Body>
       </Html>

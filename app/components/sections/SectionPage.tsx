@@ -69,7 +69,7 @@ export const SectionPage = ({ sectionId }) => {
 
   return (
     <FormProvider {...methods}>
-      <form onChange={() => onChange(watch())}>
+      {/* <form onChange={() => onChange(watch())}>
         <h2>Common Settings</h2>
         <ColorPicker
           name="common.color"
@@ -97,7 +97,7 @@ export const SectionPage = ({ sectionId }) => {
           max={50}
           sectionId={sectionId}
         />
-      </form>
+      </form> */}
 
       <div
         className="preview"

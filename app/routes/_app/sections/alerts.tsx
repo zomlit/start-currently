@@ -6,10 +6,5 @@ export const Route = createFileRoute("/_app/sections/alerts")({
 });
 
 function AlertsSection() {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Alerts Section</h2>
-      <p>Manage and view your alerts here.</p>
-    </div>
-  );
+  return <div></div>;
 }

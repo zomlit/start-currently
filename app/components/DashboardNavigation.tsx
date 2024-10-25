@@ -40,7 +40,7 @@ const navItems = [
   },
   {
     id: 5,
-    link: "/sections",
+    link: "/dashboard",
     text: "Dashboard",
     icon: LayoutDashboard,
   },

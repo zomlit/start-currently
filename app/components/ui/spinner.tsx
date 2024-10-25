@@ -6,6 +6,7 @@ interface SpinnerProps {
   message?: string;
   show?: boolean;
   wait?: `delay-${number}`;
+  color?: string;
 }
 
 export function Spinner({
@@ -13,6 +14,7 @@ export function Spinner({
   message,
   show = true,
   wait = "delay-300",
+  color = "#FFFFFF",
 }: SpinnerProps) {
   return (
     <div
@@ -22,7 +24,7 @@ export function Spinner({
           : "duration-500 opacity-0 delay-0"
       }`}
     >
-      <CircleDot className={`animate-spin ${className}`} />
+      <CircleDot className={`animate-spin ${className}`} style={{ color }} />
       {message && <p className="mt-2 text-sm text-gray-200">{message}</p>}
     </div>
   );

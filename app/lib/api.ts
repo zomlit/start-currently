@@ -1,114 +1,104 @@
-import axios from "redaxios";
+import axios, {
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
 
-const client = axios.create({
-  baseURL: import.meta.env.VITE_ELYSIA_API_URL || "/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
+const api = axios.create({
+  baseURL: import.meta.env.VITE_ELYSIA_API_URL || "http://localhost:9001",
 });
 
-const handleApiError = (error: any) => {
-  console.error("API Error:", error);
-  if (error.response) {
-    console.error("Response data:", error.response.data);
-    console.error("Response status:", error.response.status);
-    console.error("Response headers:", error.response.headers);
-  } else if (error.request) {
-    console.error("No response received:", error.request);
-  } else {
-    console.error("Error:", error.message);
-  }
-  throw error;
-};
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  // Remove the useAuth hook from here, as it's not allowed in a non-component context
+  // We'll pass the token from the component instead
+  return config;
+});
 
-export const api = {
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    console.error("API Error:", error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
+export const apiMethods = {
   profiles: {
     getAll: async (sectionId: string, token: string) => {
       console.log("API: Fetching profiles for section:", sectionId);
       try {
-        const response = await client.get(`/profiles/${sectionId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await api.get(`/profiles/${sectionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("API: Received profiles response:", response);
+        console.log("API: Received profiles response:", response.data);
         return response.data;
       } catch (error) {
-        return handleApiError(error);
+        console.error("API Error:", error);
+        throw error;
       }
     },
     get: async (sectionId: string, profileId: string | null, token: string) => {
-      return client
-        .get(`/profiles/${sectionId}/${profileId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => res.data)
-        .catch(handleApiError);
+      const response = await api.get(`/profiles/${sectionId}/${profileId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
     },
-    update: async (profile: any, token: string) => {
-      if (!profile.id) {
-        console.error("Profile ID is undefined");
-        return Promise.reject(new Error("Profile ID is required for update"));
-      }
-      return client
-        .put(`/profiles/${profile.id}`, profile, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => res.data)
-        .catch(handleApiError);
+    update: async (profileId: string, settings: any, token: string) => {
+      const response = await api.put(
+        `/profiles/${profileId}`,
+        { settings },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
     },
     copy: async (profile: any, token: string) => {
-      return client
-        .post(`/profiles/copy`, profile, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => res.data)
-        .catch(handleApiError);
+      const response = await api.post(`/profiles/copy`, profile, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
     },
     setDefault: async (profileId: string, token: string) => {
-      return client
-        .put(`/profiles/${profileId}/set-default`, null, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => res.data)
-        .catch(handleApiError);
+      const response = await api.put(
+        `/profiles/${profileId}/set-default`,
+        null,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
     },
     delete: async (profileId: string, token: string) => {
-      return client
-        .delete(`/profiles/${profileId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => res.data)
-        .catch(handleApiError);
+      const response = await api.delete(`/profiles/${profileId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
     },
     createDefault: async (
       sectionId: string,
       userId: string,
-      settings: object | undefined,
+      settings: any,
       token: string
     ) => {
-      return client
-        .post(
-          `/profiles/${sectionId}/create-default`,
-          { settings: settings },
+      try {
+        const requestData = { settings };
+        console.log("Sending request with data:", requestData, null, 2);
+        const response = await axios.post(
+          `${import.meta.env.VITE_ELYSIA_API_URL}/profiles/${sectionId}/create-default`,
+          requestData,
           {
             headers: {
               Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
           }
-        )
-        .then((res) => res.data)
-        .catch(handleApiError);
+        );
+        console.log("Create profile response:", response);
+        return response.data;
+      } catch (error) {
+        console.error("Profile creation error:", error);
+        throw error;
+      }
     },
   },
 };
+
+export default apiMethods;
