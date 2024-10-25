@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useProfile } from "@/components/sections/useProfile";
+import { useProfile } from "@/hooks/useProfile";
 import { Slider, ColorPicker, Switch } from "@/components/form/index";
 
 const profileSchema = z.object({
@@ -44,7 +44,7 @@ function SectionsDashboard() {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <h2 className="text-xl font-bold">Common Settings</h2>
         <ColorPicker name="common.backgroundColor" label="Background Color" />
         <Slider name="common.padding" label="Padding" min={0} max={50} />
@@ -74,7 +74,7 @@ function SectionsDashboard() {
       >
         <h3 className="text-lg font-semibold">Preview</h3>
         <p>This is how your section will look with the current settings.</p>
-      </div>
+      </div> */}
     </FormProvider>
   );
 }

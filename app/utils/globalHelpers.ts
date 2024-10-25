@@ -18,17 +18,19 @@ export const debounce = (func, wait) => {
   return debounced;
 };
 
-export const rgbaToString = (color: string | { r: number; g: number; b: number; a: number }) => {
+export const rgbaToString = (
+  color: string | { r: number; g: number; b: number; a: number }
+) => {
   if (typeof color === "string") return color;
   if (typeof color === "object" && color !== null) {
     const { r, g, b, a = 1 } = color;
     return `rgba(${r}, ${g}, ${b}, ${a})`;
   }
-  return "rgba(255, 255, 255, 0.7)";
+  return "rgba(255, 255, 255, 0.5)";
 };
 
 export const rgbaToTailwindClass = (
-  color: string | { r: number; g: number; b: number; a: number },
+  color: string | { r: number; g: number; b: number; a: number }
 ): string => {
   if (typeof color === "string") {
     return color;

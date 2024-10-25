@@ -15,29 +15,29 @@ function SectionsLayout() {
   // Define section-specific content
   const sectionContent = {
     "/_app/sections/": {
-      category: "Sections",
+      category: "Widgets",
       title: "Dashboard",
-      description: "Welcome to your sections dashboard",
+      description: "Dashboard",
     },
     "/_app/sections/chat": {
-      category: "Sections",
+      category: "Widgets",
       title: "Chat",
-      description: "Manage your chat interactions",
+      description: "",
     },
     "/_app/sections/alerts": {
-      category: "Sections",
+      category: "Widgets",
       title: "Alerts",
-      description: "View and manage your alerts",
+      description: "",
     },
     "/_app/sections/stats": {
-      category: "Sections",
+      category: "Widgets",
       title: "Stats",
-      description: "Analyze your statistics",
+      description: "",
     },
     "/_app/sections/visualizer": {
-      category: "Sections",
+      category: "Widgets",
       title: "Visualizer",
-      description: "Visualize your data",
+      description: "",
     },
   };
 

@@ -39,7 +39,7 @@ import { Copy, Trash, Download, Upload, Edit2, Plus } from "lucide-react";
 
 import { supabase } from "@/utils/supabase/client";
 import { Database } from "@/types/supabase";
-import { WidgetType } from "@/types/Widget";
+import { WidgetType } from "@/types/widget";
 import { toast } from "@/utils/toast";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
 

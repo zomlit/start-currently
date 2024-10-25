@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/start";
 import { getAuth } from "@clerk/tanstack-start/server";
-import { api } from "@/lib/api";
+import apiMethods from "@/lib/api";
 
 export const getProfiles = createServerFn("GET", async (_, ctx) => {
   try {
@@ -18,7 +18,7 @@ export const getProfiles = createServerFn("GET", async (_, ctx) => {
       return { error: "No token found", profiles: [] };
     }
 
-    const response = await api.profiles.getAll("visualizer", token);
+    const response = await apiMethods.profiles.getAll("visualizer", token);
     if (!response.success) {
       return {
         error: response.error || "Failed to fetch profiles",
@@ -50,7 +50,7 @@ export const getProfile = createServerFn(
       throw new Error("No token found");
     }
 
-    return api.profiles.get(payload.sectionId, payload.profileId, token);
+    return apiMethods.profiles.get(payload.sectionId, payload.profileId, token);
   }
 );
 

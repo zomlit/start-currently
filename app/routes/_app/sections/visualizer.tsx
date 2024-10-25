@@ -16,14 +16,28 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/tanstack-start";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import apiMethods from "@/lib/api";
+import { Plus, Copy, Trash, Edit2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "@/utils/toast";
+import { WidgetPreview } from "@/components/widget-preview";
+import { useDatabaseStore } from "@/store/supabaseCacheStore";
+import { SpotifyTrack } from "@/types/spotify";
+import { formatTime } from "@/utils";
 
 const profileSchema = z.object({
   id: z.string().optional(),
   section_id: z.string(),
   settings: z.object({
     name: z.string().min(1, "Profile name is required"),
-    isDefault: z.boolean().default(false),
+    isDefault: z.boolean().default(true),
     common: z.object({
       backgroundColor: z.string(),
       padding: z.number().min(0).max(50),
@@ -43,11 +57,16 @@ export const Route = createFileRoute("/_app/sections/visualizer")({
 });
 
 function VisualizerSection() {
+  const { subscribeToTable, unsubscribeFromTable, currentTrack } =
+    useDatabaseStore();
+
   const { userId, getToken, isLoaded } = useAuth();
   const queryClient = useQueryClient();
   const [selectedProfileId, setSelectedProfileId] = React.useState<
     string | null
   >(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const [newProfileName, setNewProfileName] = React.useState("");
 
   const {
     data: profiles,
@@ -78,6 +97,10 @@ function VisualizerSection() {
     },
   });
 
+  const nowPlayingData = useDatabaseStore(
+    (state) => state.VisualizerWidget?.[0]
+  );
+
   const { watch, handleSubmit, setValue, reset } = methods;
 
   React.useEffect(() => {
@@ -95,14 +118,23 @@ function VisualizerSection() {
     }
   }, [profiles, selectedProfileId]);
 
+  const getTokenAsync = async () => {
+    const token = await getToken({ template: "lstio" });
+    if (!token) throw new Error("No token available");
+    return token;
+  };
+
   const mutation = useMutation({
     mutationFn: async (newProfile: Profile) => {
-      const token = await getToken({ template: "lstio" });
-      if (!token) throw new Error("No token available");
+      const token = await getTokenAsync();
       if (newProfile.id) {
-        return api.profiles.update(newProfile, token);
+        return apiMethods.profiles.update(
+          newProfile.id,
+          newProfile.settings,
+          token
+        );
       } else {
-        return api.profiles.createDefault(
+        return apiMethods.profiles.createDefault(
           "visualizer",
           userId!,
           newProfile.settings,
@@ -112,31 +144,90 @@ function VisualizerSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profiles", "visualizer"] });
+      toast.success({ title: "Profile saved successfully" });
     },
   });
 
   const copyMutation = useMutation({
     mutationFn: async (profileToCopy: Profile) => {
-      const token = await getToken({ template: "lstio" });
-      if (!token) throw new Error("No token available");
-      return api.profiles.copy(profileToCopy, token);
+      const token = await getTokenAsync();
+      return apiMethods.profiles.copy(profileToCopy, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profiles", "visualizer"] });
+      toast.success({ title: "Profile duplicated successfully" });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (profileId: string) => {
-      const token = await getToken({ template: "lstio" });
-      if (!token) throw new Error("No token available");
-      return api.profiles.delete(profileId, token);
+      const token = await getTokenAsync();
+      return apiMethods.profiles.delete(profileId, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profiles", "visualizer"] });
       if (profiles && profiles.length > 1) {
         setSelectedProfileId(profiles[0].id);
       }
+      toast.success({ title: "Profile deleted successfully" });
+    },
+  });
+
+  const createProfileMutation = useMutation({
+    mutationFn: async (profileName: string) => {
+      const token = await getTokenAsync();
+      if (!userId) {
+        throw new Error("User ID is not available");
+      }
+
+      const settings = {
+        name: profileName,
+        isDefault: false,
+        common: {
+          backgroundColor: "#ffffff",
+          padding: 10,
+          showBorders: false,
+        },
+        sectionSpecific: {
+          fontSize: 16,
+          chartType: "bar",
+        },
+      };
+
+      console.log("Sending create profile request with data:", {
+        sectionId: "visualizer",
+        userId,
+        settings,
+        tokenPreview: token.substring(0, 10) + "...", // Log part of the token for debugging
+      });
+
+      try {
+        const response = await apiMethods.profiles.createDefault(
+          "visualizer",
+          userId,
+          settings,
+          token
+        );
+        console.log("Create profile response:", response);
+        if (!response.success) {
+          throw new Error(response.error || "Failed to create profile");
+        }
+        return response.data;
+      } catch (error: any) {
+        console.error("Profile creation error:", error);
+        throw new Error(error.message || "Failed to create profile");
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["profiles", "visualizer"] });
+      setSelectedProfileId(data.id);
+      setIsAddDialogOpen(false);
+      setNewProfileName("");
+      toast.success({ title: "New profile created successfully" });
+    },
+    onError: (error: any) => {
+      console.error("Error creating profile:", error);
+      toast.error({ title: error.message || "Failed to create profile" });
     },
   });
 
@@ -158,10 +249,16 @@ function VisualizerSection() {
   const handleSetDefault = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (selectedProfileId) {
-      const token = await getToken({ template: "lstio" });
-      if (!token) throw new Error("No token available");
-      await api.profiles.setDefault(selectedProfileId, token);
-      queryClient.invalidateQueries({ queryKey: ["profiles", "visualizer"] });
+      try {
+        const token = await getTokenAsync();
+        if (!token) throw new Error("No token available");
+        await apiMethods.profiles.setDefault(selectedProfileId, token);
+        queryClient.invalidateQueries({ queryKey: ["profiles", "visualizer"] });
+        toast.success({ title: "Profile set as default successfully" });
+      } catch (error) {
+        console.error("Error setting default profile:", error);
+        toast.error({ title: "Failed to set profile as default" });
+      }
     }
   };
 
@@ -176,35 +273,11 @@ function VisualizerSection() {
     }
   };
 
-  const createDefaultProfile = async () => {
-    if (!userId) return;
-    const token = await getToken({ template: "lstio" });
-    mutation.mutate(
-      {
-        section_id: "visualizer",
-        settings: {
-          name: "Default Profile",
-          isDefault: true,
-          common: {
-            backgroundColor: "#ffffff",
-            padding: 10,
-            showBorders: false,
-          },
-          sectionSpecific: { fontSize: 16, chartType: "bar" },
-        },
-      },
-      {
-        onSuccess: (data) => {
-          console.log("Default profile created:", data);
-          queryClient.invalidateQueries({
-            queryKey: ["profiles", "visualizer"],
-          });
-        },
-        onError: (error) => {
-          console.error("Error creating default profile:", error);
-        },
-      }
-    );
+  const handleCreateProfile = () => {
+    if (newProfileName.trim()) {
+      console.log("Creating profile:", newProfileName.trim());
+      createProfileMutation.mutate(newProfileName.trim());
+    }
   };
 
   if (!isLoaded || isProfilesLoading) {
@@ -232,16 +305,6 @@ function VisualizerSection() {
     );
   }
 
-  if (!profiles || profiles.length === 0) {
-    return (
-      <div>
-        <p>No profiles found. Please create a profile.</p>
-        <Button onClick={createDefaultProfile}>Create Default Profile</Button>
-      </div>
-    );
-  }
-
-  // Render the form only when all data is available
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -263,25 +326,43 @@ function VisualizerSection() {
                 ))}
             </SelectContent>
           </Select>
-          <Button
-            onClick={handleSetDefault}
-            disabled={profile?.settings.isDefault}
-          >
-            Set as Default
-          </Button>
-          <Button onClick={handleCopyProfile} className="btn btn-secondary">
-            Copy Profile
-          </Button>
-          <Button
-            onClick={handleDeleteProfile}
-            className="btn btn-danger"
-            disabled={profiles?.length <= 1}
-          >
-            Delete Profile
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              size="icon"
+              variant="outline"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button onClick={handleCopyProfile} size="icon" variant="outline">
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleDeleteProfile}
+              size="icon"
+              variant="outline"
+              disabled={profiles?.length <= 1}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleSetDefault}
+              disabled={profile?.settings.isDefault}
+            >
+              Set as Default
+            </Button>
+          </div>
         </div>
-
-        <Input
+        track to {currentTrack}
+        <WidgetPreview
+          currentProfile="Default Profile"
+          selectedWidget="visualizer"
+          initialTrack={currentTrack as SpotifyTrack}
+          userId={userId}
+          // Pass the current profile data instead of optimisticProfileSettings
+          // optimisticSettings={currentProfile.settings}
+        />
+        {/* <Input
           {...methods.register("settings.name")}
           placeholder="Profile Name"
           className="mb-4"
@@ -325,7 +406,69 @@ function VisualizerSection() {
             <SelectItem value="pie">Pie Chart</SelectItem>
           </SelectContent>
         </Select>
-
+ */}
+        <div className="relative z-10">
+          <h2 className="mb-2 flex items-center text-lg font-bold text-purple-400">
+            <svg
+              className="mr-2 h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
+            </svg>
+            Now Playing
+          </h2>
+          {nowPlayingData?.track ? (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                {nowPlayingData?.track?.albumArt && (
+                  <img
+                    src={nowPlayingData?.track?.albumArt}
+                    alt="Album Art"
+                    className="h-20 w-20 rounded-md border-2 border-blue-400 shadow-md"
+                  />
+                )}
+                <div>
+                  <p className="text-2xl font-bold text-blue-300">
+                    {nowPlayingData?.track?.title}
+                  </p>
+                  <p className="text-lg text-purple-200">
+                    {nowPlayingData?.track?.artist}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-[auto,1fr] gap-x-4">
+                <p className="text-gray-400">Album:</p>
+                <p className="text-purple-200">
+                  {nowPlayingData?.track?.album}
+                </p>
+                <p className="text-gray-400">Status:</p>
+                <p
+                  className={`font-semibold ${
+                    nowPlayingData?.track?.isPlaying
+                      ? "text-green-400"
+                      : "text-yellow-400"
+                  }`}
+                >
+                  {nowPlayingData?.track?.isPlaying ? "Playing" : "Paused"}
+                </p>
+                <p className="text-gray-400">Progress:</p>
+                <p className="text-purple-200">
+                  {formatTime(nowPlayingData?.track?.elapsed)} /{" "}
+                  {formatTime(nowPlayingData?.track?.duration)}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-300">Waiting for track data...</p>
+          )}
+        </div>
         <div
           className="preview mt-8 p-4"
           style={{
@@ -347,6 +490,28 @@ function VisualizerSection() {
           Save Profile
         </button>
       </form>
+
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Profile</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new profile.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Profile Name"
+            value={newProfileName}
+            onChange={(e) => setNewProfileName(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateProfile}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </FormProvider>
   );
 }
