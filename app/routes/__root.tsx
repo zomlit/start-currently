@@ -19,13 +19,7 @@ import { seo } from "@/utils/seo";
 import { getAuth } from "@clerk/tanstack-start/server";
 import appCss from "@/styles/app.css?url";
 import globalCss from "@/styles/global.css?url";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/tanstack-start";
+import { ClerkProvider } from "@clerk/tanstack-start";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 

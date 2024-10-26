@@ -31,40 +31,36 @@ import {
 } from "@/components/ui/form";
 
 export const lyricsSchema = z.object({
-  backgroundColor: z.string(),
-  textColor: z.string(),
-  currentTextColor: z.string(),
-  fontSize: z.number().min(10).max(72),
-  padding: z.number().min(0).max(100),
-  currentLineScale: z.number().min(1).max(2),
-  showFade: z.boolean(),
-  lineHeight: z.number().min(1).max(3),
-  fontFamily: z.string(),
-  greenScreenMode: z.boolean(),
-  colorSync: z.boolean(),
-  showVideoCanvas: z.boolean(),
-  videoCanvasOpacity: z.number().min(0).max(1),
-  textAlign: z.enum(["left", "center", "right"]),
-  textShadowColor: z.string(),
-  textShadowBlur: z.number().min(0).max(20),
-  textShadowOffsetX: z.number().min(-20).max(20),
-  textShadowOffsetY: z.number().min(-20).max(20),
-  animationEasing: z.enum([
-    "linear",
-    "ease",
-    "ease-in",
-    "ease-out",
-    "ease-in-out",
-  ]),
-  animationSpeed: z.number().min(100).max(1000),
-  glowEffect: z.boolean(),
-  glowColor: z.string(),
-  glowIntensity: z.number().min(0).max(20),
-  hideExplicitContent: z.boolean().default(false), // Add this line
+  backgroundColor: z.string().default("rgba(0, 0, 0, 1)"),
+  textColor: z.string().default("rgba(255, 255, 255, 1)"),
+  currentTextColor: z.string().default("rgba(220, 40, 220, 1)"),
+  fontSize: z.number().min(10).max(72).default(24),
+  padding: z.number().min(0).max(100).default(20),
+  currentLineScale: z.number().min(1).max(2).default(1.2),
+  showFade: z.boolean().default(true),
+  fadeDistance: z.number().min(0).max(200).default(64),
+  lineHeight: z.number().min(1).max(3).default(1.5),
+  fontFamily: z.string().default("Sofia Sans Condensed"),
+  greenScreenMode: z.boolean().default(false),
+  colorSync: z.boolean().default(false),
+  showVideoCanvas: z.boolean().default(false),
+  videoCanvasOpacity: z.number().min(0).max(1).default(0.2),
+  textAlign: z.enum(["left", "center", "right"]).default("left"),
+  textShadowColor: z.string().default("rgba(0, 0, 0, 0.5)"),
+  textShadowBlur: z.number().min(0).max(20).default(2),
+  textShadowOffsetX: z.number().min(-20).max(20).default(1),
+  textShadowOffsetY: z.number().min(-20).max(20).default(1),
+  animationEasing: z
+    .enum(["linear", "ease", "ease-in", "ease-out", "ease-in-out"])
+    .default("ease-out"),
+  animationSpeed: z.number().min(100).max(1000).default(300),
+  glowEffect: z.boolean().default(false),
+  glowColor: z.string().default("rgba(255, 255, 255, 0.5)"),
+  glowIntensity: z.number().min(0).max(20).default(5),
+  hideExplicitContent: z.boolean().default(false),
 });
 
 export type LyricsSettings = z.infer<typeof lyricsSchema>;
-
 interface LyricsSettingsFormProps {
   settings: LyricsSettings;
   onSettingsChange: (settings: Partial<LyricsSettings>) => void;
@@ -97,32 +93,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   };
 
   const handleResetToDefaults = () => {
-    const defaultSettings: LyricsSettings = {
-      backgroundColor: "rgba(0, 0, 0, 1)",
-      textColor: "rgba(255, 255, 255, 1)",
-      currentTextColor: "rgba(220, 40, 220, 1)",
-      fontSize: 24,
-      padding: 20,
-      currentLineScale: 1.2,
-      showFade: true,
-      lineHeight: 1.5,
-      fontFamily: "Sofia Sans Condensed",
-      greenScreenMode: false,
-      colorSync: false,
-      showVideoCanvas: false,
-      videoCanvasOpacity: 0.2,
-      textAlign: "left",
-      textShadowColor: "rgba(0, 0, 0, 0.5)",
-      textShadowBlur: 2,
-      textShadowOffsetX: 1,
-      textShadowOffsetY: 1,
-      animationEasing: "ease-out",
-      animationSpeed: 300,
-      glowEffect: false,
-      glowColor: "rgba(255, 255, 255, 0.5)",
-      glowIntensity: 5,
-      hideExplicitContent: false,
-    };
+    const defaultSettings = lyricsSchema.parse({});
     form.reset(defaultSettings);
     onSettingsChange(defaultSettings);
   };
@@ -130,14 +101,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   return (
     <Form {...form}>
       <form className="space-y-4">
-        <div className="flex items-center space-x-2 mb-6">
-          <Input value={publicUrl} readOnly className="flex-grow" />
-          <Button onClick={onCopyPublicUrl} size="icon" variant="outline">
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <Accordion type="multiple" className="w-full space-y-4">
+        <Accordion type="multiple" className="w-full">
           <AccordionItem value="general">
             <AccordionTrigger>General Settings</AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -175,34 +139,48 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="showFade"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Fade top and bottom</FormLabel>
-                      <FormDescription>
-                        Add a fade effect to the top and bottom of the lyrics
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(value) =>
-                          handleSettingChange("showFade", value)
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="text">
             <AccordionTrigger>Text Settings</AccordionTrigger>
             <AccordionContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="fontFamily"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Font Family</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        handleSettingChange("fontFamily", value);
+                        injectFont(value);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a font" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isFontLoading ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="ml-2">Loading fonts...</span>
+                          </div>
+                        ) : (
+                          fontFamilies.map((font) => (
+                            <SelectItem key={font} value={font}>
+                              {font}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="textColor"
@@ -220,6 +198,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="currentTextColor"
@@ -272,42 +251,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="fontFamily"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Font Family</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        handleSettingChange("fontFamily", value);
-                        injectFont(value);
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a font" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isFontLoading ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="ml-2">Loading fonts...</span>
-                          </div>
-                        ) : (
-                          fontFamilies.map((font) => (
-                            <SelectItem key={font} value={font}>
-                              {font}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="textAlign"
@@ -334,97 +278,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
-            </AccordionContent>
-          </AccordionItem>
 
-          <AccordionItem value="effects">
-            <AccordionTrigger>Effects</AccordionTrigger>
-            <AccordionContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="greenScreenMode"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Green Screen Mode</FormLabel>
-                      <FormDescription>
-                        Enable green screen mode for chroma keying
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(value) =>
-                          handleSettingChange("greenScreenMode", value)
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              {/* <FormField
-                control={form.control}
-                name="colorSync"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Color Sync</FormLabel>
-                      <FormDescription>
-                        Synchronize colors with the current track
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(value) =>
-                          handleSettingChange("colorSync", value)
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              /> */}
-              <FormField
-                control={form.control}
-                name="showVideoCanvas"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Show Video Canvas</FormLabel>
-                      <FormDescription>
-                        Display video background when available
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(value) =>
-                          handleSettingChange("showVideoCanvas", value)
-                        }
-                        disabled={!isVideoAvailable}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="videoCanvasOpacity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Video Canvas Opacity</FormLabel>
-                    <Slider
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={[field.value]}
-                      onValueChange={(val) =>
-                        handleSettingChange("videoCanvasOpacity", val[0])
-                      }
-                    />
-                  </FormItem>
-                )}
-              />
+              {/* Text shadow settings moved here */}
               <FormField
                 control={form.control}
                 name="textShadowColor"
@@ -493,6 +348,100 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="effects">
+            <AccordionTrigger>Effects</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="greenScreenMode"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Green Screen Mode</FormLabel>
+                      <FormDescription>
+                        Enable green screen mode for chroma keying
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(value) =>
+                          handleSettingChange("greenScreenMode", value)
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {/* <FormField
+                control={form.control}
+                name="colorSync"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Color Sync</FormLabel>
+                      <FormDescription>
+                        Synchronize colors with the current track
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(value) =>
+                          handleSettingChange("colorSync", value)
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              /> */}
+              <FormField
+                control={form.control}
+                name="showVideoCanvas"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Show Video Canvas</FormLabel>
+                      <FormDescription>
+                        Display video bg if available
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(value) =>
+                          handleSettingChange("showVideoCanvas", value)
+                        }
+                        disabled={!isVideoAvailable}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {form.watch("showVideoCanvas") && (
+                <FormField
+                  control={form.control}
+                  name="videoCanvasOpacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Video Canvas Opacity</FormLabel>
+                      <Slider
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={[field.value]}
+                        onValueChange={(val) =>
+                          handleSettingChange("videoCanvasOpacity", val[0])
+                        }
+                      />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="glowEffect"
@@ -553,30 +502,54 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   />
                 </>
               )}
+
+              <FormField
+                control={form.control}
+                name="showFade"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Fade top and bottom</FormLabel>
+                      <FormDescription>
+                        Add a fade effect to the top and bottom of the lyrics
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(value) =>
+                          handleSettingChange("showFade", value)
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {form.watch("showFade") && (
+                <FormField
+                  control={form.control}
+                  name="fadeDistance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fade Distance</FormLabel>
+                      <Slider
+                        min={0}
+                        max={200}
+                        value={[field.value]}
+                        onValueChange={(val) =>
+                          handleSettingChange("fadeDistance", val[0])
+                        }
+                      />
+                    </FormItem>
+                  )}
+                />
+              )}
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="animation">
             <AccordionTrigger>Animation</AccordionTrigger>
             <AccordionContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="currentLineScale"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Line Scale</FormLabel>
-                    <Slider
-                      min={1}
-                      max={2}
-                      step={0.1}
-                      value={[field.value]}
-                      onValueChange={(val) =>
-                        handleSettingChange("currentLineScale", val[0])
-                      }
-                    />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="animationEasing"
@@ -605,6 +578,25 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="currentLineScale"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Line Scale</FormLabel>
+                    <Slider
+                      min={1}
+                      max={2}
+                      step={0.1}
+                      value={[field.value]}
+                      onValueChange={(val) =>
+                        handleSettingChange("currentLineScale", val[0])
+                      }
+                    />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="animationSpeed"
@@ -636,12 +628,10 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
                       <FormLabel>Hide Explicit Content</FormLabel>
-                      <FormDescription>
-                        Replace explicit words with asterisks
-                      </FormDescription>
                     </div>
                     <FormControl>
                       <Switch
+                        className="!mt-0"
                         checked={field.value}
                         onCheckedChange={(value) =>
                           handleSettingChange("hideExplicitContent", value)
@@ -659,7 +649,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
           type="button"
           onClick={handleResetToDefaults}
           variant="outline"
-          className="w-full mt-4"
+          className="w-full mt-4 ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
         >
           <RotateCcw className="mr-2 h-4 w-4" />
           Reset to Defaults

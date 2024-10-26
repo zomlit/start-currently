@@ -13,12 +13,13 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
+import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppTestImport } from './routes/_app/test'
 import { Route as AppSectionsImport } from './routes/_app/sections'
 import { Route as AppPostsImport } from './routes/_app/posts'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
-import { Route as usernameLyricsImport } from './routes/[username].lyrics'
+import { Route as UsernameLyricsImport } from './routes/$username/lyrics'
 import { Route as LyricsLyricsIndexImport } from './routes/_lyrics/lyrics.index'
 import { Route as AppWheelspinIndexImport } from './routes/_app/wheelspin/index'
 import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
@@ -46,6 +47,12 @@ const LyricsRoute = LyricsImport.update({
 
 const AppRoute = AppImport.update({
   id: '/_app',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UsernameRoute = UsernameImport.update({
+  id: '/$username',
+  path: '/$username',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -78,10 +85,10 @@ const AppAuthedRoute = AppAuthedImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const usernameLyricsRoute = usernameLyricsImport.update({
-  id: '/[username]/lyrics',
-  path: '/[username]/lyrics',
-  getParentRoute: () => rootRoute,
+const UsernameLyricsRoute = UsernameLyricsImport.update({
+  id: '/lyrics',
+  path: '/lyrics',
+  getParentRoute: () => UsernameRoute,
 } as any)
 
 const LyricsLyricsIndexRoute = LyricsLyricsIndexImport.update({
@@ -190,6 +197,13 @@ const AppPostsPostIdDeepRoute = AppPostsPostIdDeepImport.update({
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/$username': {
+      id: '/$username'
+      path: '/$username'
+      fullPath: '/$username'
+      preLoaderRoute: typeof UsernameImport
+      parentRoute: typeof rootRoute
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -204,12 +218,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LyricsImport
       parentRoute: typeof rootRoute
     }
-    '/[username]/lyrics': {
-      id: '/[username]/lyrics'
-      path: '/[username]/lyrics'
-      fullPath: '/[username]/lyrics'
-      preLoaderRoute: typeof usernameLyricsImport
-      parentRoute: typeof rootRoute
+    '/$username/lyrics': {
+      id: '/$username/lyrics'
+      path: '/lyrics'
+      fullPath: '/$username/lyrics'
+      preLoaderRoute: typeof UsernameLyricsImport
+      parentRoute: typeof UsernameImport
     }
     '/_app/_authed': {
       id: '/_app/_authed'
@@ -370,6 +384,18 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
+interface UsernameRouteChildren {
+  UsernameLyricsRoute: typeof UsernameLyricsRoute
+}
+
+const UsernameRouteChildren: UsernameRouteChildren = {
+  UsernameLyricsRoute: UsernameLyricsRoute,
+}
+
+const UsernameRouteWithChildren = UsernameRoute._addFileChildren(
+  UsernameRouteChildren,
+)
+
 interface AppAuthedRouteChildren {
   AppAuthedDashboardRoute: typeof AppAuthedDashboardRoute
 }
@@ -462,8 +488,9 @@ const LyricsRouteWithChildren =
   LyricsRoute._addFileChildren(LyricsRouteChildren)
 
 export interface FileRoutesByFullPath {
+  '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
-  '/[username]/lyrics': typeof usernameLyricsRoute
+  '/$username/lyrics': typeof UsernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/sections': typeof AppSectionsRouteWithChildren
   '/test': typeof AppTestRoute
@@ -488,8 +515,9 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
+  '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
-  '/[username]/lyrics': typeof usernameLyricsRoute
+  '/$username/lyrics': typeof UsernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/test': typeof AppTestRoute
   '/': typeof AppIndexRoute
@@ -514,9 +542,10 @@ export interface FileRoutesByTo {
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
+  '/$username': typeof UsernameRouteWithChildren
   '/_app': typeof AppRouteWithChildren
   '/_lyrics': typeof LyricsRouteWithChildren
-  '/[username]/lyrics': typeof usernameLyricsRoute
+  '/$username/lyrics': typeof UsernameLyricsRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
   '/_app/posts': typeof AppPostsRouteWithChildren
   '/_app/sections': typeof AppSectionsRouteWithChildren
@@ -544,8 +573,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/$username'
     | ''
-    | '/[username]/lyrics'
+    | '/$username/lyrics'
     | '/posts'
     | '/sections'
     | '/test'
@@ -569,8 +599,9 @@ export interface FileRouteTypes {
     | '/posts/$postId/deep'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/$username'
     | ''
-    | '/[username]/lyrics'
+    | '/$username/lyrics'
     | '/posts'
     | '/test'
     | '/'
@@ -593,9 +624,10 @@ export interface FileRouteTypes {
     | '/posts/$postId/deep'
   id:
     | '__root__'
+    | '/$username'
     | '/_app'
     | '/_lyrics'
-    | '/[username]/lyrics'
+    | '/$username/lyrics'
     | '/_app/_authed'
     | '/_app/posts'
     | '/_app/sections'
@@ -622,15 +654,15 @@ export interface FileRouteTypes {
 }
 
 export interface RootRouteChildren {
+  UsernameRoute: typeof UsernameRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   LyricsRoute: typeof LyricsRouteWithChildren
-  usernameLyricsRoute: typeof usernameLyricsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  UsernameRoute: UsernameRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   LyricsRoute: LyricsRouteWithChildren,
-  usernameLyricsRoute: usernameLyricsRoute,
 }
 
 export const routeTree = rootRoute
@@ -645,9 +677,15 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
+        "/$username",
         "/_app",
-        "/_lyrics",
-        "/[username]/lyrics"
+        "/_lyrics"
+      ]
+    },
+    "/$username": {
+      "filePath": "$username.tsx",
+      "children": [
+        "/$username/lyrics"
       ]
     },
     "/_app": {
@@ -675,8 +713,9 @@ export const routeTree = rootRoute
         "/_lyrics/lyrics/"
       ]
     },
-    "/[username]/lyrics": {
-      "filePath": "[username].lyrics.tsx"
+    "/$username/lyrics": {
+      "filePath": "$username/lyrics.tsx",
+      "parent": "/$username"
     },
     "/_app/_authed": {
       "filePath": "_app/_authed.tsx",

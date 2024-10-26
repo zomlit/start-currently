@@ -114,7 +114,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${clerkToken}`,
-          "X-User-Id": userId, // Add this line to include the X-User-Id header
+          "X-User-Id": userId,
         },
       });
 
