@@ -695,7 +695,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_PUBLIC_SITE_URL}/api/rocket-league/?platform=epic&username=${encodeURIComponent(username)}`
+        `${import.meta.env.VITE_ELYSIA_API_URL}/api/rocket-league/?platform=epic&username=${encodeURIComponent(username)}`
       );
       console.log("API response status:", response.status);
 

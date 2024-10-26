@@ -19,4 +19,10 @@ dist
 # Sentry Config File
 .env.sentry-build-plugin
 
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+count.txt
 app.config.timestamp_*

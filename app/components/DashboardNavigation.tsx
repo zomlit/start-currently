@@ -3,7 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { CircleDot } from "./icons";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { UserButton, useUser } from "@clerk/tanstack-start";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   MessageCircle,

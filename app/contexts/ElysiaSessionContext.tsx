@@ -87,13 +87,13 @@ export const ElysiaSessionProvider: React.FC<{
         });
 
         newSocket.on("connect_error", (error) => {
-          console.warn("Failed to connect to socket server:", error);
-          toast.error({ title: "Failed to connect to Elysia server" });
+          // console.warn("Failed to connect to socket server:", error);
+          // toast.error({ title: "Failed to connect to Elysia server" });
         });
 
         newSocket.on("disconnect", (reason) => {
-          console.log("Disconnected from socket server:", reason);
-          toast.info({ title: "Disconnected from Elysia server" });
+          // console.log("Disconnected from socket server:", reason);
+          // toast.info({ title: "Disconnected from Elysia server" });
         });
 
         newSocket.on("pong", () => {

@@ -7,6 +7,7 @@ import { AuthWrapper } from "@/components/AuthWrapper";
 import { ElysiaSessionProvider } from "@/contexts/ElysiaSessionContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@clerk/tanstack-start";
+import { Toaster } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -39,20 +40,14 @@ function LyricsComponent() {
 
   return (
     <React.StrictMode>
-      <ThemeProvider defaultTheme="dark" storageKey="app-theme">
+      <ThemeProvider defaultTheme="dark">
         <QueryClientProvider client={queryClient}>
           <AuthWrapper>
             <ElysiaSessionProvider broadcastChannel="your-broadcast-channel">
-              <OptimisticProfileSettingsProvider
-                initialProfileSettings={{
-                  commonSettings: {},
-                  specificSettings: {},
-                }}
-              >
-                <div style={{ height: "100vh", overflow: "hidden" }}>
-                  <Outlet />
-                </div>
-              </OptimisticProfileSettingsProvider>
+              <div style={{ height: "100vh", overflow: "hidden" }}>
+                <Outlet />
+              </div>
+              <Toaster theme={theme === "system" ? undefined : theme} />
             </ElysiaSessionProvider>
           </AuthWrapper>
         </QueryClientProvider>

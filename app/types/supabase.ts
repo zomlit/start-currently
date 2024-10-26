@@ -683,6 +683,7 @@ export type Database = {
           s_client_secret: string | null
           s_expires_at: string | null
           s_refresh_token: string | null
+          s_sp_dc: string | null
           selectedUsername: string | null
           selectedUsernameToken: string | null
           session: Json | null
@@ -708,6 +709,7 @@ export type Database = {
           s_client_secret?: string | null
           s_expires_at?: string | null
           s_refresh_token?: string | null
+          s_sp_dc?: string | null
           selectedUsername?: string | null
           selectedUsernameToken?: string | null
           session?: Json | null
@@ -733,6 +735,7 @@ export type Database = {
           s_client_secret?: string | null
           s_expires_at?: string | null
           s_refresh_token?: string | null
+          s_sp_dc?: string | null
           selectedUsername?: string | null
           selectedUsernameToken?: string | null
           session?: Json | null
