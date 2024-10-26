@@ -261,8 +261,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWheelspinIndexImport
       parentRoute: typeof AppImport
     }
-    '/_app/posts/$postId/deep': {
-      id: '/_app/posts/$postId/deep'
+    '/_app/posts_/$postId/deep': {
+      id: '/_app/posts_/$postId/deep'
       path: '/posts/$postId/deep'
       fullPath: '/posts/$postId/deep'
       preLoaderRoute: typeof AppPostsPostIdDeepImport
@@ -394,7 +394,7 @@ export interface FileRoutesById {
   '/_app/pricing/': typeof AppPricingIndexRoute
   '/_app/teampicker/': typeof AppTeampickerIndexRoute
   '/_app/wheelspin/': typeof AppWheelspinIndexRoute
-  '/_app/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
+  '/_app/posts_/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRouteTypes {
@@ -455,7 +455,7 @@ export interface FileRouteTypes {
     | '/_app/pricing/'
     | '/_app/teampicker/'
     | '/_app/wheelspin/'
-    | '/_app/posts/$postId/deep'
+    | '/_app/posts_/$postId/deep'
   fileRoutesById: FileRoutesById
 }
 
@@ -497,7 +497,7 @@ export const routeTree = rootRoute
         "/_app/pricing/",
         "/_app/teampicker/",
         "/_app/wheelspin/",
-        "/_app/posts/$postId/deep"
+        "/_app/posts_/$postId/deep"
       ]
     },
     "/_app/_authed": {
@@ -572,7 +572,7 @@ export const routeTree = rootRoute
       "filePath": "_app/wheelspin/index.tsx",
       "parent": "/_app"
     },
-    "/_app/posts/$postId/deep": {
+    "/_app/posts_/$postId/deep": {
       "filePath": "_app/posts_.$postId.deep.tsx",
       "parent": "/_app"
     }
