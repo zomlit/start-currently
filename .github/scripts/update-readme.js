@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const packageJson = require("../../package.json");
 const readmePath = path.join(__dirname, "../../README.md");
