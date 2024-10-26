@@ -14,13 +14,11 @@ Currently is a modern web application for streamers built with Tanstack Start, R
 
 - **Routing**: Uses TanStack Router for efficient client-side routing.
 
-- **State Management**: Leverages TanStack Query for server state management.
+- **State Management**: Leverages Zustand for state management and TanStack Query for server state management.
 
 - **UI Components**: Includes a variety of custom UI components built with Radix UI primitives.
 
 - **Animations**: Incorporates Framer Motion for smooth animations.
-
-- **Icon System**: Uses Lucide React for a comprehensive icon set.
 
 ## Getting Started
 

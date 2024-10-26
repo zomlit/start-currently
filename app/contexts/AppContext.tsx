@@ -1,5 +1,4 @@
 // @/context/AppContext.tsx
-"use client";
 import React, { createContext, ReactNode, useContext, useEffect } from "react";
 import { useCombinedStore } from "@/store";
 
@@ -11,7 +10,9 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const { getOAuthToken, setOAuthTokens, isInitialized } = useCombinedStore();
 
   // You might want to add a useEffect here to initialize your store if needed

@@ -39,7 +39,7 @@ import { Copy, Trash, Download, Upload, Edit2, Plus } from "lucide-react";
 
 import { supabase } from "@/utils/supabase/client";
 import { Database } from "@/types/supabase";
-import { WidgetType } from "@/types/Widget";
+import { WidgetType } from "@/types/widget";
 import { toast } from "@/utils/toast";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
 
@@ -478,11 +478,12 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
           <DialogHeader>
             <DialogTitle>Add New Profile</DialogTitle>
           </DialogHeader>
-          <div className="">
+          <div className="space-y-4">
             <Input
               placeholder="Profile Name"
               value={newProfileName}
               onChange={(e) => setNewProfileName(e.target.value)}
+              className="w-full p-2 rounded mb-2 bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 focus:outline-none focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Select
               value={newProfileWidget}
@@ -490,7 +491,7 @@ const WidgetControls: React.FC<WidgetControlsProps> = ({
                 setNewProfileWidget(value as WidgetType)
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full p-2 rounded mb-2 bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 focus:outline-none focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0">
                 <SelectValue placeholder="Select Widget Type" />
               </SelectTrigger>
               <SelectContent>

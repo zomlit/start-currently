@@ -4,22 +4,68 @@ import { WidgetType, WidgetProfile, ProfileSettings } from "@/types";
 import SkinRounded from "@/components/skins/visualizer/skin-rounded";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { useDynamicColors } from "@/hooks/useDynamicColors";
-// import Tiptap from "@/components/Tiptap";
 import { useLastPlayedTrack } from "@/hooks/useLastPlayedTrack";
 import { SpotifyTrack } from "@/types/spotify";
 import { Spinner } from "@/components/ui/spinner";
-
-import type { Database } from "@/types/supabase";
-import { useQuery } from "@tanstack/react-query";
-import { loadProfile } from "@/utils/widgetDbOperations";
 import { supabase } from "@/utils/supabase/client";
+import { LyricsPanel } from "@/components/LyricsPanel";
+
 interface WidgetPreviewProps {
-  currentProfile: WidgetProfile;
+  currentProfile?: WidgetProfile;
   selectedWidget: WidgetType;
   isPublicView?: boolean;
   userId?: string;
   initialTrack?: SpotifyTrack;
 }
+
+const defaultSettings: ProfileSettings = {
+  common: {
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    textColor: "rgba(255, 255, 255, 0.5)",
+    fontFamily: "Sofia Sans Condensed, sans-serif",
+    fontSize: 24,
+    fontVariant: "400",
+    fontStyle: "normal",
+    underline: false,
+    strikethrough: false,
+    textAlignment: "left",
+    lineHeight: 1.4,
+    letterSpacing: 0,
+    wordSpacing: 0,
+    borderColor: "rgba(0, 0, 0, 1)",
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderWidth: 0,
+    borderStyle: "none",
+    borderRadius: 8,
+    paddingTop: 0,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+    padding: 0,
+    gap: 2,
+    matchArtworkColors: true,
+    matchArtworkOpacity: 0.5,
+    textTransform: "none",
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowHorizontal: 1,
+    textShadowVertical: 1,
+    textShadowBlur: 2,
+    canvasEnabled: true,
+    albumCanvas: true,
+    backgroundCanvas: true,
+    backgroundCanvasOpacity: 0.5,
+    hideOnDisabled: false,
+    pauseEnabled: false,
+  },
+  specific: {
+    showAvatars: true,
+    showBadges: true,
+    backgroundOpacity: 0.6,
+  },
+};
 
 export function WidgetPreview({
   currentProfile,
@@ -27,19 +73,20 @@ export function WidgetPreview({
   isPublicView,
   userId,
   initialTrack,
-  optimisticSettings = defaultSettings,
 }: WidgetPreviewProps) {
-  if (!currentProfile) {
-    return <div>Error: Profile data is missing</div>;
-  }
-
   const [previewSettings, setPreviewSettings] = useState(
-    currentProfile.settings
+    currentProfile?.settings || defaultSettings
   );
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(
     initialTrack || null
   );
   const { lastPlayedTrack } = useLastPlayedTrack(userId || "");
+
+  const [lyrics, setLyrics] = useState<
+    { startTimeMs: number; words: string }[] | null
+  >(null);
+  const [isLyricsLoading, setIsLyricsLoading] = useState(false);
+  const [lyricsError, setLyricsError] = useState<string | null>(null);
 
   const trackToUse = currentTrack || lastPlayedTrack || null;
 
@@ -48,10 +95,7 @@ export function WidgetPreview({
     isLoading,
     colorSyncEnabled,
     isReady,
-  } = useDynamicColors(
-    trackToUse,
-    optimisticSettings?.settings?.specificSettings || {}
-  );
+  } = useDynamicColors(trackToUse, defaultSettings.specific || {});
 
   useEffect(() => {
     if (trackToUse?.album?.images?.[0]?.url) {
@@ -114,14 +158,41 @@ export function WidgetPreview({
     }
   }, [currentProfile]);
 
-  const commonSettings =
-    optimisticSettings?.settings?.commonSettings ||
-    currentProfile.settings.commonSettings ||
-    {};
-  const specificSettings =
-    optimisticSettings?.settings?.specificSettings ||
-    currentProfile.settings.specificSettings ||
-    {};
+  const fetchLyrics = async (trackId: string) => {
+    setIsLyricsLoading(true);
+    setLyricsError(null);
+    try {
+      const response = await fetch(
+        `http://localhost:3001/v1/lyrics/${trackId}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch lyrics: ${response.statusText}`);
+      }
+      const data = await response.json();
+
+      if (data.lyrics && Array.isArray(data.lyrics.lines)) {
+        setLyrics(data.lyrics.lines);
+      } else {
+        setLyrics(null);
+        throw new Error("Invalid lyrics format");
+      }
+    } catch (error) {
+      setLyricsError(
+        error instanceof Error ? error.message : "An error occurred"
+      );
+    } finally {
+      setIsLyricsLoading(false);
+    }
+  };
+
+  const handleShowLyrics = () => {
+    if (trackToUse?.id) {
+      fetchLyrics(trackToUse.id);
+    }
+  };
+
+  const commonSettings = defaultSettings.common;
+  const specificSettings = defaultSettings.specific;
 
   const getCommonStyles = () => {
     const backgroundColor =
@@ -164,8 +235,6 @@ export function WidgetPreview({
   const style = getCommonStyles();
 
   const renderPreview = () => {
-    const { commonSettings, specificSettings } = previewSettings;
-
     if (isLoading) {
       return (
         <Spinner
@@ -178,17 +247,18 @@ export function WidgetPreview({
     try {
       if (selectedWidget === "visualizer") {
         return (
-          <SkinRounded
-            track={trackToUse}
-            commonSettings={commonSettings}
-            specificSettings={specificSettings}
-            isPublicView={isPublicView}
-            style={style}
-          />
+          <>
+            <SkinRounded
+              track={trackToUse}
+              commonSettings={commonSettings}
+              specificSettings={specificSettings}
+              isPublicView={isPublicView}
+            />
+          </>
         );
       } else if (selectedWidget === "chat") {
         return (
-          <div style={style} className="rounded-lg">
+          <div className="rounded-lg">
             <h3 className="mb-2 text-lg font-bold">Live Chat Preview</h3>
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
@@ -214,22 +284,6 @@ export function WidgetPreview({
         return (
           <div style={style} className="rounded-lg">
             <h3 className="mb-2 text-lg font-bold">Freeform Preview</h3>
-            {/* <Tiptap
-              initialContent={specificSettings.content || ""}
-              onUpdate={() => {}} // No need to update in preview
-              textColor={
-                colorSyncEnabled && dynamicPalette?.Vibrant
-                  ? dynamicPalette.Vibrant.hex
-                  : specificSettings.textColor
-              }
-              backgroundColor={
-                colorSyncEnabled && dynamicPalette?.DarkMuted
-                  ? dynamicPalette.DarkMuted.hex
-                  : specificSettings.backgroundColor
-              }
-              letterSpacing={commonSettings.letterSpacing}
-              lineHeight={commonSettings.lineHeight}
-            /> */}
           </div>
         );
       }

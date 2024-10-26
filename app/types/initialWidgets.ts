@@ -5,47 +5,7 @@ export type Widget = {
   profiles: WidgetProfile[];
 };
 
-export const defaultCommonSettings: WidgetSettings["commonSettings"] = {
-  backgroundColor: "rgba(128, 0, 128, 0.6)",
-  textColor: "rgba(255, 255, 255, 1)",
-  fontFamily: "Poppins, sans-serif",
-  fontSize: 24,
-  fontVariant: "400",
-  fontStyle: "normal",
-  underline: false,
-  strikethrough: false,
-  textAlignment: "left",
-  lineHeight: 1.4,
-  letterSpacing: 0,
-  wordSpacing: 0,
-  borderColor: "rgba(0, 0, 0, 1)",
-  borderTopWidth: 0,
-  borderRightWidth: 0,
-  borderBottomWidth: 0,
-  borderLeftWidth: 0,
-  borderWidth: 0,
-  borderStyle: "none",
-  borderRadius: 8,
-  paddingTop: 0,
-  paddingRight: 0,
-  paddingBottom: 0,
-  paddingLeft: 0,
-  padding: 0,
-  gap: 2,
-  matchArtworkColors: true,
-  matchArtworkOpacity: 0.5,
-  textTransform: "none",
-  textShadowColor: "rgba(0, 0, 0, 0.8)",
-  textShadowHorizontal: 1,
-  textShadowVertical: 1,
-  textShadowBlur: 2,
-  canvasEnabled: true,
-  albumCanvas: true,
-  backgroundCanvas: true,
-  backgroundCanvasOpacity: 0.5,
-  hideOnDisabled: false,
-  pauseEnabled: false,
-};
+export const defaultCommonSettings: WidgetSettings["commonSettings"] = {};
 
 export const initialWidgets: Record<WidgetType, Widget> = {
   visualizer: {
@@ -56,7 +16,18 @@ export const initialWidgets: Record<WidgetType, Widget> = {
         widgetType: "visualizer",
         settings: {
           commonSettings: defaultCommonSettings,
-          specificSettings: {},
+          specificSettings: {
+            selectedSkin: "rounded",
+            hideOnDisabled: false,
+            pauseEnabled: false,
+            showAlbumArt: true,
+            showPlaylist: true,
+            progressBarForegroundColor: "rgba(34, 19, 49, 0.8)",
+            progressBarBackgroundColor: "rgba(255, 255, 255, 0.5)",
+            colorSync: true,
+            backgroundOpacity: 0.8,
+            syncTextShadow: false,
+          },
         },
         color: "#000000",
         is_current: true,

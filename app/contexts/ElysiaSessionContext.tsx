@@ -1,4 +1,3 @@
-"use client";
 import React, {
   createContext,
   useContext,
@@ -30,7 +29,7 @@ interface ElysiaSessionContextType {
   stopSession: () => Promise<void>;
   lastPing: number | null;
   apiStats: ApiStats | null;
-  nowPlaying: any; // Replace 'any' with the correct type from your Database type
+  nowPlaying: any;
   twitchToken: string | undefined;
   spotifyRefreshToken: string | undefined;
   handleToggleSession: () => Promise<void>;
@@ -67,7 +66,7 @@ export const ElysiaSessionProvider: React.FC<{
   const { apiStats, setApiStats } = useChatStore();
   const [lastPing, setLastPing] = useState<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const elysiaWsUrl = process.env.NEXT_PUBLIC_ELYSIA_WS_URL;
+  const elysiaWsUrl = process.env.VITE_ELYSIA_WS_URL;
 
   useEffect(() => {
     if (!socketRef.current && isServerAvailable) {
@@ -88,13 +87,13 @@ export const ElysiaSessionProvider: React.FC<{
         });
 
         newSocket.on("connect_error", (error) => {
-          console.warn("Failed to connect to socket server:", error);
-          toast.error({ title: "Failed to connect to Elysia server" });
+          // console.warn("Failed to connect to socket server:", error);
+          // toast.error({ title: "Failed to connect to Elysia server" });
         });
 
         newSocket.on("disconnect", (reason) => {
-          console.log("Disconnected from socket server:", reason);
-          toast.info({ title: "Disconnected from Elysia server" });
+          // console.log("Disconnected from socket server:", reason);
+          // toast.info({ title: "Disconnected from Elysia server" });
         });
 
         newSocket.on("pong", () => {
