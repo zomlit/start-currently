@@ -6,8 +6,8 @@
 //   set: (name: string, value: string, options: any) => void;
 // }) {
 //   return createServerClient<Database>(
-//     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+//     process.env.VITE_SUPABASE_URL!,
+//     process.env.VITE_SUPABASE_ANON_KEY!,
 //     {
 //       cookies: {
 //         get(name: string) {

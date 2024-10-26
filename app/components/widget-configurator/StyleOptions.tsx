@@ -174,7 +174,7 @@ const StyleOptions: React.FC<StyleOptionsProps> = ({
             onValueCommit={handleValueCommit}
             className="relative flex h-5 w-full touch-none select-none items-center"
           >
-            <Slider.Track className="relative h-[3px] grow rounded-full bg-secondary">
+            <Slider.Track className="relative h-[3px] grow rounded-full bg-background shadow-md dark:bg-white/10">
               <Slider.Range className="absolute h-full rounded-full bg-primary" />
             </Slider.Track>
             <Slider.Thumb className="block h-5 w-5 rounded-full bg-primary shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" />
@@ -352,7 +352,7 @@ const StyleOptions: React.FC<StyleOptionsProps> = ({
           <Label htmlFor="backgroundColor">Background Color</Label>
           <GradientColorPicker
             color={
-              optimisticSettings.commonSettings?.backgroundColor ?? "#ffffff"
+              optimisticSettings.commonSettings?.backgroundColor ?? "#000000"
             }
             onChange={handleColorChange("commonSettings", "backgroundColor")}
             onChangeComplete={handleColorChangeComplete(
