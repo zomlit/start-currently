@@ -94,7 +94,7 @@ export const useChatStore = create<ChatState>()(
             existingSocket.disconnect();
           }
 
-          const socketUrl = "http://localhost:9001";
+          const socketUrl = `${import.meta.env.VITE_ELYSIA_WS_URL}`;
           console.log(`Connecting to socket server at: ${socketUrl}`);
 
           const socket = io(socketUrl, {
