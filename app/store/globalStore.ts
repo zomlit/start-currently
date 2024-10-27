@@ -330,9 +330,16 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_ELYSIA_API_URL}/user-tokens/${user.id}`
-      );
+      const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
+      if (!apiUrl) {
+        throw new Error("VITE_ELYSIA_API_URL environment variable is not set");
+      }
+
+      // Fix: Ensure there's no trailing slash in the base URL
+      const baseUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+      const fullUrl = `${baseUrl}/user-tokens/${user.id}`;
+
+      const response = await fetch(fullUrl);
 
       if (!response.ok) {
         throw new Error(
