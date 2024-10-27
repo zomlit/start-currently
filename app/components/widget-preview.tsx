@@ -163,7 +163,7 @@ export function WidgetPreview({
     setLyricsError(null);
     try {
       const response = await fetch(
-        `http://localhost:3001/v1/lyrics/${trackId}`
+        `${import.meta.env.VITE_ELYSIA_API_URL}/lyrics/${trackId}`
       );
       if (!response.ok) {
         throw new Error(`Failed to fetch lyrics: ${response.statusText}`);

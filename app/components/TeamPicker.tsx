@@ -204,7 +204,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is not available");
       const response = await fetch(
-        `http://localhost:9001/brackets?user_id=${user.id}`
+        `${import.meta.env.VITE_ELYSIA_API_URL}/brackets?user_id=${user.id}`
       );
       if (!response.ok) throw new Error("Failed to fetch brackets");
       return response.json();
@@ -225,7 +225,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
     if (bracketId) {
       try {
         const response = await fetch(
-          `http://localhost:9001/brackets/${bracketId}?user_id=${user?.id}`
+          `${import.meta.env.VITE_ELYSIA_API_URL}/brackets/${bracketId}?user_id=${user?.id}`
         );
         if (!response.ok) throw new Error("Failed to fetch bracket");
         const data = await response.json();
@@ -296,7 +296,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
     if (window.confirm("Are you sure you want to delete this tournament?")) {
       try {
         const response = await fetch(
-          `http://localhost:9001/brackets/${bracketId}`,
+          `${import.meta.env.VITE_ELYSIA_API_URL}/brackets/${bracketId}`,
           {
             method: "DELETE",
           }
@@ -351,11 +351,14 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
       data: any;
       user_id: string;
     }) => {
-      const response = await fetch("http://localhost:9001/brackets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...bracketData, user_id: user?.id }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_ELYSIA_API_URL}/brackets`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...bracketData, user_id: user?.id }),
+        }
+      );
       if (!response.ok) throw new Error("Failed to create bracket");
       return response.json();
     },
@@ -373,7 +376,7 @@ const TeamPicker: React.FC<TeamPickerProps> = ({
   const updateBracketMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await fetch(
-        `http://localhost:9001/brackets/${id}?user_id=${user?.id}`,
+        `${import.meta.env.VITE_ELYSIA_API_URL}/brackets/${id}?user_id=${user?.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

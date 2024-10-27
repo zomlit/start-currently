@@ -11,29 +11,48 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
+import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppTestImport } from './routes/_app/test'
+import { Route as AppSectionsImport } from './routes/_app/sections'
 import { Route as AppPostsImport } from './routes/_app/posts'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
+import { Route as UsernameLyricsImport } from './routes/$username/lyrics'
+import { Route as LyricsLyricsIndexImport } from './routes/_lyrics/lyrics.index'
 import { Route as AppWheelspinIndexImport } from './routes/_app/wheelspin/index'
 import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
+import { Route as AppSectionsIndexImport } from './routes/_app/sections/index'
 import { Route as AppPricingIndexImport } from './routes/_app/pricing/index'
 import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
 import { Route as AppSignUpSplatImport } from './routes/_app/sign-up.$'
 import { Route as AppSignInSplatImport } from './routes/_app/sign-in.$'
+import { Route as AppSectionsVisualizerImport } from './routes/_app/sections/visualizer'
+import { Route as AppSectionsStatsImport } from './routes/_app/sections/stats'
+import { Route as AppSectionsChatImport } from './routes/_app/sections/chat'
+import { Route as AppSectionsAlertsImport } from './routes/_app/sections/alerts'
 import { Route as AppPostsPostIdImport } from './routes/_app/posts.$postId'
 import { Route as AppCheckoutSuccessImport } from './routes/_app/checkout.success'
 import { Route as AppCheckoutProductIdImport } from './routes/_app/checkout.$productId'
-import { Route as AppAuthedWidgetsImport } from './routes/_app/_authed/widgets'
 import { Route as AppAuthedDashboardImport } from './routes/_app/_authed/dashboard'
-import { Route as AppAuthedBunImport } from './routes/_app/_authed/bun'
 import { Route as AppPostsPostIdDeepImport } from './routes/_app/posts_.$postId.deep'
 
 // Create/Update Routes
 
+const LyricsRoute = LyricsImport.update({
+  id: '/_lyrics',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const AppRoute = AppImport.update({
   id: '/_app',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UsernameRoute = UsernameImport.update({
+  id: '/$username',
+  path: '/$username',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -49,6 +68,12 @@ const AppTestRoute = AppTestImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
+const AppSectionsRoute = AppSectionsImport.update({
+  id: '/sections',
+  path: '/sections',
+  getParentRoute: () => AppRoute,
+} as any)
+
 const AppPostsRoute = AppPostsImport.update({
   id: '/posts',
   path: '/posts',
@@ -58,6 +83,18 @@ const AppPostsRoute = AppPostsImport.update({
 const AppAuthedRoute = AppAuthedImport.update({
   id: '/_authed',
   getParentRoute: () => AppRoute,
+} as any)
+
+const UsernameLyricsRoute = UsernameLyricsImport.update({
+  id: '/lyrics',
+  path: '/lyrics',
+  getParentRoute: () => UsernameRoute,
+} as any)
+
+const LyricsLyricsIndexRoute = LyricsLyricsIndexImport.update({
+  id: '/lyrics/',
+  path: '/lyrics/',
+  getParentRoute: () => LyricsRoute,
 } as any)
 
 const AppWheelspinIndexRoute = AppWheelspinIndexImport.update({
@@ -70,6 +107,12 @@ const AppTeampickerIndexRoute = AppTeampickerIndexImport.update({
   id: '/teampicker/',
   path: '/teampicker/',
   getParentRoute: () => AppRoute,
+} as any)
+
+const AppSectionsIndexRoute = AppSectionsIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSectionsRoute,
 } as any)
 
 const AppPricingIndexRoute = AppPricingIndexImport.update({
@@ -96,6 +139,30 @@ const AppSignInSplatRoute = AppSignInSplatImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
+const AppSectionsVisualizerRoute = AppSectionsVisualizerImport.update({
+  id: '/visualizer',
+  path: '/visualizer',
+  getParentRoute: () => AppSectionsRoute,
+} as any)
+
+const AppSectionsStatsRoute = AppSectionsStatsImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AppSectionsRoute,
+} as any)
+
+const AppSectionsChatRoute = AppSectionsChatImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppSectionsRoute,
+} as any)
+
+const AppSectionsAlertsRoute = AppSectionsAlertsImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AppSectionsRoute,
+} as any)
+
 const AppPostsPostIdRoute = AppPostsPostIdImport.update({
   id: '/$postId',
   path: '/$postId',
@@ -114,21 +181,9 @@ const AppCheckoutProductIdRoute = AppCheckoutProductIdImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const AppAuthedWidgetsRoute = AppAuthedWidgetsImport.update({
-  id: '/widgets',
-  path: '/widgets',
-  getParentRoute: () => AppAuthedRoute,
-} as any)
-
 const AppAuthedDashboardRoute = AppAuthedDashboardImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AppAuthedRoute,
-} as any)
-
-const AppAuthedBunRoute = AppAuthedBunImport.update({
-  id: '/bun',
-  path: '/bun',
   getParentRoute: () => AppAuthedRoute,
 } as any)
 
@@ -142,12 +197,33 @@ const AppPostsPostIdDeepRoute = AppPostsPostIdDeepImport.update({
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/$username': {
+      id: '/$username'
+      path: '/$username'
+      fullPath: '/$username'
+      preLoaderRoute: typeof UsernameImport
+      parentRoute: typeof rootRoute
+    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AppImport
       parentRoute: typeof rootRoute
+    }
+    '/_lyrics': {
+      id: '/_lyrics'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof LyricsImport
+      parentRoute: typeof rootRoute
+    }
+    '/$username/lyrics': {
+      id: '/$username/lyrics'
+      path: '/lyrics'
+      fullPath: '/$username/lyrics'
+      preLoaderRoute: typeof UsernameLyricsImport
+      parentRoute: typeof UsernameImport
     }
     '/_app/_authed': {
       id: '/_app/_authed'
@@ -161,6 +237,13 @@ declare module '@tanstack/react-router' {
       path: '/posts'
       fullPath: '/posts'
       preLoaderRoute: typeof AppPostsImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/sections': {
+      id: '/_app/sections'
+      path: '/sections'
+      fullPath: '/sections'
+      preLoaderRoute: typeof AppSectionsImport
       parentRoute: typeof AppImport
     }
     '/_app/test': {
@@ -177,25 +260,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexImport
       parentRoute: typeof AppImport
     }
-    '/_app/_authed/bun': {
-      id: '/_app/_authed/bun'
-      path: '/bun'
-      fullPath: '/bun'
-      preLoaderRoute: typeof AppAuthedBunImport
-      parentRoute: typeof AppAuthedImport
-    }
     '/_app/_authed/dashboard': {
       id: '/_app/_authed/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppAuthedDashboardImport
-      parentRoute: typeof AppAuthedImport
-    }
-    '/_app/_authed/widgets': {
-      id: '/_app/_authed/widgets'
-      path: '/widgets'
-      fullPath: '/widgets'
-      preLoaderRoute: typeof AppAuthedWidgetsImport
       parentRoute: typeof AppAuthedImport
     }
     '/_app/checkout/$productId': {
@@ -218,6 +287,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/posts/$postId'
       preLoaderRoute: typeof AppPostsPostIdImport
       parentRoute: typeof AppPostsImport
+    }
+    '/_app/sections/alerts': {
+      id: '/_app/sections/alerts'
+      path: '/alerts'
+      fullPath: '/sections/alerts'
+      preLoaderRoute: typeof AppSectionsAlertsImport
+      parentRoute: typeof AppSectionsImport
+    }
+    '/_app/sections/chat': {
+      id: '/_app/sections/chat'
+      path: '/chat'
+      fullPath: '/sections/chat'
+      preLoaderRoute: typeof AppSectionsChatImport
+      parentRoute: typeof AppSectionsImport
+    }
+    '/_app/sections/stats': {
+      id: '/_app/sections/stats'
+      path: '/stats'
+      fullPath: '/sections/stats'
+      preLoaderRoute: typeof AppSectionsStatsImport
+      parentRoute: typeof AppSectionsImport
+    }
+    '/_app/sections/visualizer': {
+      id: '/_app/sections/visualizer'
+      path: '/visualizer'
+      fullPath: '/sections/visualizer'
+      preLoaderRoute: typeof AppSectionsVisualizerImport
+      parentRoute: typeof AppSectionsImport
     }
     '/_app/sign-in/$': {
       id: '/_app/sign-in/$'
@@ -247,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPricingIndexImport
       parentRoute: typeof AppImport
     }
+    '/_app/sections/': {
+      id: '/_app/sections/'
+      path: '/'
+      fullPath: '/sections/'
+      preLoaderRoute: typeof AppSectionsIndexImport
+      parentRoute: typeof AppSectionsImport
+    }
     '/_app/teampicker/': {
       id: '/_app/teampicker/'
       path: '/teampicker'
@@ -261,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWheelspinIndexImport
       parentRoute: typeof AppImport
     }
+    '/_lyrics/lyrics/': {
+      id: '/_lyrics/lyrics/'
+      path: '/lyrics'
+      fullPath: '/lyrics'
+      preLoaderRoute: typeof LyricsLyricsIndexImport
+      parentRoute: typeof LyricsImport
+    }
     '/_app/posts_/$postId/deep': {
       id: '/_app/posts_/$postId/deep'
       path: '/posts/$postId/deep'
@@ -273,16 +384,24 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
+interface UsernameRouteChildren {
+  UsernameLyricsRoute: typeof UsernameLyricsRoute
+}
+
+const UsernameRouteChildren: UsernameRouteChildren = {
+  UsernameLyricsRoute: UsernameLyricsRoute,
+}
+
+const UsernameRouteWithChildren = UsernameRoute._addFileChildren(
+  UsernameRouteChildren,
+)
+
 interface AppAuthedRouteChildren {
-  AppAuthedBunRoute: typeof AppAuthedBunRoute
   AppAuthedDashboardRoute: typeof AppAuthedDashboardRoute
-  AppAuthedWidgetsRoute: typeof AppAuthedWidgetsRoute
 }
 
 const AppAuthedRouteChildren: AppAuthedRouteChildren = {
-  AppAuthedBunRoute: AppAuthedBunRoute,
   AppAuthedDashboardRoute: AppAuthedDashboardRoute,
-  AppAuthedWidgetsRoute: AppAuthedWidgetsRoute,
 }
 
 const AppAuthedRouteWithChildren = AppAuthedRoute._addFileChildren(
@@ -301,9 +420,30 @@ const AppPostsRouteWithChildren = AppPostsRoute._addFileChildren(
   AppPostsRouteChildren,
 )
 
+interface AppSectionsRouteChildren {
+  AppSectionsAlertsRoute: typeof AppSectionsAlertsRoute
+  AppSectionsChatRoute: typeof AppSectionsChatRoute
+  AppSectionsStatsRoute: typeof AppSectionsStatsRoute
+  AppSectionsVisualizerRoute: typeof AppSectionsVisualizerRoute
+  AppSectionsIndexRoute: typeof AppSectionsIndexRoute
+}
+
+const AppSectionsRouteChildren: AppSectionsRouteChildren = {
+  AppSectionsAlertsRoute: AppSectionsAlertsRoute,
+  AppSectionsChatRoute: AppSectionsChatRoute,
+  AppSectionsStatsRoute: AppSectionsStatsRoute,
+  AppSectionsVisualizerRoute: AppSectionsVisualizerRoute,
+  AppSectionsIndexRoute: AppSectionsIndexRoute,
+}
+
+const AppSectionsRouteWithChildren = AppSectionsRoute._addFileChildren(
+  AppSectionsRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAuthedRoute: typeof AppAuthedRouteWithChildren
   AppPostsRoute: typeof AppPostsRouteWithChildren
+  AppSectionsRoute: typeof AppSectionsRouteWithChildren
   AppTestRoute: typeof AppTestRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCheckoutProductIdRoute: typeof AppCheckoutProductIdRoute
@@ -320,6 +460,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAuthedRoute: AppAuthedRouteWithChildren,
   AppPostsRoute: AppPostsRouteWithChildren,
+  AppSectionsRoute: AppSectionsRouteWithChildren,
   AppTestRoute: AppTestRoute,
   AppIndexRoute: AppIndexRoute,
   AppCheckoutProductIdRoute: AppCheckoutProductIdRoute,
@@ -335,136 +476,193 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface LyricsRouteChildren {
+  LyricsLyricsIndexRoute: typeof LyricsLyricsIndexRoute
+}
+
+const LyricsRouteChildren: LyricsRouteChildren = {
+  LyricsLyricsIndexRoute: LyricsLyricsIndexRoute,
+}
+
+const LyricsRouteWithChildren =
+  LyricsRoute._addFileChildren(LyricsRouteChildren)
+
 export interface FileRoutesByFullPath {
+  '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
+  '/$username/lyrics': typeof UsernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
+  '/sections': typeof AppSectionsRouteWithChildren
   '/test': typeof AppTestRoute
   '/': typeof AppIndexRoute
-  '/bun': typeof AppAuthedBunRoute
   '/dashboard': typeof AppAuthedDashboardRoute
-  '/widgets': typeof AppAuthedWidgetsRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/posts/$postId': typeof AppPostsPostIdRoute
+  '/sections/alerts': typeof AppSectionsAlertsRoute
+  '/sections/chat': typeof AppSectionsChatRoute
+  '/sections/stats': typeof AppSectionsStatsRoute
+  '/sections/visualizer': typeof AppSectionsVisualizerRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/pricing': typeof AppPricingIndexRoute
+  '/sections/': typeof AppSectionsIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
+  '/lyrics': typeof LyricsLyricsIndexRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesByTo {
+  '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
+  '/$username/lyrics': typeof UsernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/test': typeof AppTestRoute
   '/': typeof AppIndexRoute
-  '/bun': typeof AppAuthedBunRoute
   '/dashboard': typeof AppAuthedDashboardRoute
-  '/widgets': typeof AppAuthedWidgetsRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/posts/$postId': typeof AppPostsPostIdRoute
+  '/sections/alerts': typeof AppSectionsAlertsRoute
+  '/sections/chat': typeof AppSectionsChatRoute
+  '/sections/stats': typeof AppSectionsStatsRoute
+  '/sections/visualizer': typeof AppSectionsVisualizerRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/pricing': typeof AppPricingIndexRoute
+  '/sections': typeof AppSectionsIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
+  '/lyrics': typeof LyricsLyricsIndexRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
+  '/$username': typeof UsernameRouteWithChildren
   '/_app': typeof AppRouteWithChildren
+  '/_lyrics': typeof LyricsRouteWithChildren
+  '/$username/lyrics': typeof UsernameLyricsRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
   '/_app/posts': typeof AppPostsRouteWithChildren
+  '/_app/sections': typeof AppSectionsRouteWithChildren
   '/_app/test': typeof AppTestRoute
   '/_app/': typeof AppIndexRoute
-  '/_app/_authed/bun': typeof AppAuthedBunRoute
   '/_app/_authed/dashboard': typeof AppAuthedDashboardRoute
-  '/_app/_authed/widgets': typeof AppAuthedWidgetsRoute
   '/_app/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/_app/checkout/success': typeof AppCheckoutSuccessRoute
   '/_app/posts/$postId': typeof AppPostsPostIdRoute
+  '/_app/sections/alerts': typeof AppSectionsAlertsRoute
+  '/_app/sections/chat': typeof AppSectionsChatRoute
+  '/_app/sections/stats': typeof AppSectionsStatsRoute
+  '/_app/sections/visualizer': typeof AppSectionsVisualizerRoute
   '/_app/sign-in/$': typeof AppSignInSplatRoute
   '/_app/sign-up/$': typeof AppSignUpSplatRoute
   '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/_app/pricing/': typeof AppPricingIndexRoute
+  '/_app/sections/': typeof AppSectionsIndexRoute
   '/_app/teampicker/': typeof AppTeampickerIndexRoute
   '/_app/wheelspin/': typeof AppWheelspinIndexRoute
+  '/_lyrics/lyrics/': typeof LyricsLyricsIndexRoute
   '/_app/posts_/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/$username'
     | ''
+    | '/$username/lyrics'
     | '/posts'
+    | '/sections'
     | '/test'
     | '/'
-    | '/bun'
     | '/dashboard'
-    | '/widgets'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/posts/$postId'
+    | '/sections/alerts'
+    | '/sections/chat'
+    | '/sections/stats'
+    | '/sections/visualizer'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/teampicker/$bracketId'
     | '/pricing'
+    | '/sections/'
     | '/teampicker'
     | '/wheelspin'
+    | '/lyrics'
     | '/posts/$postId/deep'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/$username'
     | ''
+    | '/$username/lyrics'
     | '/posts'
     | '/test'
     | '/'
-    | '/bun'
     | '/dashboard'
-    | '/widgets'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/posts/$postId'
+    | '/sections/alerts'
+    | '/sections/chat'
+    | '/sections/stats'
+    | '/sections/visualizer'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/teampicker/$bracketId'
     | '/pricing'
+    | '/sections'
     | '/teampicker'
     | '/wheelspin'
+    | '/lyrics'
     | '/posts/$postId/deep'
   id:
     | '__root__'
+    | '/$username'
     | '/_app'
+    | '/_lyrics'
+    | '/$username/lyrics'
     | '/_app/_authed'
     | '/_app/posts'
+    | '/_app/sections'
     | '/_app/test'
     | '/_app/'
-    | '/_app/_authed/bun'
     | '/_app/_authed/dashboard'
-    | '/_app/_authed/widgets'
     | '/_app/checkout/$productId'
     | '/_app/checkout/success'
     | '/_app/posts/$postId'
+    | '/_app/sections/alerts'
+    | '/_app/sections/chat'
+    | '/_app/sections/stats'
+    | '/_app/sections/visualizer'
     | '/_app/sign-in/$'
     | '/_app/sign-up/$'
     | '/_app/teampicker/$bracketId'
     | '/_app/pricing/'
+    | '/_app/sections/'
     | '/_app/teampicker/'
     | '/_app/wheelspin/'
+    | '/_lyrics/lyrics/'
     | '/_app/posts_/$postId/deep'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
+  UsernameRoute: typeof UsernameRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
+  LyricsRoute: typeof LyricsRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  UsernameRoute: UsernameRouteWithChildren,
   AppRoute: AppRouteWithChildren,
+  LyricsRoute: LyricsRouteWithChildren,
 }
 
 export const routeTree = rootRoute
@@ -479,7 +677,15 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/_app"
+        "/$username",
+        "/_app",
+        "/_lyrics"
+      ]
+    },
+    "/$username": {
+      "filePath": "$username.tsx",
+      "children": [
+        "/$username/lyrics"
       ]
     },
     "/_app": {
@@ -487,6 +693,7 @@ export const routeTree = rootRoute
       "children": [
         "/_app/_authed",
         "/_app/posts",
+        "/_app/sections",
         "/_app/test",
         "/_app/",
         "/_app/checkout/$productId",
@@ -500,13 +707,21 @@ export const routeTree = rootRoute
         "/_app/posts_/$postId/deep"
       ]
     },
+    "/_lyrics": {
+      "filePath": "_lyrics.tsx",
+      "children": [
+        "/_lyrics/lyrics/"
+      ]
+    },
+    "/$username/lyrics": {
+      "filePath": "$username/lyrics.tsx",
+      "parent": "/$username"
+    },
     "/_app/_authed": {
       "filePath": "_app/_authed.tsx",
       "parent": "/_app",
       "children": [
-        "/_app/_authed/bun",
-        "/_app/_authed/dashboard",
-        "/_app/_authed/widgets"
+        "/_app/_authed/dashboard"
       ]
     },
     "/_app/posts": {
@@ -514,6 +729,17 @@ export const routeTree = rootRoute
       "parent": "/_app",
       "children": [
         "/_app/posts/$postId"
+      ]
+    },
+    "/_app/sections": {
+      "filePath": "_app/sections.tsx",
+      "parent": "/_app",
+      "children": [
+        "/_app/sections/alerts",
+        "/_app/sections/chat",
+        "/_app/sections/stats",
+        "/_app/sections/visualizer",
+        "/_app/sections/"
       ]
     },
     "/_app/test": {
@@ -524,16 +750,8 @@ export const routeTree = rootRoute
       "filePath": "_app/index.tsx",
       "parent": "/_app"
     },
-    "/_app/_authed/bun": {
-      "filePath": "_app/_authed/bun.tsx",
-      "parent": "/_app/_authed"
-    },
     "/_app/_authed/dashboard": {
       "filePath": "_app/_authed/dashboard.tsx",
-      "parent": "/_app/_authed"
-    },
-    "/_app/_authed/widgets": {
-      "filePath": "_app/_authed/widgets.tsx",
       "parent": "/_app/_authed"
     },
     "/_app/checkout/$productId": {
@@ -547,6 +765,22 @@ export const routeTree = rootRoute
     "/_app/posts/$postId": {
       "filePath": "_app/posts.$postId.tsx",
       "parent": "/_app/posts"
+    },
+    "/_app/sections/alerts": {
+      "filePath": "_app/sections/alerts.tsx",
+      "parent": "/_app/sections"
+    },
+    "/_app/sections/chat": {
+      "filePath": "_app/sections/chat.tsx",
+      "parent": "/_app/sections"
+    },
+    "/_app/sections/stats": {
+      "filePath": "_app/sections/stats.tsx",
+      "parent": "/_app/sections"
+    },
+    "/_app/sections/visualizer": {
+      "filePath": "_app/sections/visualizer.tsx",
+      "parent": "/_app/sections"
     },
     "/_app/sign-in/$": {
       "filePath": "_app/sign-in.$.tsx",
@@ -564,6 +798,10 @@ export const routeTree = rootRoute
       "filePath": "_app/pricing/index.tsx",
       "parent": "/_app"
     },
+    "/_app/sections/": {
+      "filePath": "_app/sections/index.tsx",
+      "parent": "/_app/sections"
+    },
     "/_app/teampicker/": {
       "filePath": "_app/teampicker/index.tsx",
       "parent": "/_app"
@@ -571,6 +809,10 @@ export const routeTree = rootRoute
     "/_app/wheelspin/": {
       "filePath": "_app/wheelspin/index.tsx",
       "parent": "/_app"
+    },
+    "/_lyrics/lyrics/": {
+      "filePath": "_lyrics/lyrics.index.tsx",
+      "parent": "/_lyrics"
     },
     "/_app/posts_/$postId/deep": {
       "filePath": "_app/posts_.$postId.deep.tsx",
