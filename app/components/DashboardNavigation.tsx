@@ -84,7 +84,7 @@ const DashboardNavigation: React.FC = () => {
         <div>
           <div className="border-b border-b-gray-200 py-3 dark:border-b-zinc-800">
             <Link
-              to="/sections"
+              to="/dashboard"
               className="group flex items-center gap-x-3 text-lg font-semibold text-gray-800 transition-transform dark:text-gray-200"
             >
               <div className="spring-bounce-60 spring-duration-300 flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg] md:min-w-[3rem]">

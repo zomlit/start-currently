@@ -22,6 +22,8 @@ import globalCss from "@/styles/global.css?url";
 import { ClerkProvider } from "@clerk/tanstack-start";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { AccessControl } from "@/components/AccessControl";
+import { dark } from "@clerk/themes";
 
 const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
   const user = await getAuth(ctx.request);
@@ -86,14 +88,39 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      <AccessControl>
+        <Outlet />
+      </AccessControl>
     </RootDocument>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+
+        elements: {
+          avatarBox:
+            "w-10 h-10 hover:scale-110 transition-all duration-300 border-violet-500 border-[2px]",
+          modalContent: "!bg-black/25",
+          modalBackdrop: "!bg-black/25 !backdrop-blur-md",
+          impersonationFabTitle: "text-black",
+          tagInputContainer: "bg-transparent border-white/10",
+          input: "bg-white/10 text-white border-white/10",
+          navbar: "text-violet-500 !bg-transparent bg-none",
+          navbarButton: "text-violet-500",
+          navbarButtonIcon: "text-violet-500",
+        },
+        variables: {
+          colorPrimary: "#8b5cf6",
+          colorText: "white",
+          colorNeutral: "white",
+          colorInputText: "black",
+        },
+      }}
+    >
       <Html>
         <Head>
           <Meta />

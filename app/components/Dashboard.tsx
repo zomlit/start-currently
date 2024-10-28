@@ -10,6 +10,19 @@ import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { useCombinedStore } from "@/store";
 import { formatTime } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "@tanstack/react-router";
+import {
+  LayoutDashboard,
+  MessageCircle,
+  Bell,
+  BarChart2,
+  Eye,
+  Users,
+  AudioLines,
+  MicVocal,
+  MessageCircleMore,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const ConnectedAccountsCard = () => {
   const { session } = useSession();
@@ -553,6 +566,84 @@ const formatTimestamp = (timestamp: number) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
+const navItems = [
+  {
+    id: 1,
+    link: "/sections/visualizer",
+    text: "Visualizer",
+    icon: Eye,
+  },
+  {
+    id: 2,
+    link: "/lyrics",
+    text: "Lyrics",
+    icon: MicVocal,
+  },
+  {
+    id: 3,
+    link: "/sections/chat",
+    text: "Chat",
+    icon: MessageCircleMore,
+  },
+  {
+    id: 4,
+    link: "/sections/alerts",
+    text: "Alerts",
+    icon: Bell,
+  },
+  {
+    id: 5,
+    link: "/sections/stats",
+    text: "Stats",
+    icon: BarChart2,
+  },
+  {
+    id: 6,
+    link: "/dashboard",
+    text: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    id: 7,
+    link: "/teampicker",
+    text: "Team Picker",
+    icon: Users,
+  },
+];
+
+// Add this new component
+const HorizontalNav = () => {
+  const { pathname } = useLocation();
+
+  return (
+    <div className="mb-6 overflow-x-auto">
+      <nav className="flex space-x-2 rounded-lg bg-white/5 p-2">
+        {navItems.map((item) => {
+          const isActive =
+            pathname === item.link || pathname.startsWith(item.link);
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.id}
+              to={item.link}
+              className={cn(
+                "flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-purple-500/20 text-purple-400"
+                  : "text-gray-400 hover:bg-white/5 hover:text-purple-300"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.text}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
+};
+
 export function Dashboard() {
   const { organization } = useOrganization();
   const [latestAlert, setLatestAlert] = useState(null);
@@ -573,6 +664,10 @@ export function Dashboard() {
           buttonText=""
           backText=""
         />
+
+        {/* Add the horizontal navigation here */}
+        <HorizontalNav />
+
         <div className="my-6">
           <div className="my-2 text-right">
             <OrganizationSwitcher
