@@ -133,7 +133,7 @@ const ConnectedAccountsCard = () => {
                   <p className="font-semibold text-blue-300">
                     {account.provider.replace("oauth_", "")}
                   </p>
-                  <p className="text-sm text-purple-200">{account.username}</p>
+                  <p className="text-sm text-purple-500">{account.username}</p>
                 </div>
               </div>
             </div>
@@ -190,14 +190,14 @@ const NowPlayingCard = () => {
                 <p className="text-2xl font-bold text-blue-300">
                   {nowPlayingData?.track?.title}
                 </p>
-                <p className="text-lg text-purple-200">
+                <p className="text-lg text-purple-500">
                   {nowPlayingData?.track?.artist}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-[auto,1fr] gap-x-4">
               <p className="text-gray-400">Album:</p>
-              <p className="text-purple-200">{nowPlayingData?.track?.album}</p>
+              <p className="text-purple-500">{nowPlayingData?.track?.album}</p>
               <p className="text-gray-400">Status:</p>
               <p
                 className={`font-semibold ${
@@ -209,7 +209,7 @@ const NowPlayingCard = () => {
                 {nowPlayingData?.track?.isPlaying ? "Playing" : "Paused"}
               </p>
               <p className="text-gray-400">Progress:</p>
-              <p className="text-purple-200">
+              <p className="text-purple-500">
                 {formatTime(nowPlayingData?.track?.elapsed)} /{" "}
                 {formatTime(nowPlayingData?.track?.duration)}
               </p>
@@ -544,7 +544,7 @@ const ActivityBar = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-blue-300">{event.type}</p>
-                    <p className="text-sm text-purple-200">
+                    <p className="text-sm text-purple-500">
                       {event.data.displayName} {getEventCount(event)}
                     </p>
                   </div>
@@ -586,38 +586,38 @@ const navItems = [
     icon: MessageCircleMore,
   },
   {
-    id: 4,
+    id: 3,
     link: "/sections/alerts",
     text: "Alerts",
     icon: Bell,
   },
   {
-    id: 5,
+    id: 4,
     link: "/sections/stats",
     text: "Stats",
     icon: BarChart2,
   },
   {
-    id: 6,
+    id: 5,
     link: "/dashboard",
     text: "Dashboard",
     icon: LayoutDashboard,
   },
   {
-    id: 7,
+    id: 6,
     link: "/teampicker",
     text: "Team Picker",
     icon: Users,
   },
 ];
 
-// Add this new component
-const HorizontalNav = () => {
+// Change from const to export const
+export const HorizontalNav = () => {
   const { pathname } = useLocation();
 
   return (
     <div className="mb-6 overflow-x-auto">
-      <nav className="flex space-x-2 rounded-lg bg-white/5 p-2">
+      <nav className="flex space-x-2 rounded-lg dark:bg-white/5 bg-white p-2">
         {navItems.map((item) => {
           const isActive =
             pathname === item.link || pathname.startsWith(item.link);
@@ -630,8 +630,8 @@ const HorizontalNav = () => {
               className={cn(
                 "flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-purple-500/20 text-purple-400"
-                  : "text-gray-400 hover:bg-white/5 hover:text-purple-300"
+                  ? "bg-purple-500/20 text-white"
+                  : "dark:text-gray-400 hover:bg-white/5 hover:text-purple-600"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -693,7 +693,7 @@ export function Dashboard() {
                     Organization
                   </h2>
                   <p className="text-sm text-blue-300">{organization.name}</p>
-                  <p className="text-xs text-purple-200">{`${organization.membersCount} members`}</p>
+                  <p className="text-xs text-purple-500">{`${organization.membersCount} members`}</p>
                 </div>
               </AnimatedCard>
             )}
