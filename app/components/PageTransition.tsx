@@ -12,33 +12,83 @@ export const createMainTransitionProps = (
   exitY: number = 60
 ) =>
   ({
-    initial: { y: initialY, opacity: 0, position: "relative" },
-    animate: { y: 0, opacity: 1, damping: 5 },
-    exit: { y: exitY, opacity: 0 },
+    initial: {
+      y: initialY,
+      opacity: 0,
+      filter: "blur(8px)",
+      position: "relative",
+    },
+    animate: {
+      y: 0,
+      opacity: 1,
+      filter: "blur(0px)",
+      damping: 5,
+    },
+    exit: {
+      y: exitY,
+      opacity: 0,
+      filter: "blur(8px)",
+    },
     transition: {
       type: "spring",
       stiffness: 150,
       damping: 10,
+      filter: {
+        type: "tween",
+        duration: 0.2,
+      },
     },
   }) as const;
 
 const fadeTransition = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.3 },
+  initial: {
+    opacity: 0,
+    filter: "blur(8px)",
+  },
+  animate: {
+    opacity: 1,
+    filter: "blur(0px)",
+  },
+  exit: {
+    opacity: 0,
+    filter: "blur(8px)",
+  },
+  transition: {
+    duration: 0.3,
+    filter: {
+      type: "tween",
+      duration: 0.2,
+    },
+  },
 };
 
 export const mainTransitionProps = createMainTransitionProps();
 
 export const postTransitionProps = {
-  initial: { y: -20, opacity: 0 },
-  animate: { y: 0, opacity: 1, damping: 5 },
-  exit: { y: 60, opacity: 0 },
+  initial: {
+    y: -20,
+    opacity: 0,
+    filter: "blur(8px)",
+  },
+  animate: {
+    y: 0,
+    opacity: 1,
+    filter: "blur(0px)",
+    damping: 5,
+  },
+  exit: {
+    y: 60,
+    opacity: 0,
+    filter: "blur(8px)",
+  },
   transition: {
     type: "spring",
     stiffness: 150,
     damping: 10,
+    filter: {
+      type: "tween",
+      duration: 0.2,
+    },
   },
 } as const;
 

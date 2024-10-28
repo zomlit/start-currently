@@ -250,8 +250,6 @@ const WebSocketConnectionsCard = () => {
   //   connectionAttempts: state.connectionAttempts,
   // }));
 
-  const { userId } = useAuth();
-
   const connections = [
     {
       name: "Elysia",
@@ -586,25 +584,25 @@ const navItems = [
     icon: MessageCircleMore,
   },
   {
-    id: 3,
+    id: 4,
     link: "/sections/alerts",
     text: "Alerts",
     icon: Bell,
   },
   {
-    id: 4,
+    id: 5,
     link: "/sections/stats",
     text: "Stats",
     icon: BarChart2,
   },
   {
-    id: 5,
+    id: 6,
     link: "/dashboard",
     text: "Dashboard",
     icon: LayoutDashboard,
   },
   {
-    id: 6,
+    id: 7,
     link: "/teampicker",
     text: "Team Picker",
     icon: Users,
@@ -617,7 +615,7 @@ export const HorizontalNav = () => {
 
   return (
     <div className="mb-6 overflow-x-auto">
-      <nav className="flex space-x-2 rounded-lg dark:bg-white/5 bg-white p-2">
+      <nav className="md:flex hidden space-x-2 rounded-lg dark:bg-white/5 bg-white p-2">
         {navItems.map((item) => {
           const isActive =
             pathname === item.link || pathname.startsWith(item.link);
@@ -630,7 +628,7 @@ export const HorizontalNav = () => {
               className={cn(
                 "flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-purple-500/20 text-white"
+                  ? "bg-primary text-white"
                   : "dark:text-gray-400 hover:bg-white/5 hover:text-purple-600"
               )}
             >
