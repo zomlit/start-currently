@@ -25,7 +25,7 @@ const UserDetailsCard = () => {
   return (
     <div className="">
       <h2 className="relative mb-4 flex items-center gap-2 text-lg font-medium ">
-        <CircleUser /> User Details
+        <CircleUser /> User Details!
       </h2>
       <div className="flex items-center space-x-4">
         <img

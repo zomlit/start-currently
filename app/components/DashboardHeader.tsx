@@ -7,6 +7,7 @@ import InputField from "@/components/InputField";
 import { useCombinedStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/utils/toast";
+import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";
 
 interface DashboardHeaderProps {
   category: string;
@@ -39,6 +40,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const [spotifyClientId, setSpotifyClientId] = useState("");
   const [spotifyClientSecret, setSpotifyClientSecret] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { updateSpotifyToken } = useElysiaSessionContext();
+  const [code, setCode] = useState("");
 
   const handleSaveCommand = async () => {
     try {
@@ -79,11 +82,106 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     fetchSpotifyCredentials();
   }, [userId]);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get("code");
+    if (authCode) {
+      setCode(authCode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (spotifyClientId && spotifyClientSecret && code) {
+      handleTokenExchange();
+    }
+  }, [spotifyClientId, spotifyClientSecret, code]);
+
+  const handleTokenExchange = async () => {
+    const client_id = spotifyClientId;
+    const client_secret = spotifyClientSecret;
+    const redirect_uri = `${window.location.origin}${window.location.pathname}`;
+
+    // Use btoa instead of Buffer for base64 encoding in browser
+    const auth_str = `${client_id}:${client_secret}`;
+    const b64_auth_str = btoa(auth_str);
+
+    const headers = {
+      "content-type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${b64_auth_str}`,
+    };
+
+    const data = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri,
+    });
+
+    try {
+      const response = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: headers,
+        body: data.toString(),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("Spotify token exchange response:", responseData);
+
+        // Update both Supabase and Elysia session
+        const { error: userDataError } = await supabase
+          .from("UserProfile")
+          .upsert(
+            {
+              user_id: userId,
+              s_access_token: responseData.access_token,
+              s_refresh_token: responseData.refresh_token,
+              s_expires_at: new Date(
+                Date.now() + responseData.expires_in * 1000
+              ).toISOString(),
+            },
+            { onConflict: "user_id" }
+          );
+
+        if (userDataError) {
+          console.error("Error saving tokens to Supabase:", userDataError);
+          throw userDataError;
+        }
+
+        // Update Elysia session state
+        updateSpotifyToken(responseData.refresh_token);
+        console.log(
+          "Spotify refresh token stored:",
+          responseData.refresh_token
+        );
+
+        toast.success({
+          title: "Spotify authentication successful!",
+          description: "Your Spotify account has been connected.",
+        });
+
+        // Clear the code from the URL
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      } else {
+        throw new Error("Failed to exchange token");
+      }
+    } catch (error) {
+      console.error("Error during token exchange:", error);
+      toast.error({
+        title: "Failed to authenticate with Spotify",
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
   const handleSaveSpotifyCommand = async () => {
     if (!userId) return;
 
     try {
-      const { error } = await supabase.from("UserProfile").upsert(
+      const { data, error } = await supabase.from("UserProfile").upsert(
         {
           user_id: userId,
           s_client_id: spotifyClientId,
@@ -91,11 +189,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         },
         {
           onConflict: "user_id",
+          returning: true,
         }
       );
 
       if (error) throw error;
 
+      console.log("Spotify credentials saved:", data);
       handleSpotifyAuth();
       toast.success({
         title: "Spotify credentials saved successfully!",

@@ -31,7 +31,8 @@ interface ElysiaSessionContextType {
   apiStats: ApiStats | null;
   nowPlaying: any;
   twitchToken: string | undefined;
-  spotifyRefreshToken: string | undefined;
+  spotifyRefreshToken: string | null;
+  updateSpotifyToken: (token: string) => void;
   handleToggleSession: () => Promise<void>;
   isExpanded: boolean;
   setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>;
@@ -61,7 +62,9 @@ export const ElysiaSessionProvider: React.FC<{
   const { userId, sessionId } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const twitchToken = oauthTokens.twitch?.[0]?.token;
-  const spotifyRefreshToken = oauthTokens.spotify?.refreshToken;
+  const [spotifyRefreshToken, setSpotifyRefreshToken] = useState<string | null>(
+    null
+  );
   const nowPlaying = useDatabaseStore((state) => state.VisualizerWidget?.[0]);
   const { apiStats, setApiStats } = useChatStore();
   const [lastPing, setLastPing] = useState<number | null>(null);
@@ -194,6 +197,10 @@ export const ElysiaSessionProvider: React.FC<{
     }
   };
 
+  const updateSpotifyToken = (token: string) => {
+    setSpotifyRefreshToken(token);
+  };
+
   const value = {
     isSessionActive,
     isServerAvailable,
@@ -204,6 +211,7 @@ export const ElysiaSessionProvider: React.FC<{
     nowPlaying,
     twitchToken,
     spotifyRefreshToken,
+    updateSpotifyToken,
     handleToggleSession,
     isExpanded,
     setIsExpanded,

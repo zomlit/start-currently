@@ -38,8 +38,8 @@ import {
 } from "@/components/ui/popover";
 import { Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import InnerImageZoom from "react-inner-image-zoom";
-import "react-inner-image-zoom/lib/InnerImageZoom/styles.min.css";
+// import InnerImageZoom from "react-inner-image-zoom";
+// import "react-inner-image-zoom/lib/InnerImageZoom/styles.min.css";
 
 // Add this Zod schema for token validation
 const spotifyTokenSchema = z
@@ -780,12 +780,12 @@ function LyricsPage() {
                   <DialogHeader>
                     <DialogTitle>Spotify Cookie Location</DialogTitle>
                   </DialogHeader>
-                  <InnerImageZoom
+                  {/* <InnerImageZoom
                     src="/images/spotify-cookie.png"
                     zoomSrc="/images/spotify-cookie.png"
                     zoomType="hover"
                     zoomPreload={true}
-                  />
+                  /> */}
                 </DialogContent>
                 <DialogFooter></DialogFooter>
               </Dialog>
