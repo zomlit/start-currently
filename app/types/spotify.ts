@@ -3,10 +3,13 @@ export interface SpotifyTrack {
   title: string;
   artist: string;
   album: string;
-  artwork: string;
-  duration: number;
+  albumArt: string;
   isPlaying: boolean;
-  progress: number;
-  songUrl: string;
-  elapsed?: number;
+  elapsed: number;
+  duration: number;
+  lyrics?: string;
+}
+
+export interface VisualizerData {
+  track: SpotifyTrack;
 }

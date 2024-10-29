@@ -101,7 +101,7 @@
 }
 
 /* Clerk Shadcn */
-.cl-formButtonPrimary {
+/* .cl-formButtonPrimary {
   @apply inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-primary px-3  font-medium text-primary-foreground !shadow-none ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
 }
 
@@ -109,10 +109,15 @@
 .cl-socialButtonsBlockButton,
 .cl-alert,
 .cl-phoneInputBox,
-.cl-userButtonPopoverCard {
-  @apply rounded-lg border border-input bg-background;
+.cl-userButtonPopoverCard,
+.cl-organizationSwitcher-root,
+.cl-organizationSwitcher-root:hover {
+  @apply rounded-md !bg-background/10 text-foreground;
 }
-
+.cl-button,
+.cl-button:hover {
+  @apply text-foreground;
+}
 .cl-headerTitle,
 .cl-socialButtonsBlockButtonText,
 .cl-loading,
@@ -129,8 +134,9 @@
 .cl-userPreviewTextContainer,
 .cl-profileSectionContent p,
 .cl-form p,
-.cl-accordionTriggerButton {
-  @apply dark:text-foreground;
+.cl-accordionTriggerButton,
+.cl-organizationPreviewMainIdentifier {
+  @apply text-foreground;
 }
 
 .cl-headerSubtitle,
@@ -156,6 +162,27 @@ p[data-localization-key="userProfile.profilePage.successMessage"] {
   @apply text-muted-foreground;
 }
 
+.cl-organizationSwitcherTrigger {
+  @apply flex items-center gap-2 rounded-md hover:bg-muted hover:text-foreground;
+}
+
+.cl-organizationPreviewAvatarBox {
+  @apply flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-500 transition-all duration-300 hover:scale-110;
+}
+
+.cl-organizationPreviewAvatarImage {
+  @apply h-full w-full rounded-full object-cover;
+}
+
+.cl-organizationSwitcherTriggerIcon {
+  @apply h-4 w-4 text-foreground transition-transform duration-200;
+}
+
+.cl-organizationSwitcherTrigger[aria-expanded="true"]
+  .cl-organizationSwitcherTriggerIcon {
+  @apply rotate-180;
+}
+
 .cl-userButtonPopoverActionButton {
   @apply border border-white;
 }
@@ -167,11 +194,21 @@ p[data-localization-key="userProfile.profilePage.successMessage"] {
 .cl-formFieldInput[type="text"],
 .cl-formFieldInput[type="email"],
 .cl-formFieldInput[type="password"] {
-  @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply flex h-10 w-full rounded-md bg-background px-3 py-2 text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground transition-all duration-300;
+  backdrop-filter: blur(8px);
+  border: 2px solid transparent;
+}
+
+.cl-formFieldInput[type="text"]:focus,
+.cl-formFieldInput[type="email"]:focus,
+.cl-formFieldInput[type="password"]:focus {
+  @apply outline-none;
+  backdrop-filter: blur(1px);
+  border: 2px solid var(--primary);
 }
 
 .cl-footerActionLink {
-  @apply text-accent-foreground underline hover:text-accent-foreground/90;
+  @apply text-accent-foreground underline hover:text-foreground/90;
 }
 
 .cl-otpCodeFieldInput {
@@ -212,14 +249,14 @@ button[data-localization-key="userProfile.start.dangerSection.deleteAccountButto
 }
 
 .cl-fileDropAreaButtonPrimary {
-  @apply h-10 px-4 py-2 text-foreground transition-colors hover:bg-secondary hover:text-accent-foreground;
+  @apply h-10 px-4 py-2 text-foreground transition-colors hover:bg-secondary hover:text-foreground;
 }
 
 .cl-userButtonPopoverActionButton,
 .cl-profileSectionPrimaryButton,
 .cl-accordionTriggerButton,
 .cl-navbarButton {
-  @apply hover:bg-accent hover:text-accent-foreground;
+  @apply hover:bg-muted hover:text-foreground;
 }
 
 .cl-card {
@@ -247,12 +284,17 @@ button[data-localization-key="userProfile.start.dangerSection.deleteAccountButto
 }
 
 .cl-footer {
-  @apply rounded-b-lg border-x border-b bg-background bg-gradient-to-t from-background to-background  text-muted-foreground;
+  @apply bg-background/80 bg-none text-foreground;
 }
 .cl-userButtonPopoverFooter {
   @apply rounded-b-lg bg-gradient-to-t from-background to-background;
 }
-
+.cl-modalBackdrop {
+  @apply backdrop-blur-md bg-none;
+}
+.cl-footerActionText {
+  @apply !text-foreground;
+}
 .cl-signIn-start,
 .cl-signUp-start,
 .cl-signIn-password,
@@ -318,9 +360,10 @@ h1[data-localization-key="userProfile.navbar.title"] {
   @apply !border border-input text-foreground;
 }
 
-.cl-userButtonPopoverMain {
-  @apply rounded-lg border-input bg-background;
-}
+.cl-userButtonPopoverMain,
+.cl-organizationSwitcherPopoverMain {
+  @apply rounded-md bg-background text-foreground;
+} */
 
 .bg-primary {
   background-color: var(--primary);

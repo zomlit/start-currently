@@ -15,7 +15,7 @@ export const createMainTransitionProps = (
     initial: {
       y: initialY,
       opacity: 0,
-      filter: "blur(8px)",
+      filter: "blur(14px)",
       position: "relative",
     },
     animate: {
@@ -27,7 +27,7 @@ export const createMainTransitionProps = (
     exit: {
       y: exitY,
       opacity: 0,
-      filter: "blur(8px)",
+      filter: "blur(14px)",
     },
     transition: {
       type: "spring",
@@ -35,7 +35,7 @@ export const createMainTransitionProps = (
       damping: 10,
       filter: {
         type: "tween",
-        duration: 0.2,
+        duration: 0.4,
       },
     },
   }) as const;

@@ -4,7 +4,7 @@ import DashboardNavigation from "@/components/DashboardNavigation";
 import { Container } from "@/components/layout/Container";
 import GenericHeader from "@/components/GenericHeader";
 
-export const Route = createFileRoute("/_app/sections")({
+export const Route = createFileRoute("/_app/widgets")({
   component: SectionsLayout,
 });
 
@@ -14,29 +14,29 @@ function SectionsLayout() {
 
   // Define section-specific content
   const sectionContent = {
-    "/_app/sections/": {
+    "/_app/widgets/visualizer": {
       category: "Widgets",
-      title: "Dashboard",
-      description: "Dashboard",
+      title: "Visualizer",
+      description: "",
     },
-    "/_app/sections/chat": {
+    "/_app/widgets/lyrics": {
+      category: "Widgets",
+      title: "Lyrics",
+      description: "",
+    },
+    "/_app/widgets/chat": {
       category: "Widgets",
       title: "Chat",
       description: "",
     },
-    "/_app/sections/alerts": {
+    "/_app/widgets/alerts": {
       category: "Widgets",
       title: "Alerts",
       description: "",
     },
-    "/_app/sections/stats": {
+    "/_app/widgets/stats": {
       category: "Widgets",
       title: "Stats",
-      description: "",
-    },
-    "/_app/sections/visualizer": {
-      category: "Widgets",
-      title: "Visualizer",
       description: "",
     },
   };
