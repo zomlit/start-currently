@@ -23,8 +23,8 @@ import { ClerkProvider } from "@clerk/tanstack-start";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AccessControl } from "@/components/AccessControl";
-import { dark } from "@clerk/themes";
-
+import { dark, default as defaultTheme } from "@clerk/themes";
+import { useThemeStore } from "@/store/themeStore";
 const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
   const user = await getAuth(ctx.request);
 
@@ -66,7 +66,7 @@ export const Route = createRootRouteWithContext<{
     },
     { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
     { rel: "icon", href: "/favicon.ico" },
-    // { rel: "preload", href: "/images/hero-bg.webp", as: "image" },
+    { rel: "preload", href: "/images/hero-bg.webp", as: "image" },
   ],
   beforeLoad: async () => {
     const { user } = await fetchClerkAuth();
@@ -96,28 +96,37 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { theme } = useThemeStore();
+
   return (
     <ClerkProvider
       appearance={{
-        baseTheme: dark,
-
-        elements: {
-          avatarBox:
-            "w-10 h-10 hover:scale-110 transition-all duration-300 border-violet-500 border-[2px]",
-          modalContent: "!bg-black/25",
-          modalBackdrop: "!bg-black/25 !backdrop-blur-md",
-          impersonationFabTitle: "text-black",
-          tagInputContainer: "bg-transparent border-white/10",
-          input: "bg-white/10 text-white border-white/10",
-          navbar: "text-violet-500 !bg-transparent bg-none",
-          navbarButton: "text-violet-500",
-          navbarButtonIcon: "text-violet-500",
-        },
+        baseTheme: theme === "dark" ? dark : undefined,
+        // elements: {
+        //   avatarBox:
+        //     "w-10 h-10 hover:scale-110 transition-all duration-300 border-violet-500 border-[2px]",
+        //   impersonationFabTitle: "text-black",
+        //   colorNeutral: "border-solid border-2 border-sky-500",
+        //   tagInputContainer: "bg-transparent border-white/10",
+        //   input: "bg-white/10 text-white border-white/10",
+        //   navbar: "text-violet-500 !bg-transparent bg-none",
+        //   navbarButton: "text-violet-500",
+        //   navbarButtonIcon: "text-violet-500",
+        // },
         variables: {
-          colorPrimary: "#8b5cf6",
-          colorText: "white",
-          colorNeutral: "white",
-          colorInputText: "black",
+          colorBackground:
+            theme === "dark"
+              ? "hsl(20 14.3% 4.1% / 0.8)"
+              : "hsl(0 0% 100% / 1)",
+          colorPrimary: "hsl(263 70% 50%)",
+          colorShimmer: "transparent",
+        },
+        elements: {
+          card: "backdrop-blur-[14px]",
+          rootBox: "backdrop-blur-[14px]",
+          formContainer: "backdrop-blur-[14px]",
+          userButtonPopoverCard: "backdrop-blur-[14px]",
+          organizationSwitcherPopoverCard: "backdrop-blur-[14px]",
         },
       }}
     >

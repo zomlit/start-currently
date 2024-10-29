@@ -4,53 +4,9 @@ import { CircleDot } from "./icons";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { UserButton, useUser } from "@clerk/tanstack-start";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  MessageCircle,
-  Bell,
-  BarChart2,
-  Eye,
-  Users,
-} from "lucide-react";
+import MicrophoneIcon from "@icons/outline/microphone-2.svg?react";
 
-const navItems = [
-  {
-    id: 1,
-    link: "/sections/visualizer",
-    text: "Visualizer",
-    icon: Eye,
-  },
-  {
-    id: 2,
-    link: "/sections/chat",
-    text: "Chat",
-    icon: MessageCircle,
-  },
-  {
-    id: 3,
-    link: "/sections/alerts",
-    text: "Alerts",
-    icon: Bell,
-  },
-  {
-    id: 4,
-    link: "/sections/stats",
-    text: "Stats",
-    icon: BarChart2,
-  },
-  {
-    id: 5,
-    link: "/dashboard",
-    text: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    id: 6,
-    link: "/teampicker",
-    text: "Team Picker",
-    icon: Users,
-  },
-];
+import { navItems } from "@/config/navigation";
 
 const DashboardNavigation: React.FC = () => {
   const { isLoaded } = useUser();

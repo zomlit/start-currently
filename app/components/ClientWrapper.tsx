@@ -9,7 +9,7 @@ interface ClientWrapperProps {
 export function ClientWrapper({ children }: ClientWrapperProps) {
   return (
     <div>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="system">
         <BackgroundImage
           src="/images/hero-bg.webp"
           alt="Description of your image"

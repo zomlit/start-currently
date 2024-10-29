@@ -31,6 +31,7 @@ import { WidgetPreview } from "@/components/widget-preview";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { SpotifyTrack } from "@/types/spotify";
 import { formatTime } from "@/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 const profileSchema = z.object({
   id: z.string().optional(),
@@ -52,7 +53,7 @@ const profileSchema = z.object({
 
 type Profile = z.infer<typeof profileSchema>;
 
-export const Route = createFileRoute("/_app/sections/visualizer")({
+export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: VisualizerSection,
 });
 
@@ -281,11 +282,11 @@ function VisualizerSection() {
   };
 
   if (!isLoaded || isProfilesLoading) {
-    return <div>Loading...</div>;
+    return <Spinner className="w-8 fill-violet-300 dark:text-white" />;
   }
 
   if (!userId) {
-    return <div>Please sign in to access this section.</div>;
+    return <div>Please sign in to customize your visualizer</div>;
   }
 
   if (profilesError) {
@@ -353,7 +354,6 @@ function VisualizerSection() {
             </Button>
           </div>
         </div>
-        track to {currentTrack}
         <WidgetPreview
           currentProfile="Default Profile"
           selectedWidget="visualizer"

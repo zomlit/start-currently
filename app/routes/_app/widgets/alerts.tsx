@@ -1,10 +1,10 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_app/sections/alerts")({
+export const Route = createFileRoute("/_app/widgets/alerts")({
   component: AlertsSection,
 });
 
 function AlertsSection() {
-  return <div></div>;
+  return <div>Alerts</div>;
 }

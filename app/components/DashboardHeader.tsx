@@ -1,13 +1,19 @@
-import React, { Fragment, useState, useEffect } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase/client";
 import { Eye, EyeOff, X } from "lucide-react";
 import { useUser } from "@clerk/tanstack-start";
-import InputField from "@/components/InputField";
+import { Input } from "@/components/ui/input";
 import { useCombinedStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/utils/toast";
 import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface DashboardHeaderProps {
   category: string;
@@ -99,7 +105,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const handleTokenExchange = async () => {
     const client_id = spotifyClientId;
     const client_secret = spotifyClientSecret;
-    const redirect_uri = `${window.location.origin}${window.location.pathname}`;
+    const redirect_uri = `${window.location.origin}/dashboard/widgets/visualizer`;
 
     // Use btoa instead of Buffer for base64 encoding in browser
     const auth_str = `${client_id}:${client_secret}`;
@@ -165,6 +171,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           document.title,
           window.location.pathname
         );
+
+        // Redirect to dashboard after successful auth
+        window.location.href = "/dashboard";
       } else {
         throw new Error("Failed to exchange token");
       }
@@ -177,41 +186,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     }
   };
 
-  const handleSaveSpotifyCommand = async () => {
-    if (!userId) return;
-
-    try {
-      const { data, error } = await supabase.from("UserProfile").upsert(
-        {
-          user_id: userId,
-          s_client_id: spotifyClientId,
-          s_client_secret: spotifyClientSecret,
-        },
-        {
-          onConflict: "user_id",
-          returning: true,
-        }
-      );
-
-      if (error) throw error;
-
-      console.log("Spotify credentials saved:", data);
-      handleSpotifyAuth();
-      toast.success({
-        title: "Spotify credentials saved successfully!",
-      });
-    } catch (error) {
-      console.error("Error saving Spotify credentials:", error);
-      toast.error({
-        title: "Failed to save credentials",
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  };
-
   const handleSpotifyAuth = () => {
     const client_id = spotifyClientId;
-    const redirect_uri = `${window.location.origin}${window.location.pathname}`;
+    const redirect_uri = `${window.location.origin}/dashboard/widgets/visualizer`;
     const scope =
       "user-read-currently-playing user-read-playback-state user-modify-playback-state";
 
@@ -255,23 +232,23 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <div className="relative mt-4">
                 <label
                   htmlFor="spotifyClientId"
-                  className="block text-sm font-medium"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
                 >
                   Spotify Client ID
                 </label>
                 <div className="relative">
-                  <input
+                  <Input
                     type={showClientId ? "text" : "password"}
                     name="spotifyClientId"
                     id="spotifyClientId"
                     value={spotifyClientId}
                     onChange={(e) => setSpotifyClientId(e.target.value)}
-                    className="relative mt-2 block w-full rounded-lg px-4 py-3 text-lg !outline-none disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-800/50"
+                    className="mt-2"
                     required
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     onClick={() => setShowClientId(!showClientId)}
                   >
                     {showClientId ? (
@@ -286,23 +263,23 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <div className="relative mt-4">
                 <label
                   htmlFor="spotifyClientSecret"
-                  className="block text-sm font-medium"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
                 >
                   Spotify Client Secret
                 </label>
                 <div className="relative">
-                  <input
+                  <Input
                     type={showClientSecret ? "text" : "password"}
                     name="spotifyClientSecret"
                     id="spotifyClientSecret"
                     value={spotifyClientSecret}
                     onChange={(e) => setSpotifyClientSecret(e.target.value)}
-                    className="relative mt-2 block w-full rounded-lg px-4 py-3 text-lg !outline-none disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-800/50"
+                    className="mt-2"
                     required
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     onClick={() => setShowClientSecret(!showClientSecret)}
                   >
                     {showClientSecret ? (
@@ -326,13 +303,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 JWT Key
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showJwt ? "text" : "password"}
                   name="jwtKey"
                   id="jwtKey"
                   value={jwtKey}
                   onChange={(e) => setJwtKey(e.target.value)}
-                  className="relative mt-2 block w-full rounded-lg px-4 py-3 text-lg !outline-none disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-800/50"
+                  className="mt-2"
                   required
                 />
                 <button
@@ -368,35 +345,53 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       {(keyModalText || buttonText) && (
         <div className="my-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-end sm:gap-3">
           {keyModalText && (
-            <Button
-              onClick={() => setIsOpen(true)}
-              className="w-full sm:w-auto"
-              variant="success"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                className="bi bi-key mr-2"
-                viewBox="0 0 16 16"
-              >
-                <path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
-                <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
-              </svg>
-              {keyModalText}
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto" variant="default">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi bi-key mr-2"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                    <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                  </svg>
+                  {keyModalText}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>{modalContent?.title}</DialogTitle>
+                </DialogHeader>
+                <div className="mt-4">
+                  {modalContent?.content}
+                  {errorMessage && (
+                    <div className="mt-2 text-red-500">{errorMessage}</div>
+                  )}
+                  <Button
+                    onClick={handleSaveCommand}
+                    className="float-right mt-4"
+                    variant="default"
+                  >
+                    Save and Authorize
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
 
           {buttonText && buttonUrl && (
             <div className="w-full flex-1">
               <div className="relative flex items-center">
-                <Button variant="primary" className="rounded-r-none">
+                <Button variant="default" className="rounded-r-none">
                   {buttonText}
                 </Button>
-                <input
+                <Input
                   type="text"
-                  className="w-full rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-zinc-800/50 dark:text-gray-400"
+                  className="rounded-l-none"
                   value={buttonUrl}
                   readOnly
                 />
@@ -405,68 +400,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           )}
         </div>
       )}
-
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog onClose={() => setIsOpen(false)} className="relative z-50">
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-zinc-900/95 p-6 text-left align-middle text-white shadow-xl transition-all">
-                  <button
-                    type="button"
-                    className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <span className="sr-only">Close</span>
-                    <X className="h-6 w-6" />
-                  </button>
-
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6"
-                  >
-                    {modalContent?.title}
-                  </Dialog.Title>
-
-                  <div className="mt-4">
-                    {modalContent?.content}
-                    {errorMessage && (
-                      <div className="mt-2 text-red-500">{errorMessage}</div>
-                    )}
-                    <Button
-                      onClick={handleSaveCommand}
-                      className="float-right mt-4"
-                      variant="primary"
-                    >
-                      Save and Authorize
-                    </Button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
     </header>
   );
 };
