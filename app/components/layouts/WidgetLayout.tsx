@@ -29,7 +29,7 @@ export function WidgetLayout({ preview, settings }: WidgetLayoutProps) {
       <ResizablePanel
         defaultSize={72}
         minSize={50}
-        className="relative !overflow-visible bg-gradient/5 lg:flex-row"
+        className="relative !overflow-visible bg-gradient/5 lg:flex-row h-full"
       >
         {preview}
       </ResizablePanel>
