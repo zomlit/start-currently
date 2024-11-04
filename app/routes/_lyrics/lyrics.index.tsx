@@ -120,6 +120,7 @@ function LyricsPage() {
   const [noLyricsAvailable, setNoLyricsAvailable] = useState(false);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [isTokenSet, setIsTokenSet] = useState(false);
+  const [publicUrl, setPublicUrl] = useState("");
 
   const { settings, updateSettings } = useLyricsStore();
   const videoLink = useBackgroundVideo(currentTrack?.id);
@@ -384,25 +385,39 @@ function LyricsPage() {
     const darkest = Math.min(luminance1, luminance2);
     return (brightest + 0.05) / (darkest + 0.05);
   };
-  const [publicUrl, setPublicUrl] = useState("");
 
   useEffect(() => {
-    if (user?.username) {
-      setPublicUrl(
-        window.location.origin + "/" + user.username + window.location.pathname
-      );
-    }
-  }, [user?.username]);
+    const updateUrl = () => {
+      if (user?.username) {
+        const formattedUrl = `${window.location.origin}/${user.username}/lyrics`;
+        console.log("Username found:", user.username);
+        console.log("Current publicUrl before update:", publicUrl);
+        console.log("Setting new publicUrl to:", formattedUrl);
+
+        // Force state update and re-render
+        setPublicUrl(formattedUrl);
+
+        // Double-check the update
+        setTimeout(() => {
+          console.log("Public URL after update:", formattedUrl);
+        }, 0);
+      }
+    };
+
+    updateUrl();
+  }, [user, user?.username]);
 
   const handleCopyPublicUrl = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault(); // Prevent default button behavior
-      if (publicUrl) {
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (user?.username) {
+        const urlToCopy = `${window.location.origin}/${user.username}/lyrics`;
         navigator.clipboard
-          .writeText(publicUrl)
+          .writeText(urlToCopy)
           .then(() => {
             toast.success({
               title: "Public URL copied to clipboard",
+              description: urlToCopy,
             });
           })
           .catch((err) => {
@@ -413,23 +428,15 @@ function LyricsPage() {
           });
       }
     },
-    [publicUrl]
+    [user?.username]
   );
 
   const handleSettingChange = useCallback(
     (newSettings: Partial<LyricsSettings>) => {
-      // If it's a full settings object (i.e., from reset), update all settings
-      if (
-        Object.keys(newSettings).length ===
-        Object.keys(lyricsSchema.shape).length
-      ) {
-        updateSettings(newSettings as LyricsSettings);
-      } else {
-        // Otherwise, update individual settings
-        debouncedUpdateSettings(newSettings);
-      }
+      console.log("Current publicUrl in settings:", publicUrl);
+      updateSettings(newSettings);
     },
-    [debouncedUpdateSettings, updateSettings]
+    [updateSettings, publicUrl]
   );
 
   const getTextStyle = (isCurrentLine: boolean) => ({
@@ -548,6 +555,48 @@ function LyricsPage() {
 
     fetchSpotifyToken();
   }, [userId]);
+
+  const LyricsSettings = (
+    <>
+      {lyrics && (
+        <>
+          <div className="flex items-center space-x-2 mb-6">
+            <Input
+              key={publicUrl}
+              value={publicUrl}
+              readOnly
+              className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+            />
+            <Button
+              onClick={handleCopyPublicUrl}
+              size="icon"
+              variant="outline"
+              className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <LyricsSettingsForm
+            settings={settings}
+            onSettingsChange={handleSettingChange}
+            publicUrl={publicUrl} // Pass the state directly
+            onCopyPublicUrl={handleCopyPublicUrl}
+            fontFamilies={fontFamilies}
+            isFontLoading={isFontLoading}
+            injectFont={injectFont}
+            isVideoAvailable={!!videoLink}
+          />
+          <Button
+            onClick={() => setIsSpotifyTokenDialogOpen(true)}
+            variant="outline"
+            className="w-full"
+          >
+            {isTokenSet ? "Update" : "Add"} Spotify Lyrics Token
+          </Button>
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className="h-screen w-full overflow-hidden scrollbar-hide">
@@ -668,44 +717,7 @@ function LyricsPage() {
               Customize Lyrics Panel
             </h3>
             <div className="flex-grow overflow-y-auto">
-              <div className="p-6 pt-2">
-                {lyrics && (
-                  <>
-                    <div className="flex items-center space-x-2 mb-6">
-                      <Input
-                        value={publicUrl}
-                        readOnly
-                        className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-                      />
-                      <Button
-                        onClick={handleCopyPublicUrl}
-                        size="icon"
-                        variant="outline"
-                        className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <LyricsSettingsForm
-                      settings={settings}
-                      onSettingsChange={handleSettingChange}
-                      publicUrl={publicUrl}
-                      onCopyPublicUrl={handleCopyPublicUrl}
-                      fontFamilies={fontFamilies}
-                      isFontLoading={isFontLoading}
-                      injectFont={injectFont}
-                      isVideoAvailable={!!videoLink}
-                    />
-                    <Button
-                      onClick={() => setIsSpotifyTokenDialogOpen(true)}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {isTokenSet ? "Update" : "Add"} Spotify Lyrics Token
-                    </Button>
-                  </>
-                )}
-              </div>
+              <div className="p-6 pt-2">{LyricsSettings}</div>
             </div>
           </div>
         </ResizablePanel>
