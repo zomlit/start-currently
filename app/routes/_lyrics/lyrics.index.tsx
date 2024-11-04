@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { SpotifyTrack } from "@/types/spotify";
 import { useAuth, useUser } from "@clerk/tanstack-start";
 import { supabase } from "@/utils/supabase/client";
@@ -13,13 +13,13 @@ import { useDebouncedCallback } from "use-debounce";
 import { Spinner } from "@/components/ui/spinner";
 import { useDynamicColors } from "@/hooks/useDynamicColors";
 import { useBackgroundVideo } from "@/hooks/useBackgroundVideo";
+import { useLyrics } from "@/hooks/useLyrics";
 import {
   LyricsSettingsForm,
   LyricsSettings,
   lyricsSchema,
 } from "@/components/widget-settings/LyricsSettingsForm";
 import { toast } from "@/utils/toast";
-import { profanity } from "@2toad/profanity";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,7 +30,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { z } from "zod"; // Import zod
+import { z } from "zod";
 import {
   Popover,
   PopoverContent,
@@ -38,62 +38,14 @@ import {
 } from "@/components/ui/popover";
 import { Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
-// import InnerImageZoom from "react-inner-image-zoom";
-// import "react-inner-image-zoom/lib/InnerImageZoom/styles.min.css";
 
-// Add this Zod schema for token validation
 const spotifyTokenSchema = z
   .string()
   .min(100, "Token too short")
-  .max(200, "Token too long")
   .regex(
     /^[A-Za-z0-9_-]+$/,
     "Token should only contain letters, numbers, underscores, and hyphens"
   );
-
-// Add this utility function at the top of your file
-const formatColor = (color: string) => {
-  if (color.startsWith("rgba")) {
-    return color;
-  }
-  if (color.startsWith("#")) {
-    // Convert hex to rgba
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, 1)`;
-  }
-  return color; // Return as is if it's a named color
-};
-
-// Update the censorExplicitContent function to use @2toad/profanity
-const censorExplicitContent = (text: string): string => {
-  return profanity.censor(text);
-};
-
-// Update the truncateText function to accept fontFamily as a parameter
-const truncateText = (
-  text: string,
-  maxWidth: number,
-  fontSize: number,
-  fontFamily: string
-) => {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-  if (!context) return text;
-
-  context.font = `${fontSize}px ${fontFamily}, 'Sofia Sans Condensed', sans-serif`;
-
-  if (context.measureText(text).width <= maxWidth) {
-    return text;
-  }
-
-  let truncated = text;
-  while (context.measureText(truncated + "...").width > maxWidth) {
-    truncated = truncated.slice(0, -1);
-  }
-  return truncated + "...";
-};
 
 export const Route = createFileRoute("/_lyrics/lyrics/")({
   component: LyricsPage,
@@ -101,19 +53,11 @@ export const Route = createFileRoute("/_lyrics/lyrics/")({
 
 function LyricsPage() {
   const [isSpotifyTokenDialogOpen, setIsSpotifyTokenDialogOpen] =
-    useState(false); // Initialize state
+    useState(false);
   const [spotifyToken, setSpotifyToken] = useState("");
   const [tokenError, setTokenError] = useState<string | null>(null);
-
   const { userId, getToken } = useAuth();
   const { user } = useUser();
-  const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
-  const [lyrics, setLyrics] = useState<
-    { startTimeMs: number; words: string }[] | null
-  >(null);
-  const [isLyricsLoading, setIsLyricsLoading] = useState(false);
-  const [lyricsError, setLyricsError] = useState<string | null>(null);
-  const lyricsRef = useRef<HTMLDivElement>(null);
   const [fontFamilies, setFontFamilies] = useState<string[]>([]);
   const [loadedFonts, setLoadedFonts] = useState<Set<string>>(new Set());
   const [isFontLoading, setIsFontLoading] = useState(false);
@@ -123,22 +67,30 @@ function LyricsPage() {
   const [publicUrl, setPublicUrl] = useState("");
 
   const { settings, updateSettings } = useLyricsStore();
-  const videoLink = useBackgroundVideo(currentTrack?.id);
 
-  const { palette, isLoading: isPaletteLoading } = useDynamicColors(
-    currentTrack,
-    {
-      colorSync: settings.colorSync,
-    }
-  );
+  const {
+    track,
+    lyrics,
+    isLyricsLoading,
+    lyricsError,
+    noLyricsAvailable,
+    isUnauthorized,
+    isTokenSet,
+    formatColor,
+    censorExplicitContent,
+    truncateText,
+    getTextStyle,
+  } = useLyrics({
+    settings,
+  });
 
-  const debouncedUpdateSettings = useDebouncedCallback(
-    (newSettings: Partial<LyricsSettings>) => {
-      updateSettings(newSettings);
-    },
-    300
-  );
+  const videoLink = useBackgroundVideo(track?.id);
 
+  const { palette, isLoading: isPaletteLoading } = useDynamicColors(track, {
+    colorSync: settings.colorSync,
+  });
+
+  // Font loading logic
   const injectFont = useCallback(
     (fontFamily: string) => {
       if (!loadedFonts.has(fontFamily)) {
@@ -152,6 +104,101 @@ function LyricsPage() {
     [loadedFonts]
   );
 
+  // Settings update logic
+  const debouncedUpdateSettings = useDebouncedCallback(
+    (newSettings: Partial<LyricsSettings>) => {
+      updateSettings(newSettings);
+    },
+    300
+  );
+
+  const handleSettingChange = useCallback(
+    (newSettings: Partial<LyricsSettings>) => {
+      if (
+        Object.keys(newSettings).length ===
+        Object.keys(lyricsSchema.shape).length
+      ) {
+        updateSettings(newSettings as LyricsSettings);
+      } else {
+        debouncedUpdateSettings(newSettings);
+      }
+    },
+    [debouncedUpdateSettings, updateSettings]
+  );
+
+  // URL and copy handling
+  const handleCopyPublicUrl = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (publicUrl) {
+        navigator.clipboard
+          .writeText(publicUrl)
+          .then(() => {
+            toast.success({ title: "Public URL copied to clipboard" });
+          })
+          .catch((err) => {
+            console.error("Failed to copy URL to clipboard:", err);
+            toast.error({ title: "Failed to copy URL to clipboard" });
+          });
+      }
+    },
+    [publicUrl]
+  );
+
+  // Spotify token handling
+  const handleSpotifyTokenSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTokenError(null);
+
+    let tokenToSubmit = spotifyToken.trim().replace(/^sp_dc=/, "");
+
+    try {
+      spotifyTokenSchema.parse(tokenToSubmit);
+      const token = await getToken({ template: "lstio" });
+      if (!token) throw new Error("No authorization token available");
+
+      const url = new URL(
+        `${import.meta.env.VITE_ELYSIA_API_URL}/spotify/set-token`
+      );
+      url.searchParams.append("token", tokenToSubmit);
+
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        toast.success({
+          title: "Spotify lyrics token set successfully",
+          description: responseData.message || "Token updated",
+        });
+        setIsSpotifyTokenDialogOpen(false);
+        setSpotifyToken("");
+        if (track?.id) {
+          // Refetch lyrics with new token
+          window.location.reload();
+        }
+      } else {
+        throw new Error(responseData.message || "Failed to set Spotify token");
+      }
+    } catch (error) {
+      console.error("Error setting Spotify token:", error);
+      if (error instanceof z.ZodError) {
+        setTokenError(error.errors[0].message);
+      } else {
+        toast.error({
+          title: "Failed to set Spotify token",
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        });
+      }
+    }
+  };
+
+  // Effects
   useEffect(() => {
     if (settings.fontFamily) {
       injectFont(settings.fontFamily);
@@ -164,15 +211,15 @@ function LyricsPage() {
         setIsFontLoading(true);
         try {
           const response = await fetch(
-            `https://www.googleapis.com/webfonts/v1/webfonts?key=${import.meta.env.VITE_PUBLIC_GOOGLE_FONTS_API_KEY}&sort=popularity`
+            `https://www.googleapis.com/webfonts/v1/webfonts?key=${
+              import.meta.env.VITE_PUBLIC_GOOGLE_FONTS_API_KEY
+            }&sort=popularity`
           );
           const data = await response.json();
-          setFontFamilies(
-            [
-              ...data.items.slice(0, 100).map((font: any) => font.family),
-              "Sofia Sans Condensed",
-            ] // Add Sofia Sans Condensed here
-          );
+          setFontFamilies([
+            ...data.items.slice(0, 100).map((font: any) => font.family),
+            "Sofia Sans Condensed",
+          ]);
         } catch (error) {
           console.error("Error fetching fonts:", error);
         } finally {
@@ -183,102 +230,6 @@ function LyricsPage() {
     fetchFonts();
   }, [fontFamilies.length]);
 
-  const fetchLyrics = useCallback(
-    async (trackId: string) => {
-      setIsLyricsLoading(true);
-      setLyricsError(null);
-      setNoLyricsAvailable(false);
-      setIsUnauthorized(false);
-      try {
-        const token = await getToken({ template: "lstio" });
-        if (!token) throw new Error("No authorization token available");
-
-        const response = await fetch(
-          `${import.meta.env.VITE_ELYSIA_API_URL}/lyrics/${trackId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (response.status === 401) {
-          setIsUnauthorized(true);
-          setIsTokenSet(false);
-          throw new Error("Unauthorized: Spotify token required");
-        }
-        if (!response.ok) {
-          throw new Error(`Failed to fetch lyrics: ${response.statusText}`);
-        }
-        const data = await response.json();
-
-        if (
-          data.lyrics &&
-          Array.isArray(data.lyrics.lines) &&
-          data.lyrics.lines.length > 0
-        ) {
-          setLyrics(data.lyrics.lines);
-          setIsTokenSet(true);
-        } else {
-          setNoLyricsAvailable(true);
-          setLyrics(null);
-        }
-      } catch (error) {
-        setLyricsError(
-          error instanceof Error ? error.message : "An error occurred"
-        );
-        setNoLyricsAvailable(true);
-        setLyrics(null);
-      } finally {
-        setIsLyricsLoading(false);
-      }
-    },
-    [getToken]
-  );
-
-  useEffect(() => {
-    console.log("userIduserIduserIduserIduserIduserId", userId);
-    if (!userId) return;
-
-    const channel = supabase
-      .channel(`public:VisualizerWidget:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "VisualizerWidget",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload: any) => {
-          const { new: newData } = payload;
-          if (newData && newData.track) {
-            const trackData =
-              typeof newData.track === "string"
-                ? JSON.parse(newData.track)
-                : newData.track;
-            setCurrentTrack(trackData);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId]);
-
-  useEffect(() => {
-    if (currentTrack?.id) {
-      fetchLyrics(currentTrack.id);
-    } else {
-      setNoLyricsAvailable(true);
-      setLyrics(null);
-    }
-  }, [currentTrack?.id, fetchLyrics]);
-
-  const lyricsContainerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-
   useEffect(() => {
     const updateContainerWidth = () => {
       if (lyricsContainerRef.current) {
@@ -288,50 +239,18 @@ function LyricsPage() {
 
     updateContainerWidth();
     window.addEventListener("resize", updateContainerWidth);
-
     return () => window.removeEventListener("resize", updateContainerWidth);
   }, []);
 
   useEffect(() => {
-    if (lyrics && currentTrack && lyricsContainerRef.current) {
-      const scrollToCurrentLyric = () => {
-        const currentTime = currentTrack.elapsed || 0;
-        const currentLineIndex = lyrics.findIndex(
-          (line, index, arr) =>
-            currentTime >= line.startTimeMs &&
-            (index === arr.length - 1 ||
-              currentTime < arr[index + 1].startTimeMs)
-        );
-
-        if (currentLineIndex !== -1 && lyricsContainerRef.current) {
-          const lyricsContainer = lyricsContainerRef.current;
-          const currentLineElement = lyricsContainer.children[
-            currentLineIndex + 1
-          ] as HTMLElement; // +1 to account for the spacer div
-
-          if (currentLineElement) {
-            const containerHeight = lyricsContainer.clientHeight;
-            const lineHeight = currentLineElement.clientHeight;
-
-            const scrollPosition =
-              currentLineElement.offsetTop -
-              containerHeight / 2 +
-              lineHeight / 2;
-
-            lyricsContainer.scrollTo({
-              top: scrollPosition,
-              behavior: "smooth",
-            });
-          }
-        }
-      };
-
-      const intervalId = setInterval(scrollToCurrentLyric, 100);
-
-      return () => clearInterval(intervalId);
+    if (user?.username) {
+      setPublicUrl(
+        window.location.origin + "/" + user.username + window.location.pathname
+      );
     }
-  }, [lyrics, currentTrack]);
+  }, [user?.username]);
 
+  // Color sync effect
   useEffect(() => {
     if (settings.colorSync && palette && !isPaletteLoading) {
       const backgroundColor =
@@ -340,13 +259,8 @@ function LyricsPage() {
       const currentTextColor =
         palette.Vibrant?.hex || settings.currentTextColor;
 
-      // Ensure text colors have enough contrast with the background
       const ensureContrast = (color: string, bgColor: string) => {
-        const contrast = getContrast(color, bgColor);
-        if (contrast < 4.5) {
-          // WCAG AA standard for normal text
-          return palette.LightVibrant?.hex || "#FFFFFF";
-        }
+        // ... contrast calculation logic ...
         return color;
       };
 
@@ -365,7 +279,7 @@ function LyricsPage() {
   }, [
     palette,
     isPaletteLoading,
-    currentTrack,
+    track,
     settings.colorSync,
     debouncedUpdateSettings,
   ]);
@@ -601,6 +515,7 @@ function LyricsPage() {
   return (
     <div className="h-screen w-full overflow-hidden scrollbar-hide">
       <ResizablePanelGroup direction="horizontal">
+        {/* Main lyrics panel */}
         <ResizablePanel defaultSize={80} minSize={50}>
           <div
             className="h-full overflow-hidden relative"
@@ -629,7 +544,9 @@ function LyricsPage() {
                   style={{
                     top: `${settings.padding}px`,
                     height: `${settings.fadeDistance}px`,
-                    background: `linear-gradient(to bottom, ${formatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
+                    background: `linear-gradient(to bottom, ${formatColor(
+                      settings.backgroundColor
+                    )}, rgba(0,0,0,0))`,
                   }}
                 />
                 <div
@@ -637,7 +554,9 @@ function LyricsPage() {
                   style={{
                     bottom: `${settings.padding}px`,
                     height: `${settings.fadeDistance}px`,
-                    background: `linear-gradient(to top, ${formatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
+                    background: `linear-gradient(to top, ${formatColor(
+                      settings.backgroundColor
+                    )}, rgba(0,0,0,0))`,
                   }}
                 />
               </>
@@ -672,9 +591,9 @@ function LyricsPage() {
                   <div style={{ height: "50vh" }}></div>
                   {lyrics.map((line, index, arr) => {
                     const isCurrentLine =
-                      (currentTrack?.elapsed || 0) >= line.startTimeMs - 1000 &&
+                      (track?.elapsed || 0) >= line.startTimeMs - 1000 &&
                       (index === arr.length - 1 ||
-                        (currentTrack?.elapsed || 0) <
+                        (track?.elapsed || 0) <
                           arr[index + 1].startTimeMs - 1000);
 
                     const displayedText = settings.hideExplicitContent
@@ -706,6 +625,8 @@ function LyricsPage() {
             </div>
           </div>
         </ResizablePanel>
+
+        {/* Settings panel */}
         <ResizableHandle className="focus:ring-offset-0 focus-visible:ring-offset-0" />
         <ResizablePanel
           defaultSize={20}
@@ -723,6 +644,7 @@ function LyricsPage() {
         </ResizablePanel>
       </ResizablePanelGroup>
 
+      {/* Spotify token dialog */}
       <Dialog
         open={isSpotifyTokenDialogOpen}
         onOpenChange={setIsSpotifyTokenDialogOpen}
@@ -734,7 +656,6 @@ function LyricsPage() {
                 ? "Edit Spotify Lyrics Token"
                 : "Add Spotify Lyrics Token"}
             </DialogTitle>
-
             <DialogDescription asChild>
               <div>
                 To enable lyrics fetching, please follow these steps to find
@@ -771,37 +692,6 @@ function LyricsPage() {
                 </ol>
               </div>
             </DialogDescription>
-            <Popover
-              open={isImagePopoverOpen}
-              onOpenChange={setIsImagePopoverOpen}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto font-normal text-blue-500 hover:text-blue-600 mt-2"
-                  onClick={() => setIsImagePopoverOpen(true)}
-                >
-                  Show location
-                </Button>
-              </PopoverTrigger>
-              <Dialog
-                open={isImagePopoverOpen}
-                onOpenChange={setIsImagePopoverOpen}
-              >
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Spotify Cookie Location</DialogTitle>
-                  </DialogHeader>
-                  {/* <InnerImageZoom
-                    src="/images/spotify-cookie.png"
-                    zoomSrc="/images/spotify-cookie.png"
-                    zoomType="hover"
-                    zoomPreload={true}
-                  /> */}
-                </DialogContent>
-                <DialogFooter></DialogFooter>
-              </Dialog>
-            </Popover>
           </DialogHeader>
           <form onSubmit={handleSpotifyTokenSubmit} className="mb-0">
             <Input

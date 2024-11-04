@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useProfile } from "./useProfile";
 import { Slider, ColorPicker, Switch } from "./FormComponents";
 import { z } from "zod";
+import { Spinner } from "../ui/spinner";
 
 const profileSchema = z.object({
   common: z.object({
@@ -29,7 +30,8 @@ export const SectionPage = ({ sectionId }) => {
 
   const { watch } = methods;
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading)
+    return <Spinner className="w-8 fill-violet-300 dark:text-white" />;
 
   const onChange = (newValues) => {
     mutation.mutate(newValues);
