@@ -17,7 +17,7 @@ export const navItems = [
   },
   {
     id: 2,
-    link: "/widgets/lyrics",
+    link: "/lyrics",
     text: "Lyrics",
     icon: MicrophoneIcon,
   },
