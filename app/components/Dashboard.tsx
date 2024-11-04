@@ -246,11 +246,11 @@ const ConnectedAccountsCard = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-white/10 hover:bg-white/20"
+                        className="h-8 w-8 bg-white/10 hover:bg-white/20 relative"
                         onMouseEnter={(e) => {
                           const tooltip = document.createElement("div");
                           tooltip.className =
-                            "absolute -top-8 bg-black/80 px-2 py-1 rounded text-xs";
+                            "absolute -top-8 dark:bg-black/80 px-2 py-1 rounded text-xs";
                           tooltip.textContent = hasSpotifyCredentials
                             ? "Edit Spotify Keys"
                             : "Add Spotify Keys";
