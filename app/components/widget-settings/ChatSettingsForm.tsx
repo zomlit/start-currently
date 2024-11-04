@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/tanstack-start";
 import { supabase } from "@/utils/supabase/client";
-import GradientColorPicker from "@/components/GradientColorPicker";
+import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ChatSettings } from "@/types/Widget";
 import { Input } from "@/components/ui/input";
