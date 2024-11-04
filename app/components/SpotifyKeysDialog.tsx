@@ -186,13 +186,10 @@ export function SpotifyKeysDialog() {
       });
 
       const responseData = await response.json();
-      console.log("Token exchange response:", responseData);
 
       if (!response.ok) {
-        console.error("Token exchange error:", responseData);
-
         // If we get an invalid_grant error but have a refresh token in the DB,
-        // we can consider this a success
+        // we can consider this a success but without showing a toast
         const { data: userData } = await supabase
           .from("UserProfile")
           .select("s_refresh_token")
@@ -206,12 +203,7 @@ export function SpotifyKeysDialog() {
           console.log("Using existing refresh token");
           updateSpotifyToken(userData.s_refresh_token);
 
-          toast.success({
-            title: "Spotify Connected!",
-            description: "Your Spotify account is already linked.",
-          });
-
-          // Close dialog and redirect
+          // Close dialog and redirect without showing a toast
           const closeButton = document.querySelector(
             "[data-dialog-close]"
           ) as HTMLButtonElement;
@@ -226,7 +218,16 @@ export function SpotifyKeysDialog() {
         );
       }
 
-      // Rest of the success handling remains the same
+      // Only show the success toast when we actually get new tokens
+      if (responseData.access_token && responseData.refresh_token) {
+        toast.success({
+          title: "Spotify Connected!",
+          description: "Your Spotify account has been successfully linked.",
+          duration: 5000,
+        });
+      }
+
+      // Save the new tokens
       const { error: userDataError } = await supabase
         .from("UserProfile")
         .upsert(
@@ -245,16 +246,20 @@ export function SpotifyKeysDialog() {
 
       updateSpotifyToken(responseData.refresh_token);
 
-      toast.success({
-        title: "Spotify Connected!",
-        description: "Your Spotify account has been successfully linked.",
-        duration: 5000,
-      });
-
+      // Close dialog using the DialogClose component
       const closeButton = document.querySelector(
-        "[data-dialog-close]"
+        '[data-dialog-close="true"]'
       ) as HTMLButtonElement;
-      if (closeButton) closeButton.click();
+      if (closeButton) {
+        closeButton.click();
+      } else {
+        // Fallback close method
+        const dialog = document.querySelector('[role="dialog"]');
+        if (dialog) {
+          const closeEvent = new Event("close");
+          dialog.dispatchEvent(closeEvent);
+        }
+      }
 
       router.navigate({ to: "/dashboard" });
     } catch (error) {
@@ -353,7 +358,7 @@ export function SpotifyKeysDialog() {
         </div>
 
         <div className="mt-4 flex justify-end space-x-2">
-          <DialogClose asChild>
+          <DialogClose asChild data-dialog-close="true">
             <Button type="button" variant="outline">
               Cancel
             </Button>

@@ -7,6 +7,7 @@ import { supabase } from "@/utils/supabase/client";
 interface UseLyricsProps {
   track?: SpotifyTrack | null;
   settings?: any;
+  onError?: (error: Error) => void;
 }
 
 interface LyricsLine {

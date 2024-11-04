@@ -19,8 +19,8 @@ function SignUpPage() {
                   "bg-purple-600 hover:bg-purple-700 text-white",
                 formFieldInput:
                   "bg-white/20 border-purple-300 text-white placeholder-purple-200",
-                headerTitle: "text-white",
-                headerSubtitle: "text-purple-200",
+                headerTitle: "",
+                headerSubtitle: "",
                 card: "!bg-gradient/20 backdrop-blur-lg !border-none",
               },
             }}

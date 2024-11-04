@@ -42,7 +42,6 @@ import { cn } from "@/lib/utils";
 const spotifyTokenSchema = z
   .string()
   .min(100, "Token too short")
-  .max(200, "Token too long")
   .regex(
     /^[A-Za-z0-9_-]+$/,
     "Token should only contain letters, numbers, underscores, and hyphens"
@@ -284,6 +283,59 @@ function LyricsPage() {
     settings.colorSync,
     debouncedUpdateSettings,
   ]);
+
+  // Update scrolling effect
+  useEffect(() => {
+    if (lyrics && track && lyricsContainerRef.current) {
+      const scrollToCurrentLyric = () => {
+        const currentTime = track.elapsed || 0;
+        const currentLineIndex = lyrics.findIndex(
+          (line, index, arr) =>
+            currentTime >= line.startTimeMs - 1000 &&
+            (index === arr.length - 1 ||
+              currentTime < arr[index + 1].startTimeMs - 1000)
+        );
+
+        if (currentLineIndex !== -1 && lyricsContainerRef.current) {
+          const lyricsContainer = lyricsContainerRef.current;
+          const lines = Array.from(lyricsContainer.children);
+
+          // Skip the first spacer div
+          const currentLineElement = lines[currentLineIndex + 1] as HTMLElement;
+
+          if (currentLineElement) {
+            const containerHeight = lyricsContainer.clientHeight;
+            const lineHeight = currentLineElement.offsetHeight;
+
+            // Calculate scroll position to center the current line
+            const scrollPosition = Math.max(
+              0,
+              currentLineElement.offsetTop -
+                containerHeight / 2 +
+                lineHeight / 2
+            );
+
+            // Only scroll if the position has changed significantly
+            const currentScroll = lyricsContainer.scrollTop;
+            const scrollDiff = Math.abs(currentScroll - scrollPosition);
+
+            if (scrollDiff > 10) {
+              lyricsContainer.scrollTo({
+                top: scrollPosition,
+                behavior: "smooth",
+              });
+            }
+          }
+        }
+      };
+
+      // Run immediately and then set up interval
+      scrollToCurrentLyric();
+      const intervalId = setInterval(scrollToCurrentLyric, 250);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [lyrics, track]);
 
   // Render component
   return (
