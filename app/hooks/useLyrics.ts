@@ -164,7 +164,6 @@ export const useLyrics = ({
   useEffect(() => {
     if (!userId) return;
 
-    console.log("Setting up Supabase subscription for user:", userId);
     const channel = supabase
       .channel(`public:VisualizerWidget:${userId}`)
       .on(
@@ -176,22 +175,26 @@ export const useLyrics = ({
           filter: `user_id=eq.${userId}`,
         },
         (payload: any) => {
-          console.log("Supabase payload:", payload);
           const { new: newData } = payload;
           if (newData?.track) {
-            const trackData =
-              typeof newData.track === "string"
-                ? JSON.parse(newData.track)
-                : newData.track;
-            console.log("Setting track data in hook:", trackData);
-            setTrack(trackData);
+            try {
+              const trackData =
+                typeof newData.track === "string"
+                  ? JSON.parse(newData.track.replace(/\bNaN\b/g, "null"))
+                  : newData.track;
+
+              console.log("Track data received:", trackData);
+              setTrack(trackData);
+            } catch (error) {
+              console.error("Error parsing track data:", error);
+              console.log("Raw track data:", newData.track);
+            }
           }
         }
       )
       .subscribe();
 
     return () => {
-      console.log("Cleaning up Supabase subscription");
       supabase.removeChannel(channel);
     };
   }, [userId]);
