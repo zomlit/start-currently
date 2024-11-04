@@ -104,7 +104,7 @@ export const ElysiaSessionManager: React.FC = () => {
               <p>
                 User ID:{" "}
                 <span className="text-yellow-300">
-                  {truncateUserId(userId)}
+                  {truncateUserId(userId || null)}
                 </span>
               </p>
               <p>

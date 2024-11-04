@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
 import { useUser } from "@clerk/tanstack-start";
 import BackgroundImage from "@/components/ui/background-image";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/_app/checkout/success")({
   component: CheckoutSuccessPage,
@@ -43,7 +44,7 @@ function CheckoutSuccessPage() {
   }, [user, isLoaded, navigate]);
 
   if (!isLoaded || !user) {
-    return <div>Loading...</div>;
+    return <Spinner className="w-8 fill-violet-300 dark:text-white" />;
   }
 
   return <div>Payment successful! Redirecting to dashboard...</div>;
