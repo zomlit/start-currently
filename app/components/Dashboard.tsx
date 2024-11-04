@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef } from "react";
 import { useOrganization, OrganizationSwitcher } from "@clerk/tanstack-start";
 import DashboardHeader from "./DashboardHeader";
 import { Container } from "./layout/Container";
@@ -21,11 +21,105 @@ import {
   AudioLines,
   MicVocal,
   MessageCircleMore,
+  Pencil,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@clerk/tanstack-start";
+import { Button } from "./ui/button";
+import { supabase } from "@/utils/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { SpotifyKeysDialog } from "@/components/SpotifyKeysDialog";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  UserPlus as IconUserPlus,
+  Star as IconStar,
+  Diamond as IconDiamond,
+  DollarSign as IconCurrencyDollar,
+  Users as IconUsers,
+  Headphones as IconHeadphones,
+  Bell as IconBell,
+  Circle as FaCircle,
+} from "lucide-react";
+import { navItems } from "@/config/navigation";
+
+const IconButton = forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    className?: string;
+  }
+>(({ children, className, ...props }, ref) => (
+  <button
+    ref={ref}
+    className={cn(
+      "flex h-8 w-8 items-center justify-center rounded-full",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </button>
+));
+IconButton.displayName = "IconButton";
+
+const IconButtonWithRef = forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    className?: string;
+    children: React.ReactNode;
+  }
+>(({ className, children, ...props }, ref) => (
+  <Button
+    ref={ref}
+    variant="ghost"
+    size="icon"
+    className={cn("h-8 w-8 bg-white/10 hover:bg-white/20", className)}
+    {...props}
+  >
+    {children}
+  </Button>
+));
+IconButtonWithRef.displayName = "IconButtonWithRef";
 
 const ConnectedAccountsCard = () => {
   const { session } = useSession();
+  const { user } = useUser();
+  const [spotifyCredentials, setSpotifyCredentials] = useState<{
+    s_client_id: string | null;
+    s_client_secret: string | null;
+    s_refresh_token: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchSpotifyCredentials = async () => {
+      if (!user?.id) return;
+
+      const { data, error } = await supabase
+        .from("UserProfile")
+        .select("s_client_id, s_client_secret, s_refresh_token")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching Spotify credentials:", error);
+        return;
+      }
+
+      setSpotifyCredentials(data);
+    };
+
+    fetchSpotifyCredentials();
+  }, [user?.id]);
 
   const connectedAccounts = session?.user.externalAccounts || [];
 
@@ -100,24 +194,33 @@ const ConnectedAccountsCard = () => {
     }
   };
 
+  const hasSpotifyCredentials = !!(
+    spotifyCredentials?.s_client_id &&
+    spotifyCredentials?.s_client_secret &&
+    spotifyCredentials?.s_refresh_token
+  );
+
   return (
     <div className="">
-      <h2 className="mb-2 flex items-center text-lg font-bold">
-        <svg
-          className="mr-2 h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 10V3L4 14h7v7l9-11h-7z"
-          />
-        </svg>
-        Connected Accounts
-      </h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="flex items-center text-lg font-bold">
+          <svg
+            className="mr-2 h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
+          </svg>
+          Connected Accounts
+        </h2>
+      </div>
+
       {connectedAccounts.length > 0 ? (
         <div className="space-y-2">
           {connectedAccounts.map((account) => (
@@ -136,6 +239,44 @@ const ConnectedAccountsCard = () => {
                   <p className="text-sm text-purple-500">{account.username}</p>
                 </div>
               </div>
+              {account.provider === "spotify" && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 bg-white/10 hover:bg-white/20 relative"
+                        onMouseEnter={(e) => {
+                          const tooltip = document.createElement("div");
+                          tooltip.className =
+                            "absolute -top-8 dark:bg-black/80 px-2 py-1 rounded text-xs";
+                          tooltip.textContent = hasSpotifyCredentials
+                            ? "Edit Spotify Keys"
+                            : "Add Spotify Keys";
+                          e.currentTarget.appendChild(tooltip);
+                        }}
+                        onMouseLeave={(e) => {
+                          const tooltip = e.currentTarget.querySelector("div");
+                          if (tooltip) tooltip.remove();
+                        }}
+                      >
+                        {hasSpotifyCredentials ? (
+                          <Pencil className="h-4 w-4" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">
+                          {hasSpotifyCredentials
+                            ? "Edit Spotify Keys"
+                            : "Add Spotify Keys"}
+                        </span>
+                      </Button>
+                    </div>
+                  </DialogTrigger>
+                  <SpotifyKeysDialog />
+                </Dialog>
+              )}
             </div>
           ))}
         </div>
@@ -564,52 +705,6 @@ const formatTimestamp = (timestamp: number) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-const navItems = [
-  {
-    id: 1,
-    link: "/sections/visualizer",
-    text: "Visualizer",
-    icon: Eye,
-  },
-  {
-    id: 2,
-    link: "/lyrics",
-    text: "Lyrics",
-    icon: MicVocal,
-  },
-  {
-    id: 3,
-    link: "/sections/chat",
-    text: "Chat",
-    icon: MessageCircleMore,
-  },
-  {
-    id: 4,
-    link: "/sections/alerts",
-    text: "Alerts",
-    icon: Bell,
-  },
-  {
-    id: 5,
-    link: "/sections/stats",
-    text: "Stats",
-    icon: BarChart2,
-  },
-  {
-    id: 6,
-    link: "/dashboard",
-    text: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    id: 7,
-    link: "/teampicker",
-    text: "Team Picker",
-    icon: Users,
-  },
-];
-
-// Change from const to export const
 export const HorizontalNav = () => {
   const { pathname } = useLocation();
 

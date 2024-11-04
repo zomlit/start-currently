@@ -31,6 +31,8 @@ import { WidgetPreview } from "@/components/widget-preview";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { SpotifyTrack } from "@/types/spotify";
 import { formatTime } from "@/utils";
+import { Spinner } from "@/components/ui/spinner";
+import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 
 const profileSchema = z.object({
   id: z.string().optional(),
@@ -52,7 +54,7 @@ const profileSchema = z.object({
 
 type Profile = z.infer<typeof profileSchema>;
 
-export const Route = createFileRoute("/_app/sections/visualizer")({
+export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: VisualizerSection,
 });
 
@@ -281,11 +283,11 @@ function VisualizerSection() {
   };
 
   if (!isLoaded || isProfilesLoading) {
-    return <div>Loading...</div>;
+    return <Spinner className="w-8 fill-violet-300 dark:text-white" />;
   }
 
   if (!userId) {
-    return <div>Please sign in to access this section.</div>;
+    return <div>Please sign in to customize your visualizer</div>;
   }
 
   if (profilesError) {
@@ -305,170 +307,125 @@ function VisualizerSection() {
     );
   }
 
-  return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex justify-between items-center">
-          <Select
-            onValueChange={handleProfileChange}
-            value={selectedProfileId || undefined}
+  const VisualizerPreview = (
+    <div className="h-full w-full">
+      <WidgetPreview
+        currentProfile="Default Profile"
+        selectedWidget="visualizer"
+        initialTrack={currentTrack as SpotifyTrack}
+        userId={userId}
+      />
+      <div className="relative z-10">
+        <h2 className="mb-2 flex items-center text-lg font-bold text-purple-400">
+          <svg
+            className="mr-2 h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select a profile" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.isArray(profiles) &&
-                profiles.map((profile) => (
-                  <SelectItem key={profile.id} value={profile.id || ""}>
-                    {profile.settings.name}
-                    {profile.settings.isDefault && " (Default)"}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => setIsAddDialogOpen(true)}
-              size="icon"
-              variant="outline"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button onClick={handleCopyProfile} size="icon" variant="outline">
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={handleDeleteProfile}
-              size="icon"
-              variant="outline"
-              disabled={profiles?.length <= 1}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={handleSetDefault}
-              disabled={profile?.settings.isDefault}
-            >
-              Set as Default
-            </Button>
-          </div>
-        </div>
-        track to {currentTrack}
-        <WidgetPreview
-          currentProfile="Default Profile"
-          selectedWidget="visualizer"
-          initialTrack={currentTrack as SpotifyTrack}
-          userId={userId}
-          // Pass the current profile data instead of optimisticProfileSettings
-          // optimisticSettings={currentProfile.settings}
-        />
-        {/* <Input
-          {...methods.register("settings.name")}
-          placeholder="Profile Name"
-          className="mb-4"
-        />
-
-        <h2 className="text-xl font-bold">Common Settings</h2>
-        <ColorPicker
-          name="settings.common.backgroundColor"
-          label="Background Color"
-        />
-        <Slider
-          name="settings.common.padding"
-          label="Padding"
-          min={0}
-          max={50}
-        />
-        <Switch name="settings.common.showBorders" label="Show Borders" />
-
-        <h2 className="text-xl font-bold">Visualizer Specific Settings</h2>
-        <Slider
-          name="settings.sectionSpecific.fontSize"
-          label="Font Size"
-          min={10}
-          max={50}
-        />
-        <Select
-          onValueChange={(value) =>
-            setValue(
-              "settings.sectionSpecific.chartType",
-              value as "bar" | "line" | "pie"
-            )
-          }
-          value={watch("settings.sectionSpecific.chartType")}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select chart type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="bar">Bar Chart</SelectItem>
-            <SelectItem value="line">Line Chart</SelectItem>
-            <SelectItem value="pie">Pie Chart</SelectItem>
-          </SelectContent>
-        </Select>
- */}
-        <div className="relative z-10">
-          <h2 className="mb-2 flex items-center text-lg font-bold text-purple-400">
-            <svg
-              className="mr-2 h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-              />
-            </svg>
-            Now Playing
-          </h2>
-          {nowPlayingData?.track ? (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                {nowPlayingData?.track?.albumArt && (
-                  <img
-                    src={nowPlayingData?.track?.albumArt}
-                    alt="Album Art"
-                    className="h-20 w-20 rounded-md border-2 border-blue-400 shadow-md"
-                  />
-                )}
-                <div>
-                  <p className="text-2xl font-bold text-blue-300">
-                    {nowPlayingData?.track?.title}
-                  </p>
-                  <p className="text-lg text-purple-200">
-                    {nowPlayingData?.track?.artist}
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-[auto,1fr] gap-x-4">
-                <p className="text-gray-400">Album:</p>
-                <p className="text-purple-200">
-                  {nowPlayingData?.track?.album}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+            />
+          </svg>
+          Now Playing
+        </h2>
+        {nowPlayingData?.track ? (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              {nowPlayingData?.track?.albumArt && (
+                <img
+                  src={nowPlayingData?.track?.albumArt}
+                  alt="Album Art"
+                  className="h-20 w-20 rounded-md border-2 border-blue-400 shadow-md"
+                />
+              )}
+              <div>
+                <p className="text-2xl font-bold text-blue-300">
+                  {nowPlayingData?.track?.title}
                 </p>
-                <p className="text-gray-400">Status:</p>
-                <p
-                  className={`font-semibold ${
-                    nowPlayingData?.track?.isPlaying
-                      ? "text-green-400"
-                      : "text-yellow-400"
-                  }`}
-                >
-                  {nowPlayingData?.track?.isPlaying ? "Playing" : "Paused"}
-                </p>
-                <p className="text-gray-400">Progress:</p>
-                <p className="text-purple-200">
-                  {formatTime(nowPlayingData?.track?.elapsed)} /{" "}
-                  {formatTime(nowPlayingData?.track?.duration)}
+                <p className="text-lg text-purple-200">
+                  {nowPlayingData?.track?.artist}
                 </p>
               </div>
             </div>
-          ) : (
-            <p className="text-gray-300">Waiting for track data...</p>
-          )}
+            <div className="grid grid-cols-[auto,1fr] gap-x-4">
+              <p className="text-gray-400">Album:</p>
+              <p className="text-purple-200">{nowPlayingData?.track?.album}</p>
+              <p className="text-gray-400">Status:</p>
+              <p
+                className={`font-semibold ${
+                  nowPlayingData?.track?.isPlaying
+                    ? "text-green-400"
+                    : "text-yellow-400"
+                }`}
+              >
+                {nowPlayingData?.track?.isPlaying ? "Playing" : "Paused"}
+              </p>
+              <p className="text-gray-400">Progress:</p>
+              <p className="text-purple-200">
+                {formatTime(nowPlayingData?.track?.elapsed)} /{" "}
+                {formatTime(nowPlayingData?.track?.duration)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-300">Waiting for track data...</p>
+        )}
+      </div>
+    </div>
+  );
+
+  const VisualizerSettings = (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Select
+          onValueChange={handleProfileChange}
+          value={selectedProfileId || undefined}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select a profile" />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.isArray(profiles) &&
+              profiles.map((profile) => (
+                <SelectItem key={profile.id} value={profile.id || ""}>
+                  {profile.settings.name}
+                  {profile.settings.isDefault && " (Default)"}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            size="icon"
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button onClick={handleCopyProfile} size="icon" variant="outline">
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={handleDeleteProfile}
+            size="icon"
+            variant="outline"
+            disabled={profiles?.length <= 1}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={handleSetDefault}
+            disabled={profile?.settings.isDefault}
+          >
+            Set as Default
+          </Button>
         </div>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div
           className="preview mt-8 p-4"
           style={{
@@ -490,7 +447,12 @@ function VisualizerSection() {
           Save Profile
         </button>
       </form>
+    </div>
+  );
 
+  return (
+    <>
+      <WidgetLayout preview={VisualizerPreview} settings={VisualizerSettings} />
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -512,6 +474,6 @@ function VisualizerSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </FormProvider>
+    </>
   );
 }

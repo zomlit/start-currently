@@ -65,7 +65,7 @@ interface LyricsSettingsFormProps {
   settings: LyricsSettings;
   onSettingsChange: (settings: Partial<LyricsSettings>) => void;
   publicUrl: string;
-  onCopyPublicUrl: () => void;
+  onCopyPublicUrl: (e: React.MouseEvent<HTMLButtonElement>) => void;
   fontFamilies: string[];
   isFontLoading: boolean;
   injectFont: (fontFamily: string) => void;

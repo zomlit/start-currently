@@ -1,10 +1,11 @@
-import React from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useProfile } from "@/hooks/useProfile";
-import { Slider, ColorPicker, Switch } from "@/components/form/index";
+import React from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useProfile } from '@/hooks/useProfile'
+import { Slider, ColorPicker, Switch } from '@/components/form/index'
+import { Spinner } from '@/components/ui/spinner'
 
 const profileSchema = z.object({
   common: z.object({
@@ -15,32 +16,32 @@ const profileSchema = z.object({
   sectionSpecific: z.object({
     fontSize: z.number().min(10).max(50),
   }),
-});
+})
 
-export const Route = createFileRoute("/_app/sections/")({
+export const Route = createFileRoute('/_app/widgets/')({
   component: SectionsDashboard,
-});
+})
 
 function SectionsDashboard() {
-  const { profile, isLoading, mutation } = useProfile("dashboard");
+  const { profile, isLoading, mutation } = useProfile('dashboard')
 
   const methods = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: profile?.settings || {
-      common: { backgroundColor: "#000000", padding: 10, showBorders: false },
+      common: { backgroundColor: '#000000', padding: 10, showBorders: false },
       sectionSpecific: { fontSize: 16 },
     },
-  });
+  })
 
-  const { watch, handleSubmit } = methods;
+  const { watch, handleSubmit } = methods
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Spinner className="w-8 fill-violet-300 dark:text-white" />
   }
 
   const onSubmit = (data: z.infer<typeof profileSchema>) => {
-    mutation.mutate(data);
-  };
+    mutation.mutate(data)
+  }
 
   return (
     <FormProvider {...methods}>
@@ -76,5 +77,5 @@ function SectionsDashboard() {
         <p>This is how your section will look with the current settings.</p>
       </div> */}
     </FormProvider>
-  );
+  )
 }

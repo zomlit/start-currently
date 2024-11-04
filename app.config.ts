@@ -2,11 +2,14 @@ import { defineConfig } from "@tanstack/start/config";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import { visualizer } from "rollup-plugin-visualizer";
 import tsConfigPaths from "vite-tsconfig-paths";
+import svgr from "vite-plugin-svgr";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   server: { preset: "node-server" },
   vite: {
     plugins: [
+      svgr({}),
       tsConfigPaths({
         projects: ["./tsconfig.json"],
       }),

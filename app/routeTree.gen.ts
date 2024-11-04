@@ -15,24 +15,24 @@ import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
 import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
+import { Route as AppWidgetsImport } from './routes/_app/widgets'
 import { Route as AppTestImport } from './routes/_app/test'
-import { Route as AppSectionsImport } from './routes/_app/sections'
 import { Route as AppPostsImport } from './routes/_app/posts'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
 import { Route as UsernameLyricsImport } from './routes/$username/lyrics'
 import { Route as LyricsLyricsIndexImport } from './routes/_lyrics/lyrics.index'
+import { Route as AppWidgetsIndexImport } from './routes/_app/widgets/index'
 import { Route as AppWheelspinIndexImport } from './routes/_app/wheelspin/index'
 import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
-import { Route as AppSectionsIndexImport } from './routes/_app/sections/index'
 import { Route as AppPricingIndexImport } from './routes/_app/pricing/index'
+import { Route as AppWidgetsVisualizerImport } from './routes/_app/widgets/visualizer'
+import { Route as AppWidgetsStatsImport } from './routes/_app/widgets/stats'
+import { Route as AppWidgetsLyricsImport } from './routes/_app/widgets/lyrics'
+import { Route as AppWidgetsChatImport } from './routes/_app/widgets/chat'
+import { Route as AppWidgetsAlertsImport } from './routes/_app/widgets/alerts'
 import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
 import { Route as AppSignUpSplatImport } from './routes/_app/sign-up.$'
 import { Route as AppSignInSplatImport } from './routes/_app/sign-in.$'
-import { Route as AppSectionsVisualizerImport } from './routes/_app/sections/visualizer'
-import { Route as AppSectionsStatsImport } from './routes/_app/sections/stats'
-import { Route as AppSectionsLyricsImport } from './routes/_app/sections/lyrics'
-import { Route as AppSectionsChatImport } from './routes/_app/sections/chat'
-import { Route as AppSectionsAlertsImport } from './routes/_app/sections/alerts'
 import { Route as AppPostsPostIdImport } from './routes/_app/posts.$postId'
 import { Route as AppCheckoutSuccessImport } from './routes/_app/checkout.success'
 import { Route as AppCheckoutProductIdImport } from './routes/_app/checkout.$productId'
@@ -65,15 +65,15 @@ const AppIndexRoute = AppIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const AppTestRoute = AppTestImport.update({
-  id: '/test',
-  path: '/test',
+const AppWidgetsRoute = AppWidgetsImport.update({
+  id: '/widgets',
+  path: '/widgets',
   getParentRoute: () => AppRoute,
 } as any)
 
-const AppSectionsRoute = AppSectionsImport.update({
-  id: '/sections',
-  path: '/sections',
+const AppTestRoute = AppTestImport.update({
+  id: '/test',
+  path: '/test',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -100,6 +100,12 @@ const LyricsLyricsIndexRoute = LyricsLyricsIndexImport.update({
   getParentRoute: () => LyricsRoute,
 } as any)
 
+const AppWidgetsIndexRoute = AppWidgetsIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
 const AppWheelspinIndexRoute = AppWheelspinIndexImport.update({
   id: '/wheelspin/',
   path: '/wheelspin/',
@@ -112,16 +118,40 @@ const AppTeampickerIndexRoute = AppTeampickerIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const AppSectionsIndexRoute = AppSectionsIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppSectionsRoute,
-} as any)
-
 const AppPricingIndexRoute = AppPricingIndexImport.update({
   id: '/pricing/',
   path: '/pricing/',
   getParentRoute: () => AppRoute,
+} as any)
+
+const AppWidgetsVisualizerRoute = AppWidgetsVisualizerImport.update({
+  id: '/visualizer',
+  path: '/visualizer',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsStatsRoute = AppWidgetsStatsImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsLyricsRoute = AppWidgetsLyricsImport.update({
+  id: '/lyrics',
+  path: '/lyrics',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsChatRoute = AppWidgetsChatImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsAlertsRoute = AppWidgetsAlertsImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AppWidgetsRoute,
 } as any)
 
 const AppTeampickerBracketIdRoute = AppTeampickerBracketIdImport.update({
@@ -140,36 +170,6 @@ const AppSignInSplatRoute = AppSignInSplatImport.update({
   id: '/sign-in/$',
   path: '/sign-in/$',
   getParentRoute: () => AppRoute,
-} as any)
-
-const AppSectionsVisualizerRoute = AppSectionsVisualizerImport.update({
-  id: '/visualizer',
-  path: '/visualizer',
-  getParentRoute: () => AppSectionsRoute,
-} as any)
-
-const AppSectionsStatsRoute = AppSectionsStatsImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => AppSectionsRoute,
-} as any)
-
-const AppSectionsLyricsRoute = AppSectionsLyricsImport.update({
-  id: '/lyrics',
-  path: '/lyrics',
-  getParentRoute: () => AppSectionsRoute,
-} as any)
-
-const AppSectionsChatRoute = AppSectionsChatImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AppSectionsRoute,
-} as any)
-
-const AppSectionsAlertsRoute = AppSectionsAlertsImport.update({
-  id: '/alerts',
-  path: '/alerts',
-  getParentRoute: () => AppSectionsRoute,
 } as any)
 
 const AppPostsPostIdRoute = AppPostsPostIdImport.update({
@@ -261,18 +261,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPostsImport
       parentRoute: typeof AppImport
     }
-    '/_app/sections': {
-      id: '/_app/sections'
-      path: '/sections'
-      fullPath: '/sections'
-      preLoaderRoute: typeof AppSectionsImport
-      parentRoute: typeof AppImport
-    }
     '/_app/test': {
       id: '/_app/test'
       path: '/test'
       fullPath: '/test'
       preLoaderRoute: typeof AppTestImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/widgets': {
+      id: '/_app/widgets'
+      path: '/widgets'
+      fullPath: '/widgets'
+      preLoaderRoute: typeof AppWidgetsImport
       parentRoute: typeof AppImport
     }
     '/_app/': {
@@ -310,41 +310,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPostsPostIdImport
       parentRoute: typeof AppPostsImport
     }
-    '/_app/sections/alerts': {
-      id: '/_app/sections/alerts'
-      path: '/alerts'
-      fullPath: '/sections/alerts'
-      preLoaderRoute: typeof AppSectionsAlertsImport
-      parentRoute: typeof AppSectionsImport
-    }
-    '/_app/sections/chat': {
-      id: '/_app/sections/chat'
-      path: '/chat'
-      fullPath: '/sections/chat'
-      preLoaderRoute: typeof AppSectionsChatImport
-      parentRoute: typeof AppSectionsImport
-    }
-    '/_app/sections/lyrics': {
-      id: '/_app/sections/lyrics'
-      path: '/lyrics'
-      fullPath: '/sections/lyrics'
-      preLoaderRoute: typeof AppSectionsLyricsImport
-      parentRoute: typeof AppSectionsImport
-    }
-    '/_app/sections/stats': {
-      id: '/_app/sections/stats'
-      path: '/stats'
-      fullPath: '/sections/stats'
-      preLoaderRoute: typeof AppSectionsStatsImport
-      parentRoute: typeof AppSectionsImport
-    }
-    '/_app/sections/visualizer': {
-      id: '/_app/sections/visualizer'
-      path: '/visualizer'
-      fullPath: '/sections/visualizer'
-      preLoaderRoute: typeof AppSectionsVisualizerImport
-      parentRoute: typeof AppSectionsImport
-    }
     '/_app/sign-in/$': {
       id: '/_app/sign-in/$'
       path: '/sign-in/$'
@@ -366,19 +331,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeampickerBracketIdImport
       parentRoute: typeof AppImport
     }
+    '/_app/widgets/alerts': {
+      id: '/_app/widgets/alerts'
+      path: '/alerts'
+      fullPath: '/widgets/alerts'
+      preLoaderRoute: typeof AppWidgetsAlertsImport
+      parentRoute: typeof AppWidgetsImport
+    }
+    '/_app/widgets/chat': {
+      id: '/_app/widgets/chat'
+      path: '/chat'
+      fullPath: '/widgets/chat'
+      preLoaderRoute: typeof AppWidgetsChatImport
+      parentRoute: typeof AppWidgetsImport
+    }
+    '/_app/widgets/lyrics': {
+      id: '/_app/widgets/lyrics'
+      path: '/lyrics'
+      fullPath: '/widgets/lyrics'
+      preLoaderRoute: typeof AppWidgetsLyricsImport
+      parentRoute: typeof AppWidgetsImport
+    }
+    '/_app/widgets/stats': {
+      id: '/_app/widgets/stats'
+      path: '/stats'
+      fullPath: '/widgets/stats'
+      preLoaderRoute: typeof AppWidgetsStatsImport
+      parentRoute: typeof AppWidgetsImport
+    }
+    '/_app/widgets/visualizer': {
+      id: '/_app/widgets/visualizer'
+      path: '/visualizer'
+      fullPath: '/widgets/visualizer'
+      preLoaderRoute: typeof AppWidgetsVisualizerImport
+      parentRoute: typeof AppWidgetsImport
+    }
     '/_app/pricing/': {
       id: '/_app/pricing/'
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof AppPricingIndexImport
       parentRoute: typeof AppImport
-    }
-    '/_app/sections/': {
-      id: '/_app/sections/'
-      path: '/'
-      fullPath: '/sections/'
-      preLoaderRoute: typeof AppSectionsIndexImport
-      parentRoute: typeof AppSectionsImport
     }
     '/_app/teampicker/': {
       id: '/_app/teampicker/'
@@ -393,6 +386,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/wheelspin'
       preLoaderRoute: typeof AppWheelspinIndexImport
       parentRoute: typeof AppImport
+    }
+    '/_app/widgets/': {
+      id: '/_app/widgets/'
+      path: '/'
+      fullPath: '/widgets/'
+      preLoaderRoute: typeof AppWidgetsIndexImport
+      parentRoute: typeof AppWidgetsImport
     }
     '/_lyrics/lyrics/': {
       id: '/_lyrics/lyrics/'
@@ -463,33 +463,33 @@ const AppPostsRouteWithChildren = AppPostsRoute._addFileChildren(
   AppPostsRouteChildren,
 )
 
-interface AppSectionsRouteChildren {
-  AppSectionsAlertsRoute: typeof AppSectionsAlertsRoute
-  AppSectionsChatRoute: typeof AppSectionsChatRoute
-  AppSectionsLyricsRoute: typeof AppSectionsLyricsRoute
-  AppSectionsStatsRoute: typeof AppSectionsStatsRoute
-  AppSectionsVisualizerRoute: typeof AppSectionsVisualizerRoute
-  AppSectionsIndexRoute: typeof AppSectionsIndexRoute
+interface AppWidgetsRouteChildren {
+  AppWidgetsAlertsRoute: typeof AppWidgetsAlertsRoute
+  AppWidgetsChatRoute: typeof AppWidgetsChatRoute
+  AppWidgetsLyricsRoute: typeof AppWidgetsLyricsRoute
+  AppWidgetsStatsRoute: typeof AppWidgetsStatsRoute
+  AppWidgetsVisualizerRoute: typeof AppWidgetsVisualizerRoute
+  AppWidgetsIndexRoute: typeof AppWidgetsIndexRoute
 }
 
-const AppSectionsRouteChildren: AppSectionsRouteChildren = {
-  AppSectionsAlertsRoute: AppSectionsAlertsRoute,
-  AppSectionsChatRoute: AppSectionsChatRoute,
-  AppSectionsLyricsRoute: AppSectionsLyricsRoute,
-  AppSectionsStatsRoute: AppSectionsStatsRoute,
-  AppSectionsVisualizerRoute: AppSectionsVisualizerRoute,
-  AppSectionsIndexRoute: AppSectionsIndexRoute,
+const AppWidgetsRouteChildren: AppWidgetsRouteChildren = {
+  AppWidgetsAlertsRoute: AppWidgetsAlertsRoute,
+  AppWidgetsChatRoute: AppWidgetsChatRoute,
+  AppWidgetsLyricsRoute: AppWidgetsLyricsRoute,
+  AppWidgetsStatsRoute: AppWidgetsStatsRoute,
+  AppWidgetsVisualizerRoute: AppWidgetsVisualizerRoute,
+  AppWidgetsIndexRoute: AppWidgetsIndexRoute,
 }
 
-const AppSectionsRouteWithChildren = AppSectionsRoute._addFileChildren(
-  AppSectionsRouteChildren,
+const AppWidgetsRouteWithChildren = AppWidgetsRoute._addFileChildren(
+  AppWidgetsRouteChildren,
 )
 
 interface AppRouteChildren {
   AppAuthedRoute: typeof AppAuthedRouteWithChildren
   AppPostsRoute: typeof AppPostsRouteWithChildren
-  AppSectionsRoute: typeof AppSectionsRouteWithChildren
   AppTestRoute: typeof AppTestRoute
+  AppWidgetsRoute: typeof AppWidgetsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppCheckoutProductIdRoute: typeof AppCheckoutProductIdRoute
   AppCheckoutSuccessRoute: typeof AppCheckoutSuccessRoute
@@ -507,8 +507,8 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAuthedRoute: AppAuthedRouteWithChildren,
   AppPostsRoute: AppPostsRouteWithChildren,
-  AppSectionsRoute: AppSectionsRouteWithChildren,
   AppTestRoute: AppTestRoute,
+  AppWidgetsRoute: AppWidgetsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppCheckoutProductIdRoute: AppCheckoutProductIdRoute,
   AppCheckoutSuccessRoute: AppCheckoutSuccessRoute,
@@ -541,25 +541,25 @@ export interface FileRoutesByFullPath {
   '': typeof AppAuthedRouteWithChildren
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/posts': typeof AppPostsRouteWithChildren
-  '/sections': typeof AppSectionsRouteWithChildren
   '/test': typeof AppTestRoute
+  '/widgets': typeof AppWidgetsRouteWithChildren
   '/': typeof AppIndexRoute
   '/dashboard': typeof AppAuthedDashboardRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/posts/$postId': typeof AppPostsPostIdRoute
-  '/sections/alerts': typeof AppSectionsAlertsRoute
-  '/sections/chat': typeof AppSectionsChatRoute
-  '/sections/lyrics': typeof AppSectionsLyricsRoute
-  '/sections/stats': typeof AppSectionsStatsRoute
-  '/sections/visualizer': typeof AppSectionsVisualizerRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
+  '/widgets/alerts': typeof AppWidgetsAlertsRoute
+  '/widgets/chat': typeof AppWidgetsChatRoute
+  '/widgets/lyrics': typeof AppWidgetsLyricsRoute
+  '/widgets/stats': typeof AppWidgetsStatsRoute
+  '/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/pricing': typeof AppPricingIndexRoute
-  '/sections/': typeof AppSectionsIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
+  '/widgets/': typeof AppWidgetsIndexRoute
   '/lyrics': typeof LyricsLyricsIndexRoute
   '/dashboard/widgets/dev': typeof AppDashboardWidgetsDevRoute
   '/dashboard/widgets/visualizer': typeof AppDashboardWidgetsVisualizerRoute
@@ -577,18 +577,18 @@ export interface FileRoutesByTo {
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/posts/$postId': typeof AppPostsPostIdRoute
-  '/sections/alerts': typeof AppSectionsAlertsRoute
-  '/sections/chat': typeof AppSectionsChatRoute
-  '/sections/lyrics': typeof AppSectionsLyricsRoute
-  '/sections/stats': typeof AppSectionsStatsRoute
-  '/sections/visualizer': typeof AppSectionsVisualizerRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
+  '/widgets/alerts': typeof AppWidgetsAlertsRoute
+  '/widgets/chat': typeof AppWidgetsChatRoute
+  '/widgets/lyrics': typeof AppWidgetsLyricsRoute
+  '/widgets/stats': typeof AppWidgetsStatsRoute
+  '/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/pricing': typeof AppPricingIndexRoute
-  '/sections': typeof AppSectionsIndexRoute
   '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
+  '/widgets': typeof AppWidgetsIndexRoute
   '/lyrics': typeof LyricsLyricsIndexRoute
   '/dashboard/widgets/dev': typeof AppDashboardWidgetsDevRoute
   '/dashboard/widgets/visualizer': typeof AppDashboardWidgetsVisualizerRoute
@@ -603,25 +603,25 @@ export interface FileRoutesById {
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
   '/_app/posts': typeof AppPostsRouteWithChildren
-  '/_app/sections': typeof AppSectionsRouteWithChildren
   '/_app/test': typeof AppTestRoute
+  '/_app/widgets': typeof AppWidgetsRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/_authed/dashboard': typeof AppAuthedDashboardRoute
   '/_app/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/_app/checkout/success': typeof AppCheckoutSuccessRoute
   '/_app/posts/$postId': typeof AppPostsPostIdRoute
-  '/_app/sections/alerts': typeof AppSectionsAlertsRoute
-  '/_app/sections/chat': typeof AppSectionsChatRoute
-  '/_app/sections/lyrics': typeof AppSectionsLyricsRoute
-  '/_app/sections/stats': typeof AppSectionsStatsRoute
-  '/_app/sections/visualizer': typeof AppSectionsVisualizerRoute
   '/_app/sign-in/$': typeof AppSignInSplatRoute
   '/_app/sign-up/$': typeof AppSignUpSplatRoute
   '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
+  '/_app/widgets/alerts': typeof AppWidgetsAlertsRoute
+  '/_app/widgets/chat': typeof AppWidgetsChatRoute
+  '/_app/widgets/lyrics': typeof AppWidgetsLyricsRoute
+  '/_app/widgets/stats': typeof AppWidgetsStatsRoute
+  '/_app/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/_app/pricing/': typeof AppPricingIndexRoute
-  '/_app/sections/': typeof AppSectionsIndexRoute
   '/_app/teampicker/': typeof AppTeampickerIndexRoute
   '/_app/wheelspin/': typeof AppWheelspinIndexRoute
+  '/_app/widgets/': typeof AppWidgetsIndexRoute
   '/_lyrics/lyrics/': typeof LyricsLyricsIndexRoute
   '/_app/dashboard/widgets/dev': typeof AppDashboardWidgetsDevRoute
   '/_app/dashboard/widgets/visualizer': typeof AppDashboardWidgetsVisualizerRoute
@@ -635,25 +635,25 @@ export interface FileRouteTypes {
     | ''
     | '/$username/lyrics'
     | '/posts'
-    | '/sections'
     | '/test'
+    | '/widgets'
     | '/'
     | '/dashboard'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/posts/$postId'
-    | '/sections/alerts'
-    | '/sections/chat'
-    | '/sections/lyrics'
-    | '/sections/stats'
-    | '/sections/visualizer'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/teampicker/$bracketId'
+    | '/widgets/alerts'
+    | '/widgets/chat'
+    | '/widgets/lyrics'
+    | '/widgets/stats'
+    | '/widgets/visualizer'
     | '/pricing'
-    | '/sections/'
     | '/teampicker'
     | '/wheelspin'
+    | '/widgets/'
     | '/lyrics'
     | '/dashboard/widgets/dev'
     | '/dashboard/widgets/visualizer'
@@ -670,18 +670,18 @@ export interface FileRouteTypes {
     | '/checkout/$productId'
     | '/checkout/success'
     | '/posts/$postId'
-    | '/sections/alerts'
-    | '/sections/chat'
-    | '/sections/lyrics'
-    | '/sections/stats'
-    | '/sections/visualizer'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/teampicker/$bracketId'
+    | '/widgets/alerts'
+    | '/widgets/chat'
+    | '/widgets/lyrics'
+    | '/widgets/stats'
+    | '/widgets/visualizer'
     | '/pricing'
-    | '/sections'
     | '/teampicker'
     | '/wheelspin'
+    | '/widgets'
     | '/lyrics'
     | '/dashboard/widgets/dev'
     | '/dashboard/widgets/visualizer'
@@ -694,25 +694,25 @@ export interface FileRouteTypes {
     | '/$username/lyrics'
     | '/_app/_authed'
     | '/_app/posts'
-    | '/_app/sections'
     | '/_app/test'
+    | '/_app/widgets'
     | '/_app/'
     | '/_app/_authed/dashboard'
     | '/_app/checkout/$productId'
     | '/_app/checkout/success'
     | '/_app/posts/$postId'
-    | '/_app/sections/alerts'
-    | '/_app/sections/chat'
-    | '/_app/sections/lyrics'
-    | '/_app/sections/stats'
-    | '/_app/sections/visualizer'
     | '/_app/sign-in/$'
     | '/_app/sign-up/$'
     | '/_app/teampicker/$bracketId'
+    | '/_app/widgets/alerts'
+    | '/_app/widgets/chat'
+    | '/_app/widgets/lyrics'
+    | '/_app/widgets/stats'
+    | '/_app/widgets/visualizer'
     | '/_app/pricing/'
-    | '/_app/sections/'
     | '/_app/teampicker/'
     | '/_app/wheelspin/'
+    | '/_app/widgets/'
     | '/_lyrics/lyrics/'
     | '/_app/dashboard/widgets/dev'
     | '/_app/dashboard/widgets/visualizer'
@@ -760,8 +760,8 @@ export const routeTree = rootRoute
       "children": [
         "/_app/_authed",
         "/_app/posts",
-        "/_app/sections",
         "/_app/test",
+        "/_app/widgets",
         "/_app/",
         "/_app/checkout/$productId",
         "/_app/checkout/success",
@@ -800,21 +800,21 @@ export const routeTree = rootRoute
         "/_app/posts/$postId"
       ]
     },
-    "/_app/sections": {
-      "filePath": "_app/sections.tsx",
-      "parent": "/_app",
-      "children": [
-        "/_app/sections/alerts",
-        "/_app/sections/chat",
-        "/_app/sections/lyrics",
-        "/_app/sections/stats",
-        "/_app/sections/visualizer",
-        "/_app/sections/"
-      ]
-    },
     "/_app/test": {
       "filePath": "_app/test.tsx",
       "parent": "/_app"
+    },
+    "/_app/widgets": {
+      "filePath": "_app/widgets.tsx",
+      "parent": "/_app",
+      "children": [
+        "/_app/widgets/alerts",
+        "/_app/widgets/chat",
+        "/_app/widgets/lyrics",
+        "/_app/widgets/stats",
+        "/_app/widgets/visualizer",
+        "/_app/widgets/"
+      ]
     },
     "/_app/": {
       "filePath": "_app/index.tsx",
@@ -836,26 +836,6 @@ export const routeTree = rootRoute
       "filePath": "_app/posts.$postId.tsx",
       "parent": "/_app/posts"
     },
-    "/_app/sections/alerts": {
-      "filePath": "_app/sections/alerts.tsx",
-      "parent": "/_app/sections"
-    },
-    "/_app/sections/chat": {
-      "filePath": "_app/sections/chat.tsx",
-      "parent": "/_app/sections"
-    },
-    "/_app/sections/lyrics": {
-      "filePath": "_app/sections/lyrics.tsx",
-      "parent": "/_app/sections"
-    },
-    "/_app/sections/stats": {
-      "filePath": "_app/sections/stats.tsx",
-      "parent": "/_app/sections"
-    },
-    "/_app/sections/visualizer": {
-      "filePath": "_app/sections/visualizer.tsx",
-      "parent": "/_app/sections"
-    },
     "/_app/sign-in/$": {
       "filePath": "_app/sign-in.$.tsx",
       "parent": "/_app"
@@ -868,13 +848,29 @@ export const routeTree = rootRoute
       "filePath": "_app/teampicker/$bracketId.tsx",
       "parent": "/_app"
     },
+    "/_app/widgets/alerts": {
+      "filePath": "_app/widgets/alerts.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/chat": {
+      "filePath": "_app/widgets/chat.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/lyrics": {
+      "filePath": "_app/widgets/lyrics.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/stats": {
+      "filePath": "_app/widgets/stats.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/visualizer": {
+      "filePath": "_app/widgets/visualizer.tsx",
+      "parent": "/_app/widgets"
+    },
     "/_app/pricing/": {
       "filePath": "_app/pricing/index.tsx",
       "parent": "/_app"
-    },
-    "/_app/sections/": {
-      "filePath": "_app/sections/index.tsx",
-      "parent": "/_app/sections"
     },
     "/_app/teampicker/": {
       "filePath": "_app/teampicker/index.tsx",
@@ -883,6 +879,10 @@ export const routeTree = rootRoute
     "/_app/wheelspin/": {
       "filePath": "_app/wheelspin/index.tsx",
       "parent": "/_app"
+    },
+    "/_app/widgets/": {
+      "filePath": "_app/widgets/index.tsx",
+      "parent": "/_app/widgets"
     },
     "/_lyrics/lyrics/": {
       "filePath": "_lyrics/lyrics.index.tsx",
