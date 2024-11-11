@@ -23,7 +23,7 @@ import _ from "lodash";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { LyricsSettings } from "@/types/lyrics";
-import { supabase, createRealtimeChannel } from "@/utils/supabase/client";
+import { supabase } from "@/utils/supabase/client";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: LyricsSection,
@@ -567,33 +567,29 @@ function LyricsSection() {
     loadSettings();
   }, [user?.id, updateSettings]);
 
-  // Update broadcast function
+  // Add broadcast function
   const broadcastLyrics = useCallback(async (lyrics: any[], currentLine: number) => {
     if (!user?.username) return;
 
-    try {
-      const channel = createRealtimeChannel(`lyrics:${user.username}`);
-      await channel.subscribe();
-      
-      // Broadcast current lyrics
-      await channel.send({
-        type: 'broadcast',
-        event: 'lyrics',
-        payload: { lyrics }
+    const channel = supabase.channel(`lyrics:${user.username}`);
+    
+    await channel
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.send({
+            type: 'broadcast',
+            event: 'lyrics',
+            payload: { lyrics }
+          });
+
+          await channel.send({
+            type: 'broadcast',
+            event: 'currentLine',
+            payload: { currentLine }
+          });
+        }
       });
 
-      // Broadcast current line
-      await channel.send({
-        type: 'broadcast',
-        event: 'currentLine',
-        payload: { currentLine }
-      });
-
-      // Clean up channel after broadcast
-      await supabase.removeChannel(channel);
-    } catch (error) {
-      console.error('Error broadcasting lyrics:', error);
-    }
   }, [user?.username]);
 
   // Add effect to broadcast lyrics changes

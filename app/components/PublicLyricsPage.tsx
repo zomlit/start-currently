@@ -122,16 +122,16 @@ export function PublicLyricsPage() {
     const channel = supabase.channel(`lyrics:${username}`);
     
     channel
-      .on('broadcast', { event: 'lyrics' }, ({ payload }) => {
+      .on('broadcast', { event: 'lyrics' }, (payload) => {
         console.log('Received lyrics payload:', payload);
-        if (Array.isArray(payload?.lyrics)) {
-          setCurrentLyrics(payload.lyrics);
+        if (Array.isArray(payload.payload?.lyrics)) {
+          setCurrentLyrics(payload.payload.lyrics);
         }
       })
-      .on('broadcast', { event: 'currentLine' }, ({ payload }) => {
+      .on('broadcast', { event: 'currentLine' }, (payload) => {
         console.log('Received currentLine payload:', payload);
-        if (typeof payload?.currentLine === 'number') {
-          setCurrentLine(payload.currentLine);
+        if (typeof payload.payload?.currentLine === 'number') {
+          setCurrentLine(payload.payload.currentLine);
         }
       })
       .subscribe((status) => {
