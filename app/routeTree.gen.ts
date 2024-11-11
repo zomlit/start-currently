@@ -13,12 +13,15 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
+import { Route as gamepadImport } from './routes/@gamepad'
 import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppWidgetsImport } from './routes/_app/widgets'
 import { Route as AppTestImport } from './routes/_app/test'
 import { Route as AppPostsImport } from './routes/_app/posts'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
+import { Route as usernameGamepadImport } from './routes/[username].gamepad'
+import { Route as UsernameOverlayImport } from './routes/$username/overlay'
 import { Route as UsernameLyricsImport } from './routes/$username/lyrics'
 import { Route as LyricsLyricsIndexImport } from './routes/_lyrics/lyrics.index'
 import { Route as AppWidgetsIndexImport } from './routes/_app/widgets/index'
@@ -27,7 +30,9 @@ import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/inde
 import { Route as AppPricingIndexImport } from './routes/_app/pricing/index'
 import { Route as AppWidgetsVisualizerImport } from './routes/_app/widgets/visualizer'
 import { Route as AppWidgetsStatsImport } from './routes/_app/widgets/stats'
+import { Route as AppWidgetsOverlayImport } from './routes/_app/widgets/overlay'
 import { Route as AppWidgetsLyricsImport } from './routes/_app/widgets/lyrics'
+import { Route as AppWidgetsGamepadImport } from './routes/_app/widgets/gamepad'
 import { Route as AppWidgetsChatImport } from './routes/_app/widgets/chat'
 import { Route as AppWidgetsAlertsImport } from './routes/_app/widgets/alerts'
 import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
@@ -39,6 +44,7 @@ import { Route as AppCheckoutProductIdImport } from './routes/_app/checkout.$pro
 import { Route as AppAuthedDashboardImport } from './routes/_app/_authed/dashboard'
 import { Route as AppPostsPostIdDeepImport } from './routes/_app/posts_.$postId.deep'
 import { Route as AppDashboardWidgetsVisualizerImport } from './routes/_app/dashboard/widgets/visualizer'
+import { Route as AppDashboardWidgetsGamepadImport } from './routes/_app/dashboard/widgets/gamepad'
 import { Route as AppDashboardWidgetsDevImport } from './routes/_app/dashboard/widgets/dev'
 
 // Create/Update Routes
@@ -50,6 +56,12 @@ const LyricsRoute = LyricsImport.update({
 
 const AppRoute = AppImport.update({
   id: '/_app',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const gamepadRoute = gamepadImport.update({
+  id: '/@gamepad',
+  path: '/@gamepad',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -86,6 +98,18 @@ const AppPostsRoute = AppPostsImport.update({
 const AppAuthedRoute = AppAuthedImport.update({
   id: '/_authed',
   getParentRoute: () => AppRoute,
+} as any)
+
+const usernameGamepadRoute = usernameGamepadImport.update({
+  id: '/[username]/gamepad',
+  path: '/[username]/gamepad',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UsernameOverlayRoute = UsernameOverlayImport.update({
+  id: '/overlay',
+  path: '/overlay',
+  getParentRoute: () => UsernameRoute,
 } as any)
 
 const UsernameLyricsRoute = UsernameLyricsImport.update({
@@ -136,9 +160,21 @@ const AppWidgetsStatsRoute = AppWidgetsStatsImport.update({
   getParentRoute: () => AppWidgetsRoute,
 } as any)
 
+const AppWidgetsOverlayRoute = AppWidgetsOverlayImport.update({
+  id: '/overlay',
+  path: '/overlay',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
 const AppWidgetsLyricsRoute = AppWidgetsLyricsImport.update({
   id: '/lyrics',
   path: '/lyrics',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsGamepadRoute = AppWidgetsGamepadImport.update({
+  id: '/gamepad',
+  path: '/gamepad',
   getParentRoute: () => AppWidgetsRoute,
 } as any)
 
@@ -209,6 +245,14 @@ const AppDashboardWidgetsVisualizerRoute =
     getParentRoute: () => AppRoute,
   } as any)
 
+const AppDashboardWidgetsGamepadRoute = AppDashboardWidgetsGamepadImport.update(
+  {
+    id: '/dashboard/widgets/gamepad',
+    path: '/dashboard/widgets/gamepad',
+    getParentRoute: () => AppRoute,
+  } as any,
+)
+
 const AppDashboardWidgetsDevRoute = AppDashboardWidgetsDevImport.update({
   id: '/dashboard/widgets/dev',
   path: '/dashboard/widgets/dev',
@@ -224,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/$username'
       fullPath: '/$username'
       preLoaderRoute: typeof UsernameImport
+      parentRoute: typeof rootRoute
+    }
+    '/@gamepad': {
+      id: '/@gamepad'
+      path: '/@gamepad'
+      fullPath: '/@gamepad'
+      preLoaderRoute: typeof gamepadImport
       parentRoute: typeof rootRoute
     }
     '/_app': {
@@ -246,6 +297,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/$username/lyrics'
       preLoaderRoute: typeof UsernameLyricsImport
       parentRoute: typeof UsernameImport
+    }
+    '/$username/overlay': {
+      id: '/$username/overlay'
+      path: '/overlay'
+      fullPath: '/$username/overlay'
+      preLoaderRoute: typeof UsernameOverlayImport
+      parentRoute: typeof UsernameImport
+    }
+    '/[username]/gamepad': {
+      id: '/[username]/gamepad'
+      path: '/[username]/gamepad'
+      fullPath: '/[username]/gamepad'
+      preLoaderRoute: typeof usernameGamepadImport
+      parentRoute: typeof rootRoute
     }
     '/_app/_authed': {
       id: '/_app/_authed'
@@ -345,11 +410,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWidgetsChatImport
       parentRoute: typeof AppWidgetsImport
     }
+    '/_app/widgets/gamepad': {
+      id: '/_app/widgets/gamepad'
+      path: '/gamepad'
+      fullPath: '/widgets/gamepad'
+      preLoaderRoute: typeof AppWidgetsGamepadImport
+      parentRoute: typeof AppWidgetsImport
+    }
     '/_app/widgets/lyrics': {
       id: '/_app/widgets/lyrics'
       path: '/lyrics'
       fullPath: '/widgets/lyrics'
       preLoaderRoute: typeof AppWidgetsLyricsImport
+      parentRoute: typeof AppWidgetsImport
+    }
+    '/_app/widgets/overlay': {
+      id: '/_app/widgets/overlay'
+      path: '/overlay'
+      fullPath: '/widgets/overlay'
+      preLoaderRoute: typeof AppWidgetsOverlayImport
       parentRoute: typeof AppWidgetsImport
     }
     '/_app/widgets/stats': {
@@ -408,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardWidgetsDevImport
       parentRoute: typeof AppImport
     }
+    '/_app/dashboard/widgets/gamepad': {
+      id: '/_app/dashboard/widgets/gamepad'
+      path: '/dashboard/widgets/gamepad'
+      fullPath: '/dashboard/widgets/gamepad'
+      preLoaderRoute: typeof AppDashboardWidgetsGamepadImport
+      parentRoute: typeof AppImport
+    }
     '/_app/dashboard/widgets/visualizer': {
       id: '/_app/dashboard/widgets/visualizer'
       path: '/dashboard/widgets/visualizer'
@@ -429,10 +515,12 @@ declare module '@tanstack/react-router' {
 
 interface UsernameRouteChildren {
   UsernameLyricsRoute: typeof UsernameLyricsRoute
+  UsernameOverlayRoute: typeof UsernameOverlayRoute
 }
 
 const UsernameRouteChildren: UsernameRouteChildren = {
   UsernameLyricsRoute: UsernameLyricsRoute,
+  UsernameOverlayRoute: UsernameOverlayRoute,
 }
 
 const UsernameRouteWithChildren = UsernameRoute._addFileChildren(
@@ -466,7 +554,9 @@ const AppPostsRouteWithChildren = AppPostsRoute._addFileChildren(
 interface AppWidgetsRouteChildren {
   AppWidgetsAlertsRoute: typeof AppWidgetsAlertsRoute
   AppWidgetsChatRoute: typeof AppWidgetsChatRoute
+  AppWidgetsGamepadRoute: typeof AppWidgetsGamepadRoute
   AppWidgetsLyricsRoute: typeof AppWidgetsLyricsRoute
+  AppWidgetsOverlayRoute: typeof AppWidgetsOverlayRoute
   AppWidgetsStatsRoute: typeof AppWidgetsStatsRoute
   AppWidgetsVisualizerRoute: typeof AppWidgetsVisualizerRoute
   AppWidgetsIndexRoute: typeof AppWidgetsIndexRoute
@@ -475,7 +565,9 @@ interface AppWidgetsRouteChildren {
 const AppWidgetsRouteChildren: AppWidgetsRouteChildren = {
   AppWidgetsAlertsRoute: AppWidgetsAlertsRoute,
   AppWidgetsChatRoute: AppWidgetsChatRoute,
+  AppWidgetsGamepadRoute: AppWidgetsGamepadRoute,
   AppWidgetsLyricsRoute: AppWidgetsLyricsRoute,
+  AppWidgetsOverlayRoute: AppWidgetsOverlayRoute,
   AppWidgetsStatsRoute: AppWidgetsStatsRoute,
   AppWidgetsVisualizerRoute: AppWidgetsVisualizerRoute,
   AppWidgetsIndexRoute: AppWidgetsIndexRoute,
@@ -500,6 +592,7 @@ interface AppRouteChildren {
   AppTeampickerIndexRoute: typeof AppTeampickerIndexRoute
   AppWheelspinIndexRoute: typeof AppWheelspinIndexRoute
   AppDashboardWidgetsDevRoute: typeof AppDashboardWidgetsDevRoute
+  AppDashboardWidgetsGamepadRoute: typeof AppDashboardWidgetsGamepadRoute
   AppDashboardWidgetsVisualizerRoute: typeof AppDashboardWidgetsVisualizerRoute
   AppPostsPostIdDeepRoute: typeof AppPostsPostIdDeepRoute
 }
@@ -519,6 +612,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeampickerIndexRoute: AppTeampickerIndexRoute,
   AppWheelspinIndexRoute: AppWheelspinIndexRoute,
   AppDashboardWidgetsDevRoute: AppDashboardWidgetsDevRoute,
+  AppDashboardWidgetsGamepadRoute: AppDashboardWidgetsGamepadRoute,
   AppDashboardWidgetsVisualizerRoute: AppDashboardWidgetsVisualizerRoute,
   AppPostsPostIdDeepRoute: AppPostsPostIdDeepRoute,
 }
@@ -538,8 +632,11 @@ const LyricsRouteWithChildren =
 
 export interface FileRoutesByFullPath {
   '/$username': typeof UsernameRouteWithChildren
+  '/@gamepad': typeof gamepadRoute
   '': typeof AppAuthedRouteWithChildren
   '/$username/lyrics': typeof UsernameLyricsRoute
+  '/$username/overlay': typeof UsernameOverlayRoute
+  '/[username]/gamepad': typeof usernameGamepadRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/test': typeof AppTestRoute
   '/widgets': typeof AppWidgetsRouteWithChildren
@@ -553,7 +650,9 @@ export interface FileRoutesByFullPath {
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/widgets/chat': typeof AppWidgetsChatRoute
+  '/widgets/gamepad': typeof AppWidgetsGamepadRoute
   '/widgets/lyrics': typeof AppWidgetsLyricsRoute
+  '/widgets/overlay': typeof AppWidgetsOverlayRoute
   '/widgets/stats': typeof AppWidgetsStatsRoute
   '/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/pricing': typeof AppPricingIndexRoute
@@ -562,14 +661,18 @@ export interface FileRoutesByFullPath {
   '/widgets/': typeof AppWidgetsIndexRoute
   '/lyrics': typeof LyricsLyricsIndexRoute
   '/dashboard/widgets/dev': typeof AppDashboardWidgetsDevRoute
+  '/dashboard/widgets/gamepad': typeof AppDashboardWidgetsGamepadRoute
   '/dashboard/widgets/visualizer': typeof AppDashboardWidgetsVisualizerRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
 
 export interface FileRoutesByTo {
   '/$username': typeof UsernameRouteWithChildren
+  '/@gamepad': typeof gamepadRoute
   '': typeof AppAuthedRouteWithChildren
   '/$username/lyrics': typeof UsernameLyricsRoute
+  '/$username/overlay': typeof UsernameOverlayRoute
+  '/[username]/gamepad': typeof usernameGamepadRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/test': typeof AppTestRoute
   '/': typeof AppIndexRoute
@@ -582,7 +685,9 @@ export interface FileRoutesByTo {
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/widgets/chat': typeof AppWidgetsChatRoute
+  '/widgets/gamepad': typeof AppWidgetsGamepadRoute
   '/widgets/lyrics': typeof AppWidgetsLyricsRoute
+  '/widgets/overlay': typeof AppWidgetsOverlayRoute
   '/widgets/stats': typeof AppWidgetsStatsRoute
   '/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/pricing': typeof AppPricingIndexRoute
@@ -591,6 +696,7 @@ export interface FileRoutesByTo {
   '/widgets': typeof AppWidgetsIndexRoute
   '/lyrics': typeof LyricsLyricsIndexRoute
   '/dashboard/widgets/dev': typeof AppDashboardWidgetsDevRoute
+  '/dashboard/widgets/gamepad': typeof AppDashboardWidgetsGamepadRoute
   '/dashboard/widgets/visualizer': typeof AppDashboardWidgetsVisualizerRoute
   '/posts/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
@@ -598,9 +704,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/$username': typeof UsernameRouteWithChildren
+  '/@gamepad': typeof gamepadRoute
   '/_app': typeof AppRouteWithChildren
   '/_lyrics': typeof LyricsRouteWithChildren
   '/$username/lyrics': typeof UsernameLyricsRoute
+  '/$username/overlay': typeof UsernameOverlayRoute
+  '/[username]/gamepad': typeof usernameGamepadRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
   '/_app/posts': typeof AppPostsRouteWithChildren
   '/_app/test': typeof AppTestRoute
@@ -615,7 +724,9 @@ export interface FileRoutesById {
   '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/_app/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/_app/widgets/chat': typeof AppWidgetsChatRoute
+  '/_app/widgets/gamepad': typeof AppWidgetsGamepadRoute
   '/_app/widgets/lyrics': typeof AppWidgetsLyricsRoute
+  '/_app/widgets/overlay': typeof AppWidgetsOverlayRoute
   '/_app/widgets/stats': typeof AppWidgetsStatsRoute
   '/_app/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/_app/pricing/': typeof AppPricingIndexRoute
@@ -624,6 +735,7 @@ export interface FileRoutesById {
   '/_app/widgets/': typeof AppWidgetsIndexRoute
   '/_lyrics/lyrics/': typeof LyricsLyricsIndexRoute
   '/_app/dashboard/widgets/dev': typeof AppDashboardWidgetsDevRoute
+  '/_app/dashboard/widgets/gamepad': typeof AppDashboardWidgetsGamepadRoute
   '/_app/dashboard/widgets/visualizer': typeof AppDashboardWidgetsVisualizerRoute
   '/_app/posts_/$postId/deep': typeof AppPostsPostIdDeepRoute
 }
@@ -632,8 +744,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/$username'
+    | '/@gamepad'
     | ''
     | '/$username/lyrics'
+    | '/$username/overlay'
+    | '/[username]/gamepad'
     | '/posts'
     | '/test'
     | '/widgets'
@@ -647,7 +762,9 @@ export interface FileRouteTypes {
     | '/teampicker/$bracketId'
     | '/widgets/alerts'
     | '/widgets/chat'
+    | '/widgets/gamepad'
     | '/widgets/lyrics'
+    | '/widgets/overlay'
     | '/widgets/stats'
     | '/widgets/visualizer'
     | '/pricing'
@@ -656,13 +773,17 @@ export interface FileRouteTypes {
     | '/widgets/'
     | '/lyrics'
     | '/dashboard/widgets/dev'
+    | '/dashboard/widgets/gamepad'
     | '/dashboard/widgets/visualizer'
     | '/posts/$postId/deep'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/$username'
+    | '/@gamepad'
     | ''
     | '/$username/lyrics'
+    | '/$username/overlay'
+    | '/[username]/gamepad'
     | '/posts'
     | '/test'
     | '/'
@@ -675,7 +796,9 @@ export interface FileRouteTypes {
     | '/teampicker/$bracketId'
     | '/widgets/alerts'
     | '/widgets/chat'
+    | '/widgets/gamepad'
     | '/widgets/lyrics'
+    | '/widgets/overlay'
     | '/widgets/stats'
     | '/widgets/visualizer'
     | '/pricing'
@@ -684,14 +807,18 @@ export interface FileRouteTypes {
     | '/widgets'
     | '/lyrics'
     | '/dashboard/widgets/dev'
+    | '/dashboard/widgets/gamepad'
     | '/dashboard/widgets/visualizer'
     | '/posts/$postId/deep'
   id:
     | '__root__'
     | '/$username'
+    | '/@gamepad'
     | '/_app'
     | '/_lyrics'
     | '/$username/lyrics'
+    | '/$username/overlay'
+    | '/[username]/gamepad'
     | '/_app/_authed'
     | '/_app/posts'
     | '/_app/test'
@@ -706,7 +833,9 @@ export interface FileRouteTypes {
     | '/_app/teampicker/$bracketId'
     | '/_app/widgets/alerts'
     | '/_app/widgets/chat'
+    | '/_app/widgets/gamepad'
     | '/_app/widgets/lyrics'
+    | '/_app/widgets/overlay'
     | '/_app/widgets/stats'
     | '/_app/widgets/visualizer'
     | '/_app/pricing/'
@@ -715,6 +844,7 @@ export interface FileRouteTypes {
     | '/_app/widgets/'
     | '/_lyrics/lyrics/'
     | '/_app/dashboard/widgets/dev'
+    | '/_app/dashboard/widgets/gamepad'
     | '/_app/dashboard/widgets/visualizer'
     | '/_app/posts_/$postId/deep'
   fileRoutesById: FileRoutesById
@@ -722,14 +852,18 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   UsernameRoute: typeof UsernameRouteWithChildren
+  gamepadRoute: typeof gamepadRoute
   AppRoute: typeof AppRouteWithChildren
   LyricsRoute: typeof LyricsRouteWithChildren
+  usernameGamepadRoute: typeof usernameGamepadRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   UsernameRoute: UsernameRouteWithChildren,
+  gamepadRoute: gamepadRoute,
   AppRoute: AppRouteWithChildren,
   LyricsRoute: LyricsRouteWithChildren,
+  usernameGamepadRoute: usernameGamepadRoute,
 }
 
 export const routeTree = rootRoute
@@ -743,15 +877,21 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/$username",
+        "/@gamepad",
         "/_app",
-        "/_lyrics"
+        "/_lyrics",
+        "/[username]/gamepad"
       ]
     },
     "/$username": {
       "filePath": "$username.tsx",
       "children": [
-        "/$username/lyrics"
+        "/$username/lyrics",
+        "/$username/overlay"
       ]
+    },
+    "/@gamepad": {
+      "filePath": "@gamepad.tsx"
     },
     "/_app": {
       "filePath": "_app.tsx",
@@ -770,6 +910,7 @@ export const routeTree = rootRoute
         "/_app/teampicker/",
         "/_app/wheelspin/",
         "/_app/dashboard/widgets/dev",
+        "/_app/dashboard/widgets/gamepad",
         "/_app/dashboard/widgets/visualizer",
         "/_app/posts_/$postId/deep"
       ]
@@ -783,6 +924,13 @@ export const routeTree = rootRoute
     "/$username/lyrics": {
       "filePath": "$username/lyrics.tsx",
       "parent": "/$username"
+    },
+    "/$username/overlay": {
+      "filePath": "$username/overlay.tsx",
+      "parent": "/$username"
+    },
+    "/[username]/gamepad": {
+      "filePath": "[username].gamepad.tsx"
     },
     "/_app/_authed": {
       "filePath": "_app/_authed.tsx",
@@ -808,7 +956,9 @@ export const routeTree = rootRoute
       "children": [
         "/_app/widgets/alerts",
         "/_app/widgets/chat",
+        "/_app/widgets/gamepad",
         "/_app/widgets/lyrics",
+        "/_app/widgets/overlay",
         "/_app/widgets/stats",
         "/_app/widgets/visualizer",
         "/_app/widgets/"
@@ -854,8 +1004,16 @@ export const routeTree = rootRoute
       "filePath": "_app/widgets/chat.tsx",
       "parent": "/_app/widgets"
     },
+    "/_app/widgets/gamepad": {
+      "filePath": "_app/widgets/gamepad.tsx",
+      "parent": "/_app/widgets"
+    },
     "/_app/widgets/lyrics": {
       "filePath": "_app/widgets/lyrics.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/overlay": {
+      "filePath": "_app/widgets/overlay.tsx",
       "parent": "/_app/widgets"
     },
     "/_app/widgets/stats": {
@@ -888,6 +1046,10 @@ export const routeTree = rootRoute
     },
     "/_app/dashboard/widgets/dev": {
       "filePath": "_app/dashboard/widgets/dev.tsx",
+      "parent": "/_app"
+    },
+    "/_app/dashboard/widgets/gamepad": {
+      "filePath": "_app/dashboard/widgets/gamepad.tsx",
       "parent": "/_app"
     },
     "/_app/dashboard/widgets/visualizer": {

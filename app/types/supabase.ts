@@ -409,6 +409,36 @@ export type Database = {
           },
         ]
       }
+      overlays: {
+        Row: {
+          created_at: string
+          edges: Json | null
+          id: string
+          nodes: Json | null
+          settings: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          edges?: Json | null
+          id?: string
+          nodes?: Json | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          edges?: Json | null
+          id?: string
+          nodes?: Json | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       Profiles: {
         Row: {
           color: string | null
@@ -677,6 +707,7 @@ export type Database = {
           google_tokens: Json | null
           id: string
           is_active: boolean
+          last_activity: string | null
           refreshToken: string | null
           s_access_token: string | null
           s_client_id: string | null
@@ -703,6 +734,7 @@ export type Database = {
           google_tokens?: Json | null
           id?: string
           is_active?: boolean
+          last_activity?: string | null
           refreshToken?: string | null
           s_access_token?: string | null
           s_client_id?: string | null
@@ -729,6 +761,7 @@ export type Database = {
           google_tokens?: Json | null
           id?: string
           is_active?: boolean
+          last_activity?: string | null
           refreshToken?: string | null
           s_access_token?: string | null
           s_client_id?: string | null

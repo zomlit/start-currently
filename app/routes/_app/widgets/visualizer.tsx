@@ -33,21 +33,63 @@ import { SpotifyTrack } from "@/types/spotify";
 import { formatTime } from "@/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
+import { VisualizerSettingsForm } from "@/components/widget-settings/VisualizerSettingsForm";
+import type { VisualizerSettings } from "@/types/widget";
 
 const profileSchema = z.object({
   id: z.string().optional(),
   section_id: z.string(),
   settings: z.object({
     name: z.string().min(1, "Profile name is required"),
-    isDefault: z.boolean().default(true),
-    common: z.object({
-      backgroundColor: z.string(),
-      padding: z.number().min(0).max(50),
-      showBorders: z.boolean(),
-    }),
-    sectionSpecific: z.object({
-      fontSize: z.number().min(10).max(50),
-      chartType: z.enum(["bar", "line", "pie"]),
+    isDefault: z.boolean().default(false),
+    specificSettings: z.object({
+      selectedSkin: z
+        .enum(["default", "minimal", "rounded"])
+        .default("rounded"),
+      hideOnDisabled: z.boolean().default(false),
+      pauseEnabled: z.boolean().default(false),
+      canvasEnabled: z.boolean().default(false),
+      backgroundCanvas: z.boolean().default(false),
+      backgroundCanvasOpacity: z.number().min(0).max(1).default(0.5),
+      micEnabled: z.boolean().default(false),
+      progressBarForegroundColor: z.string().default("#ffffff"),
+      progressBarBackgroundColor: z.string().default("#000000"),
+      mode: z.number().default(10),
+      gradient: z.string().default("rainbow"),
+      customGradientStart: z
+        .object({
+          r: z.number(),
+          g: z.number(),
+          b: z.number(),
+          a: z.number(),
+        })
+        .optional(),
+      customGradientEnd: z
+        .object({
+          r: z.number(),
+          g: z.number(),
+          b: z.number(),
+          a: z.number(),
+        })
+        .optional(),
+      fillAlpha: z.number().min(0).max(1).default(0.5),
+      lineWidth: z.number().min(0).max(5).default(1),
+      channelLayout: z.string().default("dual-combined"),
+      frequencyScale: z.string().default("bark"),
+      linearAmplitude: z.boolean().default(true),
+      linearBoost: z.number().default(1.8),
+      showPeaks: z.boolean().default(false),
+      outlineBars: z.boolean().default(true),
+      weightingFilter: z.string().default("D"),
+      barSpace: z.number().default(0.1),
+      ledBars: z.boolean().default(false),
+      lumiBars: z.boolean().default(false),
+      reflexRatio: z.number().default(0),
+      reflexAlpha: z.number().default(0.15),
+      reflexBright: z.number().default(1),
+      mirror: z.number().default(0),
+      splitGradient: z.boolean().default(false),
+      roundBars: z.boolean().default(false),
     }),
   }),
 });
@@ -89,12 +131,37 @@ function VisualizerSection() {
       settings: {
         name: "New Profile",
         isDefault: false,
-        common: {
-          backgroundColor: "#ffffff",
-          padding: 10,
-          showBorders: false,
+        specificSettings: {
+          selectedSkin: "rounded",
+          hideOnDisabled: false,
+          pauseEnabled: false,
+          canvasEnabled: false,
+          backgroundCanvas: false,
+          backgroundCanvasOpacity: 0.5,
+          micEnabled: false,
+          progressBarForegroundColor: "#ffffff",
+          progressBarBackgroundColor: "#000000",
+          mode: 10,
+          gradient: "rainbow",
+          fillAlpha: 0.5,
+          lineWidth: 1,
+          channelLayout: "dual-combined",
+          frequencyScale: "bark",
+          linearAmplitude: true,
+          linearBoost: 1.8,
+          showPeaks: false,
+          outlineBars: true,
+          weightingFilter: "D",
+          barSpace: 0.1,
+          ledBars: false,
+          lumiBars: false,
+          reflexRatio: 0,
+          reflexAlpha: 0.15,
+          reflexBright: 1,
+          mirror: 0,
+          splitGradient: false,
+          roundBars: false,
         },
-        sectionSpecific: { fontSize: 16, chartType: "bar" },
       },
     },
   });
@@ -185,14 +252,36 @@ function VisualizerSection() {
       const settings = {
         name: profileName,
         isDefault: false,
-        common: {
-          backgroundColor: "#ffffff",
-          padding: 10,
-          showBorders: false,
-        },
-        sectionSpecific: {
-          fontSize: 16,
-          chartType: "bar",
+        specificSettings: {
+          selectedSkin: "rounded",
+          hideOnDisabled: false,
+          pauseEnabled: false,
+          canvasEnabled: false,
+          backgroundCanvas: false,
+          backgroundCanvasOpacity: 0.5,
+          micEnabled: false,
+          progressBarForegroundColor: "#ffffff",
+          progressBarBackgroundColor: "#000000",
+          mode: 10,
+          gradient: "rainbow",
+          fillAlpha: 0.5,
+          lineWidth: 1,
+          channelLayout: "dual-combined",
+          frequencyScale: "bark",
+          linearAmplitude: true,
+          linearBoost: 1.8,
+          showPeaks: false,
+          outlineBars: true,
+          weightingFilter: "D",
+          barSpace: 0.1,
+          ledBars: false,
+          lumiBars: false,
+          reflexRatio: 0,
+          reflexAlpha: 0.15,
+          reflexBright: 1,
+          mirror: 0,
+          splitGradient: false,
+          roundBars: false,
         },
       };
 
@@ -310,7 +399,7 @@ function VisualizerSection() {
   const VisualizerPreview = (
     <div className="h-full w-full">
       <WidgetPreview
-        currentProfile="Default Profile"
+        currentProfile={profile as WidgetProfile}
         selectedWidget="visualizer"
         initialTrack={currentTrack as SpotifyTrack}
         userId={userId}
@@ -332,42 +421,46 @@ function VisualizerSection() {
           </svg>
           Now Playing
         </h2>
-        {nowPlayingData?.track ? (
+        {(nowPlayingData?.track as SpotifyTrack) ? (
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
-              {nowPlayingData?.track?.albumArt && (
+              {(nowPlayingData?.track as SpotifyTrack)?.albumArt && (
                 <img
-                  src={nowPlayingData?.track?.albumArt}
+                  src={(nowPlayingData?.track as SpotifyTrack).albumArt}
                   alt="Album Art"
                   className="h-20 w-20 rounded-md border-2 border-blue-400 shadow-md"
                 />
               )}
               <div>
                 <p className="text-2xl font-bold text-blue-300">
-                  {nowPlayingData?.track?.title}
+                  {(nowPlayingData?.track as SpotifyTrack).title}
                 </p>
                 <p className="text-lg text-purple-200">
-                  {nowPlayingData?.track?.artist}
+                  {(nowPlayingData?.track as SpotifyTrack).artist}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-[auto,1fr] gap-x-4">
               <p className="text-gray-400">Album:</p>
-              <p className="text-purple-200">{nowPlayingData?.track?.album}</p>
+              <p className="text-purple-200">
+                {(nowPlayingData?.track as SpotifyTrack).album}
+              </p>
               <p className="text-gray-400">Status:</p>
               <p
                 className={`font-semibold ${
-                  nowPlayingData?.track?.isPlaying
+                  (nowPlayingData?.track as SpotifyTrack).isPlaying
                     ? "text-green-400"
                     : "text-yellow-400"
                 }`}
               >
-                {nowPlayingData?.track?.isPlaying ? "Playing" : "Paused"}
+                {(nowPlayingData?.track as SpotifyTrack).isPlaying
+                  ? "Playing"
+                  : "Paused"}
               </p>
               <p className="text-gray-400">Progress:</p>
               <p className="text-purple-200">
-                {formatTime(nowPlayingData?.track?.elapsed)} /{" "}
-                {formatTime(nowPlayingData?.track?.duration)}
+                {formatTime((nowPlayingData?.track as SpotifyTrack).elapsed)} /{" "}
+                {formatTime((nowPlayingData?.track as SpotifyTrack).duration)}
               </p>
             </div>
           </div>
@@ -425,28 +518,25 @@ function VisualizerSection() {
           </Button>
         </div>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div
-          className="preview mt-8 p-4"
-          style={{
-            backgroundColor: watch("settings.common.backgroundColor"),
-            padding: `${watch("settings.common.padding")}px`,
-            border: watch("settings.common.showBorders")
-              ? "1px solid black"
-              : "none",
-            fontSize: `${watch("settings.sectionSpecific.fontSize")}px`,
+      {profile && (
+        <VisualizerSettingsForm
+          settings={profile.settings.specificSettings}
+          onUpdate={(updates) => {
+            if (profile.id) {
+              mutation.mutate({
+                ...profile,
+                settings: {
+                  ...profile.settings,
+                  specificSettings: {
+                    ...profile.settings.specificSettings,
+                    ...updates,
+                  },
+                },
+              });
+            }
           }}
-        >
-          <h3 className="text-lg font-semibold">Visualizer Preview</h3>
-          <p>Chart Type: {watch("settings.sectionSpecific.chartType")}</p>
-          <p>
-            This is how your visualizer will look with the current settings.
-          </p>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Save Profile
-        </button>
-      </form>
+        />
+      )}
     </div>
   );
 
