@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+.nyc_output
+
+# Build outputs
+.next
+out
+build
+dist
+.vinxi
+.output
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache
+.parcel-cache
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug
+.debug
+
+# Keep these files
+!package.json
+!package-lock.json
+!pnpm-lock.yaml
+!yarn.lock
+!.npmrc 
