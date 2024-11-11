@@ -1,6 +1,36 @@
 import { create } from 'zustand';
-import { LyricsSettings, defaultLyricsSettings } from '@/types/lyrics';
+import { LyricsSettings } from '@/types/lyrics';
 import { supabase } from '@/utils/supabase/client';
+
+// Define default settings here since we can't import from routes
+export const defaultLyricsSettings: LyricsSettings = {
+  backgroundColor: "rgba(0, 0, 0, 1)",
+  textColor: "rgba(255, 255, 255, 1)",
+  currentTextColor: "rgba(220, 40, 220, 1)",
+  fontSize: 24,
+  padding: 20,
+  currentLineScale: 1.2,
+  showFade: true,
+  fadeDistance: 64,
+  lineHeight: 1.5,
+  fontFamily: "Sofia Sans Condensed",
+  greenScreenMode: false,
+  colorSync: false,
+  showVideoCanvas: false,
+  videoCanvasOpacity: 0.2,
+  textAlign: "left",
+  textShadowColor: "rgba(0, 0, 0, 0.5)",
+  textShadowBlur: 2,
+  textShadowOffsetX: 1,
+  textShadowOffsetY: 1,
+  animationEasing: "easeOut",
+  animationSpeed: 300,
+  glowEffect: false,
+  glowColor: "rgba(255, 255, 255, 0.5)",
+  glowIntensity: 5,
+  hideExplicitContent: false,
+  animationStyle: "scale"
+};
 
 interface LyricsStore {
   settings: LyricsSettings;
@@ -20,6 +50,7 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
         ...newSettings,
       };
 
+      // Include all required fields in the upsert
       const { error } = await supabase
         .from('VisualizerWidget')
         .upsert({
@@ -28,7 +59,7 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
           sensitivity: 1.0,
           colorScheme: 'default',
           visualization: 'bars',
-          lyrics_settings: mergedSettings
+          lyrics_settings: mergedSettings // This should be stored as JSONB in Supabase
         }, {
           onConflict: 'user_id',
           ignoreDuplicates: false
@@ -36,12 +67,7 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
 
       if (error) throw error;
 
-      set((state) => ({
-        settings: {
-          ...state.settings,
-          ...mergedSettings
-        }
-      }));
+      set({ settings: mergedSettings });
 
     } catch (error) {
       console.error('Error in updateSettings:', error);
@@ -62,7 +88,7 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
         return;
       }
 
-      // Otherwise fetch from database
+      // Get user_id from UserProfile
       const { data: profileData, error: profileError } = await supabase
         .from('UserProfile')
         .select('user_id')
@@ -71,8 +97,8 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
 
       if (profileError) throw profileError;
 
-      // Then get the lyrics_settings from VisualizerWidget
-      const { data: visualizerData, error: visualizerError } = await supabase
+      // Get lyrics_settings from VisualizerWidget
+      const { data, error: visualizerError } = await supabase
         .from('VisualizerWidget')
         .select('lyrics_settings')
         .eq('user_id', profileData.user_id)
@@ -84,22 +110,14 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
         return;
       }
 
-      // Safely parse the settings if they're a string
-      let parsedSettings = visualizerData?.lyrics_settings;
-      if (typeof parsedSettings === 'string') {
-        try {
-          parsedSettings = JSON.parse(parsedSettings);
-        } catch (e) {
-          console.error('Error parsing settings:', e);
-          parsedSettings = defaultLyricsSettings;
-        }
-      }
-
-      if (parsedSettings) {
+      // Handle the settings data
+      const loadedSettings = data?.lyrics_settings;
+      
+      if (loadedSettings && typeof loadedSettings === 'object') {
         set({ 
           settings: {
             ...defaultLyricsSettings,
-            ...parsedSettings
+            ...loadedSettings
           }
         });
       } else {
