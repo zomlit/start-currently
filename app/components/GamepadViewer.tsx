@@ -3,131 +3,195 @@ import { useGamepad } from '@/hooks/useGamepad'
 import type { GamepadSettings } from '@/components/widget-settings/GamepadSettingsForm'
 import { supabase } from '@/utils/supabase/client'
 import { Gamepad } from 'lucide-react'
-import throttle from 'lodash/throttle'
 import '../styles/gamepad.css'
 
 interface GamepadViewerProps {
   settings?: GamepadSettings
   isPublicView?: boolean
+  username?: string
 }
 
 export const GamepadViewer: React.FC<GamepadViewerProps> = ({
   settings,
   isPublicView = false,
+  username,
 }) => {
   const { gamepadState, isConnected } = useGamepad(settings?.deadzone ?? 0.1)
   const [showConnectMessage, setShowConnectMessage] = useState(true)
+  const [remoteGamepadState, setRemoteGamepadState] = useState<any>(null)
+  const [broadcasterActive, setBroadcasterActive] = useState(false)
   const lastBroadcastState = useRef<string>('')
+  const presenceChannel = useRef<any>(null)
+  const lastActivityTimestamp = useRef<number>(Date.now())
+  const activityCheckInterval = useRef<number>()
 
   useEffect(() => {
-    if (isConnected) {
-      setShowConnectMessage(false)
-    } else {
-      setShowConnectMessage(true)
+    if (!username) return
+
+    // Set up presence channel for broadcaster status
+    presenceChannel.current = supabase.channel(`presence-gamepad-${username}`, {
+      config: {
+        presence: {
+          key: isPublicView ? 'viewer' : 'broadcaster',
+        },
+      },
+    })
+
+    presenceChannel.current
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.current.presenceState()
+        const hasBroadcaster = state.broadcaster && state.broadcaster.length > 0
+        setBroadcasterActive(hasBroadcaster)
+      })
+      .subscribe(async (status: string) => {
+        if (status === 'SUBSCRIBED' && !isPublicView) {
+          await presenceChannel.current.track({ online: true })
+        }
+      })
+
+    return () => {
+      if (presenceChannel.current) {
+        presenceChannel.current.unsubscribe()
+      }
     }
-  }, [isConnected])
+  }, [username, isPublicView])
 
   useEffect(() => {
-    if (!isPublicView && gamepadState) {
+    if (isPublicView && username) {
+      // Subscribe to the user's gamepad channel for input updates
+      const channel = supabase.channel(`gamepad-${username}`)
+        .on('broadcast', { event: 'gamepad-update' }, ({ payload }) => {
+          setRemoteGamepadState(payload)
+          lastActivityTimestamp.current = Date.now()
+          setShowConnectMessage(false)
+        })
+        .subscribe()
+
+      // Set up activity check interval
+      activityCheckInterval.current = window.setInterval(() => {
+        const inactiveTime = Date.now() - lastActivityTimestamp.current
+        if (inactiveTime > 5000) { // 5 seconds without updates
+          setShowConnectMessage(true)
+          setBroadcasterActive(false)
+        }
+      }, 1000)
+
+      return () => {
+        supabase.removeChannel(channel)
+        if (activityCheckInterval.current) {
+          clearInterval(activityCheckInterval.current)
+        }
+      }
+    }
+  }, [isPublicView, username])
+
+  useEffect(() => {
+    // Only broadcast if not in public view and connected
+    if (!isPublicView && isConnected && gamepadState && username) {
       const stateString = JSON.stringify(gamepadState)
       if (stateString !== lastBroadcastState.current) {
-        supabase.channel('gamepad-inputs').send({
+        supabase.channel(`gamepad-${username}`).send({
           type: 'broadcast',
           event: 'gamepad-update',
           payload: gamepadState,
         })
         lastBroadcastState.current = stateString
+        lastActivityTimestamp.current = Date.now()
+        setBroadcasterActive(true)
+        setShowConnectMessage(false)
       }
     }
-  }, [gamepadState, isPublicView])
+  }, [gamepadState, isPublicView, isConnected, username])
+
+  // Use remoteGamepadState for public view, local gamepadState otherwise
+  const activeGamepadState = isPublicView ? remoteGamepadState : gamepadState
 
   if (showConnectMessage) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4 rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
         <Gamepad className="h-12 w-12 text-muted-foreground/50" />
         <div>
-          <h3 className="text-lg font-semibold text-muted-foreground">No Controller Detected</h3>
-          <p className="text-sm text-muted-foreground/75">Connect a controller and press any button</p>
+          <h3 className="text-lg font-semibold text-muted-foreground">
+            {isPublicView 
+              ? broadcasterActive 
+                ? "Waiting for controller input..." 
+                : "No controller input detected"
+              : "No Controller Detected"}
+          </h3>
+          <p className="text-sm text-muted-foreground/75">
+            {isPublicView
+              ? "Make sure the controller is connected and the overlay is active"
+              : "Connect a controller and press any button"}
+          </p>
         </div>
       </div>
     )
   }
 
+  // Add the controller UI rendering here
   return (
     <div className="relative flex items-center justify-center bg-black/5 rounded-lg overflow-hidden">
-      <div className="relative w-full h-full flex items-center justify-center">
-        <div className={`controller ds4 ${isConnected ? '' : 'disconnected'}`}>
-          <div className="triggers">
-            <span 
-              className="trigger left" 
-              style={{ 
-                opacity: gamepadState?.buttons[6]?.value || 0,
-                backgroundImage: "url('/gamepad/triggers.svg')"
-              }}
-            />
-            <span 
-              className="trigger right" 
-              style={{ 
-                opacity: gamepadState?.buttons[7]?.value || 0,
-                backgroundImage: "url('/gamepad/triggers.svg')"
-              }}
-            />
-          </div>
-
-          <div className="bumpers">
-            <span 
-              className={`bumper left ${gamepadState?.buttons[4]?.pressed ? 'pressed' : ''}`}
-              style={{ backgroundImage: "url('/gamepad/bumper.svg')" }}
-            />
-            <span 
-              className={`bumper right ${gamepadState?.buttons[5]?.pressed ? 'pressed' : ''}`}
-              style={{ backgroundImage: "url('/gamepad/bumper.svg')" }}
-            />
-          </div>
-
-          <div 
-            className={`touchpad ${gamepadState?.buttons[17]?.pressed ? 'pressed' : ''}`}
-            style={{ backgroundImage: "url('/gamepad/touchpad.svg')" }}
-          />
-
-          <div 
-            className={`meta ${gamepadState?.buttons[16]?.pressed ? 'pressed' : ''}`}
-            style={{ backgroundImage: "url('/gamepad/meta.svg')" }}
-          />
-
-          <div className="arrows">
-            <span className={`back ${gamepadState?.buttons[8]?.pressed ? 'pressed' : ''}`} />
-            <span className={`start ${gamepadState?.buttons[9]?.pressed ? 'pressed' : ''}`} />
-          </div>
-
-          <div className="abxy">
-            <span className={`button a ${gamepadState?.buttons[0]?.pressed ? 'pressed' : ''}`} />
-            <span className={`button b ${gamepadState?.buttons[1]?.pressed ? 'pressed' : ''}`} />
-            <span className={`button x ${gamepadState?.buttons[2]?.pressed ? 'pressed' : ''}`} />
-            <span className={`button y ${gamepadState?.buttons[3]?.pressed ? 'pressed' : ''}`} />
-          </div>
-
-          <div className="sticks">
-            <span 
-              className={`stick left ${gamepadState?.buttons[10]?.pressed ? 'pressed' : ''}`}
+      <div 
+        className="gamepad-container"
+        style={{
+          backgroundColor: settings?.backgroundColor || 'transparent',
+          opacity: settings?.opacity ?? 1,
+          transform: `scale(${settings?.scale ?? 1})`,
+        }}
+      >
+        {/* Base controller image */}
+        <div className={`gamepad-base ${settings?.selectedSkin || 'ds4'}`}>
+          {/* Buttons */}
+          {activeGamepadState?.buttons.map((button: any, index: number) => (
+            <div
+              key={index}
+              className={`button button-${index} ${button.pressed ? 'pressed' : ''}`}
               style={{
-                transform: `translate(${gamepadState?.axes[0] * 20}px, ${gamepadState?.axes[1] * 20}px)`
-              }}
+                '--highlight-color': settings?.buttonHighlightColor || '#ffffff',
+                '--press-color': settings?.buttonPressColor || '#00ff00',
+              } as React.CSSProperties}
             />
-            <span 
-              className={`stick right ${gamepadState?.buttons[11]?.pressed ? 'pressed' : ''}`}
-              style={{
-                transform: `translate(${gamepadState?.axes[2] * 20}px, ${gamepadState?.axes[3] * 20}px)`
-              }}
-            />
-          </div>
+          ))}
 
-          <div className="dpad">
-            <span className={`face up ${gamepadState?.buttons[12]?.pressed ? 'pressed' : ''}`} />
-            <span className={`face down ${gamepadState?.buttons[13]?.pressed ? 'pressed' : ''}`} />
-            <span className={`face left ${gamepadState?.buttons[14]?.pressed ? 'pressed' : ''}`} />
-            <span className={`face right ${gamepadState?.buttons[15]?.pressed ? 'pressed' : ''}`} />
-          </div>
+          {/* Analog sticks */}
+          {settings?.showAnalogSticks && activeGamepadState?.axes && (
+            <>
+              <div 
+                className="analog-stick left"
+                style={{
+                  transform: `translate(${activeGamepadState.axes[0] * 20}px, ${activeGamepadState.axes[1] * 20}px)`,
+                  backgroundColor: settings.analogStickColor,
+                }}
+              />
+              <div 
+                className="analog-stick right"
+                style={{
+                  transform: `translate(${activeGamepadState.axes[2] * 20}px, ${activeGamepadState.axes[3] * 20}px)`,
+                  backgroundColor: settings.analogStickColor,
+                }}
+              />
+            </>
+          )}
+
+          {/* Triggers */}
+          {settings?.showTriggers && activeGamepadState?.buttons && (
+            <>
+              <div 
+                className="trigger left"
+                style={{
+                  transform: `scaleY(${activeGamepadState.buttons[6].value})`,
+                  backgroundColor: settings.triggerColor,
+                }}
+              />
+              <div 
+                className="trigger right"
+                style={{
+                  transform: `scaleY(${activeGamepadState.buttons[7].value})`,
+                  backgroundColor: settings.triggerColor,
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
