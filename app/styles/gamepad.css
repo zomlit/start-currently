@@ -1,0 +1,299 @@
+/* Base Controller */
+.controller {
+  background: url('/gamepad/base.svg') no-repeat;
+  height: 598px;
+  width: 806px;
+  position: relative;
+}
+
+.controller.half {
+  transform: scale(0.5);
+  transform-origin: 0 0;
+}
+
+/* Triggers Section */
+.controller .triggers {
+  width: 588px;
+  height: 90px;
+  position: absolute;
+  left: 109px;
+}
+
+.controller .trigger {
+  width: 99px;
+  height: 90px;
+  background: url('/gamepad/triggers.svg');
+  opacity: 0;
+}
+
+.controller .trigger.left {
+  float: left;
+}
+
+.controller .trigger.right {
+  float: right;
+  transform: rotateY(180deg);
+}
+
+.controller .trigger-button {
+  width: 99px;
+  height: 23px;
+  background: url('/gamepad/button.svg');
+  opacity: 0;
+}
+
+.controller .trigger-button.left {
+  float: left;
+}
+
+.controller .trigger-button.right {
+  float: right;
+}
+
+/* Bumpers */
+.controller .bumpers {
+  position: absolute;
+  width: 588px;
+  height: 23px;
+  left: 109px;
+  top: 94px;
+}
+
+.controller .bumper {
+  width: 99px;
+  height: 23px;
+  background: url('/gamepad/bumper.svg');
+  opacity: 0;
+}
+
+.controller .bumper.left {
+  float: left;
+}
+
+.controller .bumper.right {
+  float: right;
+  transform: rotateY(180deg);
+}
+
+/* Touchpad */
+.controller .touchpad {
+  width: 262px;
+  height: 151px;
+  position: absolute;
+  left: 272px;
+  top: 122px;
+  background: url('/gamepad/touchpad.svg');
+  opacity: 0;
+}
+
+/* Meta (PS Button) */
+.controller .meta {
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  left: 382px;
+  bottom: 216px;
+  background: url('/gamepad/meta.svg');
+  opacity: 0;
+}
+
+/* Arrows (Start/Select) */
+.controller .arrows {
+  position: absolute;
+  width: 205px;
+  height: 19px;
+  top: 250px;
+  left: 273px;
+}
+
+.controller .back,
+.controller .start {
+  width: 34px;
+  height: 19px;
+  background: url('/gamepad/button.svg');
+  opacity: 0;
+}
+
+.controller .back {
+  float: left;
+}
+
+.controller .start {
+  float: right;
+}
+
+/* Face Buttons */
+.controller .abxy {
+  position: absolute;
+  width: 170px;
+  height: 171px;
+  top: 159px;
+  left: 567px;
+}
+
+.controller .button {
+  position: absolute;
+  width: 55px;
+  height: 55px;
+  background: url('/gamepad/button.svg');
+  opacity: 0;
+}
+
+.controller .button.a {
+  bottom: 0;
+  left: 58px;
+}
+
+.controller .button.b {
+  top: 58px;
+  right: 0;
+}
+
+.controller .button.x {
+  top: 58px;
+  left: 0;
+}
+
+.controller .button.y {
+  left: 58px;
+  top: 0;
+}
+
+/* Sticks Section */
+.controller .sticks {
+  position: absolute;
+  width: 361px;
+  height: 105px;
+  top: 308px;
+  left: 228px;
+}
+
+.controller .stick {
+  position: absolute;
+  background: url('/gamepad/sticks.svg');
+  height: 94px;
+  width: 94px;
+  opacity: 1;
+  background-position: 0 0;
+}
+
+.controller .stick.pressed {
+    background-position: -96px 0;
+}
+
+.controller .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.controller .stick.right {
+  top: 0;
+  right: 0;
+}
+
+/* Wheels (Stick Rotation Indicators) */
+.controller .wheels {
+  position: absolute;
+  width: 361px;
+  height: 105px;
+  top: 308px;
+  left: 228px;
+}
+
+.controller .wheel {
+  position: absolute;
+  background: url('/gamepad/sticks.svg');
+  height: 94px;
+  width: 94px;
+  opacity: 0;
+  background-position: -192px 0;
+}
+
+.controller .wheel.left {
+  top: 0;
+  left: 0;
+}
+
+.controller .wheel.right {
+  top: 0;
+  right: 0;
+}
+
+/* D-Pad */
+.controller .dpad {
+  position: absolute;
+  width: 125px;
+  height: 126px;
+  top: 181px;
+  left: 92px;
+}
+
+.controller .face {
+  background: url('/gamepad/dpad.svg');
+  position: absolute;
+  opacity: 0;
+}
+
+.controller .face.up,
+.controller .face.down {
+  width: 36px;
+  height: 52px;
+}
+
+.controller .face.left,
+.controller .face.right {
+  width: 52px;
+  height: 36px;
+}
+
+.controller .face.up {
+  left: 44px;
+  top: 0;
+  background-position: 0 0;
+}
+
+.controller .face.down {
+  left: 44px;
+  bottom: 0;
+  background-position: -37px 0;
+}
+
+.controller .face.left {
+  top: 45px;
+  left: 0;
+  background-position: -74px 0;
+}
+
+.controller .face.right {
+  top: 45px;
+  right: 0;
+  background-position: -127px 0;
+}
+
+/* Utilities */
+.clear {
+  clear: both;
+}
+
+/* States */
+.controller.disconnected {
+  background: url('/gamepad/disconnected.svg');
+}
+
+.controller.disconnected div {
+  display: none;
+}
+
+/* Pressed States */
+.controller .button.pressed,
+.controller .face.pressed,
+.controller .meta.pressed,
+.controller .back.pressed,
+.controller .start.pressed,
+.controller .stick.pressed,
+.controller .trigger.pressed,
+.controller .trigger-button.pressed,
+.controller .bumper.pressed,
+.controller .touchpad.pressed {
+  opacity: 1;
+}

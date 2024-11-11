@@ -25,6 +25,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AccessControl } from "@/components/AccessControl";
 import { dark, default as defaultTheme } from "@clerk/themes";
 import { useThemeStore } from "@/store/themeStore";
+import type { RouterContext } from '@/lib/router'
+
 const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
   const user = await getAuth(ctx.request);
 
@@ -33,9 +35,15 @@ const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
   };
 });
 
-export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient;
-}>()({
+export const Route = createRootRouteWithContext<RouterContext>()({
+
+  beforeLoad: async () => {
+    const { user } = await fetchClerkAuth();
+
+    return {
+      user,
+    };
+  },
   meta: () => [
     { charSet: "utf-8" },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -44,6 +52,7 @@ export const Route = createRootRouteWithContext<{
       description: "Currently is a streaming platform for the modern streamer.",
     }),
   ],
+
   links: () => [
     { rel: "stylesheet", href: globalCss },
     { rel: "stylesheet", href: appCss },
@@ -68,13 +77,6 @@ export const Route = createRootRouteWithContext<{
     { rel: "icon", href: "/favicon.ico" },
     { rel: "preload", href: "/images/hero-bg.webp", as: "image" },
   ],
-  beforeLoad: async () => {
-    const { user } = await fetchClerkAuth();
-
-    return {
-      user,
-    };
-  },
 
   errorComponent: (props) => (
     <RootDocument>

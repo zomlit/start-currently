@@ -101,7 +101,7 @@ export function SpotifyKeysDialog() {
 
   const handleSpotifyAuth = () => {
     const client_id = spotifyClientId;
-    const redirect_uri = `${window.location.origin}/dashboard`;
+    const redirect_uri = `${window.location.origin}/dashboard/widgets/visualizer`;
     const scope =
       "user-read-currently-playing user-read-playback-state user-modify-playback-state";
 

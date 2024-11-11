@@ -1,4 +1,10 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useLyricsStore } from "@/store/lyricsStore";
 import { useLyrics } from "@/hooks/useLyrics";
@@ -13,10 +19,78 @@ import { useUser } from "@clerk/tanstack-start";
 import { toast } from "@/utils/toast";
 import { Dialog } from "@/components/ui/dialog";
 import { SpotifyKeysDialog } from "@/components/SpotifyKeysDialog";
+import _ from "lodash";
+import { Switch } from "@/components/ui/switch";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: LyricsSection,
 });
+
+// Update the PLACEHOLDER_LYRICS array near the top of the file
+const PLACEHOLDER_LYRICS = [
+  { startTimeMs: 0, words: "👋 Welcome to Lyrics Widget!" },
+  { startTimeMs: 2000, words: "This is a preview of how lyrics will appear" },
+  { startTimeMs: 4000, words: "When you connect your Spotify account" },
+  { startTimeMs: 6000, words: "⚠️ Important: Spotify Premium is required ⚠️" },
+  { startTimeMs: 8000, words: "The lyrics will scroll automatically" },
+  { startTimeMs: 10000, words: "Just like you're seeing now" },
+  { startTimeMs: 12000, words: "Each line will highlight as it plays" },
+  { startTimeMs: 14000, words: "Making it easy to follow along" },
+  { startTimeMs: 16000, words: "🎵 To get started:" },
+  { startTimeMs: 18000, words: "1. Connect your Spotify Premium account" },
+  { startTimeMs: 20000, words: "2. Add your Spotify lyrics token" },
+  { startTimeMs: 22000, words: "3. Play a song on Spotify" },
+  { startTimeMs: 24000, words: "Then watch as the magic happens!" },
+  { startTimeMs: 26000, words: "✨ Your lyrics will appear here ✨" },
+  { startTimeMs: 28000, words: "Synced perfectly with your music" },
+];
+
+type AnimationStyle = "scale" | "glow" | "slide" | "fade" | "bounce";
+
+// Add this type for memoized variants
+type AnimationVariants = {
+  [key in AnimationStyle]: {
+    initial: any;
+    animate: (isCurrentLine: boolean) => any;
+  };
+};
+
+// Move animation variants outside component to prevent recreation
+const ANIMATION_VARIANTS: AnimationVariants = {
+  scale: {
+    initial: { scale: 1 },
+    animate: (isCurrentLine) => ({
+      scale: isCurrentLine ? 1.15 : 1,
+    }),
+  },
+  glow: {
+    initial: { textShadow: "0 0 0px rgba(255,255,255,0)" },
+    animate: (isCurrentLine) => ({
+      textShadow: isCurrentLine
+        ? "0 0 20px rgba(255,255,255,0.8)"
+        : "0 0 0px rgba(255,255,255,0)",
+    }),
+  },
+  slide: {
+    initial: { x: 0 },
+    animate: (isCurrentLine) => ({
+      x: isCurrentLine ? 20 : 0,
+    }),
+  },
+  fade: {
+    initial: { opacity: 0.6 },
+    animate: (isCurrentLine) => ({
+      opacity: isCurrentLine ? 1 : 0.6,
+    }),
+  },
+  bounce: {
+    initial: { y: 0 },
+    animate: (isCurrentLine) => ({
+      y: isCurrentLine ? -10 : 0,
+    }),
+  },
+};
 
 function LyricsSection() {
   const { user } = useUser();
@@ -26,6 +100,8 @@ function LyricsSection() {
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [publicUrl, setPublicUrl] = useState("");
+  const [mockTime, setMockTime] = useState(0);
+  const [hideExampleLyrics, setHideExampleLyrics] = useState(true);
 
   const {
     track,
@@ -44,17 +120,27 @@ function LyricsSection() {
 
   const videoLink = useBackgroundVideo(track?.id);
 
-  // Update container width
+  // Throttle container width updates more aggressively
   useEffect(() => {
+    if (!lyricsContainerRef.current) return;
+
     const updateContainerWidth = () => {
-      if (lyricsContainerRef.current) {
-        setContainerWidth(lyricsContainerRef.current.offsetWidth);
+      const newWidth = lyricsContainerRef.current?.offsetWidth || 0;
+      if (Math.abs(newWidth - containerWidth) > 20) {
+        // More tolerance
+        setContainerWidth(newWidth);
       }
     };
 
     updateContainerWidth();
-    window.addEventListener("resize", updateContainerWidth);
-    return () => window.removeEventListener("resize", updateContainerWidth);
+
+    const throttledResize = _.throttle(updateContainerWidth, 500);
+    window.addEventListener("resize", throttledResize);
+
+    return () => {
+      window.removeEventListener("resize", throttledResize);
+      throttledResize.cancel();
+    };
   }, []);
 
   // Update public URL
@@ -100,58 +186,150 @@ function LyricsSection() {
     [updateSettings]
   );
 
-  // Add scrolling effect
+  // Add this mock elapsed time for placeholder lyrics
+  const mockElapsedTime = useMemo(() => {
+    if (!lyrics?.length && !isLyricsLoading) {
+      return {
+        elapsed: mockTime,
+      };
+    }
+    return track;
+  }, [track, lyrics, isLyricsLoading, mockTime]);
+
+  // Add this effect to handle the mock timing animation
   useEffect(() => {
-    if (lyrics && track && lyricsContainerRef.current) {
-      const scrollToCurrentLyric = () => {
-        const currentTime = track.elapsed || 0;
-        const currentLineIndex = lyrics.findIndex(
-          (line, index, arr) =>
-            currentTime >= line.startTimeMs - 1000 &&
-            (index === arr.length - 1 ||
-              currentTime < arr[index + 1].startTimeMs - 1000)
-        );
+    if (!lyrics?.length && !isLyricsLoading && !hideExampleLyrics) {
+      let lastUpdateTime = 0;
+      let frameId: number;
 
-        if (currentLineIndex !== -1 && lyricsContainerRef.current) {
-          const lyricsContainer = lyricsContainerRef.current;
-          const lines = Array.from(lyricsContainer.children);
-
-          // Skip the first spacer div
-          const currentLineElement = lines[currentLineIndex + 1] as HTMLElement;
-
-          if (currentLineElement) {
-            const containerHeight = lyricsContainer.clientHeight;
-            const lineHeight = currentLineElement.offsetHeight;
-
-            // Calculate scroll position to center the current line
-            const scrollPosition = Math.max(
-              0,
-              currentLineElement.offsetTop -
-                containerHeight / 2 +
-                lineHeight / 2
-            );
-
-            // Only scroll if the position has changed significantly
-            const currentScroll = lyricsContainer.scrollTop;
-            const scrollDiff = Math.abs(currentScroll - scrollPosition);
-
-            if (scrollDiff > 10) {
-              lyricsContainer.scrollTo({
-                top: scrollPosition,
-                behavior: "smooth",
-              });
-            }
-          }
+      const updateMockTime = (timestamp: number) => {
+        if (timestamp - lastUpdateTime >= 16) {
+          // Limit to ~60fps
+          setMockTime((prev) => (prev + 16) % 30000);
+          lastUpdateTime = timestamp;
         }
+        frameId = requestAnimationFrame(updateMockTime);
       };
 
-      // Run immediately and then set up interval
-      scrollToCurrentLyric();
-      const intervalId = setInterval(scrollToCurrentLyric, 250);
-
-      return () => clearInterval(intervalId);
+      frameId = requestAnimationFrame(updateMockTime);
+      return () => cancelAnimationFrame(frameId);
     }
-  }, [lyrics, track]);
+  }, [lyrics?.length, isLyricsLoading, hideExampleLyrics]);
+
+  // Update the renderLyrics function
+  const renderLyrics = useCallback(
+    (lyricsToRender: typeof lyrics, isPlaceholder = false) => {
+      if (!lyricsToRender) return null;
+
+      const currentTime = isPlaceholder ? mockTime : track?.elapsed || 0;
+      const currentLineIndex = lyricsToRender.findIndex((line, index, arr) => {
+        const nextLine = arr[index + 1];
+        return (
+          currentTime >= line.startTimeMs &&
+          currentTime < (nextLine?.startTimeMs ?? Infinity)
+        );
+      });
+
+      return lyricsToRender.map((line, index) => {
+        const isCurrentLine = index === currentLineIndex;
+        const displayedText = settings.hideExplicitContent
+          ? censorExplicitContent(line.words)
+          : line.words;
+
+        const variant = ANIMATION_VARIANTS[settings.animationStyle];
+
+        return (
+          <motion.p
+            key={index}
+            initial={variant.initial}
+            animate={variant.animate(isCurrentLine)}
+            transition={{
+              duration: settings.animationSpeed / 1000,
+              ease: settings.animationEasing,
+              ...(settings.animationStyle === "bounce" && {
+                type: "spring",
+                stiffness: 500,
+                damping: 20,
+              }),
+            }}
+            style={{
+              ...getTextStyle(isCurrentLine),
+              opacity: isPlaceholder ? (isCurrentLine ? 0.8 : 0.5) : 1,
+            }}
+            className="text-center"
+          >
+            {displayedText}
+          </motion.p>
+        );
+      });
+    },
+    [
+      track?.elapsed,
+      mockTime,
+      settings.hideExplicitContent,
+      settings.animationStyle,
+      settings.animationSpeed,
+      settings.animationEasing,
+      censorExplicitContent,
+      getTextStyle,
+    ]
+  );
+
+  // Update the scrolling effect
+  useEffect(() => {
+    if (!lyricsContainerRef.current) return;
+
+    const lyricsToUse = lyrics?.length ? lyrics : PLACEHOLDER_LYRICS;
+    const isPlaceholder = !lyrics?.length;
+    let frameId: number;
+    let lastScrollTime = 0;
+
+    const scrollToCurrentLyric = () => {
+      const now = performance.now();
+      if (now - lastScrollTime < 100) {
+        // Limit to 10 updates per second
+        frameId = requestAnimationFrame(scrollToCurrentLyric);
+        return;
+      }
+
+      const currentTime = isPlaceholder ? mockTime : track?.elapsed || 0;
+      const currentLineIndex = lyricsToUse.findIndex(
+        (line, index) =>
+          currentTime >= line.startTimeMs &&
+          currentTime < (lyricsToUse[index + 1]?.startTimeMs ?? Infinity)
+      );
+
+      const lyricsContainer = lyricsContainerRef.current;
+      if (currentLineIndex === -1 || !lyricsContainer) {
+        frameId = requestAnimationFrame(scrollToCurrentLyric);
+        return;
+      }
+
+      const currentLineElement = lyricsContainer.children[
+        currentLineIndex + 1
+      ] as HTMLElement;
+
+      if (currentLineElement) {
+        const containerHeight = lyricsContainer.clientHeight;
+        const scrollPosition = Math.max(
+          0,
+          currentLineElement.offsetTop - containerHeight / 2
+        );
+
+        lyricsContainer.scrollTo({
+          top: scrollPosition,
+          behavior: "smooth",
+        });
+
+        lastScrollTime = now;
+      }
+
+      frameId = requestAnimationFrame(scrollToCurrentLyric);
+    };
+
+    frameId = requestAnimationFrame(scrollToCurrentLyric);
+    return () => cancelAnimationFrame(frameId);
+  }, [lyrics, track?.elapsed, mockTime]);
 
   // Add font loading logic
   const [fontFamilies, setFontFamilies] = useState<string[]>([]);
@@ -198,17 +376,10 @@ function LyricsSection() {
     [loadedFonts]
   );
 
-  const LyricsPreview = (
-    <div
-      className="h-full w-full overflow-hidden relative"
-      style={{
-        backgroundColor: settings.greenScreenMode
-          ? "#00FF00"
-          : formatColor(settings.backgroundColor),
-        padding: `${settings.padding}px`,
-      }}
-    >
-      {settings.showVideoCanvas && videoLink && (
+  // Split the preview content into smaller components
+  const VideoBackground = useMemo(
+    () =>
+      settings.showVideoCanvas && videoLink ? (
         <video
           src={videoLink}
           className="absolute top-0 left-0 w-full h-full object-cover"
@@ -218,8 +389,13 @@ function LyricsSection() {
           muted
           playsInline
         />
-      )}
-      {settings.showFade && !settings.greenScreenMode && (
+      ) : null,
+    [settings.showVideoCanvas, videoLink, settings.videoCanvasOpacity]
+  );
+
+  const FadeOverlay = useMemo(
+    () =>
+      settings.showFade && !settings.greenScreenMode ? (
         <>
           <div
             className="absolute z-40 left-0 right-0 pointer-events-none"
@@ -242,76 +418,84 @@ function LyricsSection() {
             }}
           />
         </>
-      )}
+      ) : null,
+    [settings, formatColor]
+  );
+
+  // Memoize the preview content with split components
+  const LyricsPreview = useMemo(
+    () => (
       <div
-        ref={lyricsContainerRef}
-        className="h-full w-full overflow-y-auto scrollbar-hide relative z-20 flex flex-col"
+        className="h-full w-full overflow-hidden relative"
         style={{
-          fontFamily: `'${settings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
+          backgroundColor: settings.greenScreenMode
+            ? "#00FF00"
+            : formatColor(settings.backgroundColor),
+          padding: `${settings.padding}px`,
         }}
       >
-        {isLyricsLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Spinner className="w-[30px] h-[30px]" />
-          </div>
-        ) : isUnauthorized ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-            <p className="mb-4">Spotify token required to fetch lyrics</p>
-            <Button
-              onClick={() => setIsSpotifyTokenDialogOpen(true)}
-              variant="outline"
-            >
-              Add Spotify Lyrics Token
-            </Button>
-          </div>
-        ) : noLyricsAvailable ? (
-          <div className="flex items-center justify-center h-full text-center text-gray-500">
-            No lyrics available for this track
-          </div>
-        ) : lyrics && lyrics.length > 0 ? (
-          <>
-            <div className="flex-1 min-h-[50vh]" />
-            {lyrics.map((line, index, arr) => {
-              const isCurrentLine =
-                (track?.elapsed || 0) >= line.startTimeMs - 1000 &&
-                (index === arr.length - 1 ||
-                  (track?.elapsed || 0) < arr[index + 1].startTimeMs - 1000);
-
-              const displayedText = settings.hideExplicitContent
-                ? censorExplicitContent(line.words)
-                : line.words;
-
-              const truncatedText = truncateText(
-                displayedText,
-                containerWidth - settings.padding * 2,
-                isCurrentLine
-                  ? settings.fontSize * settings.currentLineScale
-                  : settings.fontSize,
-                settings.fontFamily
-              );
-
-              return (
-                <p
-                  key={index}
-                  className="transition-all duration-300 text-center"
-                  style={getTextStyle(isCurrentLine)}
-                >
-                  {truncatedText}
-                </p>
-              );
-            })}
-            <div className="flex-1 min-h-[50vh]" />
-          </>
-        ) : null}
+        {VideoBackground}
+        {FadeOverlay}
+        <div
+          ref={lyricsContainerRef}
+          className="h-full w-full overflow-y-auto scrollbar-hide relative z-20 flex flex-col"
+          style={{
+            fontFamily: `'${settings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
+            scrollBehavior: "smooth",
+            transition: `all ${settings.animationSpeed}ms ${settings.animationEasing}`,
+          }}
+        >
+          {isLyricsLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-4">
+                <Spinner className="w-[30px] h-[30px]" />
+                <p className="text-muted-foreground">Loading lyrics...</p>
+              </div>
+            </div>
+          ) : lyrics?.length ? (
+            <>
+              <div className="flex-1 min-h-[50vh]" />
+              {renderLyrics(lyrics, false)}
+              <div className="flex-1 min-h-[50vh]" />
+            </>
+          ) : !hideExampleLyrics ? (
+            <>
+              <div className="flex-1 min-h-[50vh]" />
+              {renderLyrics(PLACEHOLDER_LYRICS, true)}
+              <div className="flex-1 min-h-[50vh]" />
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+              <p>Play a song on Spotify to see lyrics</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    ),
+    [
+      settings,
+      isLyricsLoading,
+      lyrics,
+      renderLyrics,
+      formatColor,
+      VideoBackground,
+      FadeOverlay,
+      hideExampleLyrics,
+    ]
   );
 
   const LyricsSettings = (
-    <>
-      {lyrics && (
-        <div className="flex flex-col h-full max-h-screen">
-          {/* Header with URL input - fixed at top */}
+    <div className="flex flex-col h-full max-h-screen">
+      {isLyricsLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Spinner className="w-[30px] h-[30px]" />
+            <p className="text-muted-foreground">Loading settings...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Header with URL input */}
           <div className="flex-none p-6 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center space-x-2">
               <Input
@@ -331,9 +515,25 @@ function LyricsSection() {
             </div>
           </div>
 
-          {/* Scrollable settings area - takes remaining space */}
+          {/* Settings content */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="p-6 space-y-6">
+              {!lyrics?.length && (
+                <div className="flex items-center justify-between mb-6 pb-6 border-b">
+                  <div className="space-y-0.5">
+                    <h2 className="text-lg font-medium">Example Lyrics</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Show or hide example lyrics when no song is playing
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!hideExampleLyrics}
+                    onCheckedChange={(checked) =>
+                      setHideExampleLyrics(!checked)
+                    }
+                  />
+                </div>
+              )}
               <LyricsSettingsForm
                 settings={settings}
                 onSettingsChange={handleSettingChange}
@@ -347,7 +547,7 @@ function LyricsSection() {
             </div>
           </div>
 
-          {/* Footer with Spotify button - fixed at bottom */}
+          {/* Footer */}
           <div className="flex-none p-6 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <Button
               onClick={() => setIsSpotifyTokenDialogOpen(true)}
@@ -357,9 +557,9 @@ function LyricsSection() {
               {isTokenSet ? "Update" : "Add"} Spotify Lyrics Token
             </Button>
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 
   return (

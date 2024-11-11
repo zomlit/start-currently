@@ -39,6 +39,11 @@ function SectionsLayout() {
       title: "Stats",
       description: "",
     },
+    "/_app/widgets/gamepad": {
+      category: "Widgets",
+      title: "Gamepad",
+      description: "Track and display your controller inputs in real-time",
+    },
   };
 
   const content = sectionContent[

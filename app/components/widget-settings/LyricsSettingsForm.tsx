@@ -30,6 +30,29 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 
+const safeFormatColor = (color: any): string => {
+  if (!color) return "rgba(0, 0, 0, 1)";
+
+  // If it's a palette color object
+  if (typeof color === "object" && color !== null) {
+    if (typeof color.hex === "string") return color.hex;
+    if (
+      typeof color.r === "number" &&
+      typeof color.g === "number" &&
+      typeof color.b === "number"
+    ) {
+      return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a || 1})`;
+    }
+    return "rgba(0, 0, 0, 1)";
+  }
+
+  if (typeof color !== "string") {
+    return "rgba(0, 0, 0, 1)";
+  }
+
+  return color;
+};
+
 export const lyricsSchema = z.object({
   backgroundColor: z.string().default("rgba(0, 0, 0, 1)"),
   textColor: z.string().default("rgba(255, 255, 255, 1)"),
@@ -51,13 +74,27 @@ export const lyricsSchema = z.object({
   textShadowOffsetX: z.number().min(-20).max(20).default(1),
   textShadowOffsetY: z.number().min(-20).max(20).default(1),
   animationEasing: z
-    .enum(["linear", "ease", "ease-in", "ease-out", "ease-in-out"])
-    .default("ease-out"),
+    .enum([
+      "linear",
+      "easeIn",
+      "easeOut",
+      "easeInOut",
+      "circIn",
+      "circOut",
+      "circInOut",
+      "backIn",
+      "backOut",
+      "backInOut",
+    ])
+    .default("easeOut"),
   animationSpeed: z.number().min(100).max(1000).default(300),
   glowEffect: z.boolean().default(false),
   glowColor: z.string().default("rgba(255, 255, 255, 0.5)"),
   glowIntensity: z.number().min(0).max(20).default(5),
   hideExplicitContent: z.boolean().default(false),
+  animationStyle: z
+    .enum(["scale", "glow", "slide", "fade", "bounce"])
+    .default("scale"),
 });
 
 export type LyricsSettings = z.infer<typeof lyricsSchema>;
@@ -112,9 +149,12 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>Background Color</FormLabel>
                     <GradientColorPicker
-                      color={field.value}
+                      color={safeFormatColor(field.value)}
                       onChange={(color) =>
-                        handleSettingChange("backgroundColor", color)
+                        handleSettingChange(
+                          "backgroundColor",
+                          safeFormatColor(color)
+                        )
                       }
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
@@ -188,9 +228,9 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>Text Color</FormLabel>
                     <GradientColorPicker
-                      color={field.value}
-                      onChange={(value) =>
-                        handleSettingChange("textColor", value)
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) =>
+                        handleSettingChange("textColor", safeFormatColor(color))
                       }
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
@@ -206,9 +246,12 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>Current Line Text Color</FormLabel>
                     <GradientColorPicker
-                      color={field.value}
-                      onChange={(value) =>
-                        handleSettingChange("currentTextColor", value)
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) =>
+                        handleSettingChange(
+                          "currentTextColor",
+                          safeFormatColor(color)
+                        )
                       }
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
@@ -287,9 +330,12 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>Text Shadow Color</FormLabel>
                     <GradientColorPicker
-                      color={field.value}
-                      onChange={(value) =>
-                        handleSettingChange("textShadowColor", value)
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) =>
+                        handleSettingChange(
+                          "textShadowColor",
+                          safeFormatColor(color)
+                        )
                       }
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
@@ -473,9 +519,12 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormItem>
                         <FormLabel>Glow Color</FormLabel>
                         <GradientColorPicker
-                          color={field.value}
-                          onChange={(value) =>
-                            handleSettingChange("glowColor", value)
+                          color={safeFormatColor(field.value)}
+                          onChange={(color) =>
+                            handleSettingChange(
+                              "glowColor",
+                              safeFormatColor(color)
+                            )
                           }
                           onChangeComplete={field.onBlur}
                           currentProfile={null}
@@ -550,71 +599,91 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
           <AccordionItem value="animation">
             <AccordionTrigger>Animation</AccordionTrigger>
             <AccordionContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="animationEasing"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Animation Easing</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        handleSettingChange("animationEasing", value)
-                      }
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select easing" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="linear">Linear</SelectItem>
-                        <SelectItem value="ease">Ease</SelectItem>
-                        <SelectItem value="ease-in">Ease In</SelectItem>
-                        <SelectItem value="ease-out">Ease Out</SelectItem>
-                        <SelectItem value="ease-in-out">Ease In Out</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="currentLineScale"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Line Scale</FormLabel>
-                    <Slider
-                      min={1}
-                      max={2}
-                      step={0.1}
-                      value={[field.value]}
-                      onValueChange={(val) =>
-                        handleSettingChange("currentLineScale", val[0])
-                      }
-                    />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="animationStyle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Animation Style</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) =>
+                          handleSettingChange("animationStyle", value)
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select animation style" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="scale">Scale</SelectItem>
+                          <SelectItem value="glow">Glow</SelectItem>
+                          <SelectItem value="slide">Slide</SelectItem>
+                          <SelectItem value="fade">Fade</SelectItem>
+                          <SelectItem value="bounce">Bounce</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="animationSpeed"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Animation Speed (ms)</FormLabel>
-                    <Slider
-                      min={100}
-                      max={1000}
-                      step={50}
-                      value={[field.value]}
-                      onValueChange={(val) =>
-                        handleSettingChange("animationSpeed", val[0])
-                      }
-                    />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="animationSpeed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Animation Speed (ms)</FormLabel>
+                      <Slider
+                        min={100}
+                        max={1000}
+                        step={50}
+                        value={[field.value]}
+                        onValueChange={(val) =>
+                          handleSettingChange("animationSpeed", val[0])
+                        }
+                      />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="animationEasing"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Animation Easing</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) =>
+                          handleSettingChange("animationEasing", value)
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select easing" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="linear">Linear</SelectItem>
+                          <SelectItem value="easeIn">Ease In</SelectItem>
+                          <SelectItem value="easeOut">Ease Out</SelectItem>
+                          <SelectItem value="easeInOut">Ease In Out</SelectItem>
+                          <SelectItem value="circIn">Circular In</SelectItem>
+                          <SelectItem value="circOut">Circular Out</SelectItem>
+                          <SelectItem value="circInOut">
+                            Circular In Out
+                          </SelectItem>
+                          <SelectItem value="backIn">Back In</SelectItem>
+                          <SelectItem value="backOut">Back Out</SelectItem>
+                          <SelectItem value="backInOut">Back In Out</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
 
