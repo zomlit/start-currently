@@ -28,14 +28,37 @@ export const useLyrics = ({
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [isTokenSet, setIsTokenSet] = useState(false);
 
-  const formatColor = useCallback((color: string) => {
-    if (color.startsWith("rgba")) return color;
-    if (color.startsWith("#")) {
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, 1)`;
+  const formatColor = useCallback((color: any): string => {
+    if (!color) return "rgba(0, 0, 0, 1)";
+
+    if (
+      typeof color === "object" &&
+      color !== null &&
+      typeof color.hex === "string"
+    ) {
+      color = color.hex;
     }
+
+    if (typeof color !== "string") {
+      return "rgba(0, 0, 0, 1)";
+    }
+
+    if (color.startsWith("rgba")) return color;
+
+    if (color.startsWith("#")) {
+      try {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        if (isNaN(r) || isNaN(g) || isNaN(b)) {
+          return "rgba(0, 0, 0, 1)";
+        }
+        return `rgba(${r}, ${g}, ${b}, 1)`;
+      } catch (e) {
+        return "rgba(0, 0, 0, 1)";
+      }
+    }
+
     return color;
   }, []);
 
@@ -68,8 +91,40 @@ export const useLyrics = ({
     (isCurrentLine: boolean) => {
       if (!settings) return {};
 
+      const safeFormatColor = (color: any): string => {
+        if (!color) return "rgba(0, 0, 0, 1)";
+
+        if (
+          typeof color === "object" &&
+          color !== null &&
+          typeof color.hex === "string"
+        ) {
+          color = color.hex;
+        }
+
+        if (typeof color !== "string") {
+          return "rgba(0, 0, 0, 1)";
+        }
+
+        if (color.startsWith("rgba")) return color;
+        if (color.startsWith("#")) {
+          try {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            if (isNaN(r) || isNaN(g) || isNaN(b)) {
+              return "rgba(0, 0, 0, 1)";
+            }
+            return `rgba(${r}, ${g}, ${b}, 1)`;
+          } catch (e) {
+            return "rgba(0, 0, 0, 1)";
+          }
+        }
+        return color;
+      };
+
       return {
-        color: formatColor(
+        color: safeFormatColor(
           isCurrentLine ? settings.currentTextColor : settings.textColor
         ),
         fontSize: `${
@@ -89,18 +144,18 @@ export const useLyrics = ({
               : "center center",
         lineHeight: settings.lineHeight,
         textAlign: settings.textAlign,
-        textShadow: `${settings.textShadowOffsetX}px ${settings.textShadowOffsetY}px ${settings.textShadowBlur}px ${formatColor(settings.textShadowColor)}`,
+        textShadow: `${settings.textShadowOffsetX}px ${settings.textShadowOffsetY}px ${settings.textShadowBlur}px ${safeFormatColor(settings.textShadowColor)}`,
         transition: `all ${settings.animationSpeed}ms ${settings.animationEasing}`,
         ...(settings.glowEffect
           ? {
-              filter: `drop-shadow(0 0 ${settings.glowIntensity}px ${formatColor(
+              filter: `drop-shadow(0 0 ${settings.glowIntensity}px ${safeFormatColor(
                 settings.glowColor
               )})`,
             }
           : {}),
       };
     },
-    [settings, formatColor]
+    [settings]
   );
 
   const fetchLyrics = useCallback(

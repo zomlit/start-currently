@@ -95,6 +95,30 @@ const truncateText = (
   return truncated + "...";
 };
 
+// Add this helper function at the top of the file
+const safeFormatColor = (color: any): string => {
+  if (!color) return "rgba(0, 0, 0, 1)";
+
+  // If it's a palette color object
+  if (typeof color === "object" && color !== null) {
+    if (typeof color.hex === "string") return color.hex;
+    if (
+      typeof color.r === "number" &&
+      typeof color.g === "number" &&
+      typeof color.b === "number"
+    ) {
+      return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a || 1})`;
+    }
+    return "rgba(0, 0, 0, 1)";
+  }
+
+  if (typeof color !== "string") {
+    return "rgba(0, 0, 0, 1)";
+  }
+
+  return color;
+};
+
 export const Route = createFileRoute("/_lyrics/lyrics/")({
   component: LyricsPage,
 });
@@ -335,40 +359,34 @@ function LyricsPage() {
   useEffect(() => {
     if (settings.colorSync && palette && !isPaletteLoading) {
       const backgroundColor =
-        palette.DarkMuted?.hex || settings.backgroundColor;
-      const textColor = palette.LightVibrant?.hex || settings.textColor;
+        safeFormatColor(palette.DarkMuted) || settings.backgroundColor;
+      const textColor =
+        safeFormatColor(palette.LightVibrant) || settings.textColor;
       const currentTextColor =
-        palette.Vibrant?.hex || settings.currentTextColor;
+        safeFormatColor(palette.Vibrant) || settings.currentTextColor;
 
       // Ensure text colors have enough contrast with the background
       const ensureContrast = (color: string, bgColor: string) => {
         const contrast = getContrast(color, bgColor);
         if (contrast < 4.5) {
-          // WCAG AA standard for normal text
-          return palette.LightVibrant?.hex || "#FFFFFF";
+          return safeFormatColor(palette.LightVibrant) || "#FFFFFF";
         }
         return color;
       };
 
-      const updatedTextColor = ensureContrast(textColor, backgroundColor);
-      const updatedCurrentTextColor = ensureContrast(
+      const formattedTextColor = ensureContrast(textColor, backgroundColor);
+      const formattedCurrentTextColor = ensureContrast(
         currentTextColor,
         backgroundColor
       );
 
       debouncedUpdateSettings({
         backgroundColor,
-        textColor: updatedTextColor,
-        currentTextColor: updatedCurrentTextColor,
+        textColor: formattedTextColor,
+        currentTextColor: formattedCurrentTextColor,
       });
     }
-  }, [
-    palette,
-    isPaletteLoading,
-    currentTrack,
-    settings.colorSync,
-    debouncedUpdateSettings,
-  ]);
+  }, [palette, isPaletteLoading, settings.colorSync, debouncedUpdateSettings]);
 
   // Add this function to calculate contrast ratio
   const getContrast = (foreground: string, background: string) => {
@@ -607,7 +625,7 @@ function LyricsPage() {
             style={{
               backgroundColor: settings.greenScreenMode
                 ? "#00FF00"
-                : formatColor(settings.backgroundColor),
+                : safeFormatColor(settings.backgroundColor),
               padding: `${settings.padding}px`,
             }}
           >
@@ -629,7 +647,7 @@ function LyricsPage() {
                   style={{
                     top: `${settings.padding}px`,
                     height: `${settings.fadeDistance}px`,
-                    background: `linear-gradient(to bottom, ${formatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
+                    background: `linear-gradient(to bottom, ${safeFormatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
                   }}
                 />
                 <div
@@ -637,7 +655,7 @@ function LyricsPage() {
                   style={{
                     bottom: `${settings.padding}px`,
                     height: `${settings.fadeDistance}px`,
-                    background: `linear-gradient(to top, ${formatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
+                    background: `linear-gradient(to top, ${safeFormatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
                   }}
                 />
               </>

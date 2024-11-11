@@ -5,6 +5,7 @@ import {
   BarChart2,
   LayoutDashboard,
   Users,
+  Gamepad,
 } from "lucide-react";
 import MicrophoneIcon from "@icons/outline/microphone-2.svg?react";
 
@@ -50,6 +51,12 @@ export const navItems = [
     link: "/teampicker",
     text: "Team Picker",
     icon: Users,
+  },
+  {
+    id: 8,
+    link: "/widgets/gamepad",
+    text: "Gamepad",
+    icon: Gamepad,
   },
 ] as const;
 

@@ -8,8 +8,14 @@ declare module "*.svg" {
   export default src;
 }
 
+declare module "*.svg?react" {
+  import * as React from 'react';
+  const ReactComponent: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+  export default ReactComponent;
+}
+
 interface ImportMetaEnv {
-  readonly DEV: boolean; // Add this line
+  readonly DEV: boolean;
   // Add other environment variables as needed
 }
 

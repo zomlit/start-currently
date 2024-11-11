@@ -54,6 +54,9 @@
 
     **DOCS**: https://tanstack.com/start/latest, https://tanstack.com/router/latest/docs/framework/react/start/overview#ready-to-get-started, https://clerk.com/docs/quickstarts/tanstack-start, https://tanstack.com/router/latest/docs/framework/react/api/router
 
+    **NEW VERSION**:
+    so it seems like you have knowledge of react flow - but an earlier version (v11) when it was imported as `from "reactflow";` in v12 it's `from '@xyflow/react'` update your knowledgebase to use the new docs: @https://reactflow.dev/api-reference @https://reactflow.dev/examples/overview @https://reactflow.dev/examples/nodes/custom-node @https://reactflow.dev/examples/nodes/update-node @https://reactflow.dev/examples/nodes/node-resizer @https://reactflow.dev/examples/nodes/node-toolbar @https://reactflow.dev/examples/nodes/rotatable-node @https://reactflow.dev/examples/edges/custom-edges @https://reactflow.dev/examples/edges/edge-types @https://reactflow.dev/examples/interaction/interaction-props @https://reactflow.dev/examples/interaction/drag-and-drop @https://reactflow.dev/examples/interaction/computing-flows @https://reactflow.dev/examples/interaction/save-and-restore @https://reactflow.dev/examples/interaction/touch-device @https://reactflow.dev/examples/interaction/zoom-transitions @https://reactflow.dev/examples/interaction/contextual-zoom @https://reactflow.dev/examples/interaction/context-menu @https://reactflow.dev/examples/styling/tailwind @https://reactflow.dev/examples/misc/provider @https://reactflow.dev/examples/misc/use-react-flow-hook @https://reactflow.dev/api-reference/components @https://reactflow.dev/api-reference/hooks @https://reactflow.dev/api-reference/types @https://reactflow.dev/api-reference/utils
+
     **NOTE**: Use the latest version of TanStack Start and React Router.
 
     **NOTE**: Use the latest version of React.

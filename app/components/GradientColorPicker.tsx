@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import debounce from "lodash/debounce";
-import { Profile } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 interface GradientColorPickerProps {
