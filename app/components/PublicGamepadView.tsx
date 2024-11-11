@@ -14,8 +14,9 @@ export function PublicGamepadView() {
         <GamepadViewer 
           settings={profile?.settings?.specificSettings || defaultSettings} 
           isPublicView={true}
+          username={username}
         />
       </div>
     </div>
   )
-} 
+}

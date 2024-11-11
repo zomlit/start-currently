@@ -29,6 +29,8 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
+import { useDebouncedCallback } from 'use-debounce';
+import { toast } from "@/utils/toast";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -100,7 +102,7 @@ export const lyricsSchema = z.object({
 export type LyricsSettings = z.infer<typeof lyricsSchema>;
 interface LyricsSettingsFormProps {
   settings: LyricsSettings;
-  onSettingsChange: (settings: Partial<LyricsSettings>) => void;
+  onSettingsChange: (settings: LyricsSettings) => Promise<void>;
   publicUrl: string;
   onCopyPublicUrl: (e: React.MouseEvent<HTMLButtonElement>) => void;
   fontFamilies: string[];
@@ -124,20 +126,80 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     defaultValues: settings,
   });
 
-  const handleSettingChange = (field: keyof LyricsSettings, value: any) => {
-    form.setValue(field, value);
-    onSettingsChange({ [field]: value });
+  // Add handleResetToDefaults function
+  const handleResetToDefaults = async () => {
+    try {
+      const defaultSettings = lyricsSchema.parse({});
+      form.reset(defaultSettings);
+      await onSettingsChange(defaultSettings);
+      
+      toast.success({
+        title: "Settings reset",
+        description: "All settings have been restored to their default values.",
+      });
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+      toast.error({
+        title: "Error resetting settings",
+        description: "Your settings couldn't be reset. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleResetToDefaults = () => {
-    const defaultSettings = lyricsSchema.parse({});
-    form.reset(defaultSettings);
-    onSettingsChange(defaultSettings);
+  // Debounce the settings update
+  const debouncedSettingsChange = useDebouncedCallback(
+    async (updatedSettings: LyricsSettings) => {
+      try {
+        await onSettingsChange(updatedSettings);
+        toast.success({
+          title: "Settings saved",
+          description: "Your changes have been saved successfully.",
+        });
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        toast.error({
+          title: "Error saving settings",
+          description: "Your changes couldn't be saved. Please try again.",
+        });
+      }
+    },
+    500
+  );
+
+  const handleSettingChange = async (field: keyof LyricsSettings, value: any) => {
+    const updatedSettings: LyricsSettings = {
+      ...settings,
+      [field]: value,
+    };
+    
+    // Update form state immediately
+    form.setValue(field, value);
+    
+    // Debounce the save
+    debouncedSettingsChange(updatedSettings);
+  };
+
+  // Form submission handler
+  const onSubmit = async (data: LyricsSettings) => {
+    try {
+      await onSettingsChange(data);
+      toast.success({
+        title: "Settings saved",
+        description: "Your changes have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error({
+        title: "Error saving settings",
+        description: "Your changes couldn't be saved. Please try again.",
+      });
+    }
   };
 
   return (
     <Form {...form}>
-      <form className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Accordion type="multiple" className="w-full">
           <AccordionItem value="general">
             <AccordionTrigger>General Settings</AccordionTrigger>
@@ -150,12 +212,11 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     <FormLabel>Background Color</FormLabel>
                     <GradientColorPicker
                       color={safeFormatColor(field.value)}
-                      onChange={(color) =>
-                        handleSettingChange(
-                          "backgroundColor",
-                          safeFormatColor(color)
-                        )
-                      }
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleSettingChange("backgroundColor", formattedColor);
+                      }}
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
                     />
@@ -172,9 +233,10 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       min={0}
                       max={100}
                       value={[field.value]}
-                      onValueChange={(val) =>
-                        handleSettingChange("padding", val[0])
-                      }
+                      onValueChange={(val) => {
+                        field.onChange(val[0]);
+                        handleSettingChange("padding", val[0]);
+                      }}
                     />
                   </FormItem>
                 )}
@@ -192,11 +254,12 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>Font Family</FormLabel>
                     <Select
+                      value={field.value}
                       onValueChange={(value) => {
+                        field.onChange(value);
                         handleSettingChange("fontFamily", value);
                         injectFont(value);
                       }}
-                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -247,12 +310,11 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     <FormLabel>Current Line Text Color</FormLabel>
                     <GradientColorPicker
                       color={safeFormatColor(field.value)}
-                      onChange={(color) =>
-                        handleSettingChange(
-                          "currentTextColor",
-                          safeFormatColor(color)
-                        )
-                      }
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleSettingChange("currentTextColor", formattedColor);
+                      }}
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
                     />
@@ -269,9 +331,10 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       min={10}
                       max={72}
                       value={[field.value]}
-                      onValueChange={(val) =>
-                        handleSettingChange("fontSize", val[0])
-                      }
+                      onValueChange={(val) => {
+                        field.onChange(val[0]);
+                        handleSettingChange("fontSize", val[0]);
+                      }}
                     />
                   </FormItem>
                 )}
@@ -302,10 +365,11 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>Text Alignment</FormLabel>
                     <Select
-                      onValueChange={(value) =>
-                        handleSettingChange("textAlign", value)
-                      }
                       value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleSettingChange("textAlign", value);
+                      }}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -322,7 +386,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                 )}
               />
 
-              {/* Text shadow settings moved here */}
               <FormField
                 control={form.control}
                 name="textShadowColor"
@@ -414,36 +477,15 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     <FormControl>
                       <Switch
                         checked={field.value}
-                        onCheckedChange={(value) =>
-                          handleSettingChange("greenScreenMode", value)
-                        }
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          handleSettingChange("greenScreenMode", checked);
+                        }}
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-              {/* <FormField
-                control={form.control}
-                name="colorSync"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Color Sync</FormLabel>
-                      <FormDescription>
-                        Synchronize colors with the current track
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(value) =>
-                          handleSettingChange("colorSync", value)
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              /> */}
               <FormField
                 control={form.control}
                 name="showVideoCanvas"
@@ -608,9 +650,10 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormLabel>Animation Style</FormLabel>
                       <Select
                         value={field.value}
-                        onValueChange={(value) =>
-                          handleSettingChange("animationStyle", value)
-                        }
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleSettingChange("animationStyle", value);
+                        }}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -714,15 +757,25 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
           </AccordionItem>
         </Accordion>
 
-        <Button
-          type="button"
-          onClick={handleResetToDefaults}
-          variant="outline"
-          className="w-full mt-4 ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-        >
-          <RotateCcw className="mr-2 h-4 w-4" />
-          Reset to Defaults
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            type="button"
+            onClick={handleResetToDefaults}
+            variant="outline"
+            className="w-full"
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset to Defaults
+          </Button>
+          
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={!form.formState.isDirty}
+          >
+            Save Changes
+          </Button>
+        </div>
       </form>
     </Form>
   );

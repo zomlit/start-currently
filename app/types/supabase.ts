@@ -793,6 +793,7 @@ export type Database = {
         Row: {
           colorScheme: string
           id: string
+          lyrics_settings: Json | null
           sensitivity: number
           track: Json | null
           type: string
@@ -802,6 +803,7 @@ export type Database = {
         Insert: {
           colorScheme: string
           id?: string
+          lyrics_settings?: Json | null
           sensitivity: number
           track?: Json | null
           type: string
@@ -811,6 +813,7 @@ export type Database = {
         Update: {
           colorScheme?: string
           id?: string
+          lyrics_settings?: Json | null
           sensitivity?: number
           track?: Json | null
           type?: string

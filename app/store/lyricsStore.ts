@@ -1,107 +1,114 @@
-import { create } from "zustand";
-import { persist, devtools } from "zustand/middleware";
+import { create } from 'zustand';
+import { LyricsSettings, defaultLyricsSettings } from '@/types/lyrics';
+import { supabase } from '@/utils/supabase/client';
 
-type LyricsSettings = {
-  backgroundColor: string;
-  textColor: string;
-  currentTextColor: string;
-  fontSize: number;
-  padding: number;
-  currentLineScale: number;
-  showFade: boolean;
-  lineHeight: number;
-  fontFamily: string;
-  greenScreenMode: boolean;
-  colorSync: boolean;
-  showVideoCanvas: boolean;
-  videoCanvasOpacity: number;
-  textAlign: "left" | "center" | "right";
-  textShadowColor: string;
-  textShadowAngle: number;
-  textShadowDistance: number;
-  textShadowBlur: number;
-  textShadowOpacity: number;
-  textShadowHorizontal: number;
-  textShadowVertical: number;
-  animationEasing:
-    | "linear"
-    | "easeIn"
-    | "easeOut"
-    | "easeInOut"
-    | "circIn"
-    | "circOut"
-    | "circInOut"
-    | "backIn"
-    | "backOut"
-    | "backInOut";
-  fadeDistance: number;
-  textShadowOffsetX: number;
-  textShadowOffsetY: number;
-  animationSpeed: number;
-  glowEffect: boolean;
-  glowColor: string;
-  glowIntensity: number;
-  hideExplicitContent: boolean;
-  animationStyle: "scale" | "glow" | "slide" | "fade" | "bounce";
-};
-
-const defaultSettings: LyricsSettings = {
-  backgroundColor: "rgba(0, 0, 0, 0.8)",
-  textColor: "#FFFFFF",
-  currentTextColor: "#FFD700",
-  fontSize: 24,
-  padding: 20,
-  currentLineScale: 1.2,
-  showFade: true,
-  lineHeight: 1.5,
-  fontFamily: "Sofia Sans Condensed",
-  greenScreenMode: false,
-  colorSync: false,
-  showVideoCanvas: false,
-  videoCanvasOpacity: 0.2,
-  textAlign: "center",
-  textShadowColor: "rgba(0, 0, 0, 0.5)",
-  textShadowAngle: 45,
-  textShadowDistance: 5,
-  textShadowBlur: 2,
-  textShadowOpacity: 0.5,
-  textShadowHorizontal: 3.54,
-  textShadowVertical: 3.54,
-  animationEasing: "easeOut",
-  fadeDistance: 64,
-  textShadowOffsetX: 1,
-  textShadowOffsetY: 1,
-  animationSpeed: 300,
-  glowEffect: false,
-  glowColor: "#FFFFFF",
-  glowIntensity: 5,
-  hideExplicitContent: false,
-  animationStyle: "scale",
-};
-
-type LyricsStore = {
+interface LyricsStore {
   settings: LyricsSettings;
-  updateSettings: (newSettings: Partial<LyricsSettings>) => void;
-  resetSettings: () => void;
-};
+  updateSettings: (newSettings: Partial<LyricsSettings>, userId: string) => Promise<void>;
+  loadPublicSettings: (username: string, settings?: Partial<LyricsSettings>) => Promise<void>;
+}
 
-export const useLyricsStore = create<LyricsStore>()(
-  persist(
-    devtools(
-      (set) => ({
-        settings: defaultSettings,
-        updateSettings: (newSettings) =>
-          set((state) => ({
-            settings: { ...state.settings, ...newSettings },
-          })),
-        resetSettings: () => set({ settings: defaultSettings }),
-      }),
-      {
-        name: "lyrics-settings-storage",
-      }
-    ),
-    {
-      name: "lyrics-settings-storage",
+export const useLyricsStore = create<LyricsStore>((set) => ({
+  settings: defaultLyricsSettings,
+  
+  updateSettings: async (newSettings: Partial<LyricsSettings>, userId: string) => {
+    try {
+      if (!userId) throw new Error('No user ID provided');
+
+      const mergedSettings = {
+        ...defaultLyricsSettings,
+        ...newSettings,
+      };
+
+      const { error } = await supabase
+        .from('VisualizerWidget')
+        .upsert({
+          user_id: userId,
+          type: 'lyrics',
+          sensitivity: 1.0,
+          colorScheme: 'default',
+          visualization: 'bars',
+          lyrics_settings: mergedSettings
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        });
+
+      if (error) throw error;
+
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          ...mergedSettings
+        }
+      }));
+
+    } catch (error) {
+      console.error('Error in updateSettings:', error);
+      throw error;
     }
-  )
-);
+  },
+
+  loadPublicSettings: async (username: string, settings?: Partial<LyricsSettings>) => {
+    try {
+      // If settings are provided directly, use them
+      if (settings) {
+        set({ 
+          settings: {
+            ...defaultLyricsSettings,
+            ...settings
+          }
+        });
+        return;
+      }
+
+      // Otherwise fetch from database
+      const { data: profileData, error: profileError } = await supabase
+        .from('UserProfile')
+        .select('user_id')
+        .eq('username', username)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Then get the lyrics_settings from VisualizerWidget
+      const { data: visualizerData, error: visualizerError } = await supabase
+        .from('VisualizerWidget')
+        .select('lyrics_settings')
+        .eq('user_id', profileData.user_id)
+        .single();
+
+      if (visualizerError) {
+        console.error('Error fetching settings:', visualizerError);
+        set({ settings: defaultLyricsSettings });
+        return;
+      }
+
+      // Safely parse the settings if they're a string
+      let parsedSettings = visualizerData?.lyrics_settings;
+      if (typeof parsedSettings === 'string') {
+        try {
+          parsedSettings = JSON.parse(parsedSettings);
+        } catch (e) {
+          console.error('Error parsing settings:', e);
+          parsedSettings = defaultLyricsSettings;
+        }
+      }
+
+      if (parsedSettings) {
+        set({ 
+          settings: {
+            ...defaultLyricsSettings,
+            ...parsedSettings
+          }
+        });
+      } else {
+        set({ settings: defaultLyricsSettings });
+      }
+
+    } catch (error) {
+      console.error('Error loading public settings:', error);
+      set({ settings: defaultLyricsSettings });
+    }
+  }
+}));

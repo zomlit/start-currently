@@ -13,7 +13,6 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
-import { Route as gamepadImport } from './routes/@gamepad'
 import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppWidgetsImport } from './routes/_app/widgets'
@@ -55,12 +54,6 @@ const LyricsRoute = LyricsImport.update({
 
 const AppRoute = AppImport.update({
   id: '/_app',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const gamepadRoute = gamepadImport.update({
-  id: '/@gamepad',
-  path: '/@gamepad',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -259,13 +252,6 @@ declare module '@tanstack/react-router' {
       path: '/$username'
       fullPath: '/$username'
       preLoaderRoute: typeof UsernameImport
-      parentRoute: typeof rootRoute
-    }
-    '/@gamepad': {
-      id: '/@gamepad'
-      path: '/@gamepad'
-      fullPath: '/@gamepad'
-      preLoaderRoute: typeof gamepadImport
       parentRoute: typeof rootRoute
     }
     '/_app': {
@@ -616,7 +602,6 @@ const LyricsRouteWithChildren =
 
 export interface FileRoutesByFullPath {
   '/$username': typeof UsernameRouteWithChildren
-  '/@gamepad': typeof gamepadRoute
   '': typeof AppAuthedRouteWithChildren
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
@@ -651,7 +636,6 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/$username': typeof UsernameRouteWithChildren
-  '/@gamepad': typeof gamepadRoute
   '': typeof AppAuthedRouteWithChildren
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
@@ -686,7 +670,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/$username': typeof UsernameRouteWithChildren
-  '/@gamepad': typeof gamepadRoute
   '/_app': typeof AppRouteWithChildren
   '/_lyrics': typeof LyricsRouteWithChildren
   '/$username/gamepad': typeof UsernameGamepadRoute
@@ -725,7 +708,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/$username'
-    | '/@gamepad'
     | ''
     | '/$username/gamepad'
     | '/$username/lyrics'
@@ -759,7 +741,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/$username'
-    | '/@gamepad'
     | ''
     | '/$username/gamepad'
     | '/$username/lyrics'
@@ -792,7 +773,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/$username'
-    | '/@gamepad'
     | '/_app'
     | '/_lyrics'
     | '/$username/gamepad'
@@ -830,14 +810,12 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   UsernameRoute: typeof UsernameRouteWithChildren
-  gamepadRoute: typeof gamepadRoute
   AppRoute: typeof AppRouteWithChildren
   LyricsRoute: typeof LyricsRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
   UsernameRoute: UsernameRouteWithChildren,
-  gamepadRoute: gamepadRoute,
   AppRoute: AppRouteWithChildren,
   LyricsRoute: LyricsRouteWithChildren,
 }
@@ -853,7 +831,6 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/$username",
-        "/@gamepad",
         "/_app",
         "/_lyrics"
       ]
@@ -865,9 +842,6 @@ export const routeTree = rootRoute
         "/$username/lyrics",
         "/$username/overlay"
       ]
-    },
-    "/@gamepad": {
-      "filePath": "@gamepad.tsx"
     },
     "/_app": {
       "filePath": "_app.tsx",

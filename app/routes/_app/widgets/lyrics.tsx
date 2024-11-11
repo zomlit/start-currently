@@ -22,6 +22,7 @@ import { SpotifyKeysDialog } from "@/components/SpotifyKeysDialog";
 import _ from "lodash";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
+import { LyricsSettings } from "@/types/lyrics";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: LyricsSection,
@@ -102,6 +103,7 @@ function LyricsSection() {
   const [publicUrl, setPublicUrl] = useState("");
   const [mockTime, setMockTime] = useState(0);
   const [hideExampleLyrics, setHideExampleLyrics] = useState(true);
+  const [isVideoAvailable, setIsVideoAvailable] = useState(false);
 
   const {
     track,
@@ -177,13 +179,6 @@ function LyricsSection() {
       }
     },
     [user?.username]
-  );
-
-  const handleSettingChange = useCallback(
-    (newSettings: Partial<typeof settings>) => {
-      updateSettings(newSettings);
-    },
-    [updateSettings]
   );
 
   // Add this mock elapsed time for placeholder lyrics
@@ -484,6 +479,16 @@ function LyricsSection() {
     ]
   );
 
+  // Create a wrapped version of updateSettings that includes the user ID
+  const handleSettingsUpdate = useCallback(
+    async (newSettings: Partial<LyricsSettings>) => {
+      if (!user?.id) throw new Error('No user found');
+      return updateSettings(newSettings, user.id);
+    },
+    [user?.id, updateSettings]
+  );
+
+  // Pass the wrapped version to LyricsSettingsForm
   const LyricsSettings = (
     <div className="flex flex-col h-full max-h-screen">
       {isLyricsLoading ? (
@@ -515,52 +520,27 @@ function LyricsSection() {
             </div>
           </div>
 
-          {/* Settings content */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="p-6 space-y-6">
-              {!lyrics?.length && (
-                <div className="flex items-center justify-between mb-6 pb-6 border-b">
-                  <div className="space-y-0.5">
-                    <h2 className="text-lg font-medium">Example Lyrics</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Show or hide example lyrics when no song is playing
-                    </p>
-                  </div>
-                  <Switch
-                    checked={!hideExampleLyrics}
-                    onCheckedChange={(checked) =>
-                      setHideExampleLyrics(!checked)
-                    }
-                  />
-                </div>
-              )}
-              <LyricsSettingsForm
-                settings={settings}
-                onSettingsChange={handleSettingChange}
-                publicUrl={publicUrl}
-                onCopyPublicUrl={handleCopyPublicUrl}
-                fontFamilies={fontFamilies}
-                isFontLoading={isFontLoading}
-                injectFont={injectFont}
-                isVideoAvailable={!!videoLink}
-              />
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex-none p-6 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <Button
-              onClick={() => setIsSpotifyTokenDialogOpen(true)}
-              variant="outline"
-              className="w-full"
-            >
-              {isTokenSet ? "Update" : "Add"} Spotify Lyrics Token
-            </Button>
+          <div className="flex-1 overflow-y-auto">
+            <LyricsSettingsForm
+              settings={settings}
+              onSettingsChange={handleSettingsUpdate}
+              publicUrl={publicUrl}
+              onCopyPublicUrl={handleCopyPublicUrl}
+              fontFamilies={fontFamilies}
+              isFontLoading={isFontLoading}
+              injectFont={injectFont}
+              isVideoAvailable={isVideoAvailable}
+            />
           </div>
         </>
       )}
     </div>
   );
+
+  // Add this effect to check video availability when videoLink changes
+  useEffect(() => {
+    setIsVideoAvailable(!!videoLink);
+  }, [videoLink]);
 
   return (
     <div className="h-screen overflow-hidden">

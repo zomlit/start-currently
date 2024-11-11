@@ -1,10 +1,13 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams } from "@tanstack/react-router";
 import { supabase } from "@/utils/supabase/client";
 import { SpotifyTrack } from "@/types/spotify";
 import { Spinner } from "@/components/ui/spinner";
 import { useLyricsStore } from "@/store/lyricsStore";
 import { profanity } from "@2toad/profanity";
+import { defaultLyricsSettings } from "@/routes/_lyrics/lyrics.index";
+import { Loader2 } from "lucide-react";
+import { LyricsDisplay } from "@/components/lyrics/LyricsDisplay";
 
 // Utility functions
 const formatColor = (color: string) => {
@@ -48,18 +51,19 @@ const truncateText = (
 export function PublicLyricsPage() {
   const { username } = useParams({ from: "/$username/lyrics" });
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
-  const [lyrics, setLyrics] = useState<
-    { startTimeMs: number; words: string }[] | null
-  >(null);
+  const [lyrics, setLyrics] = useState<{ startTimeMs: number; words: string }[] | null>(null);
   const [isLyricsLoading, setIsLyricsLoading] = useState(false);
   const [noLyricsAvailable, setNoLyricsAvailable] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const lyricsRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [loadedFonts, setLoadedFonts] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
+  const { settings, loadPublicSettings } = useLyricsStore();
+  const [currentLyrics, setCurrentLyrics] = useState<string[]>([]);
+  const [currentLine, setCurrentLine] = useState(0);
 
-  const { settings } = useLyricsStore();
-
+  // Font injection callback
   const injectFont = useCallback(
     (fontFamily: string) => {
       if (!loadedFonts.has(fontFamily)) {
@@ -73,12 +77,30 @@ export function PublicLyricsPage() {
     [loadedFonts]
   );
 
+  // Settings loading effect
+  useEffect(() => {
+    async function loadUserAndSettings() {
+      if (!username) return;
+      try {
+        await loadPublicSettings(username);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    }
+
+    loadUserAndSettings();
+  }, [username, loadPublicSettings]);
+
+  // Add font effect
   useEffect(() => {
     if (settings.fontFamily) {
       injectFont(settings.fontFamily);
     }
   }, [settings.fontFamily, injectFont]);
 
+  // Add user ID and subscription effect
   useEffect(() => {
     const fetchUserIdAndSubscribe = async () => {
       try {
@@ -104,12 +126,14 @@ export function PublicLyricsPage() {
             },
             (payload: any) => {
               const { new: newData } = payload;
-              if (newData && newData.track) {
-                const trackData =
-                  typeof newData.track === "string"
-                    ? JSON.parse(newData.track)
-                    : newData.track;
+              if (newData?.track) {
+                const trackData = typeof newData.track === "string"
+                  ? JSON.parse(newData.track)
+                  : newData.track;
                 setCurrentTrack(trackData);
+              }
+              if (newData?.lyrics_settings) {
+                loadPublicSettings(username, newData.lyrics_settings);
               }
             }
           )
@@ -124,8 +148,9 @@ export function PublicLyricsPage() {
     };
 
     fetchUserIdAndSubscribe();
-  }, [username]);
+  }, [username, loadPublicSettings]);
 
+  // Add lyrics fetching effect
   useEffect(() => {
     const fetchLyrics = async (trackId: string) => {
       setIsLyricsLoading(true);
@@ -135,7 +160,7 @@ export function PublicLyricsPage() {
           `${import.meta.env.VITE_ELYSIA_API_URL}/lyrics/${trackId}`,
           {
             headers: {
-              "X-User-ID": userId || "", // Send the user ID in the header
+              "X-User-ID": userId || "",
             },
           }
         );
@@ -144,11 +169,7 @@ export function PublicLyricsPage() {
         }
         const data = await response.json();
 
-        if (
-          data.lyrics &&
-          Array.isArray(data.lyrics.lines) &&
-          data.lyrics.lines.length > 0
-        ) {
+        if (data.lyrics?.lines?.length > 0) {
           setLyrics(data.lyrics.lines);
         } else {
           setNoLyricsAvailable(true);
@@ -171,101 +192,135 @@ export function PublicLyricsPage() {
     }
   }, [currentTrack?.id, userId]);
 
+  // Optimize scrolling with debounce
+  const scrollToCurrentLyric = useCallback(() => {
+    if (!lyrics || !currentTrack || !lyricsRef.current) return;
+
+    const currentTime = currentTrack.elapsed || 0;
+    const currentLineIndex = lyrics.findIndex(
+      (line, index, arr) =>
+        currentTime >= line.startTimeMs &&
+        (index === arr.length - 1 || currentTime < arr[index + 1].startTimeMs)
+    );
+
+    if (currentLineIndex === -1 || !lyricsRef.current) return;
+
+    const lyricsContainer = lyricsRef.current;
+    const currentLineElement = lyricsContainer.children[currentLineIndex + 1] as HTMLElement;
+
+    if (!currentLineElement) return;
+
+    const containerHeight = lyricsContainer.clientHeight;
+    const lineHeight = currentLineElement.clientHeight;
+    const scrollPosition = currentLineElement.offsetTop - containerHeight / 2 + lineHeight / 2;
+
+    // Use requestAnimationFrame for smooth scrolling
+    requestAnimationFrame(() => {
+      lyricsContainer.scrollTo({
+        top: scrollPosition,
+        behavior: "smooth",
+      });
+    });
+  }, [lyrics, currentTrack]);
+
+  // Optimize lyrics scrolling effect
+  useEffect(() => {
+    if (!lyrics || !currentTrack) return;
+
+    const intervalId = setInterval(scrollToCurrentLyric, 250); // Reduced from 100ms to 250ms
+    return () => clearInterval(intervalId);
+  }, [lyrics, currentTrack, scrollToCurrentLyric]);
+
+  // Optimize container width updates
   useEffect(() => {
     const updateContainerWidth = () => {
-      if (lyricsRef.current) {
-        setContainerWidth(lyricsRef.current.offsetWidth);
-      }
+      if (!lyricsRef.current) return;
+      
+      requestAnimationFrame(() => {
+        setContainerWidth(lyricsRef.current?.offsetWidth || 0);
+      });
     };
 
     updateContainerWidth();
-    window.addEventListener("resize", updateContainerWidth);
 
-    return () => window.removeEventListener("resize", updateContainerWidth);
+    // Debounce resize handler
+    let timeoutId: NodeJS.Timeout;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateContainerWidth, 250);
+    };
+
+    window.addEventListener("resize", debouncedResize);
+    return () => {
+      window.removeEventListener("resize", debouncedResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
-  useEffect(() => {
-    if (lyrics && currentTrack && lyricsRef.current) {
-      const scrollToCurrentLyric = () => {
-        const currentTime = currentTrack.elapsed || 0;
-        const currentLineIndex = lyrics.findIndex(
-          (line, index, arr) =>
-            currentTime >= line.startTimeMs &&
-            (index === arr.length - 1 ||
-              currentTime < arr[index + 1].startTimeMs)
-        );
-
-        if (currentLineIndex !== -1 && lyricsRef.current) {
-          const lyricsContainer = lyricsRef.current;
-          const currentLineElement = lyricsContainer.children[
-            currentLineIndex + 1
-          ] as HTMLElement;
-
-          if (currentLineElement) {
-            const containerHeight = lyricsContainer.clientHeight;
-            const lineHeight = currentLineElement.clientHeight;
-
-            const scrollPosition =
-              currentLineElement.offsetTop -
-              containerHeight / 2 +
-              lineHeight / 2;
-
-            lyricsContainer.scrollTo({
-              top: scrollPosition,
-              behavior: "smooth",
-            });
-          }
-        }
-      };
-
-      const intervalId = setInterval(scrollToCurrentLyric, 100);
-
-      return () => clearInterval(intervalId);
-    }
-  }, [lyrics, currentTrack]);
-
-  const getTextStyle = (isCurrentLine: boolean) => ({
-    color: formatColor(
-      isCurrentLine ? settings.currentTextColor : settings.textColor
-    ),
-    fontSize: `${
-      isCurrentLine
-        ? settings.fontSize * settings.currentLineScale
-        : settings.fontSize
-    }px`,
+  // Memoize text style calculation
+  const getTextStyle = useCallback((isCurrentLine: boolean) => ({
+    color: formatColor(isCurrentLine ? settings.currentTextColor : settings.textColor),
+    fontSize: `${isCurrentLine ? settings.fontSize * settings.currentLineScale : settings.fontSize}px`,
     fontWeight: isCurrentLine ? "bold" : "normal",
-    transform: isCurrentLine
-      ? `scale(${settings.currentLineScale})`
-      : "scale(1)",
-    transformOrigin:
-      settings.textAlign === "left"
-        ? "left center"
-        : settings.textAlign === "right"
-          ? "right center"
-          : "center center",
+    transform: isCurrentLine ? `scale(${settings.currentLineScale})` : "scale(1)",
+    transformOrigin: settings.textAlign === "left" ? "left center" : 
+                    settings.textAlign === "right" ? "right center" : "center center",
     lineHeight: settings.lineHeight,
     textAlign: settings.textAlign,
-    textShadow: `${settings.textShadowOffsetX}px ${settings.textShadowOffsetY}px ${settings.textShadowBlur}px ${formatColor(
-      settings.textShadowColor
-    )}`,
+    textShadow: `${settings.textShadowOffsetX}px ${settings.textShadowOffsetY}px ${settings.textShadowBlur}px ${formatColor(settings.textShadowColor)}`,
     transition: `all ${settings.animationSpeed}ms ${settings.animationEasing}`,
-    ...(settings.glowEffect
-      ? {
-          filter: `drop-shadow(0 0 ${settings.glowIntensity}px ${formatColor(
-            settings.glowColor
-          )})`,
-        }
-      : {}),
+    ...(settings.glowEffect ? {
+      filter: `drop-shadow(0 0 ${settings.glowIntensity}px ${formatColor(settings.glowColor)})`
+    } : {}),
     fontFamily: `'${settings.fontFamily}', sans-serif`,
-  });
+  }), [settings]);
+
+  // Memoize lyrics rendering
+  const renderedLyrics = useMemo(() => {
+    if (!lyrics || !lyrics.length) return null;
+
+    return lyrics.map((line, index, arr) => {
+      const isCurrentLine =
+        (currentTrack?.elapsed || 0) >= line.startTimeMs - 1000 &&
+        (index === arr.length - 1 ||
+          (currentTrack?.elapsed || 0) < arr[index + 1].startTimeMs - 1000);
+
+      const displayedText = settings.hideExplicitContent
+        ? censorExplicitContent(line.words)
+        : line.words;
+
+      const truncatedText = truncateText(
+        displayedText,
+        containerWidth - settings.padding * 2,
+        isCurrentLine ? settings.fontSize * settings.currentLineScale : settings.fontSize,
+        settings.fontFamily
+      );
+
+      return (
+        <p
+          key={index}
+          className="transition-all duration-300"
+          style={getTextStyle(isCurrentLine)}
+        >
+          {truncatedText}
+        </p>
+      );
+    });
+  }, [lyrics, currentTrack?.elapsed, settings, containerWidth, getTextStyle]);
+
+  if (isLoadingSettings) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spinner className="w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
     <div
       className="h-screen w-full overflow-hidden"
       style={{
-        backgroundColor: settings.greenScreenMode
-          ? "#00FF00"
-          : formatColor(settings.backgroundColor),
+        backgroundColor: settings.greenScreenMode ? "#00FF00" : formatColor(settings.backgroundColor),
         padding: `${settings.padding}px`,
       }}
     >
@@ -276,9 +331,7 @@ export function PublicLyricsPage() {
             style={{
               top: `${settings.padding}px`,
               height: `${settings.fadeDistance}px`,
-              background: `linear-gradient(to bottom, ${formatColor(
-                settings.backgroundColor
-              )}, rgba(0,0,0,0))`,
+              background: `linear-gradient(to bottom, ${formatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
             }}
           />
           <div
@@ -286,9 +339,7 @@ export function PublicLyricsPage() {
             style={{
               bottom: `${settings.padding}px`,
               height: `${settings.fadeDistance}px`,
-              background: `linear-gradient(to top, ${formatColor(
-                settings.backgroundColor
-              )}, rgba(0,0,0,0))`,
+              background: `linear-gradient(to top, ${formatColor(settings.backgroundColor)}, rgba(0,0,0,0))`,
             }}
           />
         </>
@@ -311,36 +362,7 @@ export function PublicLyricsPage() {
         ) : lyrics && lyrics.length > 0 ? (
           <>
             <div style={{ height: "50vh" }}></div>
-            {lyrics.map((line, index, arr) => {
-              const isCurrentLine =
-                (currentTrack?.elapsed || 0) >= line.startTimeMs - 1000 &&
-                (index === arr.length - 1 ||
-                  (currentTrack?.elapsed || 0) <
-                    arr[index + 1].startTimeMs - 1000);
-
-              const displayedText = settings.hideExplicitContent
-                ? censorExplicitContent(line.words)
-                : line.words;
-
-              const truncatedText = truncateText(
-                displayedText,
-                containerWidth - settings.padding * 2,
-                isCurrentLine
-                  ? settings.fontSize * settings.currentLineScale
-                  : settings.fontSize,
-                settings.fontFamily
-              );
-
-              return (
-                <p
-                  key={index}
-                  className="transition-all duration-300"
-                  style={getTextStyle(isCurrentLine)}
-                >
-                  {truncatedText}
-                </p>
-              );
-            })}
+            {renderedLyrics}
             <div style={{ height: "50vh" }}></div>
           </>
         ) : null}
