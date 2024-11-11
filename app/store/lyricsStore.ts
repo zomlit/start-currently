@@ -23,7 +23,17 @@ type LyricsSettings = {
   textShadowOpacity: number;
   textShadowHorizontal: number;
   textShadowVertical: number;
-  animationEasing: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out";
+  animationEasing:
+    | "linear"
+    | "easeIn"
+    | "easeOut"
+    | "easeInOut"
+    | "circIn"
+    | "circOut"
+    | "circInOut"
+    | "backIn"
+    | "backOut"
+    | "backInOut";
   fadeDistance: number;
   textShadowOffsetX: number;
   textShadowOffsetY: number;
@@ -32,6 +42,7 @@ type LyricsSettings = {
   glowColor: string;
   glowIntensity: number;
   hideExplicitContent: boolean;
+  animationStyle: "scale" | "glow" | "slide" | "fade" | "bounce";
 };
 
 const defaultSettings: LyricsSettings = {
@@ -56,7 +67,7 @@ const defaultSettings: LyricsSettings = {
   textShadowOpacity: 0.5,
   textShadowHorizontal: 3.54,
   textShadowVertical: 3.54,
-  animationEasing: "ease-out",
+  animationEasing: "easeOut",
   fadeDistance: 64,
   textShadowOffsetX: 1,
   textShadowOffsetY: 1,
@@ -65,6 +76,7 @@ const defaultSettings: LyricsSettings = {
   glowColor: "#FFFFFF",
   glowIntensity: 5,
   hideExplicitContent: false,
+  animationStyle: "scale",
 };
 
 type LyricsStore = {
