@@ -23,6 +23,7 @@ import _ from "lodash";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { LyricsSettings } from "@/types/lyrics";
+import { supabase, createRealtimeChannel } from "@/utils/supabase/client";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: LyricsSection,
@@ -106,7 +107,7 @@ function LyricsSection() {
   const [isVideoAvailable, setIsVideoAvailable] = useState(false);
 
   const {
-    track,
+    track: currentTrack,
     lyrics,
     isLyricsLoading,
     noLyricsAvailable,
@@ -120,7 +121,7 @@ function LyricsSection() {
     settings,
   });
 
-  const videoLink = useBackgroundVideo(track?.id);
+  const videoLink = useBackgroundVideo(currentTrack?.id);
 
   // Throttle container width updates more aggressively
   useEffect(() => {
@@ -188,8 +189,8 @@ function LyricsSection() {
         elapsed: mockTime,
       };
     }
-    return track;
-  }, [track, lyrics, isLyricsLoading, mockTime]);
+    return currentTrack;
+  }, [currentTrack, lyrics, isLyricsLoading, mockTime]);
 
   // Add this effect to handle the mock timing animation
   useEffect(() => {
@@ -216,7 +217,7 @@ function LyricsSection() {
     (lyricsToRender: typeof lyrics, isPlaceholder = false) => {
       if (!lyricsToRender) return null;
 
-      const currentTime = isPlaceholder ? mockTime : track?.elapsed || 0;
+      const currentTime = isPlaceholder ? mockTime : currentTrack?.elapsed || 0;
       const currentLineIndex = lyricsToRender.findIndex((line, index, arr) => {
         const nextLine = arr[index + 1];
         return (
@@ -259,7 +260,7 @@ function LyricsSection() {
       });
     },
     [
-      track?.elapsed,
+      currentTrack?.elapsed,
       mockTime,
       settings.hideExplicitContent,
       settings.animationStyle,
@@ -287,7 +288,7 @@ function LyricsSection() {
         return;
       }
 
-      const currentTime = isPlaceholder ? mockTime : track?.elapsed || 0;
+      const currentTime = isPlaceholder ? mockTime : currentTrack?.elapsed || 0;
       const currentLineIndex = lyricsToUse.findIndex(
         (line, index) =>
           currentTime >= line.startTimeMs &&
@@ -324,7 +325,7 @@ function LyricsSection() {
 
     frameId = requestAnimationFrame(scrollToCurrentLyric);
     return () => cancelAnimationFrame(frameId);
-  }, [lyrics, track?.elapsed, mockTime]);
+  }, [lyrics, currentTrack?.elapsed, mockTime]);
 
   // Add font loading logic
   const [fontFamilies, setFontFamilies] = useState<string[]>([]);
@@ -541,6 +542,75 @@ function LyricsSection() {
   useEffect(() => {
     setIsVideoAvailable(!!videoLink);
   }, [videoLink]);
+
+  // Load settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from('VisualizerWidget')
+          .select('lyrics_settings')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.lyrics_settings) {
+          await updateSettings(data.lyrics_settings, user.id);
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+
+    loadSettings();
+  }, [user?.id, updateSettings]);
+
+  // Update broadcast function
+  const broadcastLyrics = useCallback(async (lyrics: any[], currentLine: number) => {
+    if (!user?.username) return;
+
+    try {
+      const channel = createRealtimeChannel(`lyrics:${user.username}`);
+      await channel.subscribe();
+      
+      // Broadcast current lyrics
+      await channel.send({
+        type: 'broadcast',
+        event: 'lyrics',
+        payload: { lyrics }
+      });
+
+      // Broadcast current line
+      await channel.send({
+        type: 'broadcast',
+        event: 'currentLine',
+        payload: { currentLine }
+      });
+
+      // Clean up channel after broadcast
+      await supabase.removeChannel(channel);
+    } catch (error) {
+      console.error('Error broadcasting lyrics:', error);
+    }
+  }, [user?.username]);
+
+  // Add effect to broadcast lyrics changes
+  useEffect(() => {
+    if (!lyrics || !user?.username || !currentTrack) return;
+    
+    const currentLineIndex = lyrics.findIndex(
+      (line, index, arr) =>
+        (currentTrack.elapsed || 0) >= line.startTimeMs &&
+        (index === arr.length - 1 || (currentTrack.elapsed || 0) < arr[index + 1].startTimeMs)
+    );
+
+    broadcastLyrics(
+      lyrics.map(line => line.words),
+      currentLineIndex
+    );
+  }, [lyrics, currentTrack?.elapsed, user?.username, broadcastLyrics, currentTrack]);
 
   return (
     <div className="h-screen overflow-hidden">
