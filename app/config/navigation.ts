@@ -11,6 +11,12 @@ import MicrophoneIcon from "@icons/outline/microphone-2.svg?react";
 
 export const navItems = [
   {
+    id: "dashboard",
+    text: "Dashboard",
+    link: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
     id: 1,
     link: "/widgets/visualizer",
     text: "Visualizer",
@@ -42,18 +48,12 @@ export const navItems = [
   },
   {
     id: 6,
-    link: "/dashboard",
-    text: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    id: 7,
     link: "/teampicker",
     text: "Team Picker",
     icon: Users,
   },
   {
-    id: 8,
+    id: 7,
     link: "/widgets/gamepad",
     text: "Gamepad",
     icon: Gamepad,
