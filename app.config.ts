@@ -9,6 +9,9 @@ export default defineConfig({
   server: { preset: "node-server" },
   vite: {
     build: {
+      cache: {
+        dir: ".vinxi/cache",
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
@@ -37,5 +40,9 @@ export default defineConfig({
       }),
       react(),
     ],
+    optimizeDeps: {
+      include: ["react", "react-dom"],
+      exclude: ["@tanstack/react-router"],
+    },
   },
 });
