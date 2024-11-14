@@ -297,6 +297,7 @@ export type Database = {
       }
       GamepadWidget: {
         Row: {
+          gamepad_settings: Json | null
           id: string
           layout: Json
           showPressedButtons: boolean
@@ -304,6 +305,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          gamepad_settings?: Json | null
           id?: string
           layout: Json
           showPressedButtons: boolean
@@ -311,6 +313,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          gamepad_settings?: Json | null
           id?: string
           layout?: Json
           showPressedButtons?: boolean

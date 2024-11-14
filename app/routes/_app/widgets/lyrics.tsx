@@ -283,7 +283,6 @@ function LyricsSection() {
     const scrollToCurrentLyric = () => {
       const now = performance.now();
       if (now - lastScrollTime < 100) {
-        // Limit to 10 updates per second
         frameId = requestAnimationFrame(scrollToCurrentLyric);
         return;
       }
@@ -301,19 +300,22 @@ function LyricsSection() {
         return;
       }
 
-      const currentLineElement = lyricsContainer.children[
-        currentLineIndex + 1
-      ] as HTMLElement;
+      // Get all lyric elements (p tags)
+      const lyricElements = Array.from(lyricsContainer.querySelectorAll("p"));
+      const currentLineElement = lyricElements[currentLineIndex];
 
       if (currentLineElement) {
         const containerHeight = lyricsContainer.clientHeight;
-        const scrollPosition = Math.max(
-          0,
-          currentLineElement.offsetTop - containerHeight / 2
-        );
+        const lineHeight = currentLineElement.offsetHeight;
+        const lineTop = currentLineElement.offsetTop;
 
+        // Calculate the target scroll position to keep the current line centered
+        const targetScrollPosition =
+          lineTop - containerHeight / 2 + lineHeight / 2;
+
+        // Apply the scroll with smooth behavior
         lyricsContainer.scrollTo({
-          top: scrollPosition,
+          top: Math.max(0, targetScrollPosition),
           behavior: "smooth",
         });
 
@@ -422,7 +424,7 @@ function LyricsSection() {
   const LyricsPreview = useMemo(
     () => (
       <div
-        className="h-full w-full overflow-hidden relative"
+        className="h-full w-full relative"
         style={{
           backgroundColor: settings.greenScreenMode
             ? "#00FF00"
@@ -434,37 +436,28 @@ function LyricsSection() {
         {FadeOverlay}
         <div
           ref={lyricsContainerRef}
-          className="h-full w-full overflow-y-auto scrollbar-hide relative z-20 flex flex-col"
+          className="h-screen w-full overflow-y-auto scrollbar-hide relative z-20"
           style={{
             fontFamily: `'${settings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
             scrollBehavior: "smooth",
             transition: `all ${settings.animationSpeed}ms ${settings.animationEasing}`,
           }}
         >
-          {isLyricsLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center space-y-4">
+          <div className="text-center">
+            {isLyricsLoading ? (
+              <div className="flex items-center justify-center h-full">
                 <Spinner className="w-[30px] h-[30px]" />
-                <p className="text-muted-foreground">Loading lyrics...</p>
               </div>
-            </div>
-          ) : lyrics?.length ? (
-            <>
-              <div className="flex-1 min-h-[50vh]" />
-              {renderLyrics(lyrics, false)}
-              <div className="flex-1 min-h-[50vh]" />
-            </>
-          ) : !hideExampleLyrics ? (
-            <>
-              <div className="flex-1 min-h-[50vh]" />
-              {renderLyrics(PLACEHOLDER_LYRICS, true)}
-              <div className="flex-1 min-h-[50vh]" />
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full text-center text-muted-foreground">
-              <p>Play a song on Spotify to see lyrics</p>
-            </div>
-          )}
+            ) : lyrics?.length ? (
+              renderLyrics(lyrics, false)
+            ) : !hideExampleLyrics ? (
+              renderLyrics(PLACEHOLDER_LYRICS, true)
+            ) : (
+              <p className="text-muted-foreground">
+                Play a song on Spotify to see lyrics
+              </p>
+            )}
+          </div>
         </div>
       </div>
     ),
@@ -483,7 +476,7 @@ function LyricsSection() {
   // Create a wrapped version of updateSettings that includes the user ID
   const handleSettingsUpdate = useCallback(
     async (newSettings: Partial<LyricsSettings>) => {
-      if (!user?.id) throw new Error('No user found');
+      if (!user?.id) throw new Error("No user found");
       return updateSettings(newSettings, user.id);
     },
     [user?.id, updateSettings]
@@ -491,7 +484,7 @@ function LyricsSection() {
 
   // Pass the wrapped version to LyricsSettingsForm
   const LyricsSettings = (
-    <div className="flex flex-col h-full max-h-screen">
+    <div className="flex flex-col">
       {isLyricsLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
@@ -502,7 +495,7 @@ function LyricsSection() {
       ) : (
         <>
           {/* Header with URL input */}
-          <div className="flex-none p-6 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center space-x-2">
               <Input
                 key={publicUrl}
@@ -549,9 +542,9 @@ function LyricsSection() {
       if (!user?.id) return;
       try {
         const { data, error } = await supabase
-          .from('VisualizerWidget')
-          .select('lyrics_settings')
-          .eq('user_id', user.id)
+          .from("VisualizerWidget")
+          .select("lyrics_settings")
+          .eq("user_id", user.id)
           .single();
 
         if (error) throw error;
@@ -560,7 +553,7 @@ function LyricsSection() {
           await updateSettings(data.lyrics_settings, user.id);
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error("Error loading settings:", error);
       }
     }
 
@@ -568,48 +561,56 @@ function LyricsSection() {
   }, [user?.id, updateSettings]);
 
   // Add broadcast function
-  const broadcastLyrics = useCallback(async (lyrics: any[], currentLine: number) => {
-    if (!user?.username) return;
+  const broadcastLyrics = useCallback(
+    async (lyrics: any[], currentLine: number) => {
+      if (!user?.username) return;
 
-    const channel = supabase.channel(`lyrics:${user.username}`);
-    
-    await channel
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
+      const channel = supabase.channel(`lyrics:${user.username}`);
+
+      await channel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
           await channel.send({
-            type: 'broadcast',
-            event: 'lyrics',
-            payload: { lyrics }
+            type: "broadcast",
+            event: "lyrics",
+            payload: { lyrics },
           });
 
           await channel.send({
-            type: 'broadcast',
-            event: 'currentLine',
-            payload: { currentLine }
+            type: "broadcast",
+            event: "currentLine",
+            payload: { currentLine },
           });
         }
       });
-
-  }, [user?.username]);
+    },
+    [user?.username]
+  );
 
   // Add effect to broadcast lyrics changes
   useEffect(() => {
     if (!lyrics || !user?.username || !currentTrack) return;
-    
+
     const currentLineIndex = lyrics.findIndex(
       (line, index, arr) =>
         (currentTrack.elapsed || 0) >= line.startTimeMs &&
-        (index === arr.length - 1 || (currentTrack.elapsed || 0) < arr[index + 1].startTimeMs)
+        (index === arr.length - 1 ||
+          (currentTrack.elapsed || 0) < arr[index + 1].startTimeMs)
     );
 
     broadcastLyrics(
-      lyrics.map(line => line.words),
+      lyrics.map((line) => line.words),
       currentLineIndex
     );
-  }, [lyrics, currentTrack?.elapsed, user?.username, broadcastLyrics, currentTrack]);
+  }, [
+    lyrics,
+    currentTrack?.elapsed,
+    user?.username,
+    broadcastLyrics,
+    currentTrack,
+  ]);
 
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="max-h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
       <WidgetLayout preview={LyricsPreview} settings={LyricsSettings} />
       <Dialog
         open={isSpotifyTokenDialogOpen}

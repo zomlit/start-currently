@@ -34,6 +34,17 @@ export function PublicLyricsPage() {
   const [currentLine, setCurrentLine] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug log
+  useEffect(() => {
+    console.log('Current state:', {
+      username,
+      settings,
+      currentLyrics,
+      currentLine,
+      isLoadingSettings
+    });
+  }, [username, settings, currentLyrics, currentLine, isLoadingSettings]);
+
   // Handle font injection when settings change
   useEffect(() => {
     if (settings?.fontFamily) {
@@ -42,16 +53,6 @@ export function PublicLyricsPage() {
     }
   }, [settings?.fontFamily]);
 
-  // Cleanup fonts on unmount
-  useEffect(() => {
-    return () => {
-      // Remove any fonts we injected
-      document.querySelectorAll('link[data-font]').forEach(link => {
-        link.remove();
-      });
-    };
-  }, []);
-
   // Load settings and subscribe to changes
   useEffect(() => {
     let mounted = true;
@@ -59,6 +60,7 @@ export function PublicLyricsPage() {
     async function loadUserAndSettings() {
       if (!username) return;
       try {
+        console.log('Loading settings for:', username);
         // Get user_id first
         const { data: profileData, error: profileError } = await supabase
           .from('UserProfile')
@@ -71,9 +73,10 @@ export function PublicLyricsPage() {
 
         // Load initial settings
         await loadPublicSettings(username);
+        console.log('Settings loaded successfully');
 
         // Subscribe to settings changes
-        const channel = supabase
+        const settingsChannel = supabase
           .channel(`visualizer-settings:${profileData.user_id}`)
           .on(
             'postgres_changes',
@@ -87,14 +90,13 @@ export function PublicLyricsPage() {
               console.log('Settings changed:', payload);
               if (mounted && payload.new?.lyrics_settings) {
                 await loadPublicSettings(username);
-                // Font will be injected automatically when settings update
               }
             }
           )
           .subscribe();
 
         return () => {
-          supabase.removeChannel(channel);
+          supabase.removeChannel(settingsChannel);
         };
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -118,10 +120,10 @@ export function PublicLyricsPage() {
   useEffect(() => {
     if (!username) return;
 
-    console.log('Setting up realtime subscription for:', username);
-    const channel = supabase.channel(`lyrics:${username}`);
+    console.log('Setting up lyrics subscription for:', username);
+    const lyricsChannel = supabase.channel(`lyrics:${username}`);
     
-    channel
+    lyricsChannel
       .on('broadcast', { event: 'lyrics' }, (payload) => {
         console.log('Received lyrics payload:', payload);
         if (Array.isArray(payload.payload?.lyrics)) {
@@ -135,12 +137,12 @@ export function PublicLyricsPage() {
         }
       })
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Lyrics subscription status:', status);
       });
 
     return () => {
-      console.log('Cleaning up subscription');
-      supabase.removeChannel(channel);
+      console.log('Cleaning up lyrics subscription');
+      supabase.removeChannel(lyricsChannel);
     };
   }, [username]);
 

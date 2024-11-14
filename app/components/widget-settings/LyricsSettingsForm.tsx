@@ -29,7 +29,7 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { useDebouncedCallback } from 'use-debounce';
+import { useDebouncedCallback } from "use-debounce";
 import { toast } from "@/utils/toast";
 
 const safeFormatColor = (color: any): string => {
@@ -62,7 +62,7 @@ export const lyricsSchema = z.object({
   fontSize: z.number().min(10).max(72).default(24),
   padding: z.number().min(0).max(100).default(20),
   currentLineScale: z.number().min(1).max(2).default(1.2),
-  showFade: z.boolean().default(true),
+  showFade: z.boolean().default(false),
   fadeDistance: z.number().min(0).max(200).default(64),
   lineHeight: z.number().min(1).max(3).default(1.5),
   fontFamily: z.string().default("Sofia Sans Condensed"),
@@ -132,13 +132,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
       const defaultSettings = lyricsSchema.parse({});
       form.reset(defaultSettings);
       await onSettingsChange(defaultSettings);
-      
+
       toast.success({
         title: "Settings reset",
         description: "All settings have been restored to their default values.",
       });
     } catch (error) {
-      console.error('Error resetting settings:', error);
+      console.error("Error resetting settings:", error);
       toast.error({
         title: "Error resetting settings",
         description: "Your settings couldn't be reset. Please try again.",
@@ -157,7 +157,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
           description: "Your changes have been saved successfully.",
         });
       } catch (error) {
-        console.error('Error saving settings:', error);
+        console.error("Error saving settings:", error);
         toast.error({
           title: "Error saving settings",
           description: "Your changes couldn't be saved. Please try again.",
@@ -167,15 +167,18 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     500
   );
 
-  const handleSettingChange = async (field: keyof LyricsSettings, value: any) => {
+  const handleSettingChange = async (
+    field: keyof LyricsSettings,
+    value: any
+  ) => {
     const updatedSettings: LyricsSettings = {
       ...settings,
       [field]: value,
     };
-    
+
     // Update form state immediately
     form.setValue(field, value);
-    
+
     // Debounce the save
     debouncedSettingsChange(updatedSettings);
   };
@@ -189,7 +192,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
         description: "Your changes have been saved successfully.",
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error("Error saving settings:", error);
       toast.error({
         title: "Error saving settings",
         description: "Your changes couldn't be saved. Please try again.",
@@ -767,9 +770,9 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset to Defaults
           </Button>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             className="w-full"
             disabled={!form.formState.isDirty}
           >
