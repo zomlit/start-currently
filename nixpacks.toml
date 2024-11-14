@@ -1,0 +1,14 @@
+[phases.build]
+cmds = ['bun run build']
+cacheDirectories = [
+  'node_modules/.cache',
+  '.vinxi',
+  'dist'
+]
+
+[phases.install]
+cmds = ['bun i --no-save']
+cacheDirectories = [
+  '/root/.bun',
+  'node_modules'
+] 

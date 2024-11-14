@@ -8,6 +8,21 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   server: { preset: "node-server" },
   vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules")) {
+              return "vendor";
+            }
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
+      assetsInlineLimit: 4096,
+      cssCodeSplit: true,
+      sourcemap: false,
+    },
     plugins: [
       svgr({}),
       tsConfigPaths({
@@ -20,6 +35,7 @@ export default defineConfig({
         emitFile: true,
         filename: "test",
       }),
+      react(),
     ],
   },
 });
