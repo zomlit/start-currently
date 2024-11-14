@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun clean && vinxi dev",
-    "build": "bun clean && vinxi build",
-    "clean": "rimraf --glob app.config.timestamp_*",
+    "build": "vinxi build",
+    "clean": "rm -rf app.config.timestamp_*",
     "start": "vinxi start",
     "lint": "prettier --check '**/*' --ignore-unknown && eslint --ext .ts,.tsx ./app",
     "format": "prettier --write '**/*' --ignore-unknown",

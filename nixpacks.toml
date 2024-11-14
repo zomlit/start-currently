@@ -1,14 +1,26 @@
 [phases.build]
-cmds = ['bun run build']
+cmds = [
+  "rm -rf app.config.timestamp_*",
+  "bun run build"
+]
 cacheDirectories = [
   'node_modules/.cache',
   '.vinxi',
-  'dist'
+  'dist',
+  '.output'
 ]
 
 [phases.install]
-cmds = ['bun i --no-save']
+cmds = ['bun i --frozen-lockfile --no-save']
 cacheDirectories = [
   '/root/.bun',
-  'node_modules'
+  'node_modules',
+  '.vinxi/build'
+]
+
+[phases.setup]
+nixPkgs = [
+  'nodejs_18',
+  'bun',
+  'coreutils'
 ] 
