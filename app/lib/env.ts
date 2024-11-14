@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-empty-object-type */
 
-import { z } from 'zod'
+import { z } from "zod";
 
-const PUBLIC_ENV_PREFIX = 'VITE_' as const
+const PUBLIC_ENV_PREFIX = "VITE_" as const;
 
-const publicSchema = createEnvSchema('Public', {
+const publicSchema = createEnvSchema("Public", {
   VITE_BASE_URL: z.string().url(),
   VITE_CLERK_PUBLISHABLE_KEY: z.string(),
   VITE_CLERK_SIGN_IN_URL: z.string(),
@@ -25,61 +25,73 @@ const publicSchema = createEnvSchema('Public', {
   VITE_PUBLIC_SUPABASE_URL: z.string().url(),
   VITE_TWITCH_CLIENT_ID: z.string(),
   VITE_TWITCH_CLIENT_SECRET: z.string(),
-})
+});
 
-const privateSchema = createEnvSchema('Private', {
+const privateSchema = createEnvSchema("Private", {
   CLERK_PUBLIC_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),
   DATABASE_URL: z.string(),
   ELYSIA_JWT_SECRET: z.string(),
   SUPABASE_JWT_SECRET: z.string(),
-})
+  SUPABASE_URL: z.string().url(),
+});
 
 function parseEnv() {
-  const result = z.object({
-    ...publicSchema.shape,
-    ...privateSchema.shape,
-  }).safeParse({
-    ...import.meta.env,
-    ...process.env,
-  })
+  const result = z
+    .object({
+      ...publicSchema.shape,
+      ...privateSchema.shape,
+    })
+    .safeParse({
+      ...import.meta.env,
+      ...process.env,
+    });
 
   if (!result.success) {
-    console.error('❌ Invalid environment variables:', result.error.format())
-    throw new Error('Invalid environment variables')
+    console.error("❌ Invalid environment variables:", result.error.format());
+    throw new Error("Invalid environment variables");
   }
 
-  const total = Object.keys(result.data).length
-  console.info(`✅ Environment variables validated (${total} variables)`)
+  const total = Object.keys(result.data).length;
+  console.info(`✅ Environment variables validated (${total} variables)`);
 }
 
-function createEnvSchema<Shape extends z.ZodRawShape>(type: 'Public' | 'Private', shape: Shape) {
+function createEnvSchema<Shape extends z.ZodRawShape>(
+  type: "Public" | "Private",
+  shape: Shape
+) {
   for (const key in shape) {
-    if (type === 'Public' && !key.startsWith(PUBLIC_ENV_PREFIX)) {
-      throw new Error(`Public environment variables must start with "${PUBLIC_ENV_PREFIX}", got "${key}"`)
+    if (type === "Public" && !key.startsWith(PUBLIC_ENV_PREFIX)) {
+      throw new Error(
+        `Public environment variables must start with "${PUBLIC_ENV_PREFIX}", got "${key}"`
+      );
     }
 
-    if (type === 'Private' && key.startsWith(PUBLIC_ENV_PREFIX)) {
-      throw new Error(`Private environment variables must not start with "${PUBLIC_ENV_PREFIX}", got "${key}"`)
+    if (type === "Private" && key.startsWith(PUBLIC_ENV_PREFIX)) {
+      throw new Error(
+        `Private environment variables must not start with "${PUBLIC_ENV_PREFIX}", got "${key}"`
+      );
     }
   }
 
-  return z.object(shape)
+  return z.object(shape);
 }
 
 type ViteBuiltInEnv = {
-  MODE: 'development' | 'production' | 'test'
-  DEV: boolean
-  SSR: boolean
-  PROD: boolean
-  BASE_URL: string
-}
+  MODE: "development" | "production" | "test";
+  DEV: boolean;
+  SSR: boolean;
+  PROD: boolean;
+  BASE_URL: string;
+};
 
 declare global {
-  interface ImportMetaEnv extends z.infer<typeof publicSchema>, ViteBuiltInEnv {}
+  interface ImportMetaEnv
+    extends z.infer<typeof publicSchema>,
+      ViteBuiltInEnv {}
 
   interface ImportMeta {
-    readonly env: ImportMetaEnv
+    readonly env: ImportMetaEnv;
   }
 
   namespace NodeJS {
@@ -87,4 +99,4 @@ declare global {
   }
 }
 
-export { parseEnv }
+export { parseEnv };
