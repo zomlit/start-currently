@@ -11,16 +11,16 @@ import { useAuth } from "@clerk/clerk-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Container } from "@/components/layout/Container";
 
-const getProductsFn = createServerFn("GET", async () => {
-  const products = await getProducts();
-  return products;
-});
+// const getProductsFn = createServerFn("GET", async () => {
+//   const products = await getProducts();
+//   return products;
+// });
 
 export const Route = createFileRoute("/_app/pricing/")({
-  loader: async () => {
-    const products = await getProductsFn();
-    return { products };
-  },
+  // loader: async () => {
+  //   const products = await getProductsFn();
+  //   return { products };
+  // },
   component: PricingRoute,
 });
 
@@ -55,7 +55,7 @@ function PricingRoute() {
 
   return (
     <Container isDashboard maxWidth="7xl">
-      <PricingPage products={products} />
+      {/* <PricingPage products={products} /> */}
       <button
         onClick={refreshProducts}
         className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
