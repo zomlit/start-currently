@@ -1,41 +1,30 @@
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
-import { routerWithQueryClient } from '@tanstack/react-router-with-query'
-import { lazy } from 'react'
-import type { QueryClient } from '@tanstack/react-query'
-import type { useRouteContext } from '@tanstack/react-router'
+import { QueryClient } from "@tanstack/react-query";
+import {
+  Router,
+  createRouter as createTanStackRouter,
+} from "@tanstack/react-router";
+import { routerWithQueryClient } from "@tanstack/react-router-with-query";
+import { routeTree } from "../routeTree.gen";
 
-import { createQueryClient } from '@/lib/query'
-import { routeTree } from '@/route-tree.gen'
-import type { FileRouteTypes } from '@/route-tree.gen'
-
-export type InferRouteContext<Route extends FileRouteTypes['to']> =
-  ReturnType<typeof useRouteContext<typeof routeTree, Route>>
-
-export type RouterContext = {
-  queryClient: QueryClient
+export interface RouterContext {
+  queryClient: QueryClient;
+  user?: any;
 }
 
 export function createRouter() {
-  const queryClient = createQueryClient()
+  const queryClient = new QueryClient();
 
-  const routerContext: RouterContext = {
-    queryClient,
-  }
-
-  const router = createTanStackRouter({
+  const baseRouter = createTanStackRouter({
     routeTree,
-    context: routerContext,
-    search: {
-      strict: true,
-    },
-    defaultPreload: 'intent',
-  })
+    context: { queryClient } satisfies RouterContext,
+    defaultPreload: "intent",
+  });
 
-  return routerWithQueryClient(router, queryClient)
+  return routerWithQueryClient(baseRouter as any, queryClient);
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
-    router: ReturnType<typeof createRouter>
+    router: ReturnType<typeof createRouter>;
   }
 }

@@ -1,5 +1,5 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "vite-env.d.ts"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
@@ -16,7 +16,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
-      "~/*": ["./app/*"],
       "@icons/*": ["./app/icons/*"]
     },
     "noEmit": true
