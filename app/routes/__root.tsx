@@ -1,49 +1,23 @@
 import {
   Outlet,
   ScrollRestoration,
-  createRootRouteWithContext,
+  createRootRoute,
 } from "@tanstack/react-router";
-import {
-  Body,
-  Head,
-  Html,
-  Meta,
-  Scripts,
-  createServerFn,
-} from "@tanstack/start";
-import * as React from "react";
-import type { QueryClient } from "@tanstack/react-query";
+import { Meta, Scripts } from "@tanstack/start";
+import { ClerkProvider } from "@clerk/tanstack-start";
+import { useThemeStore } from "@/store/themeStore";
+import { dark } from "@clerk/themes";
+import { seo } from "@/utils/seo";
+import { AccessControl } from "@/components/AccessControl";
 import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
-import { seo } from "@/utils/seo";
-import { getAuth } from "@clerk/tanstack-start/server";
+import type { ReactNode } from "react";
+
+// Import CSS
 import appCss from "@/styles/app.css?url";
 import globalCss from "@/styles/global.css?url";
-import { ClerkProvider } from "@clerk/tanstack-start";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { AccessControl } from "@/components/AccessControl";
-import { dark, default as defaultTheme } from "@clerk/themes";
-import { useThemeStore } from "@/store/themeStore";
-import type { RouterContext } from '@/lib/router'
 
-const fetchClerkAuth = createServerFn("GET", async (_, ctx) => {
-  const user = await getAuth(ctx.request);
-
-  return {
-    user,
-  };
-});
-
-export const Route = createRootRouteWithContext<RouterContext>()({
-
-  beforeLoad: async () => {
-    const { user } = await fetchClerkAuth();
-
-    return {
-      user,
-    };
-  },
+export const Route = createRootRoute({
   meta: () => [
     { charSet: "utf-8" },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -52,41 +26,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       description: "Currently is a streaming platform for the modern streamer.",
     }),
   ],
-
   links: () => [
     { rel: "stylesheet", href: globalCss },
     { rel: "stylesheet", href: appCss },
-    {
-      rel: "preconnect",
-      href: "https://fonts.googleapis.com",
-    },
-    {
-      rel: "preconnect",
-      href: "https://fonts.gstatic.com",
-      crossOrigin: "anonymous",
-    },
-    {
-      rel: "apple-touch-icon",
-      sizes: "180x180",
-      href: "/apple-touch-icon.png",
-    },
-    {
-      rel: "icon",
-      type: "image/png",
-      sizes: "32x32",
-      href: "/favicon-32x32.png",
-    },
-    {
-      rel: "icon",
-      type: "image/png",
-      sizes: "16x16",
-      href: "/favicon-16x16.png",
-    },
-    { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
-    { rel: "icon", href: "/favicon.ico" },
-    { rel: "preload", href: "/images/hero-bg.webp", as: "image" },
   ],
-
   errorComponent: (props) => (
     <RootDocument>
       <DefaultCatchBoundary {...props} />
@@ -97,33 +40,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootComponent() {
-  return (
-    <RootDocument>
-      <AccessControl>
-        <Outlet />
-      </AccessControl>
-    </RootDocument>
-  );
-}
-
-function RootDocument({ children }: { children: React.ReactNode }) {
   const { theme } = useThemeStore();
 
   return (
     <ClerkProvider
       appearance={{
         baseTheme: theme === "dark" ? dark : undefined,
-        // elements: {
-        //   avatarBox:
-        //     "w-10 h-10 hover:scale-110 transition-all duration-300 border-violet-500 border-[2px]",
-        //   impersonationFabTitle: "text-black",
-        //   colorNeutral: "border-solid border-2 border-sky-500",
-        //   tagInputContainer: "bg-transparent border-white/10",
-        //   input: "bg-white/10 text-white border-white/10",
-        //   navbar: "text-violet-500 !bg-transparent bg-none",
-        //   navbarButton: "text-violet-500",
-        //   navbarButtonIcon: "text-violet-500",
-        // },
         variables: {
           colorBackground:
             theme === "dark"
@@ -141,18 +63,26 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <Html>
-        <Head>
-          <Meta />
-        </Head>
-        <Body>
-          {children}
-          <ScrollRestoration />
-          {/* <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-left" /> */}
-          <Scripts />
-        </Body>
-      </Html>
+      <RootDocument>
+        <AccessControl>
+          <Outlet />
+        </AccessControl>
+      </RootDocument>
     </ClerkProvider>
+  );
+}
+
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  return (
+    <html>
+      <head>
+        <Meta />
+      </head>
+      <body>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
   );
 }

@@ -760,7 +760,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
           </AccordionItem>
         </Accordion>
 
-        <div className="flex gap-4">
+        <div className="flex !overflow-hidden">
           <Button
             type="button"
             onClick={handleResetToDefaults}
@@ -773,7 +773,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full ml-2"
             disabled={!form.formState.isDirty}
           >
             Save Changes
