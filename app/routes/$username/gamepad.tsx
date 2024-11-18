@@ -3,4 +3,4 @@ import { PublicGamepadView } from "@/components/PublicGamepadView";
 
 export const Route = createFileRoute("/$username/gamepad")({
   component: PublicGamepadView,
-}); 
+});

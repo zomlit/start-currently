@@ -133,32 +133,48 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         const responseData = await response.json();
         console.log("Spotify token exchange response:", responseData);
 
-        // Update both Supabase and Elysia session
-        const { error: userDataError } = await supabase
+        // Check if the access token has changed or is about to expire
+        const currentProfile = await supabase
           .from("UserProfile")
-          .upsert(
-            {
-              user_id: userId,
-              s_access_token: responseData.access_token,
-              s_refresh_token: responseData.refresh_token,
-              s_expires_at: new Date(
-                Date.now() + responseData.expires_in * 1000
-              ).toISOString(),
-            },
-            { onConflict: "user_id" }
+          .select("s_expires_at")
+          .eq("user_id", userId)
+          .single();
+
+        const isTokenExpired =
+          new Date(currentProfile.data?.s_expires_at) <= new Date();
+        const isTokenChanged =
+          currentProfile.data?.s_access_token !== responseData.access_token;
+
+        if (isTokenExpired || isTokenChanged) {
+          // Update both Supabase and Elysia session
+          const { error: userDataError } = await supabase
+            .from("UserProfile")
+            .upsert(
+              {
+                user_id: userId,
+                s_access_token: responseData.access_token,
+                s_refresh_token: responseData.refresh_token,
+                s_expires_at: new Date(
+                  Date.now() + responseData.expires_in * 1000
+                ).toISOString(),
+              },
+              { onConflict: "user_id" }
+            );
+
+          if (userDataError) {
+            console.error("Error saving tokens to Supabase:", userDataError);
+            throw userDataError;
+          }
+
+          // Update Elysia session state
+          updateSpotifyToken(responseData.refresh_token);
+          console.log(
+            "Spotify refresh token stored:",
+            responseData.refresh_token
           );
-
-        if (userDataError) {
-          console.error("Error saving tokens to Supabase:", userDataError);
-          throw userDataError;
+        } else {
+          console.log("No update needed for Supabase.");
         }
-
-        // Update Elysia session state
-        updateSpotifyToken(responseData.refresh_token);
-        console.log(
-          "Spotify refresh token stored:",
-          responseData.refresh_token
-        );
 
         toast.success({
           title: "Spotify authentication successful!",

@@ -1,299 +1,899 @@
-/* Base Controller */
+/*Font Imports*/
+@import url(https://fonts.googleapis.com/css?family=Press+Start+2P);
+
 .controller {
-  background: url('/gamepad/base.svg') no-repeat;
-  height: 598px;
-  width: 806px;
+  transition:
+    filter 0.3s ease,
+    transform 0.3s ease;
   position: relative;
+  max-width: 800px; /* DS4 width */
+  max-height: 592px; /* DS4 height */
+  aspect-ratio: 800/592; /* DS4 aspect ratio */
+  margin: auto;
 }
 
 .controller.half {
-  transform: scale(0.5);
-  transform-origin: 0 0;
+  margin-top: 0px !important;
 }
 
-/* Triggers Section */
-.controller .triggers {
-  width: 588px;
-  height: 90px;
-  position: absolute;
-  left: 109px;
+/*BEGIN Xbox 360 Controller Styling*/
+.controller.xbox-old {
+  background: url(xbox-assets-old/bg.png);
+  height: 544px;
+  width: 668px;
+  /*    margin-left: -332px;
+        margin-top: -228px;*/
+  aspect-ratio: 668/544;
+  max-width: 668px;
+  max-height: 544px;
 }
 
-.controller .trigger {
-  width: 99px;
-  height: 90px;
-  background: url('/gamepad/triggers.svg');
-  opacity: 0;
+.xbox-old.disconnected {
+  background: url(xbox-assets-old/bg-disconnect.png);
 }
 
-.controller .trigger.left {
-  float: left;
-}
-
-.controller .trigger.right {
-  float: right;
-  transform: rotateY(180deg);
-}
-
-.controller .trigger-button {
-  width: 99px;
-  height: 23px;
-  background: url('/gamepad/button.svg');
-  opacity: 0;
-}
-
-.controller .trigger-button.left {
-  float: left;
-}
-
-.controller .trigger-button.right {
-  float: right;
-}
-
-/* Bumpers */
-.controller .bumpers {
-  position: absolute;
-  width: 588px;
-  height: 23px;
-  left: 109px;
-  top: 94px;
-}
-
-.controller .bumper {
-  width: 99px;
-  height: 23px;
-  background: url('/gamepad/bumper.svg');
-  opacity: 0;
-}
-
-.controller .bumper.left {
-  float: left;
-}
-
-.controller .bumper.right {
-  float: right;
-  transform: rotateY(180deg);
-}
-
-/* Touchpad */
-.controller .touchpad {
-  width: 262px;
-  height: 151px;
-  position: absolute;
-  left: 272px;
-  top: 122px;
-  background: url('/gamepad/touchpad.svg');
-  opacity: 0;
-}
-
-/* Meta (PS Button) */
-.controller .meta {
-  width: 42px;
-  height: 42px;
-  position: absolute;
-  left: 382px;
-  bottom: 216px;
-  background: url('/gamepad/meta.svg');
-  opacity: 0;
-}
-
-/* Arrows (Start/Select) */
-.controller .arrows {
-  position: absolute;
-  width: 205px;
-  height: 19px;
-  top: 250px;
-  left: 273px;
-}
-
-.controller .back,
-.controller .start {
-  width: 34px;
-  height: 19px;
-  background: url('/gamepad/button.svg');
-  opacity: 0;
-}
-
-.controller .back {
-  float: left;
-}
-
-.controller .start {
-  float: right;
-}
-
-/* Face Buttons */
-.controller .abxy {
-  position: absolute;
-  width: 170px;
-  height: 171px;
-  top: 159px;
-  left: 567px;
-}
-
-.controller .button {
-  position: absolute;
-  width: 55px;
-  height: 55px;
-  background: url('/gamepad/button.svg');
-  opacity: 0;
-}
-
-.controller .button.a {
-  bottom: 0;
-  left: 58px;
-}
-
-.controller .button.b {
-  top: 58px;
-  right: 0;
-}
-
-.controller .button.x {
-  top: 58px;
-  left: 0;
-}
-
-.controller .button.y {
-  left: 58px;
-  top: 0;
-}
-
-/* Sticks Section */
-.controller .sticks {
-  position: absolute;
-  width: 361px;
-  height: 105px;
-  top: 308px;
-  left: 228px;
-}
-
-.controller .stick {
-  position: absolute;
-  background: url('/gamepad/sticks.svg');
-  height: 94px;
-  width: 94px;
-  opacity: 1;
-  background-position: 0 0;
-}
-
-.controller .stick.pressed {
-    background-position: -96px 0;
-}
-
-.controller .stick.left {
-  top: 0;
-  left: 0;
-}
-
-.controller .stick.right {
-  top: 0;
-  right: 0;
-}
-
-/* Wheels (Stick Rotation Indicators) */
-.controller .wheels {
-  position: absolute;
-  width: 361px;
-  height: 105px;
-  top: 308px;
-  left: 228px;
-}
-
-.controller .wheel {
-  position: absolute;
-  background: url('/gamepad/sticks.svg');
-  height: 94px;
-  width: 94px;
-  opacity: 0;
-  background-position: -192px 0;
-}
-
-.controller .wheel.left {
-  top: 0;
-  left: 0;
-}
-
-.controller .wheel.right {
-  top: 0;
-  right: 0;
-}
-
-/* D-Pad */
-.controller .dpad {
-  position: absolute;
-  width: 125px;
-  height: 126px;
-  top: 181px;
-  left: 92px;
-}
-
-.controller .face {
-  background: url('/gamepad/dpad.svg');
-  position: absolute;
-  opacity: 0;
-}
-
-.controller .face.up,
-.controller .face.down {
-  width: 36px;
-  height: 52px;
-}
-
-.controller .face.left,
-.controller .face.right {
-  width: 52px;
-  height: 36px;
-}
-
-.controller .face.up {
-  left: 44px;
-  top: 0;
-  background-position: 0 0;
-}
-
-.controller .face.down {
-  left: 44px;
-  bottom: 0;
-  background-position: -37px 0;
-}
-
-.controller .face.left {
-  top: 45px;
-  left: 0;
-  background-position: -74px 0;
-}
-
-.controller .face.right {
-  top: 45px;
-  right: 0;
-  background-position: -127px 0;
-}
-
-/* Utilities */
-.clear {
-  clear: both;
-}
-
-/* States */
-.controller.disconnected {
-  background: url('/gamepad/disconnected.svg');
-}
-
-.controller.disconnected div {
+.xbox-old.disconnected div {
   display: none;
 }
 
-/* Pressed States */
-.controller .button.pressed,
-.controller .face.pressed,
-.controller .meta.pressed,
-.controller .back.pressed,
-.controller .start.pressed,
-.controller .stick.pressed,
-.controller .trigger.pressed,
-.controller .trigger-button.pressed,
-.controller .bumper.pressed,
-.controller .touchpad.pressed {
+.xbox-old .triggers {
+  width: 430px;
+  height: 76px;
+  position: absolute;
+  left: 119px;
+}
+
+.xbox-old .trigger {
+  width: 33px;
+  height: 76px;
+  background: url(xbox-assets-old/trigger.png);
+  opacity: 0;
+}
+
+.xbox-old .trigger.left {
+  float: left;
+  background-position: 0 0;
+}
+
+.xbox-old .trigger.right {
+  float: right;
+  background-position: 0 -77px;
+}
+
+.xbox-old .bumper {
+  width: 119px;
+  height: 44px;
+  background: url(xbox-assets-old/bumper.png);
+  opacity: 0;
+}
+
+.xbox-old .bumpers {
+  position: absolute;
+  width: 516px;
+  height: 44px;
+  left: 76px;
+  top: 84px;
+}
+
+.xbox-old .bumper.pressed {
   opacity: 1;
+}
+
+.xbox-old .bumper.left {
+  float: left;
+}
+
+.xbox-old .bumper.right {
+  float: right;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.xbox-old .quadrant {
+  position: absolute;
+  background: url(xbox-assets-old/quadrant.png);
+  height: 100px;
+  width: 100px;
+  top: 165px;
+  left: 284px;
+  z-index: -1;
+}
+
+.xbox-old .p0 {
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+
+.xbox-old .p1 {
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.xbox-old .p2 {
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+}
+
+.xbox-old .p3 {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.xbox-old .arrows {
+  position: absolute;
+  width: 180px;
+  height: 29px;
+  top: 200px;
+  left: 244px;
+}
+
+.xbox-old .back,
+.xbox-old .start {
+  background: url(xbox-assets-old/arrow.png);
+  width: 34px;
+  height: 29px;
+}
+
+.xbox-old .back.pressed,
+.xbox-old .start.pressed {
+  background-position: 0 -30px;
+}
+
+.xbox-old .back {
+  float: left;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.xbox-old .start {
+  float: right;
+}
+
+.xbox-old .abxy {
+  position: absolute;
+  width: 161px;
+  height: 160px;
+  top: 125px;
+  left: 451px;
+}
+
+.xbox-old .button {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+}
+
+.xbox-old .button.a {
+  width: 53px;
+  height: 53px;
+}
+
+.xbox-old .button.y {
+  width: 55px;
+  height: 54px;
+}
+
+.xbox-old .button.pressed {
+  background-position: 0 -55px;
+  margin-top: 6px;
+  opacity: 1;
+}
+
+.xbox-old .button.pressed.a {
+  background-position: 0 -54px;
+}
+
+.xbox-old .button.pressed.y {
+  background-position: 0 -56px;
+}
+
+.xbox-old .a {
+  background: url(xbox-assets-old/a.png);
+  top: 108px;
+  left: 55px;
+}
+
+.xbox-old .b {
+  background: url(xbox-assets-old/b.png);
+  top: 54px;
+  right: 0px;
+}
+
+.xbox-old .x {
+  background: url(xbox-assets-old/x.png);
+  top: 54px;
+}
+
+.xbox-old .y {
+  background: url(xbox-assets-old/y.png);
+  left: 54px;
+}
+
+.xbox-old .sticks {
+  position: absolute;
+  width: 383px;
+  height: 208px;
+  top: 167px;
+  left: 89px;
+}
+
+.xbox-old .stick {
+  position: absolute;
+  background: url(xbox-assets-old/stick.png);
+  height: 86px;
+  width: 86px;
+}
+
+.xbox-old .stick.pressed {
+  background-position: 0 -87px;
+}
+
+.xbox-old .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.xbox-old .stick.right {
+  top: calc(100% - 86px);
+  left: calc(100% - 86px);
+}
+
+.xbox-old .dpad {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  top: 273px;
+  left: 174px;
+}
+
+.xbox-old .face {
+  position: absolute;
+  font-size: 30px;
+  line-height: 0;
+  color: white;
+  opacity: 0;
+  font-family: "FontAwesome";
+}
+
+.xbox-old .face.pressed {
+  opacity: 1;
+}
+
+.xbox-old .face.up {
+  left: 42px;
+  top: 20px;
+}
+
+.xbox-old .face.up:after {
+  content: "\f062";
+}
+
+.xbox-old .face.down {
+  left: 42px;
+  bottom: 20px;
+}
+
+.xbox-old .face.down:after {
+  content: "\f063";
+}
+
+.xbox-old .face.left {
+  top: 56px;
+  left: 3px;
+}
+
+.xbox-old .face.left:after {
+  content: "\f060";
+}
+
+.xbox-old .face.right {
+  top: 56px;
+  right: 3px;
+}
+
+.xbox-old .face.right:after {
+  content: "\f061";
+}
+
+.xbox-old.half {
+  margin-top: -272px;
+}
+
+/*END Xbox 360 Controller Styling*/
+
+/*BEGIN Xbox One Controller Styling*/
+.controller.xbox {
+  background: url(xbox-assets/base.svg);
+  height: 630px;
+  width: 750px;
+  /*    margin-left: -375px;
+        margin-top: -285px;*/
+  aspect-ratio: 750/630;
+  max-width: 750px;
+  max-height: 630px;
+}
+
+.xbox.white {
+  background: url(xbox-assets/base-white.svg);
+}
+
+.xbox.disconnected {
+  background: url(xbox-assets/disconnected.svg);
+}
+
+.xbox.disconnected div {
+  display: none;
+}
+
+.xbox .triggers {
+  width: 446px;
+  height: 121px;
+  position: absolute;
+  left: 152px;
+}
+
+.xbox .trigger {
+  width: 88px;
+  height: 121px;
+  background: url(xbox-assets/trigger.svg);
+  opacity: 0;
+}
+
+.xbox .trigger.left {
+  float: left;
+  background-position: 0 0;
+}
+
+.xbox .trigger.right {
+  float: right;
+  transform: rotateY(180deg);
+}
+
+.xbox .bumper {
+  width: 170px;
+  height: 61px;
+  background: url(xbox-assets/bumper.svg);
+  opacity: 0;
+}
+
+.xbox .bumpers {
+  position: absolute;
+  width: 536px;
+  height: 61px;
+  left: 107px;
+  top: 129px;
+}
+
+.xbox .bumper.pressed {
+  opacity: 1;
+}
+
+.xbox .bumper.left {
+  float: left;
+}
+
+.xbox .bumper.right {
+  float: right;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.xbox .quadrant {
+  position: absolute;
+  background: url(xbox-assets/quadrant.svg);
+  height: 45px;
+  width: 45px;
+  top: 258px;
+  left: 354px;
+  z-index: 0;
+}
+
+.xbox .p0 {
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+
+.xbox .p1 {
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.xbox .p2 {
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+}
+
+.xbox .p3 {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.xbox .arrows {
+  position: absolute;
+  width: 141px;
+  height: 33px;
+  top: 264px;
+  left: 306px;
+}
+
+.xbox .back,
+.xbox .start {
+  background: url(xbox-assets/start-select.svg);
+  width: 33px;
+  height: 33px;
+  opacity: 0;
+}
+
+.xbox .back.pressed,
+.xbox .start.pressed {
+  opacity: 1;
+}
+
+.xbox .back {
+  float: left;
+}
+
+.xbox .start {
+  background-position: 33px 0px;
+  float: right;
+}
+
+.xbox .abxy {
+  position: absolute;
+  width: 153px;
+  height: 156px;
+  top: 192px;
+  left: 488px;
+}
+
+.xbox .button {
+  position: absolute;
+  background: url(xbox-assets/abxy.svg);
+  width: 48px;
+  height: 48px;
+}
+
+.xbox .button.pressed {
+  background-position-y: -48px;
+  margin-top: 5px;
+  opacity: 1;
+}
+
+.xbox .a {
+  background-position: 0 0;
+  top: 108px;
+  left: 55px;
+}
+
+.xbox .b {
+  background-position: -49px 0;
+  top: 58px;
+  right: 0px;
+}
+
+.xbox .x {
+  background-position: -98px 0;
+  top: 58px;
+  left: 4px;
+}
+
+.xbox .y {
+  background-position: 48px 0;
+  left: 55px;
+  top: 7px;
+}
+
+.xbox .sticks {
+  position: absolute;
+  width: 371px;
+  height: 196px;
+  top: 239px;
+  left: 144px;
+}
+
+.xbox .stick {
+  position: absolute;
+  background: url(xbox-assets/stick.svg);
+  background-position: -85px 0;
+  height: 83px;
+  width: 83px;
+}
+
+.xbox .stick.pressed {
+  background-position: 0 0;
+}
+
+.xbox .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.xbox .stick.right {
+  top: 113px;
+  left: 288px;
+}
+
+.xbox .dpad {
+  position: absolute;
+  width: 110px;
+  height: 111px;
+  top: 345px;
+  left: 223px;
+}
+
+.xbox .face {
+  background: url(xbox-assets/dpad.svg);
+  position: absolute;
+  opacity: 0;
+}
+
+.xbox .face.pressed {
+  opacity: 1;
+}
+
+.xbox .face.up {
+  background-position: 34px 0;
+  left: 38px;
+  top: 0px;
+  width: 34px;
+  height: 56px;
+}
+
+.xbox .face.down {
+  left: 38px;
+  bottom: 0;
+  width: 34px;
+  height: 56px;
+}
+
+.xbox .face.left {
+  background-position: 0 -93px;
+  width: 55px;
+  height: 35px;
+  top: 38px;
+  left: 0;
+}
+
+.xbox .face.right {
+  background-position: 0 -57px;
+  width: 55px;
+  height: 35px;
+  top: 38px;
+  right: 0;
+}
+
+.xbox.half {
+  margin-top: -315px;
+}
+
+.xbox {
+  background: no-repeat center;
+}
+
+/*END Xbox One Controller Styling*/
+
+/*BEGIN PS4 Controller Styling*/
+.controller.ds4 {
+  background: url(/gamepad/ds4/base.svg) no-repeat center;
+  background-size: contain;
+  width: 100%;
+  height: 100%;
+  /*    margin-left: -403px;
+        margin-top: -280px;*/
+}
+
+.ds4.disconnected {
+  background: url(/gamepad/ds4/disconnected.svg);
+}
+
+.ds4.disconnected div {
+  display: none;
+}
+
+.ds4 .triggers {
+  width: 72.94%; /* 588/806.1 */
+  height: 15.03%; /* 90/598.97 */
+  position: absolute;
+  left: 13.52%; /* 109/806.1 */
+  top: 0;
+}
+
+.ds4 .trigger {
+  width: 16.84%; /* 99/588 - relative to triggers container */
+  height: 100%;
+  background: url(/gamepad/ds4/triggers.svg) no-repeat;
+  background-size: 200% 100%; /* Double width for left/right states */
+  opacity: 0;
+}
+
+.ds4 .trigger.pressed {
+  opacity: 1;
+}
+
+.ds4 .trigger.left {
+  float: left;
+  background-position: 0 0;
+}
+
+.ds4 .trigger.right {
+  float: right;
+  background-position: -99px 0; /* Exact pixel offset for right trigger */
+}
+
+.ds4 .bumper {
+  width: 16.84%; /* 99/588 - relative to bumpers container */
+  height: 100%;
+  background: url(/gamepad/ds4/bumper.svg) no-repeat;
+  background-size: 100% 100%;
+  opacity: 0;
+}
+
+.ds4 .bumpers {
+  width: 72.94%; /* 588/806.1 */
+  height: 3.84%; /* 23/598.97 */
+  position: absolute;
+  left: 13.52%; /* 109/806.1 */
+  top: 15.69%; /* 94/598.97 */
+}
+
+.ds4 .bumper.pressed {
+  opacity: 1;
+}
+
+.ds4 .bumper.left {
+  float: left;
+}
+
+.ds4 .bumper.right {
+  float: right;
+  transform: rotateY(180deg);
+}
+
+.ds4 .touchpad {
+  width: 32.5%; /* 262/806.1 */
+  height: 25.21%; /* 151/598.97 */
+  position: absolute;
+  left: 33.74%; /* 272/806.1 */
+  top: 20.37%; /* 122/598.97 */
+}
+
+.ds4 .touchpad.pressed {
+  background: url(/gamepad/ds4/touchpad.svg) no-repeat center;
+  background-size: contain;
+}
+
+.ds4 .meta {
+  width: 5.21%; /* 42/806.1 */
+  height: 7.01%; /* 42/598.97 */
+  position: absolute;
+  left: 47.39%; /* 382/806.1 */
+  bottom: 36.06%; /* 216/598.97 */
+}
+
+.ds4 .meta.pressed {
+  background: url(/gamepad/ds4/meta.svg) no-repeat center;
+  background-size: contain;
+}
+
+.ds4 .arrows {
+  position: absolute;
+  width: 43.67%; /* 352/806.1 */
+  height: 7.68%; /* 46/598.97 */
+  top: 23.71%; /* 142/598.97 */
+  left: 28.16%; /* 227/806.1 */
+}
+
+.ds4 .back,
+.ds4 .start {
+  background: url(/gamepad/ds4/start.svg) no-repeat;
+  background-size: 200% 100%; /* Double width for back/start states */
+  width: 7.95%; /* 28/352 */
+  height: 100%;
+  opacity: 0;
+}
+
+.ds4 .back.pressed,
+.ds4 .start.pressed {
+  /* background-position-y: -21px; */
+  /* margin-top: 2px; */
+  opacity: 1;
+}
+
+.ds4 .back {
+  float: left;
+  /* width: 28px; */
+}
+
+.ds4 .start {
+  float: right;
+  /* width: 28px; */
+  background-position-x: 100%;
+}
+
+.ds4 .abxy {
+  position: absolute;
+  width: 21.09%; /* 170/806.1 */
+  height: 28.55%; /* 171/598.97 */
+  top: 26.55%; /* 159/598.97 */
+  left: 70.34%; /* 567/806.1 */
+}
+
+.ds4 .button {
+  position: absolute;
+  width: 32.35%; /* 55/170 */
+  height: 32.16%; /* 55/171 */
+  background: url(/gamepad/ds4/face.svg) no-repeat;
+  background-size: 400% 200%; /* 4 buttons horizontally, 2 states vertically */
+}
+
+.ds4 .button.pressed {
+  background-position-y: 100%;
+}
+
+.ds4 .a {
+  background-position: 0% 0%;
+  bottom: 0;
+  left: 34.12%; /* 58/170 */
+}
+
+.ds4 .b {
+  background-position: 33.33% 0%;
+  top: 33.92%; /* 58/171 */
+  right: 0;
+}
+
+.ds4 .x {
+  background-position: 66.66% 0%;
+  top: 33.92%; /* 58/171 */
+  left: 0;
+}
+
+.ds4 .y {
+  background-position: 100% 0%;
+  top: 0;
+  left: 34.12%; /* 58/170 */
+}
+
+.ds4 .sticks {
+  position: absolute;
+  width: 44.78%; /* 361/806.1 */
+  height: 17.53%; /* 105/598.97 */
+  top: 51.42%; /* 308/598.97 */
+  left: 28.28%; /* 228/806.1 */
+}
+
+.ds4 .stick {
+  position: absolute;
+  background: url(/gamepad/ds4/sticks.svg) no-repeat;
+  background-size: 300% 100%; /* Three states horizontally */
+  width: 26.04%; /* 94/361 */
+  height: 89.52%; /* 94/105 */
+}
+
+.ds4 .stick.pressed.left {
+  background-position-x: 50%;
+}
+
+.ds4 .stick.pressed.right {
+  background-position-x: 100%;
+}
+
+.ds4 .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.ds4 .stick.right {
+  bottom: 0;
+  right: 0;
+}
+
+.ds4 .dpad {
+  position: absolute;
+  width: 15.51%; /* 125/806.1 */
+  height: 21.04%; /* 126/598.97 */
+  top: 30.22%; /* 181/598.97 */
+  left: 11.41%; /* 92/806.1 */
+}
+
+.ds4 .face {
+  background: url(/gamepad/ds4/dpad.svg) no-repeat;
+  background-size: 400% 100%;
+  position: absolute;
+  opacity: 0;
+}
+
+.ds4 .face.pressed {
+  opacity: 1;
+}
+
+.ds4 .face.up {
+  width: 27.2%; /* 34/125 */
+  height: 44.44%; /* 56/126 */
+  left: 30.4%; /* 38/125 */
+  top: 0;
+  background-position: 0 0;
+}
+
+.ds4 .face.down {
+  width: 27.2%; /* 34/125 */
+  height: 44.44%; /* 56/126 */
+  left: 30.4%; /* 38/125 */
+  bottom: 0;
+  background-position: -34px 0;
+}
+
+.ds4 .face.left {
+  width: 44%; /* 55/125 */
+  height: 27.78%; /* 35/126 */
+  top: 30.16%; /* 38/126 */
+  left: 0;
+  background-position: -68px 0;
+}
+
+.ds4 .face.right {
+  width: 44%; /* 55/125 */
+  height: 27.78%; /* 35/126 */
+  top: 30.16%; /* 38/126 */
+  right: 0;
+  background-position: -123px 0;
+}
+
+.ds4.half {
+  margin-top: -315px;
+}
+
+/*END PS4 Controller Styling*/
+
+/* Controller color variants */
+.controller.white {
+  filter: brightness(1);
+}
+
+.controller.black {
+  filter: brightness(0.8) saturate(0);
+}
+
+.controller.midnight-black {
+  filter: brightness(0.6) saturate(0);
+}
+
+.controller.cosmic-red {
+  filter: hue-rotate(0deg) saturate(1.5) brightness(0.9);
+}
+
+.controller.starlight-blue {
+  filter: hue-rotate(210deg) saturate(1.2) brightness(0.9);
+}
+
+.controller.nova-pink {
+  filter: hue-rotate(320deg) saturate(1.3) brightness(0.95);
+}
+
+.controller.galactic-purple {
+  filter: hue-rotate(270deg) saturate(1.2) brightness(0.85);
+}
+
+/* Add a container class for better scaling */
+.controller-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Add relative positioning for d-pad container */
+.ds4 .dpad {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make d-pad buttons scale with container */
+.ds4 .face {
+  position: absolute;
+  background-size: auto 100%;
 }

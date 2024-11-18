@@ -1,20 +1,18 @@
-import React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
-import { useAuth, useUser } from '@clerk/tanstack-start'
-import { useQueryClient } from '@tanstack/react-query'
-import { z } from 'zod'
-import { WidgetLayout } from '@/components/layouts/WidgetLayout'
-import { GamepadViewer } from '@/components/GamepadViewer'
-import { GamepadSettingsForm } from '@/components/widget-settings/GamepadSettingsForm'
-import { useProfile, useProfiles } from '@/hooks/useProfile'
-import { apiMethods } from '@/lib/api'
-import { useMutation } from '@tanstack/react-query'
-import { Spinner } from '@/components/ui/spinner'
-import { Button } from '@/components/ui/button'
-import { Copy } from 'lucide-react'
-import { toast } from '@/utils/toast'
-import { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useUser } from "@clerk/tanstack-start";
+import { WidgetLayout } from "@/components/layouts/WidgetLayout";
+import { GamepadViewer } from "@/components/GamepadViewer";
 import { supabase } from "@/utils/supabase/client";
+import { useGamepad } from "@/hooks/useGamepad";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/utils/toast";
+import { GamepadSettingsForm } from "@/components/widget-settings/GamepadSettingsForm";
+import { defaultGamepadSettings } from "@/lib/gamepad-settings";
+import { GamepadSettings, HookGamepadState } from "@/types/gamepad";
 
 export const defaultSettings = {
   selectedSkin: "ds4",
@@ -32,103 +30,352 @@ export const defaultSettings = {
   touchpadEnabled: true,
   rumbleEnabled: true,
   debugMode: false,
-} as const
+} as const;
+
+interface GamepadState {
+  buttons: boolean[];
+  axes: number[];
+}
+
+const BUTTON_MAPPINGS = [
+  "A",
+  "B",
+  "X",
+  "Y",
+  "LB",
+  "RB",
+  "LT",
+  "RT",
+  "Back",
+  "Start",
+  "LS",
+  "RS",
+  "DPad-Up",
+  "DPad-Down",
+  "DPad-Left",
+  "DPad-Right",
+  "Home",
+  "Share",
+];
+
+const TOKEN_REFRESH_BUFFER = 60 * 1000; // Refresh 60 seconds before expiry
+const TOKEN_UPDATE_INTERVAL = 60 * 1000; // Check token every 60 seconds
+
+// Add these helper functions at the top level
+const AXIS_THRESHOLD = 0.05; // Minimum change in axis value to trigger an update
+
+function hasSignificantAxisChange(
+  oldAxes: number[],
+  newAxes: number[]
+): boolean {
+  return newAxes.some((value, index) => {
+    const oldValue = oldAxes[index] || 0;
+    return Math.abs(value - oldValue) > AXIS_THRESHOLD;
+  });
+}
+
+function hasButtonStateChanged(
+  oldButtons: boolean[],
+  newButtons: boolean[]
+): boolean {
+  return newButtons.some((value, index) => value !== oldButtons[index]);
+}
 
 export function GamepadSection() {
   const { user } = useUser();
-  const queryClient = useQueryClient();
-  const { data: profiles, isLoading: isProfilesLoading } = useProfiles('gamepad');
-  const { data: profile, isLoading: isProfileLoading } = useProfile('gamepad', user?.id ?? null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const [currentGamepadState, setCurrentGamepadState] =
+    useState<GamepadState | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const frameRef = useRef<number>();
+  const lastBroadcastRef = useRef<number>(0);
+  const BROADCAST_INTERVAL = 16;
+  const lastStateRef = useRef<string>("");
 
-  const publicUrl = `${import.meta.env.VITE_PUBLIC_APP_URL}/${user?.id}/gamepad`;
+  // Use the useGamepad hook with the default deadzone
+  const { gamepadState, isConnected: isGamepadConnected } = useGamepad(
+    defaultSettings.deadzone
+  );
 
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(publicUrl);
-    toast.success({
-      title: "Success",
-      description: "URL copied to clipboard"
+  const channelId = `gamepad:${user?.id}`;
+
+  const lastValidStateRef = useRef<GamepadState>({
+    buttons: Array(18).fill(false),
+    axes: Array(4).fill(0),
+  });
+
+  const broadcastGamepadState = useCallback(
+    async (state: HookGamepadState) => {
+      if (!user?.id || !channelRef.current || !state) return;
+
+      const now = performance.now();
+      if (now - lastBroadcastRef.current < BROADCAST_INTERVAL) return;
+
+      // Transform HookGamepadState to GamepadState
+      const transformedState: GamepadState = {
+        buttons: state.buttons.map((button) => button.pressed),
+        axes: state.axes.map((value) =>
+          Math.abs(value) < defaultSettings.deadzone ? 0 : value
+        ),
+      };
+
+      // Check if the state has changed significantly
+      const hasSignificantChange =
+        hasSignificantAxisChange(
+          lastValidStateRef.current.axes,
+          transformedState.axes
+        ) ||
+        hasButtonStateChanged(
+          lastValidStateRef.current.buttons,
+          transformedState.buttons
+        );
+
+      if (!hasSignificantChange) return;
+
+      // Update the last valid state
+      lastValidStateRef.current = transformedState;
+      lastBroadcastRef.current = now;
+
+      try {
+        await channelRef.current.send({
+          type: "broadcast",
+          event: "gamepadState",
+          payload: { gamepadState: transformedState },
+        });
+      } catch (error) {
+        console.error("Error broadcasting gamepad state:", error);
+      }
+    },
+    [user?.id]
+  );
+
+  // Setup Supabase channel
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase.channel(channelId, {
+      config: {
+        broadcast: { self: false },
+        presence: { key: user.id },
+      },
     });
-  };
 
-  // Add broadcast function using Supabase Realtime
-  const broadcastGamepadState = useCallback(async (gamepadState: any) => {
-    if (!user?.username) return;
-
-    try {
-      const channel = supabase.channel(`gamepad:${user.username}`, {
-        config: {
-          broadcast: { self: true },
-          presence: { key: user.username },
-        },
-      });
-
-      await channel.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.send({
-            type: 'broadcast',
-            event: 'gamepadState',
-            payload: { gamepadState }
-          });
+    channel
+      .on("broadcast", { event: "gamepadState" }, (payload) => {
+        if (payload.payload?.gamepadState) {
+          setCurrentGamepadState(payload.payload.gamepadState);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          channelRef.current = channel;
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
         }
       });
 
-      // Clean up channel after broadcast
-      await supabase.removeChannel(channel);
-    } catch (error) {
-      console.error('Error broadcasting gamepad state:', error);
-    }
-  }, [user?.username]);
+    return () => {
+      channel.unsubscribe();
+      channelRef.current = null;
+    };
+  }, [user?.id, channelId]);
 
-  // Add effect to broadcast gamepad changes
+  // Use RAF for smoother updates
   useEffect(() => {
-    if (!user?.username) return;
+    if (!gamepadState) return;
 
-    const handleGamepadInput = (e: GamepadEvent) => {
-      const gamepad = e.gamepad;
-      if (gamepad) {
-        broadcastGamepadState({
-          buttons: gamepad.buttons.map(b => b.pressed),
-          axes: gamepad.axes
-        });
+    const updateFrame = () => {
+      const transformedState: GamepadState = {
+        buttons: gamepadState.buttons.map((button) => button.pressed),
+        axes: gamepadState.axes.map((value) =>
+          Math.abs(value) < defaultSettings.deadzone ? 0 : value
+        ),
+      };
+
+      // Check if the state has changed significantly
+      const hasSignificantChange =
+        hasSignificantAxisChange(
+          lastValidStateRef.current.axes,
+          transformedState.axes
+        ) ||
+        hasButtonStateChanged(
+          lastValidStateRef.current.buttons,
+          transformedState.buttons
+        );
+
+      if (hasSignificantChange) {
+        setCurrentGamepadState(transformedState);
+        broadcastGamepadState(gamepadState);
+        lastValidStateRef.current = transformedState;
       }
+
+      frameRef.current = requestAnimationFrame(updateFrame);
     };
 
-    window.addEventListener('gamepadconnected', handleGamepadInput);
-    window.addEventListener('gamepaddisconnected', handleGamepadInput);
-
-    // Poll for gamepad state
-    const interval = setInterval(() => {
-      const gamepads = navigator.getGamepads();
-      const activeGamepad = gamepads[0];
-      if (activeGamepad) {
-        broadcastGamepadState({
-          buttons: activeGamepad.buttons.map(b => b.pressed),
-          axes: activeGamepad.axes
-        });
-      }
-    }, 16); // 60fps
+    frameRef.current = requestAnimationFrame(updateFrame);
 
     return () => {
-      window.removeEventListener('gamepadconnected', handleGamepadInput);
-      window.removeEventListener('gamepaddisconnected', handleGamepadInput);
-      clearInterval(interval);
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
     };
-  }, [user?.username, broadcastGamepadState]);
+  }, [gamepadState, broadcastGamepadState]);
 
-  return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex flex-col space-y-4">
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-background">
-          <GamepadViewer 
-            settings={profile?.settings?.specificSettings || defaultSettings} 
-            username={user?.id}
+  // Get the public URL
+  const publicUrl = user?.username
+    ? `${window.location.origin}/${user.username}/gamepad`
+    : null;
+
+  const handleCopyPublicUrl = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (user?.username) {
+        const urlToCopy = `${window.location.origin}/${user.username}/gamepad`;
+        navigator.clipboard
+          .writeText(urlToCopy)
+          .then(() => {
+            toast.success({
+              title: "Public URL copied to clipboard",
+              description: urlToCopy,
+            });
+          })
+          .catch((err) => {
+            console.error("Failed to copy URL to clipboard:", err);
+            toast.error({
+              title: "Failed to copy URL to clipboard",
+            });
+          });
+      }
+    },
+    [user?.username]
+  );
+
+  const [settings, setSettings] = useState(defaultGamepadSettings);
+
+  const handleSettingsChange = useCallback(
+    async (newSettings: Partial<GamepadSettings>) => {
+      if (!user?.id) return;
+
+      const updatedSettings = {
+        ...settings,
+        ...newSettings,
+      };
+
+      try {
+        const { error } = await supabase.from("GamepadWidget").upsert({
+          user_id: user.id,
+          settings: updatedSettings,
+        });
+
+        if (error) throw error;
+        setSettings(updatedSettings);
+      } catch (error) {
+        console.error("Error updating settings:", error);
+        toast.error({
+          title: "Failed to update settings",
+        });
+      }
+    },
+    [user?.id, settings]
+  );
+
+  const renderStickValues = (axes: number[]) => {
+    return (
+      <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+        <div>
+          <p className="font-semibold">Left Stick</p>
+          <p>X: {axes[0]?.toFixed(4) || "0.0000"}</p>
+          <p>Y: {axes[1]?.toFixed(4) || "0.0000"}</p>
+        </div>
+        <div>
+          <p className="font-semibold">Right Stick</p>
+          <p>X: {axes[2]?.toFixed(4) || "0.0000"}</p>
+          <p>Y: {axes[3]?.toFixed(4) || "0.0000"}</p>
+        </div>
+      </div>
+    );
+  };
+
+  const GamepadPreview = (
+    <div className="flex h-full flex-col">
+      <div className="flex-1 space-y-4 p-4">
+        <GamepadViewer
+          settings={settings}
+          username={user?.username || undefined}
+          gamepadState={currentGamepadState}
+        />
+
+        {/* Stick Values Display */}
+        {currentGamepadState && (
+          <div className="mx-auto max-w-md rounded-lg border bg-card p-4 shadow-sm">
+            {renderStickValues(currentGamepadState.axes)}
+          </div>
+        )}
+      </div>
+
+      {/* Debug Section */}
+      {defaultSettings.debugMode && (
+        <div className="flex-none border-t p-4">
+          <div className="text-xs text-muted-foreground">
+            <p>Debug Info:</p>
+            <p>Channel: {channelId}</p>
+            <p>
+              Connection Status: {isConnected ? "Connected" : "Disconnected"}
+            </p>
+            <p>
+              Gamepad Status:{" "}
+              {isGamepadConnected ? "Connected" : "Disconnected"}
+            </p>
+            <pre className="mt-2 whitespace-pre-wrap">
+              Current State: {JSON.stringify(currentGamepadState, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const GamepadSettings = (
+    <div className="flex flex-col">
+      {/* Header with URL input */}
+      <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center space-x-2">
+          <Input
+            key={publicUrl}
+            value={publicUrl || ""}
+            readOnly
+            className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+          />
+          <Button
+            onClick={handleCopyPublicUrl}
+            size="icon"
+            variant="outline"
+            className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="rounded-lg border bg-card shadow-sm">
+          <GamepadSettingsForm
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
           />
         </div>
       </div>
     </div>
   );
+
+  return (
+    <div className="max-h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
+      <WidgetLayout preview={GamepadPreview} settings={GamepadSettings} />
+    </div>
+  );
 }
 
-export const Route = createFileRoute('/_app/widgets/gamepad')({
-  component: GamepadSection
-}) 
+export const Route = createFileRoute("/_app/widgets/gamepad")({
+  component: GamepadSection,
+});
