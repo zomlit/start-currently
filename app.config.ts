@@ -1,13 +1,20 @@
 import { defineConfig } from "@tanstack/start/config";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import svgr from "vite-plugin-svgr";
 import tsConfigPaths from "vite-tsconfig-paths";
-import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 
 export default defineConfig({
   server: {
     preset: "node-server",
   },
   vite: {
+    css: {
+      postcss: true,
+      modules: {
+        localsConvention: "camelCase",
+      },
+    },
+
     plugins: [
       tsConfigPaths({
         projects: ["./tsconfig.json"],
@@ -25,17 +32,6 @@ export default defineConfig({
       alias: {
         "@": "/app",
         "@icons": "/app/icons",
-      },
-    },
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks(id: string) {
-            if (id.includes("node_modules")) {
-              return "vendor";
-            }
-          },
-        },
       },
     },
   },

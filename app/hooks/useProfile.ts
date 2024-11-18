@@ -1,34 +1,32 @@
-import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@clerk/tanstack-start'
-import { apiMethods } from '@/lib/api'
-import type { Profile } from '@/types'
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/tanstack-start";
+import { apiMethods } from "@/lib/api";
+import type { VisualizerProfile } from "@/types/visualizer";
 
-export function useProfiles(sectionId: string) {
-  const { userId, getToken } = useAuth()
+export function useProfiles(sectionId: string, options?: any) {
+  const { getToken } = useAuth();
 
-  return useQuery({
-    queryKey: ['profiles', sectionId],
+  return useQuery<VisualizerProfile[]>({
+    queryKey: ["profiles", sectionId],
     queryFn: async () => {
-      if (!userId) return null
-      const token = await getToken()
-      if (!token) throw new Error('No token available')
-      return apiMethods.profiles.getAll(sectionId, token)
+      const token = await getToken({ template: "lstio" });
+      if (!token) throw new Error("No token available");
+      return apiMethods.profiles.getAll(sectionId, token);
     },
-    enabled: !!userId,
-  })
+    ...options,
+  });
 }
 
 export function useProfile(sectionId: string, profileId: string | null) {
-  const { userId, getToken } = useAuth()
+  const { getToken } = useAuth();
 
-  return useQuery({
-    queryKey: ['profile', sectionId, profileId],
+  return useQuery<VisualizerProfile>({
+    queryKey: ["profile", sectionId, profileId],
     queryFn: async () => {
-      if (!userId || !profileId) return null
-      const token = await getToken()
-      if (!token) throw new Error('No token available')
-      return apiMethods.profiles.get(profileId, token)
+      const token = await getToken({ template: "lstio" });
+      if (!token) throw new Error("No token available");
+      return apiMethods.profiles.get(sectionId, profileId, token);
     },
-    enabled: !!userId && !!profileId,
-  })
+    enabled: !!profileId,
+  });
 }

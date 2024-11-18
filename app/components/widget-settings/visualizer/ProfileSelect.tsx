@@ -9,11 +9,25 @@ import type { VisualizerProfile } from "@/types/visualizer";
 import { useVisualizerStore } from "@/store/visualizerStore";
 
 interface ProfileSelectProps {
-  profiles: VisualizerProfile[];
+  profiles: VisualizerProfile[] | undefined;
 }
 
 export function ProfileSelect({ profiles }: ProfileSelectProps) {
   const { selectedProfileId, setSelectedProfileId } = useVisualizerStore();
+
+  if (!Array.isArray(profiles) || profiles.length === 0) {
+    return (
+      <Select disabled>
+        <SelectTrigger className="w-[200px]">
+          <SelectValue>No profiles available</SelectValue>
+        </SelectTrigger>
+      </Select>
+    );
+  }
+
+  const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+  const selectedProfileName =
+    selectedProfile?.settings.name || "Select a profile";
 
   return (
     <Select
@@ -21,7 +35,7 @@ export function ProfileSelect({ profiles }: ProfileSelectProps) {
       onValueChange={setSelectedProfileId}
     >
       <SelectTrigger className="w-[200px]">
-        <SelectValue placeholder="Select a profile" />
+        <SelectValue>{selectedProfileName}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {profiles.map((profile) => (

@@ -19,7 +19,6 @@ import {
   Eye,
   Users,
   AudioLines,
-  MicVocal,
   MessageCircleMore,
   Pencil,
   Plus,
@@ -52,6 +51,9 @@ import {
   Circle as FaCircle,
 } from "lucide-react";
 import { navItems } from "@/config/navigation";
+import { LiveStatusCard } from "@/components/widget-settings/visualizer/LiveStatusCard";
+import type { Event, Alert } from "@/types/events";
+import type { TrackData } from "@/types/visualizer";
 
 const IconButton = forwardRef<
   HTMLButtonElement,
@@ -544,10 +546,10 @@ const ActivityBar = () => {
   );
 
   const { currentAlert } = useCombinedStore((state) => ({
-    currentAlert: state.currentAlert,
+    currentAlert: state.currentAlert as Alert | null,
   }));
 
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     const newEvent = (() => {
@@ -590,7 +592,7 @@ const ActivityBar = () => {
     }
   }, [nowPlayingData, currentAlert]);
 
-  const getEventIcon = (type, amount = 0) => {
+  const getEventIcon = (type: string, amount: number = 0) => {
     switch (type.toLowerCase()) {
       case "follow":
         return <IconUserPlus className="h-4 w-4 text-blue-400" />;
@@ -610,7 +612,7 @@ const ActivityBar = () => {
     }
   };
 
-  const getEventCount = (event) => {
+  const getEventCount = (event: Event) => {
     switch (event.type.toLowerCase()) {
       case "tip":
         return (
@@ -758,7 +760,6 @@ export function Dashboard() {
           backText=""
         />
 
-        {/* Add the horizontal navigation here */}
         <HorizontalNav />
 
         <div className="my-6">
@@ -774,11 +775,17 @@ export function Dashboard() {
 
           <div className="columns-1 gap-4 space-y-4 sm:columns-2 lg:columns-3">
             <AnimatedCard className="mb-4 break-inside-avoid">
+              <LiveStatusCard />
+            </AnimatedCard>
+
+            <AnimatedCard className="mb-4 break-inside-avoid">
               <UserDetailsCard />
             </AnimatedCard>
+
             <AnimatedCard className="break-inside-avoid">
               <NowPlayingCard />
             </AnimatedCard>
+
             {organization && (
               <AnimatedCard className="mb-4 break-inside-avoid">
                 <div className="break-inside-avoid">

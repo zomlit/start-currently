@@ -537,6 +537,44 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_sessions: {
+        Row: {
+          broadcaster_id: string
+          created_at: string | null
+          end_time: string | null
+          id: string
+          is_live: boolean | null
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          broadcaster_id: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_live?: boolean | null
+          start_time: string
+          user_id: string
+        }
+        Update: {
+          broadcaster_id?: string
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_live?: boolean | null
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_sessions_broadcaster_id_fkey"
+            columns: ["broadcaster_id"]
+            isOneToOne: false
+            referencedRelation: "TwitchUserCache"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       table_metadata: {
         Row: {
           real_time_enabled: boolean
