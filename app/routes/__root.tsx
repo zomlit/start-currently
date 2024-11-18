@@ -1,49 +1,26 @@
-import globalStyle from "@/styles/global.css?url";
-
 import {
-  createRootRouteWithContext,
   Outlet,
   ScrollRestoration,
+  createRootRoute,
 } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
-import type { ErrorComponentProps } from "@tanstack/react-router";
-import type { PropsWithChildren } from "react";
-import { RouterContext } from "@/lib/router";
 import { ClerkProvider } from "@clerk/tanstack-start";
+import { useThemeStore } from "@/store/themeStore";
+import { dark } from "@clerk/themes";
+import { seo } from "@/utils/seo";
+import { AccessControl } from "@/components/AccessControl";
+import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
+import { NotFound } from "@/components/NotFound";
+import type { ReactNode } from "react";
 
-export const Route = createRootRouteWithContext<RouterContext>()({
-  meta: () => [
-    ...createMetadata({
-      charSet: "utf-8",
-      viewport: "width=device-width, initial-scale=1",
-      title: "TanStack Boilerplate",
-      description:
-        "A fully type-safe boilerplate with a focus on UX and DX, complete with multiple examples.",
-      robots: "index, follow",
-    }),
-  ],
-  // TODO: dynamic import font depending on locale
-  // https://github.com/TanStack/router/pull/2571
-  links: () => [
-    {
-      rel: "icon",
-      href: "/favicon.ico",
-    },
-    {
-      rel: "stylesheet",
-      href: fontsourceInter,
-    },
-    {
-      rel: "stylesheet",
-      href: fontsourceNotoSansTC,
-    },
-    {
-      rel: "stylesheet",
-      href: globalStyle,
-    },
-  ],
-  // https://github.com/TanStack/router/issues/1992#issuecomment-2397896356
-  // 2024-11-15: I think HMR is fixed?
+// Import CSS directly
+import "@/styles/app.css";
+
+export const Route = createRootRoute({
+  component: RootComponent,
+  beforeLoad: async () => {
+    return {};
+  },
   scripts: () =>
     import.meta.env.PROD
       ? []
@@ -58,17 +35,21 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       `,
           },
         ],
-  component: RootComponent,
-  errorComponent: ErrorComponent,
-  pendingComponent: PendingComponent,
-  notFoundComponent: NotFoundComponent,
+  errorComponent: DefaultCatchBoundary,
 });
 
 function RootComponent() {
+  const { theme } = useThemeStore();
+
   return (
     <ClerkProvider
       appearance={{
+        baseTheme: theme === "dark" ? dark : undefined,
         variables: {
+          colorBackground:
+            theme === "dark"
+              ? "hsl(20 14.3% 4.1% / 0.8)"
+              : "hsl(0 0% 100% / 1)",
           colorPrimary: "hsl(263 70% 50%)",
           colorShimmer: "transparent",
         },
@@ -82,43 +63,22 @@ function RootComponent() {
       }}
     >
       <RootDocument>
-        <div className="flex h-full flex-col">
-          <div className="flex h-full flex-1 flex-col items-center px-2">
-            <Outlet />
-          </div>
-        </div>
+        <AccessControl>
+          <Outlet />
+        </AccessControl>
       </RootDocument>
     </ClerkProvider>
   );
 }
 
-function PendingComponent() {
-  return <div className="space-y-6 p-6"></div>;
-}
-
-function ErrorComponent({ error }: ErrorComponentProps) {
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <RootDocument>
-      <div className="space-y-6 p-6">
-        <p className="text-destructive">{error.message}</p>
-      </div>
-    </RootDocument>
-  );
-}
-
-function NotFoundComponent() {
-  return <div className="space-y-6"></div>;
-}
-
-function RootDocument({ children }: PropsWithChildren) {
-  return (
-    <html suppressHydrationWarning>
+    <html>
       <head>
         <Meta />
       </head>
       <body>
         {children}
-
         <ScrollRestoration />
         <Scripts />
       </body>
