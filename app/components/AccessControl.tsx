@@ -8,7 +8,13 @@ const ALLOWED_USER_IDS = [
   "user_2c6N06VTAXeFDPwYGJgxaFMiYex",
 ];
 
-const PUBLIC_ROUTES = ["/", "/lyrics", "/dashboard", "/teampicker"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/lyrics",
+  "/dashboard",
+  "/teampicker",
+  "/visualizer",
+];
 
 interface AccessControlProps {
   children: ReactNode;
@@ -26,7 +32,7 @@ export function AccessControl({ children }: AccessControlProps) {
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
-  const isAllowedUser = user && ALLOWED_USER_IDS.includes(user.id);
+  const isAllowedUser = user;
 
   if (isPublicRoute || isAllowedUser) {
     return <>{children}</>;
