@@ -1,56 +1,74 @@
+import globalStyle from "@/styles/global.css?url";
+
 import {
+  createRootRouteWithContext,
   Outlet,
   ScrollRestoration,
-  createRootRoute,
 } from "@tanstack/react-router";
 import { Meta, Scripts } from "@tanstack/start";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import type { PropsWithChildren } from "react";
+import { RouterContext } from "@/lib/router";
 import { ClerkProvider } from "@clerk/tanstack-start";
-import { useThemeStore } from "@/store/themeStore";
-import { dark } from "@clerk/themes";
-import { seo } from "@/utils/seo";
-import { AccessControl } from "@/components/AccessControl";
-import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
-import { NotFound } from "@/components/NotFound";
-import type { ReactNode } from "react";
 
-// Import CSS
-import appCss from "@/styles/app.css?url";
-import globalCss from "@/styles/global.css?url";
-
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   meta: () => [
-    { charSet: "utf-8" },
-    { name: "viewport", content: "width=device-width, initial-scale=1" },
-    ...seo({
-      title: "Currently | Modern Tools for the Modern Streamer.",
-      description: "Currently is a streaming platform for the modern streamer.",
+    ...createMetadata({
+      charSet: "utf-8",
+      viewport: "width=device-width, initial-scale=1",
+      title: "TanStack Boilerplate",
+      description:
+        "A fully type-safe boilerplate with a focus on UX and DX, complete with multiple examples.",
+      robots: "index, follow",
     }),
   ],
+  // TODO: dynamic import font depending on locale
+  // https://github.com/TanStack/router/pull/2571
   links: () => [
-    { rel: "stylesheet", href: globalCss },
-    { rel: "stylesheet", href: appCss },
+    {
+      rel: "icon",
+      href: "/favicon.ico",
+    },
+    {
+      rel: "stylesheet",
+      href: fontsourceInter,
+    },
+    {
+      rel: "stylesheet",
+      href: fontsourceNotoSansTC,
+    },
+    {
+      rel: "stylesheet",
+      href: globalStyle,
+    },
   ],
-  errorComponent: (props) => (
-    <RootDocument>
-      <DefaultCatchBoundary {...props} />
-    </RootDocument>
-  ),
-  notFoundComponent: () => <NotFound />,
+  // https://github.com/TanStack/router/issues/1992#issuecomment-2397896356
+  // 2024-11-15: I think HMR is fixed?
+  scripts: () =>
+    import.meta.env.PROD
+      ? []
+      : [
+          {
+            type: "module",
+            children: /* js */ `
+        import RefreshRuntime from "/_build/@react-refresh"
+        RefreshRuntime.injectIntoGlobalHook(window)
+        window.$RefreshReg$ = () => {}
+        window.$RefreshSig$ = () => (type) => type
+      `,
+          },
+        ],
   component: RootComponent,
+  errorComponent: ErrorComponent,
+  pendingComponent: PendingComponent,
+  notFoundComponent: NotFoundComponent,
 });
 
 function RootComponent() {
-  const { theme } = useThemeStore();
-
   return (
     <ClerkProvider
       appearance={{
-        baseTheme: theme === "dark" ? dark : undefined,
         variables: {
-          colorBackground:
-            theme === "dark"
-              ? "hsl(20 14.3% 4.1% / 0.8)"
-              : "hsl(0 0% 100% / 1)",
           colorPrimary: "hsl(263 70% 50%)",
           colorShimmer: "transparent",
         },
@@ -64,22 +82,43 @@ function RootComponent() {
       }}
     >
       <RootDocument>
-        <AccessControl>
-          <Outlet />
-        </AccessControl>
+        <div className="flex h-full flex-col">
+          <div className="flex h-full flex-1 flex-col items-center px-2">
+            <Outlet />
+          </div>
+        </div>
       </RootDocument>
     </ClerkProvider>
   );
 }
 
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+function PendingComponent() {
+  return <div className="space-y-6 p-6"></div>;
+}
+
+function ErrorComponent({ error }: ErrorComponentProps) {
   return (
-    <html>
+    <RootDocument>
+      <div className="space-y-6 p-6">
+        <p className="text-destructive">{error.message}</p>
+      </div>
+    </RootDocument>
+  );
+}
+
+function NotFoundComponent() {
+  return <div className="space-y-6"></div>;
+}
+
+function RootDocument({ children }: PropsWithChildren) {
+  return (
+    <html suppressHydrationWarning>
       <head>
         <Meta />
       </head>
       <body>
         {children}
+
         <ScrollRestoration />
         <Scripts />
       </body>

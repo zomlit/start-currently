@@ -1,38 +1,39 @@
-import React, { ErrorInfo, ReactNode } from "react";
+import React from "react";
+import { Button } from "./ui/button";
 
-interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback: ReactNode;
+interface Props {
+  children: React.ReactNode;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
+  error?: Error;
 }
 
-class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
+export class ErrorBoundary extends React.Component<Props, State> {
+  public state: State = {
+    hasError: false,
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
-  }
-
-  render() {
+  public render() {
     if (this.state.hasError) {
-      return this.props.fallback;
+      return (
+        <div className="flex h-screen flex-col items-center justify-center gap-4">
+          <h2 className="text-xl font-semibold text-red-500">
+            Something went wrong
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            {this.state.error?.message}
+          </p>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
+        </div>
+      );
     }
 
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;
