@@ -13,30 +13,29 @@ import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
 import type { ReactNode } from "react";
 
-// Import CSS
-import appCss from "@/styles/app.css?url";
-import globalCss from "@/styles/global.css?url";
+// Import CSS directly
+import "@/styles/app.css";
 
 export const Route = createRootRoute({
-  meta: () => [
-    { charSet: "utf-8" },
-    { name: "viewport", content: "width=device-width, initial-scale=1" },
-    ...seo({
-      title: "Currently | Modern Tools for the Modern Streamer.",
-      description: "Currently is a streaming platform for the modern streamer.",
-    }),
-  ],
-  links: () => [
-    { rel: "stylesheet", href: globalCss },
-    { rel: "stylesheet", href: appCss },
-  ],
-  errorComponent: (props) => (
-    <RootDocument>
-      <DefaultCatchBoundary {...props} />
-    </RootDocument>
-  ),
-  notFoundComponent: () => <NotFound />,
   component: RootComponent,
+  beforeLoad: async () => {
+    return {};
+  },
+  scripts: () =>
+    import.meta.env.PROD
+      ? []
+      : [
+          {
+            type: "module",
+            children: /* js */ `
+        import RefreshRuntime from "/_build/@react-refresh"
+        RefreshRuntime.injectIntoGlobalHook(window)
+        window.$RefreshReg$ = () => {}
+        window.$RefreshSig$ = () => (type) => type
+      `,
+          },
+        ],
+  errorComponent: DefaultCatchBoundary,
 });
 
 function RootComponent() {

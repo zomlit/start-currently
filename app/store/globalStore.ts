@@ -6,6 +6,7 @@ import { TwitchApi } from "ts-twitch-api";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useAuth } from "@clerk/tanstack-start";
 import { useElysiaSession } from "@/hooks/useElysiaSession";
+import type { Track } from "@/types/visualizer";
 
 // Types
 type OAuthTokens = {
@@ -99,6 +100,16 @@ export interface GlobalState {
   switchSpotifyTokens: () => void;
   twitchApi: TwitchApi | null;
   refreshTwitchToken: () => Promise<void>;
+  currentAlert: Alert | null;
+}
+
+export interface Alert {
+  type: string;
+  data: {
+    displayName: string;
+    amount?: string | number;
+    gifted?: boolean;
+  };
 }
 
 export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
@@ -670,4 +681,5 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
       return state;
     });
   },
+  currentAlert: null,
 });

@@ -2,4 +2,3 @@
 **/public
 pnpm-lock.yaml
 routeTree.gen.ts
-app/__root.tsx
