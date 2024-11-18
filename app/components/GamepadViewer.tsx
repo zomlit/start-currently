@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useUser } from "@clerk/tanstack-start";
-import { useGamepadStore } from "@/store/gamepadStore";
-import { defaultGamepadSettings } from "@/lib/gamepad-settings";
+import React from "react";
+import { Gamepad } from "lucide-react";
 import type { GamepadState, GamepadSettings } from "@/types/gamepad";
-import { Loader2, Gamepad } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface GamepadViewerProps {
   settings?: Partial<GamepadSettings>;
@@ -12,57 +10,21 @@ interface GamepadViewerProps {
   isPublicView?: boolean;
 }
 
-export function GamepadViewer({ 
-  settings = defaultGamepadSettings, 
-  username, 
+export function GamepadViewer({
+  settings,
+  username,
   gamepadState,
-  isPublicView = false 
+  isPublicView = false,
 }: GamepadViewerProps) {
-  const { settings: storeSettings, loadPublicSettings } = useGamepadStore();
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load settings and subscribe to changes
-  useEffect(() => {
-    async function loadSettings() {
-      if (!username) return;
-      
-      try {
-        await loadPublicSettings(username);
-        setIsLoadingSettings(false);
-      } catch (error) {
-        console.error('Error loading settings:', error);
-        setError('Failed to load settings');
-        setIsLoadingSettings(false);
-      }
-    }
-
-    loadSettings();
-  }, [username, loadPublicSettings]);
-
-  if (error) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
-  if (isLoadingSettings) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   if (!gamepadState) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
         <Gamepad className="h-12 w-12 text-muted-foreground/50" />
         <div>
           <h3 className="text-lg font-semibold text-muted-foreground">
-            {isPublicView ? "Waiting for controller input..." : "No Controller Detected"}
+            {isPublicView
+              ? "Waiting for controller input..."
+              : "No Controller Detected"}
           </h3>
           <p className="text-sm text-muted-foreground/75">
             {isPublicView
@@ -77,100 +39,132 @@ export function GamepadViewer({
   const { buttons, axes } = gamepadState;
 
   return (
-    <div 
-      className="relative flex items-center justify-center bg-black/5 rounded-lg overflow-hidden"
-      style={{
-        backgroundColor: storeSettings.backgroundColor,
-        transform: `scale(${storeSettings.scale})`,
-      }}
-    >
-      <div className={`gamepad-base ${storeSettings.selectedSkin || 'ds4'}`}>
-        {/* Face Buttons */}
-        <div className="face-buttons">
-          <button 
-            className={`face-button cross ${buttons[0] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-          <button 
-            className={`face-button circle ${buttons[1] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-          <button 
-            className={`face-button square ${buttons[2] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-          <button 
-            className={`face-button triangle ${buttons[3] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-        </div>
-
-        {/* D-Pad */}
-        <div className="d-pad">
-          <button 
-            className={`d-pad-button up ${buttons[12] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-          <button 
-            className={`d-pad-button right ${buttons[15] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-          <button 
-            className={`d-pad-button down ${buttons[13] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-          <button 
-            className={`d-pad-button left ${buttons[14] ? 'pressed' : ''}`}
-            style={{ backgroundColor: storeSettings.buttonColor }}
-          />
-        </div>
-
-        {/* Analog Sticks */}
-        {storeSettings.showAnalogSticks && (
-          <>
-            <div 
-              className="analog-stick left"
+    <div className="relative flex h-full w-full items-center justify-center p-4">
+      <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-full" style={{ paddingBottom: "75%" }}>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className={cn(
+                "controller active max-w-full max-h-full",
+                settings?.controllerType || "ds4",
+                settings?.controllerColor,
+                "id-gamepad-0"
+              )}
               style={{
-                transform: `translate(${axes[0] * 20}px, ${axes[1] * 20}px)`,
-                backgroundColor: storeSettings.stickColor
+                transform: `scale(${settings?.scale || 1})`,
+                position: "relative",
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
               }}
-            />
-            <div 
-              className="analog-stick right"
-              style={{
-                transform: `translate(${axes[2] * 20}px, ${axes[3] * 20}px)`,
-                backgroundColor: storeSettings.stickColor
-              }}
-            />
-          </>
-        )}
+            >
+              <div className="triggers">
+                <span
+                  className={cn("trigger left", buttons[6] && "pressed")}
+                  data-name="button-left-shoulder-bottom"
+                ></span>
+                <span
+                  className={cn("trigger right", buttons[7] && "pressed")}
+                  data-name="button-right-shoulder-bottom"
+                ></span>
+                <span
+                  className="trigger-button left"
+                  data-name="button-left-shoulder-bottom-digital"
+                ></span>
+                <span
+                  className="trigger-button right"
+                  data-name="button-right-shoulder-bottom-digital"
+                ></span>
+                <span className="clear"></span>
+              </div>
 
-        {/* Triggers */}
-        {storeSettings.showTriggers && (
-          <div className="triggers">
-            <div 
-              className={`trigger l2 ${buttons[6] ? 'pressed' : ''}`}
-              style={{ 
-                backgroundColor: storeSettings.triggerColor,
-                transform: `scaleY(${buttons[6] ? 0.7 : 1})`
-              }}
-            />
-            <div 
-              className={`trigger r2 ${buttons[7] ? 'pressed' : ''}`}
-              style={{ 
-                backgroundColor: storeSettings.triggerColor,
-                transform: `scaleY(${buttons[7] ? 0.7 : 1})`
-              }}
-            />
-          </div>
-        )}
+              <div className="bumpers">
+                <span
+                  className={cn("bumper left", buttons[4] && "pressed")}
+                  data-name="button-left-shoulder-top"
+                ></span>
+                <span
+                  className={cn("bumper right", buttons[5] && "pressed")}
+                  data-name="button-right-shoulder-top"
+                ></span>
+                <span className="clear"></span>
+              </div>
 
-        {/* Debug Mode */}
-        {storeSettings.debugMode && (
-          <div className="debug-info">
-            <pre>{JSON.stringify(gamepadState, null, 2)}</pre>
+              <div className="touchpad" data-name="touch-pad"></div>
+              <div className="meta" data-name="button-meta"></div>
+
+              <div className="arrows">
+                <span
+                  className={cn("back", buttons[8] && "pressed")}
+                  data-name="button-select"
+                ></span>
+                <span
+                  className={cn("start", buttons[9] && "pressed")}
+                  data-name="button-start"
+                ></span>
+                <span className="clear"></span>
+              </div>
+
+              <div className="abxy">
+                <span
+                  className={cn("button a", buttons[0] && "pressed")}
+                  data-name="button-1"
+                ></span>
+                <span
+                  className={cn("button b", buttons[1] && "pressed")}
+                  data-name="button-2"
+                ></span>
+                <span
+                  className={cn("button x", buttons[2] && "pressed")}
+                  data-name="button-3"
+                ></span>
+                <span
+                  className={cn("button y", buttons[3] && "pressed")}
+                  data-name="button-4"
+                ></span>
+              </div>
+
+              <div className="sticks">
+                <span
+                  className={cn("stick left", buttons[10] && "pressed")}
+                  data-name="stick-1"
+                  style={{
+                    transform: `translate3d(${axes[0] * 20}px, ${axes[1] * 20}px, 0)`,
+                    willChange: "transform",
+                  }}
+                ></span>
+                <span
+                  className={cn("stick right", buttons[11] && "pressed")}
+                  data-name="stick-2"
+                  style={{
+                    transform: `translate3d(${axes[2] * 20}px, ${axes[3] * 20}px, 0)`,
+                    willChange: "transform",
+                  }}
+                ></span>
+              </div>
+
+              <div className="dpad">
+                <span
+                  className={cn("face up", buttons[12] && "pressed")}
+                  data-name="button-dpad-top"
+                ></span>
+                <span
+                  className={cn("face down", buttons[13] && "pressed")}
+                  data-name="button-dpad-bottom"
+                ></span>
+                <span
+                  className={cn("face left", buttons[14] && "pressed")}
+                  data-name="button-dpad-left"
+                ></span>
+                <span
+                  className={cn("face right", buttons[15] && "pressed")}
+                  data-name="button-dpad-right"
+                ></span>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
