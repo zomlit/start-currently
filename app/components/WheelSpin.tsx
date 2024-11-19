@@ -10,7 +10,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import tmi from "tmi.js";
-import { Wheel } from "react-custom-roulette";
 import GenericHeader from "./GenericHeader";
 import { Container } from "@/components/layout/Container";
 import {
@@ -34,6 +33,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
+import { lazy, Suspense } from 'react';
+const Wheel = lazy(() => import('react-custom-roulette').then(mod => ({ 
+  default: mod.Wheel 
+})));
 
 interface WheelData {
   option: string;
@@ -160,7 +163,7 @@ const WheelSpin: React.FC = () => {
   const [confettiType, setConfettiType] =
     useState<keyof typeof confettiTypes>("Basic");
 
-  const truncateText = (text: string, maxLength: number = 20): string => {
+  const truncateText = (text: string, maxLength: number = 25): string => {
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
   };
 
@@ -568,58 +571,54 @@ const WheelSpin: React.FC = () => {
               className="flex flex-col items-center justify-center"
             >
               <div className="mb-8 w-full max-w-md relative">
-                <Wheel
-                  mustStartSpinning={mustSpin}
-                  prizeNumber={prizeNumber}
-                  data={data.length > 0 ? data : [{ option: "Add items" }]}
-                  onStopSpinning={() => {
-                    setMustSpin(false);
-                    let fullText: string;
-                    if (selectedPreset === "Custom") {
-                      fullText =
-                        customPreset[prizeNumber] || "No item selected";
-                    } else if (selectedPreset === "Twitch Chat") {
-                      fullText =
-                        data[prizeNumber]?.option || "No user selected";
-                    } else {
-                      fullText =
-                        presets[selectedPreset]?.[prizeNumber] ||
-                        "No item selected";
-                    }
-                    setResult(fullText);
-                    setShowModal(true);
-                    triggerConfetti();
-                  }}
-                  backgroundColors={[
-                    "#3B82F6",
-                    "#10B981",
-                    "#F59E0B",
-                    "#EF4444",
-                    "#8B5CF6",
-                    "#EC4899",
-                    "#6366F1",
-                    "#14B8A6",
-                  ]}
-                  textColors={["#ffffff"]}
-                  outerBorderColor="#4B5563"
-                  outerBorderWidth={5}
-                  innerRadius={20}
-                  innerBorderColor="#4B5563"
-                  innerBorderWidth={20}
-                  radiusLineColor="#4B5563"
-                  radiusLineWidth={1}
-                  fontSize={12}
-                  textDistance={60}
-                  perpendicularText={false}
-                  pointerProps={
-                    {
-                      style: {
-                        transform: "scale(0.5)",
-                        transformOrigin: "left bottom",
-                      },
-                    } as any
-                  }
-                />
+                <Suspense fallback={<div>Loading wheel...</div>}>
+                  {typeof window !== 'undefined' && (
+                    <Wheel
+                      mustStartSpinning={mustSpin}
+                      prizeNumber={prizeNumber}
+                      data={data.length > 0 ? data : [{ option: "Add items" }]}
+                      onStopSpinning={() => {
+                        setMustSpin(false);
+                        let fullText: string;
+                        if (selectedPreset === "Custom") {
+                          fullText = customPreset[prizeNumber] || "No item selected";
+                        } else if (selectedPreset === "Twitch Chat") {
+                          fullText = data[prizeNumber]?.option || "No user selected";
+                        } else {
+                          fullText = presets[selectedPreset]?.[prizeNumber] || "No item selected";
+                        }
+                        setResult(fullText);
+                        setShowModal(true);
+                        triggerConfetti();
+                      }}
+                      backgroundColors={[
+                        "#2563EB", "#059669", "#D97706", "#DC2626", "#7C3AED",
+                        "#DB2777", "#4F46E5", "#0D9488", "#BE185D", "#059669",
+                        "#8B5CF6", "#D97706", "#3B82F6", "#10B981", "#EF4444",
+                        "#6366F1"
+                      ]}
+                      textColors={["#ffffff"]}
+                      outerBorderColor="#18181b"
+                      outerBorderWidth={5}
+                      innerRadius={5}
+                      innerBorderColor="#18181b"
+                      innerBorderWidth={5}
+                      radiusLineColor="#18181b"
+                      radiusLineWidth={1}
+                      fontSize={12}
+                      textDistance={55}
+                      perpendicularText={false}
+                      spinDuration={0.5}
+                      startingOptionIndex={0}
+                      pointerProps={{
+                        style: {
+                          transform: "scale(0.5)",
+                          transformOrigin: "left bottom",
+                        },
+                      }}
+                    />
+                  )}
+                </Suspense>
               </div>
 
               <motion.button
