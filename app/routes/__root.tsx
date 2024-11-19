@@ -18,25 +18,36 @@ import "@/styles/app.css";
 import "@/styles/gamepad.css";
 
 export const Route = createRootRoute({
-  component: RootComponent,
+  head: () => {
+    return {
+      links: [
+        {
+          rel: "icon",
+          href: "/favicon.ico",
+        },
+      ],
+      scripts: import.meta.env.PROD
+        ? []
+        : [
+            {
+              type: "module",
+              children: /* js */ `
+          import RefreshRuntime from "/_build/@react-refresh"
+          RefreshRuntime.injectIntoGlobalHook(window)
+          window.$RefreshReg$ = () => {}
+          window.$RefreshSig$ = () => (type) => type
+        `,
+            },
+          ],
+    };
+  },
+
   beforeLoad: async () => {
     return {};
   },
-  scripts: () =>
-    import.meta.env.PROD
-      ? []
-      : [
-          {
-            type: "module",
-            children: /* js */ `
-        import RefreshRuntime from "/_build/@react-refresh"
-        RefreshRuntime.injectIntoGlobalHook(window)
-        window.$RefreshReg$ = () => {}
-        window.$RefreshSig$ = () => (type) => type
-      `,
-          },
-        ],
+
   errorComponent: DefaultCatchBoundary,
+  component: RootComponent,
 });
 
 function RootComponent() {

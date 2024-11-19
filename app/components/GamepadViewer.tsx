@@ -10,6 +10,12 @@ import type {
   HookGamepadState,
 } from "@/types/gamepad";
 import { CONTROLLER_COLORS } from "@/lib/gamepad-settings";
+import {
+  CircleButton,
+  CrossButton,
+  SquareButton,
+  TriangleButton,
+} from "./gamepad/FaceButtons";
 
 interface GamepadViewerProps {
   settings?: Partial<GamepadSettings>;
@@ -52,9 +58,14 @@ export function GamepadViewer({
       (color) => color.id === settings?.controllerColor
     );
 
+    const colors = {
+      "--button-color": settings?.buttonColor || "#ffffff",
+    };
+
     switch (selectedColor?.id) {
       case "cosmic-red":
         return {
+          ...colors,
           "--controller-primary-color": "#BE2434",
           "--controller-touchpad-color": "#AB1F2E",
           "--controller-button-area-color": "#9C1C2A",
@@ -63,6 +74,7 @@ export function GamepadViewer({
         };
       case "white":
         return {
+          ...colors,
           "--controller-primary-color": "#e8e8e8",
           "--controller-touchpad-color": "#f5f5f5",
           "--controller-button-area-color": "#e0e0e0",
@@ -71,6 +83,7 @@ export function GamepadViewer({
         };
       case "black":
         return {
+          ...colors,
           "--controller-primary-color": "#1a1a1a",
           "--controller-touchpad-color": "#2a2a2a",
           "--controller-button-area-color": "#202020",
@@ -79,6 +92,7 @@ export function GamepadViewer({
         };
       case "midnight-black":
         return {
+          ...colors,
           "--controller-primary-color": "#0a0a0a",
           "--controller-touchpad-color": "#1a1a1a",
           "--controller-button-area-color": "#101010",
@@ -87,6 +101,7 @@ export function GamepadViewer({
         };
       case "starlight-blue":
         return {
+          ...colors,
           "--controller-primary-color": "#0066cc",
           "--controller-touchpad-color": "#0077dd",
           "--controller-button-area-color": "#0055bb",
@@ -95,6 +110,7 @@ export function GamepadViewer({
         };
       case "nova-pink":
         return {
+          ...colors,
           "--controller-primary-color": "#ff69b4",
           "--controller-touchpad-color": "#ff79c4",
           "--controller-button-area-color": "#ff59a4",
@@ -103,6 +119,7 @@ export function GamepadViewer({
         };
       case "galactic-purple":
         return {
+          ...colors,
           "--controller-primary-color": "#800080",
           "--controller-touchpad-color": "#900090",
           "--controller-button-area-color": "#700070",
@@ -111,6 +128,7 @@ export function GamepadViewer({
         };
       default:
         return {
+          ...colors,
           "--controller-primary-color": "#1a1a1a",
           "--controller-touchpad-color": "#2a2a2a",
           "--controller-button-area-color": "#202020",
@@ -127,6 +145,7 @@ export function GamepadViewer({
         {
           backgroundColor: settings?.backgroundColor || "transparent",
           ...getControllerColors(),
+          "--button-color": settings?.buttonColor || "#ffffff",
         } as React.CSSProperties
       }
     >
@@ -140,14 +159,17 @@ export function GamepadViewer({
                 settings?.controllerColor,
                 "active"
               )}
-              style={{
-                transform: `scale(${settings?.scale || 1})`,
-                position: "relative",
-                display: "block",
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
+              style={
+                {
+                  transform: `scale(${settings?.scale || 1})`,
+                  position: "relative",
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  "--button-color": settings?.buttonColor || "#ffffff",
+                } as React.CSSProperties
+              }
             >
               {/* Base Controller SVG */}
               <DS4Base className="absolute inset-0 w-full h-full" />
@@ -178,22 +200,18 @@ export function GamepadViewer({
               <div className="abxy">
                 {settings?.showButtonPresses && (
                   <>
-                    <div
-                      className={cn("button a", buttons[0] && "pressed")}
-                      style={{ backgroundColor: settings.buttonColor }}
-                    />
-                    <div
-                      className={cn("button b", buttons[1] && "pressed")}
-                      style={{ backgroundColor: settings.buttonColor }}
-                    />
-                    <div
-                      className={cn("button x", buttons[2] && "pressed")}
-                      style={{ backgroundColor: settings.buttonColor }}
-                    />
-                    <div
-                      className={cn("button y", buttons[3] && "pressed")}
-                      style={{ backgroundColor: settings.buttonColor }}
-                    />
+                    <div>
+                      <CrossButton pressed={buttons[0]} />
+                    </div>
+                    <div>
+                      <CircleButton pressed={buttons[1]} />
+                    </div>
+                    <div>
+                      <SquareButton pressed={buttons[2]} />
+                    </div>
+                    <div>
+                      <TriangleButton pressed={buttons[3]} />
+                    </div>
                   </>
                 )}
               </div>
