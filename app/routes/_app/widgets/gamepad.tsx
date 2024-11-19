@@ -14,24 +14,6 @@ import { GamepadSettingsForm } from "@/components/widget-settings/GamepadSetting
 import { defaultGamepadSettings } from "@/lib/gamepad-settings";
 import { GamepadSettings, HookGamepadState } from "@/types/gamepad";
 
-export const defaultSettings = {
-  selectedSkin: "ds4",
-  showButtonPresses: true,
-  showAnalogSticks: true,
-  showTriggers: true,
-  buttonHighlightColor: "#ffffff",
-  buttonPressColor: "#00ff00",
-  analogStickColor: "#ff0000",
-  triggerColor: "#0000ff",
-  backgroundColor: "rgba(0, 0, 0, 0)",
-  opacity: 1,
-  scale: 1,
-  deadzone: 0.1,
-  touchpadEnabled: true,
-  rumbleEnabled: true,
-  debugMode: false,
-} as const;
-
 interface GamepadState {
   buttons: boolean[];
   axes: number[];
@@ -94,7 +76,7 @@ export function GamepadSection() {
 
   // Use the useGamepad hook with the default deadzone
   const { gamepadState, isConnected: isGamepadConnected } = useGamepad(
-    defaultSettings.deadzone
+    defaultGamepadSettings.deadzone || 0.1
   );
 
   const channelId = `gamepad:${user?.id}`;
@@ -115,7 +97,7 @@ export function GamepadSection() {
       const transformedState: GamepadState = {
         buttons: state.buttons.map((button) => button.pressed),
         axes: state.axes.map((value) =>
-          Math.abs(value) < defaultSettings.deadzone ? 0 : value
+          Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
         ),
       };
 
@@ -189,7 +171,7 @@ export function GamepadSection() {
       const transformedState: GamepadState = {
         buttons: gamepadState.buttons.map((button) => button.pressed),
         axes: gamepadState.axes.map((value) =>
-          Math.abs(value) < defaultSettings.deadzone ? 0 : value
+          Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
         ),
       };
 
@@ -251,8 +233,12 @@ export function GamepadSection() {
     [user?.username]
   );
 
-  const [settings, setSettings] = useState(defaultGamepadSettings);
+  // Initialize settings with the imported default
+  const [settings, setSettings] = useState<GamepadSettings>({
+    ...defaultGamepadSettings,
+  });
 
+  // Update the settings change handler
   const handleSettingsChange = useCallback(
     async (newSettings: Partial<GamepadSettings>) => {
       if (!user?.id) return;
@@ -263,12 +249,45 @@ export function GamepadSection() {
       };
 
       try {
-        const { error } = await supabase.from("GamepadWidget").upsert({
-          user_id: user.id,
-          settings: updatedSettings,
-        });
+        // First try to update existing row
+        const { data, error: selectError } = await supabase
+          .from("GamepadWidget")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
 
-        if (error) throw error;
+        if (selectError && selectError.code !== "PGRST116") {
+          throw selectError;
+        }
+
+        // If row exists, update it
+        if (data?.id) {
+          const { error: updateError } = await supabase
+            .from("GamepadWidget")
+            .update({
+              settings: updatedSettings,
+              style: "default",
+              layout: {},
+              showPressedButtons: true,
+            })
+            .eq("id", data.id);
+
+          if (updateError) throw updateError;
+        } else {
+          // If no row exists, insert one
+          const { error: insertError } = await supabase
+            .from("GamepadWidget")
+            .insert({
+              user_id: user.id,
+              settings: updatedSettings,
+              style: "default",
+              layout: {},
+              showPressedButtons: true,
+            });
+
+          if (insertError) throw insertError;
+        }
+
         setSettings(updatedSettings);
       } catch (error) {
         console.error("Error updating settings:", error);
@@ -279,6 +298,53 @@ export function GamepadSection() {
     },
     [user?.id, settings]
   );
+
+  // Load saved settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      if (!user?.id) return;
+
+      try {
+        // Try to get existing settings
+        const { data, error } = await supabase
+          .from("GamepadWidget")
+          .select("settings")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) {
+          // If no row exists, create one with default settings
+          if (error.code === "PGRST116") {
+            const { error: insertError } = await supabase
+              .from("GamepadWidget")
+              .insert({
+                user_id: user.id,
+                settings: defaultGamepadSettings,
+                style: "default",
+                layout: {},
+                showPressedButtons: true,
+              });
+
+            if (insertError) throw insertError;
+            setSettings(defaultGamepadSettings);
+            return;
+          }
+          throw error;
+        }
+
+        if (data?.settings) {
+          setSettings({
+            ...defaultGamepadSettings,
+            ...data.settings,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    }
+
+    loadSettings();
+  }, [user?.id]);
 
   const renderStickValues = (axes: number[]) => {
     return (
@@ -297,6 +363,7 @@ export function GamepadSection() {
     );
   };
 
+  // Update GamepadViewer props in the preview
   const GamepadPreview = (
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-4 p-4">
@@ -304,6 +371,7 @@ export function GamepadSection() {
           settings={settings}
           username={user?.username || undefined}
           gamepadState={currentGamepadState}
+          isPublicView={false}
         />
 
         {/* Stick Values Display */}
@@ -315,7 +383,7 @@ export function GamepadSection() {
       </div>
 
       {/* Debug Section */}
-      {defaultSettings.debugMode && (
+      {defaultGamepadSettings.debugMode && (
         <div className="flex-none border-t p-4">
           <div className="text-xs text-muted-foreground">
             <p>Debug Info:</p>

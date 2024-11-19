@@ -143,7 +143,7 @@ export const apiMethods = {
                 deadzone: 0.1,
                 touchpadEnabled: true,
                 rumbleEnabled: true,
-                debugMode: false,
+                debugMode: true,
               },
               style: "default",
               layout: {},
