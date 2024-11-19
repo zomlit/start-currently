@@ -2,9 +2,7 @@
 @import url(https://fonts.googleapis.com/css?family=Press+Start+2P);
 
 .controller {
-  transition:
-    filter 0.3s ease,
-    transform 0.3s ease;
+  transition: filter 0.3s ease;
   position: relative;
   max-width: 800px; /* DS4 width */
   max-height: 592px; /* DS4 height */
@@ -863,15 +861,15 @@
 }
 
 .controller.starlight-blue {
-  filter: hue-rotate(210deg) saturate(1.2) brightness(0.9);
+  filter: hue-rotate(180deg) saturate(1.5) brightness(0.9);
 }
 
 .controller.nova-pink {
-  filter: hue-rotate(320deg) saturate(1.3) brightness(0.95);
+  filter: hue-rotate(320deg) saturate(1.5) brightness(0.9);
 }
 
 .controller.galactic-purple {
-  filter: hue-rotate(270deg) saturate(1.2) brightness(0.85);
+  filter: hue-rotate(270deg) saturate(1.5) brightness(0.9);
 }
 
 /* Add a container class for better scaling */
@@ -896,4 +894,104 @@
 .ds4 .face {
   position: absolute;
   background-size: auto 100%;
+}
+
+/* Button states */
+.button {
+  background-color: var(--button-color, #ffffff);
+  /* opacity: 0; */
+  transition: opacity 0.15s ease;
+}
+
+.button.pressed {
+  opacity: 1;
+}
+
+/* Analog sticks */
+.stick {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+
+.stick.left {
+  left: 25%;
+  top: 50%;
+}
+
+.stick.right {
+  right: 25%;
+  top: 50%;
+}
+
+/* Triggers */
+.trigger {
+  position: absolute;
+  width: 10px;
+  height: 30px;
+  transform-origin: bottom;
+  transition: transform 0.1s ease;
+}
+
+.trigger.left {
+  left: 10%;
+  top: 0;
+}
+
+.trigger.right {
+  right: 10%;
+  top: 0;
+}
+
+/* Face Buttons */
+.button {
+  transition: opacity 0.05s ease;
+}
+
+.button.pressed {
+  opacity: 1;
+}
+
+/* Remove any transform animations */
+.button.triangle,
+.button.circle,
+.button.cross,
+.button.square {
+  transform: none;
+}
+
+/* Default state buttons are visible, pressed state starts invisible */
+.button.triangle.pressed,
+.button.circle.pressed,
+.button.cross.pressed,
+.button.square.pressed {
+  opacity: 0;
+}
+
+/* When pressed, show the pressed state button */
+.button.pressed {
+  opacity: 1;
+}
+
+/* Button colors when pressed */
+.button.triangle.pressed {
+  fill: var(--button-color, #7cc576);
+  stroke: var(--button-color, #7cc576);
+}
+
+.button.circle.pressed {
+  fill: var(--button-color, #ec1c24);
+  stroke: var(--button-color, #ec1c24);
+}
+
+.button.cross.pressed {
+  fill: var(--button-color, #0072bc);
+  stroke: var(--button-color, #0072bc);
+}
+
+.button.square.pressed {
+  fill: var(--button-color, #f7941d);
+  stroke: var(--button-color, #f7941d);
 }

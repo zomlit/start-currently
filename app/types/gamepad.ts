@@ -28,6 +28,7 @@ export interface GamepadSettings {
   triggerColor: string;
   backgroundColor: string;
   scale: number;
+  deadzone: number;
   debugMode: boolean;
 }
 

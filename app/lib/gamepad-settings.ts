@@ -15,7 +15,8 @@ export const defaultGamepadSettings = {
   triggerColor: "#0000ff",
   backgroundColor: "rgba(0, 0, 0, 0)",
   scale: 1,
-  debugMode: false,
+  deadzone: 0.1,
+  debugMode: true,
 } as const;
 
 export type GamepadSettings = typeof defaultGamepadSettings;

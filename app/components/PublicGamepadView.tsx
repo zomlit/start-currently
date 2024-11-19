@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "@tanstack/react-router";
-import { supabase } from "@/utils/supabase/client";
 import { GamepadViewer } from "@/components/GamepadViewer";
-import { defaultSettings } from "@/routes/_app/widgets/gamepad";
-import type { GamepadState } from "@/types/gamepad";
+import { supabase } from "@/utils/supabase/client";
+import { useGamepad } from "@/hooks/useGamepad";
+import { defaultGamepadSettings } from "@/lib/gamepad-settings";
+import type { GamepadSettings, GamepadState } from "@/types/gamepad";
 
 export function PublicGamepadView() {
   const { username } = useParams({ from: "/$username/gamepad" });
   const [gamepadState, setGamepadState] = useState<GamepadState | null>(null);
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState<GamepadSettings>(
+    defaultGamepadSettings
+  );
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -34,7 +37,10 @@ export function PublicGamepadView() {
             .single();
 
           if (widgetData?.settings) {
-            setSettings(widgetData.settings);
+            setSettings({
+              ...defaultGamepadSettings,
+              ...widgetData.settings,
+            });
           }
         }
       } catch (error) {
@@ -46,14 +52,13 @@ export function PublicGamepadView() {
     loadSettings();
   }, [username]);
 
-  // Subscribe to gamepad updates using userId instead of username
+  // Setup Supabase channel for receiving gamepad state
   useEffect(() => {
     if (!userId) return;
 
-    console.log("Setting up gamepad subscription for user:", userId);
     const channel = supabase.channel(`gamepad:${userId}`, {
       config: {
-        broadcast: { self: true },
+        broadcast: { self: false },
       },
     });
 
@@ -64,32 +69,23 @@ export function PublicGamepadView() {
           setGamepadState(payload.payload.gamepadState);
         }
       })
-      .subscribe((status) => {
-        console.log("Gamepad subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
-      console.log("Cleaning up gamepad subscription");
       channel.unsubscribe();
     };
   }, [userId]);
 
   if (error) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
+    return <div>Error: {error}</div>;
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-transparent">
-      <GamepadViewer
-        settings={settings}
-        username={username}
-        gamepadState={gamepadState}
-        isPublicView={true}
-      />
-    </div>
+    <GamepadViewer
+      settings={settings}
+      username={username}
+      gamepadState={gamepadState}
+      isPublicView={true}
+    />
   );
 }
