@@ -4,32 +4,41 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
 } from "axios";
+import { createClient } from "@supabase/supabase-js";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_ELYSIA_API_URL || "http://localhost:9001",
 });
 
+// Simple request interceptor to add authorization header
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  // The token will be fetched fresh when needed by the components
+  // using useAuth().getToken()
   return config;
 });
 
+// Simple error handler
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     console.error("API Error:", error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
 
+// Supabase client setup
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
 export const apiMethods = {
   profiles: {
     getAll: async (sectionId: string, token: string) => {
-      console.log("API: Fetching profiles for section:", sectionId);
       try {
         const response = await api.get(`/profiles/${sectionId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("API: Received profiles response:", response.data);
         return response.data;
       } catch (error) {
         console.error("API Error:", error);
@@ -78,51 +87,12 @@ export const apiMethods = {
     ) => {
       try {
         const requestData = {
-          name: settings.name || "Default Profile",
+          name: settings.name,
+          section_id: sectionId,
+          user_id: userId,
+          is_default: true,
           settings: {
-            specificSettings: {
-              selectedSkin:
-                settings.specificSettings?.selectedSkin || "rounded",
-              hideOnDisabled:
-                settings.specificSettings?.hideOnDisabled || false,
-              pauseEnabled: settings.specificSettings?.pauseEnabled || false,
-              canvasEnabled: settings.specificSettings?.canvasEnabled || false,
-              backgroundCanvas:
-                settings.specificSettings?.backgroundCanvas || false,
-              backgroundCanvasOpacity:
-                settings.specificSettings?.backgroundCanvasOpacity || 0.5,
-              micEnabled: settings.specificSettings?.micEnabled || false,
-              progressBarForegroundColor:
-                settings.specificSettings?.progressBarForegroundColor ||
-                "#ffffff",
-              progressBarBackgroundColor:
-                settings.specificSettings?.progressBarBackgroundColor ||
-                "#000000",
-              mode: settings.specificSettings?.mode || 10,
-              gradient: settings.specificSettings?.gradient || "rainbow",
-              fillAlpha: settings.specificSettings?.fillAlpha || 0.5,
-              lineWidth: settings.specificSettings?.lineWidth || 1,
-              channelLayout:
-                settings.specificSettings?.channelLayout || "dual-combined",
-              frequencyScale:
-                settings.specificSettings?.frequencyScale || "bark",
-              linearAmplitude:
-                settings.specificSettings?.linearAmplitude || true,
-              linearBoost: settings.specificSettings?.linearBoost || 1.8,
-              showPeaks: settings.specificSettings?.showPeaks || false,
-              outlineBars: settings.specificSettings?.outlineBars || true,
-              weightingFilter:
-                settings.specificSettings?.weightingFilter || "D",
-              barSpace: settings.specificSettings?.barSpace || 0.1,
-              ledBars: settings.specificSettings?.ledBars || false,
-              lumiBars: settings.specificSettings?.lumiBars || false,
-              reflexRatio: settings.specificSettings?.reflexRatio || 0,
-              reflexAlpha: settings.specificSettings?.reflexAlpha || 0.15,
-              reflexBright: settings.specificSettings?.reflexBright || 1,
-              mirror: settings.specificSettings?.mirror || 0,
-              splitGradient: settings.specificSettings?.splitGradient || false,
-              roundBars: settings.specificSettings?.roundBars || false,
-            },
+            specificSettings: settings.specificSettings,
             commonSettings: settings.commonSettings || {},
           },
         };
@@ -150,6 +120,134 @@ export const apiMethods = {
           response: error.response?.data,
           status: error.response?.status,
         });
+        throw error;
+      }
+    },
+  },
+  gamepad: {
+    createDefault: async (userId: string, token: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("GamepadWidget")
+          .insert([
+            {
+              user_id: userId,
+              gamepad_settings: {
+                selectedSkin: "ds4",
+                showButtonPresses: true,
+                showAnalogSticks: true,
+                showTriggers: true,
+                buttonHighlightColor: "#ffffff",
+                buttonPressColor: "#00ff00",
+                analogStickColor: "#ff0000",
+                triggerColor: "#0000ff",
+                backgroundColor: "rgba(0, 0, 0, 0)",
+                opacity: 1,
+                scale: 1,
+                deadzone: 0.1,
+                touchpadEnabled: true,
+                rumbleEnabled: true,
+                debugMode: true,
+              },
+              style: "default",
+              layout: {},
+              showPressedButtons: true,
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Error creating default gamepad settings:", error);
+        throw error;
+      }
+    },
+
+    get: async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("GamepadWidget")
+          .select("gamepad_settings")
+          .eq("user_id", userId)
+          .single();
+
+        if (error) {
+          if (error.code === "PGRST116") {
+            // No settings found, create default
+            return apiMethods.gamepad.createDefault(userId);
+          }
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+        console.error("Error getting gamepad settings:", error);
+        throw error;
+      }
+    },
+  },
+  gamepad: {
+    createDefault: async (userId: string, token: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("GamepadWidget")
+          .insert([
+            {
+              user_id: userId,
+              gamepad_settings: {
+                selectedSkin: "ds4",
+                showButtonPresses: true,
+                showAnalogSticks: true,
+                showTriggers: true,
+                buttonHighlightColor: "#ffffff",
+                buttonPressColor: "#00ff00",
+                analogStickColor: "#ff0000",
+                triggerColor: "#0000ff",
+                backgroundColor: "rgba(0, 0, 0, 0)",
+                opacity: 1,
+                scale: 1,
+                deadzone: 0.1,
+                touchpadEnabled: true,
+                rumbleEnabled: true,
+                debugMode: true,
+              },
+              style: "default",
+              layout: {},
+              showPressedButtons: true,
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Error creating default gamepad settings:", error);
+        throw error;
+      }
+    },
+
+    get: async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("GamepadWidget")
+          .select("gamepad_settings")
+          .eq("user_id", userId)
+          .single();
+
+        if (error) {
+          if (error.code === "PGRST116") {
+            // No settings found, create default
+            return apiMethods.gamepad.createDefault(userId);
+          }
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+        console.error("Error getting gamepad settings:", error);
         throw error;
       }
     },
