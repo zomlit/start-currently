@@ -23,7 +23,6 @@ const config = {
       },
       fontFamily: {
         sofia: ["Sofia Sans Condensed Variable", "sans-serif"],
-        sans: ["var(--font-sans)", ...fontFamily.sans],
       },
       colors: {
         border: "hsl(var(--border))",

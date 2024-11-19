@@ -1,28 +1,34 @@
-import type { Database } from './supabase';
+import type { Database } from "./supabase";
+import type { FunctionComponent, SVGProps } from "react";
 
-type GamepadWidgetRow = Database['public']['Tables']['GamepadWidget']['Row'];
+type GamepadWidgetRow = Database["public"]["Tables"]["GamepadWidget"]["Row"];
 
 export interface GamepadState {
   buttons: boolean[];
   axes: number[];
 }
 
+export interface HookGamepadState {
+  buttons: {
+    pressed: boolean;
+    value: number;
+  }[];
+  axes: number[];
+  timestamp: number;
+}
+
 export interface GamepadSettings {
-  backgroundColor: string;
-  buttonColor: string;
-  stickColor: string;
-  scale: number;
-  opacity: number;
-  selectedSkin: 'switch' | 'ds4' | 'xbox';
+  controllerType: string;
+  controllerColor: string;
   showButtonPresses: boolean;
   showAnalogSticks: boolean;
   showTriggers: boolean;
-  buttonHighlightColor: string;
-  analogStickColor: string;
+  buttonColor: string;
+  stickColor: string;
   triggerColor: string;
-  labelColor: string;
-  labelBackgroundColor: string;
-  labelOpacity: number;
+  backgroundColor: string;
+  scale: number;
+  deadzone: number;
   debugMode: boolean;
 }
 
@@ -33,4 +39,21 @@ export interface GamepadViewerProps {
 }
 
 // Helper type for the gamepad_settings column
-export type GamepadWidgetSettings = NonNullable<GamepadWidgetRow['gamepad_settings']>; 
+export type GamepadWidgetSettings = NonNullable<
+  GamepadWidgetRow["gamepad_settings"]
+>;
+
+export interface ControllerType {
+  id: string;
+  name: string;
+  brand: string;
+  icon: FunctionComponent<SVGProps<SVGElement>>;
+  disabled?: boolean;
+}
+
+export interface ControllerColor {
+  id: string;
+  name: string;
+  hex: string;
+  className: string;
+}

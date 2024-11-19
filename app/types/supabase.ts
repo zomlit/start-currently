@@ -300,6 +300,7 @@ export type Database = {
           gamepad_settings: Json | null
           id: string
           layout: Json
+          settings: Json | null
           showPressedButtons: boolean
           style: string
           user_id: string
@@ -308,6 +309,7 @@ export type Database = {
           gamepad_settings?: Json | null
           id?: string
           layout: Json
+          settings?: Json | null
           showPressedButtons: boolean
           style: string
           user_id?: string
@@ -316,6 +318,7 @@ export type Database = {
           gamepad_settings?: Json | null
           id?: string
           layout?: Json
+          settings?: Json | null
           showPressedButtons?: boolean
           style?: string
           user_id?: string

@@ -13,29 +13,41 @@ import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
 import type { ReactNode } from "react";
 
-// Import CSS directly
+// Import CSS files
 import "@/styles/app.css";
+import "@/styles/gamepad.css";
 
 export const Route = createRootRoute({
-  component: RootComponent,
+  head: () => {
+    return {
+      links: [
+        {
+          rel: "icon",
+          href: "/favicon.ico",
+        },
+      ],
+      scripts: import.meta.env.PROD
+        ? []
+        : [
+            {
+              type: "module",
+              children: /* js */ `
+          import RefreshRuntime from "/_build/@react-refresh"
+          RefreshRuntime.injectIntoGlobalHook(window)
+          window.$RefreshReg$ = () => {}
+          window.$RefreshSig$ = () => (type) => type
+        `,
+            },
+          ],
+    };
+  },
+
   beforeLoad: async () => {
     return {};
   },
-  scripts: () =>
-    import.meta.env.PROD
-      ? []
-      : [
-          {
-            type: "module",
-            children: /* js */ `
-        import RefreshRuntime from "/_build/@react-refresh"
-        RefreshRuntime.injectIntoGlobalHook(window)
-        window.$RefreshReg$ = () => {}
-        window.$RefreshSig$ = () => (type) => type
-      `,
-          },
-        ],
+
   errorComponent: DefaultCatchBoundary,
+  component: RootComponent,
 });
 
 function RootComponent() {
@@ -71,13 +83,15 @@ function RootComponent() {
   );
 }
 
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html>
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
       </head>
-      <body>
+      <body className="min-h-screen font-sofia antialiased">
         {children}
         <ScrollRestoration />
         <Scripts />
