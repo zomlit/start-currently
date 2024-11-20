@@ -1,10 +1,9 @@
-import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 // @ts-expect-error This is how Tailwind CSS is imported
 import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 import plugin from "tailwindcss/plugin";
 
-const config = {
+module.exports = {
   darkMode: ["class"],
   content: ["./components/**/*.{ts,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
 
@@ -133,10 +132,9 @@ const config = {
     require("@tailwindcss/typography"),
     addVariablesForColors,
     plugin(function ({ addUtilities, theme }) {
-      const opacityValues = theme("opacity") as Record<string, string>;
-      const gradientOpacityUtilities = Object.entries(opacityValues).reduce<
-        Record<string, Record<string, string>>
-      >((acc, [key, value]) => {
+      const opacityValues = theme("opacity");
+      const gradientOpacityUtilities = Object.entries(opacityValues).reduce
+      ((acc, [key, value]) => {
         acc[`.bg-gradient\\/${key}`] = {
           "background-image": `linear-gradient(rgba(var(--gradient-from), ${value}), rgba(var(--gradient-to), ${value}))`,
         };
@@ -156,7 +154,7 @@ const config = {
       });
     }),
   ],
-} satisfies Config;
+}
 
 function addVariablesForColors({ addBase, theme }: any) {
   let allColors = flattenColorPalette(theme("colors"));
@@ -169,4 +167,3 @@ function addVariablesForColors({ addBase, theme }: any) {
   });
 }
 
-export default config;

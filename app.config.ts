@@ -8,6 +8,12 @@ export default defineConfig({
     preset: "node-server",
   },
   vite: {
+    css: {
+      postcss: true,
+      modules: {
+        localsConvention: "camelCase",
+      },
+    },
     plugins: [
       tsConfigPaths({
         projects: ["./tsconfig.json"],
