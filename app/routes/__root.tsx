@@ -14,8 +14,8 @@ import { NotFound } from "@/components/NotFound";
 import type { ReactNode } from "react";
 
 // Import CSS files
-import "@/styles/app.css";
-import "@/styles/gamepad.css";
+import "@/styles/app.css?url";
+import "@/styles/gamepad.css?url";
 
 export const Route = createRootRoute({
   head: () => {
