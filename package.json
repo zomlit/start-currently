@@ -4,10 +4,10 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "bun clean && vinxi dev",
+    "dev": "vinxi dev",
     "build": "vinxi build",
-    "clean": "rm -rf app.config.timestamp_*",
     "start": "vinxi start",
+    "clean": "rm -rf app.config.timestamp_*",
     "lint": "prettier --check '**/*' --ignore-unknown && eslint --ext .ts,.tsx ./app",
     "format": "prettier --write '**/*' --ignore-unknown",
     "generate-types": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > app/types/supabase.ts"
