@@ -13,7 +13,7 @@ cacheDirectories = [
 
 [phases.install]
 cmds = [
-  'bun i --frozen-lockfile --no-save',
+  'bun i --no-save',
   'ln -s /app/node_modules/.bin/* /usr/local/bin/'
 ]
 cacheDirectories = [
