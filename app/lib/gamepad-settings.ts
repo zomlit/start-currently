@@ -4,20 +4,21 @@ import IconBrandXbox from "@icons/outline/brand-xbox.svg?react";
 import IconBrandNintendo from "@icons/outline/device-nintendo.svg?react";
 import IconBrand8BitDo from "@icons/filled/brand-8bitdo.svg?react";
 
-export const defaultGamepadSettings = {
+export const defaultGamepadSettings: GamepadSettings = {
   controllerType: "ds4",
   controllerColor: "white",
   showButtonPresses: true,
   showAnalogSticks: true,
   showTriggers: true,
-  buttonColor: "#ffffff",
-  stickColor: "#ff0000",
-  triggerColor: "#0000ff",
-  backgroundColor: "rgba(0, 0, 0, 0)",
+  buttonColor: "#1a1a1a",
+  buttonPressedColor: "#000000",
+  stickColor: "#1a1a1a",
+  triggerColor: "#1a1a1a",
+  backgroundColor: "transparent",
   scale: 1,
   deadzone: 0.1,
-  debugMode: true,
-} as const;
+  debugMode: false,
+};
 
 export type GamepadSettings = typeof defaultGamepadSettings;
 
@@ -94,4 +95,24 @@ export const CONTROLLER_COLORS: ControllerColor[] = [
     hex: "#800080",
     className: "galactic-purple",
   },
+  {
+    id: "macho",
+    name: "Miss Macho TV",
+    hex: "#39FF14",
+    className: "macho",
+  },
 ];
+
+export const getControllerColors = (colorId: string) => {
+  switch (colorId) {
+    case "macho":
+      return {
+        "--controller-primary-color": "#0d0e13",
+        "--controller-touchpad-color": "#39FF14",
+        "--controller-button-area-color": "#800080",
+        "--controller-stick-area-color": "#39FF14",
+        "--controller-ps-button-color": "#800080",
+      };
+    default:
+  }
+};

@@ -589,19 +589,19 @@
 }
 
 .ds4 .triggers {
-  width: 72.94%; /* 588/806.1 */
-  height: 15.03%; /* 90/598.97 */
+  width: 72.94%;
+  height: 15.03%;
   position: absolute;
-  left: 13.52%; /* 109/806.1 */
-  top: 0;
+  left: 13.52%;
+  top: -2%;
+  z-index: 2;
 }
 
 .ds4 .trigger {
-  width: 16.84%; /* 99/588 - relative to triggers container */
+  width: 16.84%;
   height: 100%;
-  background: url(/gamepad/ds4/triggers.svg) no-repeat;
-  background-size: 200% 100%; /* Double width for left/right states */
-  opacity: 0;
+  opacity: 1;
+  transition: opacity 0.1s ease;
 }
 
 .ds4 .trigger.pressed {
@@ -610,28 +610,25 @@
 
 .ds4 .trigger.left {
   float: left;
-  background-position: 0 0;
 }
 
 .ds4 .trigger.right {
   float: right;
-  background-position: -99px 0; /* Exact pixel offset for right trigger */
 }
 
 .ds4 .bumper {
-  width: 16.84%; /* 99/588 - relative to bumpers container */
+  width: 16.84%;
   height: 100%;
-  background: url(/gamepad/ds4/bumper.svg) no-repeat;
-  background-size: 100% 100%;
-  opacity: 0;
+  opacity: 1;
+  transition: all 0.1s ease;
 }
 
 .ds4 .bumpers {
-  width: 72.94%; /* 588/806.1 */
-  height: 3.84%; /* 23/598.97 */
+  width: 72.94%;
+  height: 3.84%;
   position: absolute;
-  left: 13.52%; /* 109/806.1 */
-  top: 15.69%; /* 94/598.97 */
+  left: 13.52%;
+  top: 15.69%;
 }
 
 .ds4 .bumper.pressed {
@@ -648,11 +645,11 @@
 }
 
 .ds4 .touchpad {
-  width: 32.5%; /* 262/806.1 */
-  height: 25.21%; /* 151/598.97 */
+  width: 32.5%;
+  height: 25.21%;
   position: absolute;
-  left: 33.74%; /* 272/806.1 */
-  top: 20.37%; /* 122/598.97 */
+  left: 33.74%;
+  top: 20.37%;
 }
 
 .ds4 .touchpad.pressed {
@@ -661,11 +658,11 @@
 }
 
 .ds4 .meta {
-  width: 5.21%; /* 42/806.1 */
-  height: 7.01%; /* 42/598.97 */
+  width: 5.21%;
+  height: 7.01%;
   position: absolute;
-  left: 47.39%; /* 382/806.1 */
-  bottom: 36.06%; /* 216/598.97 */
+  left: 47.39%;
+  bottom: 36.06%;
 }
 
 .ds4 .meta.pressed {
@@ -675,45 +672,41 @@
 
 .ds4 .arrows {
   position: absolute;
-  width: 43.67%; /* 352/806.1 */
-  height: 7.68%; /* 46/598.97 */
-  top: 23.71%; /* 142/598.97 */
-  left: 28.16%; /* 227/806.1 */
+  width: 43.67%;
+  height: 7.68%;
+  top: 23.71%;
+  left: 28.16%;
 }
 
 .ds4 .back,
 .ds4 .start {
   background: url(/gamepad/ds4/start.svg) no-repeat;
-  background-size: 200% 100%; /* Double width for back/start states */
-  width: 7.95%; /* 28/352 */
+  background-size: 200% 100%;
+  width: 7.95%;
   height: 100%;
   opacity: 0;
 }
 
 .ds4 .back.pressed,
 .ds4 .start.pressed {
-  /* background-position-y: -21px; */
-  /* margin-top: 2px; */
   opacity: 1;
 }
 
 .ds4 .back {
   float: left;
-  /* width: 28px; */
 }
 
 .ds4 .start {
   float: right;
-  /* width: 28px; */
   background-position-x: 100%;
 }
 
 .ds4 .abxy {
   position: absolute;
-  width: 21.09%; /* 170/806.1 */
-  height: 28.55%; /* 171/598.97 */
-  top: 26.55%; /* 159/598.97 */
-  left: 70.34%; /* 567/806.1 */
+  width: 21.09%;
+  height: 28.55%;
+  top: 26.55%;
+  left: 70.34%;
   display: grid;
   grid-template-areas:
     ". triangle ."
@@ -734,25 +727,21 @@
 }
 
 .ds4 .abxy > div:nth-child(1) {
-  /* Cross */
   grid-area: cross;
   justify-self: center;
 }
 
 .ds4 .abxy > div:nth-child(2) {
-  /* Circle */
   grid-area: circle;
   justify-self: end;
 }
 
 .ds4 .abxy > div:nth-child(3) {
-  /* Square */
   grid-area: square;
   justify-self: start;
 }
 
 .ds4 .abxy > div:nth-child(4) {
-  /* Triangle */
   grid-area: triangle;
   justify-self: center;
 }
@@ -769,41 +758,41 @@
 .ds4 .a {
   background-position: 0% 0%;
   bottom: 0;
-  left: 34.12%; /* 58/170 */
+  left: 34.12%;
 }
 
 .ds4 .b {
   background-position: 33.33% 0%;
-  top: 33.92%; /* 58/171 */
+  top: 33.92%;
   right: 0;
 }
 
 .ds4 .x {
   background-position: 66.66% 0%;
-  top: 33.92%; /* 58/171 */
+  top: 33.92%;
   left: 0;
 }
 
 .ds4 .y {
   background-position: 100% 0%;
   top: 0;
-  left: 34.12%; /* 58/170 */
+  left: 34.12%;
 }
 
 .ds4 .sticks {
   position: absolute;
-  width: 44.78%; /* 361/806.1 */
-  height: 17.53%; /* 105/598.97 */
-  top: 51.42%; /* 308/598.97 */
-  left: 28.28%; /* 228/806.1 */
+  width: 44.78%;
+  height: 17.53%;
+  top: 51.42%;
+  left: 28.28%;
 }
 
 .ds4 .stick {
   position: absolute;
   background: url(/gamepad/ds4/sticks.svg) no-repeat;
-  background-size: 300% 100%; /* Three states horizontally */
-  width: 26.04%; /* 94/361 */
-  height: 89.52%; /* 94/105 */
+  background-size: 300% 100%;
+  width: 26.04%;
+  height: 89.52%;
 }
 
 .ds4 .stick.pressed.left {
@@ -826,10 +815,10 @@
 
 .ds4 .dpad {
   position: absolute;
-  width: 15.51%; /* 125/806.1 */
-  height: 21.04%; /* 126/598.97 */
-  top: 30.22%; /* 181/598.97 */
-  left: 11.41%; /* 92/806.1 */
+  width: 15.51%;
+  height: 21.04%;
+  top: 30.22%;
+  left: 11.41%;
 }
 
 .ds4 .face {
@@ -844,33 +833,33 @@
 }
 
 .ds4 .face.up {
-  width: 27.2%; /* 34/125 */
-  height: 44.44%; /* 56/126 */
-  left: 30.4%; /* 38/125 */
+  width: 27.2%;
+  height: 44.44%;
+  left: 30.4%;
   top: 0;
   background-position: 0 0;
 }
 
 .ds4 .face.down {
-  width: 27.2%; /* 34/125 */
-  height: 44.44%; /* 56/126 */
-  left: 30.4%; /* 38/125 */
+  width: 27.2%;
+  height: 44.44%;
+  left: 30.4%;
   bottom: 0;
   background-position: -34px 0;
 }
 
 .ds4 .face.left {
-  width: 44%; /* 55/125 */
-  height: 27.78%; /* 35/126 */
-  top: 30.16%; /* 38/126 */
+  width: 44%;
+  height: 27.78%;
+  top: 30.16%;
   left: 0;
   background-position: -68px 0;
 }
 
 .ds4 .face.right {
-  width: 44%; /* 55/125 */
-  height: 27.78%; /* 35/126 */
-  top: 30.16%; /* 38/126 */
+  width: 44%;
+  height: 27.78%;
+  top: 30.16%;
   right: 0;
   background-position: -123px 0;
 }
@@ -880,35 +869,6 @@
 }
 
 /*END PS4 Controller Styling*/
-
-/* Controller color variants */
-.controller.white {
-  filter: brightness(1);
-}
-
-.controller.black {
-  filter: brightness(0.8) saturate(0);
-}
-
-.controller.midnight-black {
-  filter: brightness(0.6) saturate(0);
-}
-
-.controller.cosmic-red {
-  filter: hue-rotate(0deg) saturate(1.5) brightness(0.9);
-}
-
-.controller.starlight-blue {
-  filter: hue-rotate(180deg) saturate(1.5) brightness(0.9);
-}
-
-.controller.nova-pink {
-  filter: hue-rotate(320deg) saturate(1.5) brightness(0.9);
-}
-
-.controller.galactic-purple {
-  filter: hue-rotate(270deg) saturate(1.5) brightness(0.9);
-}
 
 /* Add a container class for better scaling */
 .controller-container {
@@ -971,16 +931,6 @@
   height: 30px;
   transform-origin: bottom;
   transition: transform 0.1s ease;
-}
-
-.trigger.left {
-  left: 10%;
-  top: 0;
-}
-
-.trigger.right {
-  right: 10%;
-  top: 0;
 }
 
 /* Face Buttons */
@@ -1087,4 +1037,22 @@
   opacity: 1;
   fill: var(--button-color);
   stroke: var(--button-color);
+}
+
+.controller.macho {
+  --macho-green: #39ff14;
+  --macho-purple: #800080;
+}
+
+.controller.macho .touchpad {
+  background-image: url("/gamepad/macho-logo.svg");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.8;
+}
+
+.controller.macho .touchpad.pressed {
+  opacity: 1;
+  filter: brightness(1.2);
 }
