@@ -747,12 +747,15 @@
 }
 
 .ds4 .button {
-  transition: all 0.1s ease;
+  background-color: var(--button-color, #ffffff);
+  transition: opacity 0.15s ease;
 }
 
 .ds4 .button.pressed {
-  transform: scale(1);
   opacity: 1;
+  transform: scale(0.95);
+  fill: var(--button-pressed-color);
+  stroke: var(--button-pressed-color);
 }
 
 .ds4 .a {
@@ -789,10 +792,9 @@
 
 .ds4 .stick {
   position: absolute;
-  background: url(/gamepad/ds4/sticks.svg) no-repeat;
-  background-size: 300% 100%;
   width: 26.04%;
   height: 89.52%;
+  transition: transform 0.1s ease;
 }
 
 .ds4 .stick.pressed.left {
