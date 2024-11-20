@@ -2,7 +2,7 @@
 cmds = [
   "rm -rf app.config.timestamp_*",
   "export PATH=/app/node_modules/.bin:$PATH",
-  "bun run build"
+  "vinxi build"
 ]
 cacheDirectories = [
   'node_modules/.cache',
@@ -27,4 +27,12 @@ nixPkgs = [
   'nodejs_18',
   'bun',
   'coreutils'
-] 
+]
+nixLibs = [
+  'libuuid',
+  'libGL'
+]
+
+[start]
+cmd = "vinxi start"
+  
