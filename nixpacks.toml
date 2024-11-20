@@ -2,7 +2,7 @@
 cmds = [
   "rm -rf app.config.timestamp_*",
   "export PATH=/app/node_modules/.bin:$PATH",
-  "vinxi build"
+  "node /app/node_modules/vinxi/dist/cli.js build"
 ]
 cacheDirectories = [
   'node_modules/.cache',
@@ -34,5 +34,5 @@ nixLibs = [
 ]
 
 [start]
-cmd = "vinxi start"
+cmd = "node /app/node_modules/vinxi/dist/cli.js start"
   
