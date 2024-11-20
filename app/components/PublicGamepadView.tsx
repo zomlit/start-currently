@@ -30,18 +30,58 @@ export function PublicGamepadView() {
         if (profileData?.user_id) {
           setUserId(profileData.user_id);
 
+          // Get widget settings from GamepadWidget table
           const { data: widgetData } = await supabase
             .from("GamepadWidget")
-            .select("settings")
+            .select(
+              "settings, gamepad_settings, layout, showPressedButtons, style"
+            )
             .eq("user_id", profileData.user_id)
             .single();
 
-          if (widgetData?.settings) {
-            setSettings({
+          if (widgetData) {
+            const combinedSettings = {
               ...defaultGamepadSettings,
               ...widgetData.settings,
-            });
+              ...widgetData.gamepad_settings,
+              showButtonPresses: widgetData.showPressedButtons,
+              style: widgetData.style,
+              layout: widgetData.layout,
+            };
+            setSettings(combinedSettings as GamepadSettings);
           }
+
+          // Subscribe to settings changes
+          const settingsChannel = supabase
+            .channel(`gamepad-settings:${profileData.user_id}`)
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "GamepadWidget",
+                filter: `user_id=eq.${profileData.user_id}`,
+              },
+              (payload) => {
+                console.log("Settings changed:", payload);
+                if (payload.new) {
+                  const newSettings = {
+                    ...defaultGamepadSettings,
+                    ...payload.new.settings,
+                    ...payload.new.gamepad_settings,
+                    showButtonPresses: payload.new.showPressedButtons,
+                    style: payload.new.style,
+                    layout: payload.new.layout,
+                  };
+                  setSettings(newSettings as GamepadSettings);
+                }
+              }
+            )
+            .subscribe();
+
+          return () => {
+            settingsChannel.unsubscribe();
+          };
         }
       } catch (error) {
         console.error("Error loading gamepad settings:", error);

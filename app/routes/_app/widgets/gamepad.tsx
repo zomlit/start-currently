@@ -381,26 +381,6 @@ export function GamepadSection() {
           </div>
         )}
       </div>
-
-      {/* Debug Section */}
-      {defaultGamepadSettings.debugMode && (
-        <div className="flex-none border-t p-4">
-          <div className="text-xs text-muted-foreground">
-            <p>Debug Info:</p>
-            <p>Channel: {channelId}</p>
-            <p>
-              Connection Status: {isConnected ? "Connected" : "Disconnected"}
-            </p>
-            <p>
-              Gamepad Status:{" "}
-              {isGamepadConnected ? "Connected" : "Disconnected"}
-            </p>
-            <pre className="mt-2 whitespace-pre-wrap">
-              Current State: {JSON.stringify(currentGamepadState, null, 2)}
-            </pre>
-          </div>
-        </div>
-      )}
     </div>
   );
 

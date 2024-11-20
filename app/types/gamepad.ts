@@ -24,6 +24,7 @@ export interface GamepadSettings {
   showAnalogSticks: boolean;
   showTriggers: boolean;
   buttonColor: string;
+  buttonPressedColor: string;
   stickColor: string;
   triggerColor: string;
   backgroundColor: string;
