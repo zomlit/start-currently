@@ -1,207 +1,257 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { CircleDot } from "./icons";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { UserButton, useUser } from "@clerk/tanstack-start";
 import { cn } from "@/lib/utils";
-import MicrophoneIcon from "@icons/outline/microphone-2.svg?react";
-import { motion } from "framer-motion";
-
+import { motion, AnimatePresence } from "framer-motion";
 import { navItems } from "@/config/navigation";
+import { ChevronRight } from "lucide-react";
 
 const DashboardNavigation: React.FC = () => {
   const { isLoaded } = useUser();
   const [sidebarToggled, setSidebarToggled] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const { pathname } = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target as Node) &&
-        toggleButtonRef.current &&
-        !toggleButtonRef.current.contains(event.target as Node)
-      ) {
-        setSidebarToggled(false);
-      }
-    };
-
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setSidebarToggled(false);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener("scroll", handleScroll);
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("resize", handleResize);
-    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarToggled((prev) => !prev);
+  const handleSubmenuClick = (itemId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    setOpenSubmenu(openSubmenu === itemId ? null : itemId);
+    
+    if (isMobile) {
+      setIsExpanded(true);
+    }
   };
 
-  const activeIndex = Math.max(
-    0,
-    navItems.findIndex(
-      (item) => pathname === item.link || pathname.startsWith(item.link)
-    )
-  );
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      setIsExpanded(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isMobile) {
+      setIsExpanded(false);
+      setOpenSubmenu(null);
+    }
+  };
+
+  const handleToggleSidebar = () => {
+    setSidebarToggled(!sidebarToggled);
+    if (!sidebarToggled) {
+      setIsExpanded(true);
+    } else {
+      setIsExpanded(false);
+      setOpenSubmenu(null);
+    }
+  };
 
   return (
     <div>
       <aside
         ref={sidebarRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-[100dvh] flex-col justify-between overflow-visible px-4 shadow-2xl shadow-purple-500/20 !backdrop-blur-2xl",
-          "w-[18rem] transition-all duration-300 ease-in-out",
+          "fixed left-0 top-0 z-40 flex h-[100dvh] flex-col gap-4 pb-10 pt-4 shadow-2xl shadow-purple-500/20 !backdrop-blur-2xl",
+          "w-14 transition-all duration-300 ease-in-out",
+          isExpanded && "w-64 px-2",
           sidebarToggled
             ? "translate-x-0"
-            : "-translate-x-full md:translate-x-0",
-          "md:w-20"
+            : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div>
-          <div className="border-b border-b-gray-200 py-3 dark:border-b-zinc-800">
-            <Link
-              to="/"
-              className="group flex items-center justify-center gap-x-3 text-lg font-semibold text-gray-800 transition-transform dark:text-gray-200"
-            >
-              <div className="spring-bounce-60 spring-duration-300 flex h-10 w-10 items-center justify-center rounded-md text-white transition-transform hover:rotate-[-42deg]">
-                <CircleDot
-                  className={cn("w-8 fill-violet-500", {
-                    "animate-spin": !isLoaded,
-                  })}
-                />
-              </div>
-            </Link>
-          </div>
-          <nav className="relative h-full">
-            <ul className="relative z-10 mt-2 space-y-1 text-gray-700 dark:text-gray-300">
-              <motion.div
-                className="absolute left-0 h-8 w-1 rounded-r-full bg-violet-500"
-                initial={false}
-                animate={{
-                  top: `${activeIndex * 40 + 4}px`,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 30,
-                }}
-              />
-              {navItems.map((navItem) => (
-                <li key={navItem.id} className="grid w-full place-items-center">
-                  <HoverCard openDelay={50} closeDelay={50}>
-                    <HoverCardTrigger asChild>
-                      <Link
-                        to={navItem.link}
-                        onClick={() => {
-                          if (sidebarToggled) toggleSidebar();
-                        }}
+        <div className="flex h-[60px] items-center justify-center">
+          <Link
+            to="/"
+            className={cn(
+              "flex items-center",
+              isExpanded ? "gap-2" : "justify-center"
+            )}
+          >
+            <CircleDot
+              className={cn("h-6 w-6 fill-violet-500", {
+                "animate-spin": !isLoaded,
+              })}
+            />
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="text-lg font-semibold overflow-hidden whitespace-nowrap"
+                >
+                  Currently
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
+
+        <div className="flex-1">
+          <nav className="grid gap-1 px-2">
+            {navItems.map((item) => {
+              const isActive = item.submenu
+                ? item.submenu.some(
+                    (subItem) =>
+                      pathname === subItem.link ||
+                      pathname.startsWith(subItem.link || "")
+                  )
+                : pathname === item.link || pathname.startsWith(item.link || "");
+
+              return (
+                <div key={item.id} className="transition-all duration-300 ease-in-out">
+                  {item.submenu ? (
+                    <div>
+                      <button
+                        onClick={(e) => handleSubmenuClick(item.id, e)}
                         className={cn(
-                          "relative z-10 flex w-full items-center justify-start rounded-md p-2",
-                          "md:justify-center",
-                          "group transition-colors duration-200",
-                          pathname === navItem.link ||
-                            pathname.startsWith(navItem.link)
-                            ? "bg-violet-500/10 text-violet-500"
-                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-black/25"
+                          "group/nav flex h-10 w-full items-center justify-between rounded-md px-3 text-sm font-medium",
+                          "transition-[background-color,color,width,transform] duration-300 ease-in-out",
+                          isActive && "bg-violet-500/10 text-violet-500"
                         )}
                       >
-                        {navItem.icon && (
-                          <navItem.icon
-                            className={cn(
-                              "h-5 w-5",
-                              pathname === navItem.link ||
-                                pathname.startsWith(navItem.link)
-                                ? "text-violet-500"
-                                : "text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300"
+                        <div className="flex items-center min-w-[24px] transition-all duration-300 ease-in-out">
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <AnimatePresence mode="wait">
+                            {isExpanded && (
+                              <motion.span
+                                initial={{ opacity: 0, width: 0 }}
+                                animate={{ opacity: 1, width: "auto" }}
+                                exit={{ opacity: 0, width: 0 }}
+                                className="ml-2 overflow-hidden whitespace-nowrap"
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                              >
+                                {item.text}
+                              </motion.span>
                             )}
-                          />
+                          </AnimatePresence>
+                        </div>
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                            >
+                              <ChevronRight
+                                className={cn(
+                                  "h-4 w-4 transition-transform duration-200",
+                                  openSubmenu === item.id && "rotate-90"
+                                )}
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </button>
+                      <AnimatePresence>
+                        {(openSubmenu === item.id) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="ml-4 mt-1 space-y-1">
+                              {item.submenu.map((subItem) => {
+                                const isSubActive =
+                                  pathname === subItem.link ||
+                                  pathname.startsWith(subItem.link);
+
+                                return (
+                                  <Link
+                                    key={subItem.id}
+                                    to={subItem.link}
+                                    onClick={() => {
+                                      if (isMobile) {
+                                        setSidebarToggled(false);
+                                        setOpenSubmenu(null);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+                                      "hover:bg-violet-500/10 hover:text-accent-foreground",
+                                      isSubActive && "bg-violet-500/10 text-violet-500"
+                                    )}
+                                  >
+                                    <subItem.icon className="mr-2 h-4 w-4" />
+                                    <span>{subItem.text}</span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
                         )}
-                        <span className="visible ml-3 text-sm transition-colors duration-300 ease-linear md:hidden">
-                          {navItem.text}
-                        </span>
-                      </Link>
-                    </HoverCardTrigger>
-                    <HoverCardContent
-                      sticky="always"
-                      className="invisible max-w-max border-0 lg:visible"
-                      side="right"
-                      sideOffset={10}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <Link
+                      to={item.link || ""}
+                      className={cn(
+                        "group/nav flex h-10 items-center rounded-md px-3 text-sm font-medium",
+                        isExpanded ? "w-full" : "w-10",
+                        "transition-[background-color,color,width,transform] duration-300 ease-in-out",
+                        isActive && "bg-violet-500/10 text-violet-500 border-l-4 border-violet-500"
+                      )}
                     >
-                      {navItem.text}
-                    </HoverCardContent>
-                  </HoverCard>
-                </li>
-              ))}
-            </ul>
+                      <div className="flex items-center min-w-[24px] transition-all duration-300 ease-in-out">
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <AnimatePresence mode="wait">
+                          {isExpanded && (
+                            <motion.span
+                              initial={{ opacity: 0, width: 0 }}
+                              animate={{ opacity: 1, width: "auto" }}
+                              exit={{ opacity: 0, width: 0 }}
+                              className="ml-2 overflow-hidden whitespace-nowrap"
+                              transition={{ duration: 0.3, ease: "easeInOut" }}
+                            >
+                              {item.text}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </div>
-        <div className="z-50 mb-4 transition-all duration-300 md:flex md:justify-center">
+
+        <div className="mt-auto flex justify-center">
           <UserButton
             afterSignOutUrl="/"
             appearance={{
               elements: {
-                avatarBox: "w-10 h-10",
+                avatarBox: "w-6 h-6",
               },
             }}
           />
         </div>
       </aside>
 
-      {/* Mobile sidebar toggle button with delayed visibility */}
-      <div
-        className={cn(
-          "fixed left-0 z-50 flex p-[5px] transition-all duration-300 ease-in-out md:hidden",
-          "opacity-0 transition-opacity duration-300",
-          isScrolled ? "top-[10px]" : "top-[10px]",
-          !sidebarToggled && "delay-300 opacity-100"
-        )}
-        style={{
-          transform: sidebarToggled ? "translateX(240px)" : "translateX(0)",
-        }}
+      <button
+        onClick={handleToggleSidebar}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-background/80 rounded-md"
       >
-        <button
-          ref={toggleButtonRef}
-          onClick={toggleSidebar}
-          className="relative flex aspect-square w-8 flex-col items-center justify-center rounded-full p-1 outline-none"
-        >
-          <span className="sr-only">toggle sidebar</span>
-          <span
-            className={cn(
-              "h-0.5 w-4 rounded-full bg-gray-300 transition-transform duration-100 ease-linear",
-              sidebarToggled ? "translate-y-1.5 rotate-[40deg]" : ""
-            )}
-          />
-          <span
-            className={cn(
-              "mt-1 h-0.5 w-4 origin-center rounded-full bg-gray-300 transition-all duration-100 ease-linear",
-              sidebarToggled ? "scale-x-0 opacity-0" : ""
-            )}
-          />
-          <span
-            className={cn(
-              "mt-1 h-0.5 w-4 rounded-full bg-gray-300 transition-all duration-100 ease-linear",
-              sidebarToggled ? "-translate-y-1.5 -rotate-[40deg]" : ""
-            )}
-          />
-        </button>
-      </div>
+        <span className="sr-only">Toggle Menu</span>
+        {/* Add your menu icon here */}
+      </button>
     </div>
   );
 };
