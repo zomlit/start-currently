@@ -54,6 +54,7 @@ import { navItems } from "@/config/navigation";
 import { LiveStatusCard } from "@/components/widget-settings/visualizer/LiveStatusCard";
 import type { Event, Alert } from "@/types/events";
 import type { TrackData } from "@/types/visualizer";
+
 import { ChevronRight } from "lucide-react";
 
 const IconButton = forwardRef<
@@ -713,9 +714,9 @@ export const HorizontalNav = () => {
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   return (
-    <div className="mb-6">
+    <div className="mb-2">
       <nav className="hidden md:block">
-        <div className="rounded-lg bg-white/5 p-2">
+        <div className="rounded-lg bg-white/10 p-2">
           <div className="flex flex-col">
             <div className="flex items-center space-x-4">
               {navItems.map((item) => {
@@ -725,13 +726,16 @@ export const HorizontalNav = () => {
                         pathname === subItem.link ||
                         pathname.startsWith(subItem.link || "")
                     )
-                  : pathname === item.link || pathname.startsWith(item.link || "");
+                  : pathname === item.link ||
+                    pathname.startsWith(item.link || "");
                 const Icon = item.icon;
 
                 return item.submenu ? (
                   <div key={item.id} className="relative">
                     <button
-                      onClick={() => setOpenSubmenu(openSubmenu === item.id ? null : item.id)}
+                      onClick={() =>
+                        setOpenSubmenu(openSubmenu === item.id ? null : item.id)
+                      }
                       className={cn(
                         "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ",
                         isActive
@@ -791,7 +795,8 @@ export const HorizontalNav = () => {
                               className={cn(
                                 "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                                 "hover:bg-violet-500/10 hover:text-accent-foreground",
-                                isSubActive && "bg-violet-500/10 text-violet-500"
+                                isSubActive &&
+                                  "bg-violet-500/10 text-violet-500"
                               )}
                             >
                               <subItem.icon className="h-4 w-4" />
@@ -832,19 +837,18 @@ export function Dashboard() {
           backText=""
         />
 
+        {/* <div className="flex items-center justify-between mb-2">
+          <OrganizationSwitcher
+            appearance={{
+              elements: {
+                organizationPreviewAvatarBox: "size-6",
+              },
+            }}
+          />
+        </div> */}
         <HorizontalNav />
 
-        <div className="my-6">
-          <div className="my-2 text-right">
-            <OrganizationSwitcher
-              appearance={{
-                elements: {
-                  organizationPreviewAvatarBox: "size-6",
-                },
-              }}
-            />
-          </div>
-
+        <div className="my-4">
           <div className="columns-1 gap-4 space-y-4 sm:columns-2 lg:columns-3">
             <AnimatedCard className="mb-4 break-inside-avoid">
               <LiveStatusCard />

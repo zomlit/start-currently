@@ -1,5 +1,4 @@
 import {
-  Link,
   Outlet,
   ReactNode,
   ScrollRestoration,
@@ -8,7 +7,6 @@ import {
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Meta, Scripts } from "@tanstack/start";
-import * as React from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { AccessControl } from "@/components/AccessControl";
 
@@ -20,6 +18,7 @@ import { dark } from "@clerk/themes";
 import { seo } from "@/utils/seo";
 import { ClerkProvider } from "@clerk/tanstack-start";
 import { useThemeStore } from "@/store/themeStore";
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
 }>()({
@@ -78,8 +77,9 @@ export const Route = createRootRouteWithContext<{
   beforeLoad: async () => {
     return {};
   },
-  errorComponent: DefaultCatchBoundary,
-
+  errorComponent: ({ error, reset }) => (
+    <DefaultCatchBoundary error={error} reset={reset} />
+  ),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
 });
@@ -124,11 +124,13 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Meta />
       </head>
       <body className="min-h-screen font-sofia antialiased">
-        {children}
-        <ScrollRestoration />
-        <TanStackRouterDevtools position="bottom-right" />
-        <ReactQueryDevtools buttonPosition="bottom-left" />
-        <Scripts />
+        <div className="relative flex min-h-screen flex-col">
+          <main className="flex-1">{children}</main>
+          <ScrollRestoration />
+          <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-left" />
+          <Scripts />
+        </div>
       </body>
     </html>
   );

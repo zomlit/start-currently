@@ -16,6 +16,7 @@ import { Route as AppImport } from './routes/_app'
 import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppWidgetsImport } from './routes/_app/widgets'
+import { Route as AppDashboardImport } from './routes/_app/dashboard'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
 import { Route as UsernameOverlayImport } from './routes/$username/overlay'
 import { Route as UsernameLyricsImport } from './routes/$username/lyrics'
@@ -68,6 +69,12 @@ const AppIndexRoute = AppIndexImport.update({
 const AppWidgetsRoute = AppWidgetsImport.update({
   id: '/widgets',
   path: '/widgets',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppDashboardRoute = AppDashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -204,15 +211,15 @@ const AppAuthedDashboardRoute = AppAuthedDashboardImport.update({
 
 const AppDashboardWidgetsVisualizerRoute =
   AppDashboardWidgetsVisualizerImport.update({
-    id: '/dashboard/widgets/visualizer',
-    path: '/dashboard/widgets/visualizer',
-    getParentRoute: () => AppRoute,
+    id: '/widgets/visualizer',
+    path: '/widgets/visualizer',
+    getParentRoute: () => AppDashboardRoute,
   } as any)
 
 const AppDashboardWidgetsDevRoute = AppDashboardWidgetsDevImport.update({
-  id: '/dashboard/widgets/dev',
-  path: '/dashboard/widgets/dev',
-  getParentRoute: () => AppRoute,
+  id: '/widgets/dev',
+  path: '/widgets/dev',
+  getParentRoute: () => AppDashboardRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -266,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AppAuthedImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardImport
       parentRoute: typeof AppImport
     }
     '/_app/widgets': {
@@ -410,17 +424,17 @@ declare module '@tanstack/react-router' {
     }
     '/_app/dashboard/widgets/dev': {
       id: '/_app/dashboard/widgets/dev'
-      path: '/dashboard/widgets/dev'
+      path: '/widgets/dev'
       fullPath: '/dashboard/widgets/dev'
       preLoaderRoute: typeof AppDashboardWidgetsDevImport
-      parentRoute: typeof AppImport
+      parentRoute: typeof AppDashboardImport
     }
     '/_app/dashboard/widgets/visualizer': {
       id: '/_app/dashboard/widgets/visualizer'
-      path: '/dashboard/widgets/visualizer'
+      path: '/widgets/visualizer'
       fullPath: '/dashboard/widgets/visualizer'
       preLoaderRoute: typeof AppDashboardWidgetsVisualizerImport
-      parentRoute: typeof AppImport
+      parentRoute: typeof AppDashboardImport
     }
   }
 }
@@ -455,6 +469,20 @@ const AppAuthedRouteWithChildren = AppAuthedRoute._addFileChildren(
   AppAuthedRouteChildren,
 )
 
+interface AppDashboardRouteChildren {
+  AppDashboardWidgetsDevRoute: typeof AppDashboardWidgetsDevRoute
+  AppDashboardWidgetsVisualizerRoute: typeof AppDashboardWidgetsVisualizerRoute
+}
+
+const AppDashboardRouteChildren: AppDashboardRouteChildren = {
+  AppDashboardWidgetsDevRoute: AppDashboardWidgetsDevRoute,
+  AppDashboardWidgetsVisualizerRoute: AppDashboardWidgetsVisualizerRoute,
+}
+
+const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
+  AppDashboardRouteChildren,
+)
+
 interface AppWidgetsRouteChildren {
   AppWidgetsAlertsRoute: typeof AppWidgetsAlertsRoute
   AppWidgetsChatRoute: typeof AppWidgetsChatRoute
@@ -483,6 +511,7 @@ const AppWidgetsRouteWithChildren = AppWidgetsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAuthedRoute: typeof AppAuthedRouteWithChildren
+  AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppWidgetsRoute: typeof AppWidgetsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppCheckoutProductIdRoute: typeof AppCheckoutProductIdRoute
@@ -493,12 +522,11 @@ interface AppRouteChildren {
   AppPricingIndexRoute: typeof AppPricingIndexRoute
   AppTeampickerIndexRoute: typeof AppTeampickerIndexRoute
   AppWheelspinIndexRoute: typeof AppWheelspinIndexRoute
-  AppDashboardWidgetsDevRoute: typeof AppDashboardWidgetsDevRoute
-  AppDashboardWidgetsVisualizerRoute: typeof AppDashboardWidgetsVisualizerRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAuthedRoute: AppAuthedRouteWithChildren,
+  AppDashboardRoute: AppDashboardRouteWithChildren,
   AppWidgetsRoute: AppWidgetsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppCheckoutProductIdRoute: AppCheckoutProductIdRoute,
@@ -509,8 +537,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppPricingIndexRoute: AppPricingIndexRoute,
   AppTeampickerIndexRoute: AppTeampickerIndexRoute,
   AppWheelspinIndexRoute: AppWheelspinIndexRoute,
-  AppDashboardWidgetsDevRoute: AppDashboardWidgetsDevRoute,
-  AppDashboardWidgetsVisualizerRoute: AppDashboardWidgetsVisualizerRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -532,9 +558,9 @@ export interface FileRoutesByFullPath {
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
+  '/dashboard': typeof AppAuthedDashboardRoute
   '/widgets': typeof AppWidgetsRouteWithChildren
   '/': typeof AppIndexRoute
-  '/dashboard': typeof AppAuthedDashboardRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/sign-in/$': typeof AppSignInSplatRoute
@@ -562,8 +588,8 @@ export interface FileRoutesByTo {
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
-  '/': typeof AppIndexRoute
   '/dashboard': typeof AppAuthedDashboardRoute
+  '/': typeof AppIndexRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/sign-in/$': typeof AppSignInSplatRoute
@@ -594,6 +620,7 @@ export interface FileRoutesById {
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
+  '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/widgets': typeof AppWidgetsRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/_authed/dashboard': typeof AppAuthedDashboardRoute
@@ -626,9 +653,9 @@ export interface FileRouteTypes {
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
+    | '/dashboard'
     | '/widgets'
     | '/'
-    | '/dashboard'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/sign-in/$'
@@ -655,8 +682,8 @@ export interface FileRouteTypes {
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
-    | '/'
     | '/dashboard'
+    | '/'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/sign-in/$'
@@ -685,6 +712,7 @@ export interface FileRouteTypes {
     | '/$username/lyrics'
     | '/$username/overlay'
     | '/_app/_authed'
+    | '/_app/dashboard'
     | '/_app/widgets'
     | '/_app/'
     | '/_app/_authed/dashboard'
@@ -749,6 +777,7 @@ export const routeTree = rootRoute
       "filePath": "_app.tsx",
       "children": [
         "/_app/_authed",
+        "/_app/dashboard",
         "/_app/widgets",
         "/_app/",
         "/_app/checkout/$productId",
@@ -758,9 +787,7 @@ export const routeTree = rootRoute
         "/_app/teampicker/$bracketId",
         "/_app/pricing/",
         "/_app/teampicker/",
-        "/_app/wheelspin/",
-        "/_app/dashboard/widgets/dev",
-        "/_app/dashboard/widgets/visualizer"
+        "/_app/wheelspin/"
       ]
     },
     "/_lyrics": {
@@ -786,6 +813,14 @@ export const routeTree = rootRoute
       "parent": "/_app",
       "children": [
         "/_app/_authed/dashboard"
+      ]
+    },
+    "/_app/dashboard": {
+      "filePath": "_app/dashboard.tsx",
+      "parent": "/_app",
+      "children": [
+        "/_app/dashboard/widgets/dev",
+        "/_app/dashboard/widgets/visualizer"
       ]
     },
     "/_app/widgets": {
@@ -880,11 +915,11 @@ export const routeTree = rootRoute
     },
     "/_app/dashboard/widgets/dev": {
       "filePath": "_app/dashboard/widgets/dev.tsx",
-      "parent": "/_app"
+      "parent": "/_app/dashboard"
     },
     "/_app/dashboard/widgets/visualizer": {
       "filePath": "_app/dashboard/widgets/visualizer.tsx",
-      "parent": "/_app"
+      "parent": "/_app/dashboard"
     }
   }
 }

@@ -40,7 +40,7 @@ const gamepadSettingsSchema = z.object({
   triggerColor: z.string(),
   backgroundColor: z.string(),
   scale: z.number().min(0.1).max(2),
-  deadzone: z.number().min(0).max(1),
+  deadzone: z.number().min(0).max(0.4),
   debugMode: z.boolean(),
 });
 
@@ -122,20 +122,43 @@ export function GamepadSettingsForm({
     defaultValues: settings,
   });
 
-  // Update form when settings change, but prevent infinite loop
+  const { watch, setValue } = form;
+
+  // Update form values when settings change
+  useEffect(() => {
+    setValue("scale", settings.scale);
+    setValue("deadzone", settings.deadzone);
+    // Update other fields as necessary
+  }, [settings, setValue]);
+
+  // Watch all form values for immediate UI updates
+  const formValues = form.watch();
+
+  // Update form when settings change from outside
   useEffect(() => {
     if (JSON.stringify(form.getValues()) !== JSON.stringify(settings)) {
       form.reset(settings);
     }
   }, [settings]);
 
-  // Handle individual field changes with debounce
-  const handleFieldChange = useDebouncedCallback(
-    (field: keyof GamepadSettings, value: any) => {
-      onSettingsChange({ [field]: value });
+  // Debounced handler for server updates
+  const debouncedServerUpdate = useDebouncedCallback(
+    (values: GamepadSettings) => {
+      onSettingsChange(values);
     },
-    500
+    1000 // 1 second debounce
   );
+
+  // Effect to handle server updates
+  useEffect(() => {
+    debouncedServerUpdate(formValues);
+  }, [formValues, debouncedServerUpdate]);
+
+  // Immediate local update handler
+  const handleFieldChange = (field: keyof GamepadSettings, value: any) => {
+    setValue(field, value);
+    onSettingsChange({ [field]: value });
+  };
 
   // Add handler for skin changes
   const handleSkinChange = (skinId: string) => {
@@ -160,7 +183,7 @@ export function GamepadSettingsForm({
         triggerColor: "#1a1a1a",
         backgroundColor: "transparent",
         scale: 1,
-        deadzone: 0.1,
+        deadzone: 0,
         debugMode: false,
       };
 
@@ -175,44 +198,7 @@ export function GamepadSettingsForm({
 
   return (
     <Form {...form}>
-      <form className="space-y-6 p-6">
-        {/* Add Skins dropdown at the top */}
-        <FormField
-          control={form.control}
-          name="skin"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Skins</FormLabel>
-              <FormDescription>
-                Choose a preset color scheme for your controller
-              </FormDescription>
-              <Select onValueChange={handleSkinChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a skin" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {CONTROLLER_SKINS.map((skin) => (
-                    <SelectItem key={skin.id} value={skin.id}>
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className="h-4 w-4 rounded-full border"
-                          style={{
-                            backgroundColor: skin.colors.buttonColor,
-                            borderColor: skin.colors.buttonPressedColor,
-                          }}
-                        />
-                        <span>{skin.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
-
+      <form className="space-y-6 mt-4">
         {/* Controller Type */}
         <FormField
           control={form.control}
@@ -289,6 +275,43 @@ export function GamepadSettingsForm({
           )}
         />
 
+        {/* Add Skins dropdown at the top */}
+        <FormField
+          control={form.control}
+          name="skin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Skins</FormLabel>
+              <FormDescription>
+                Choose a preset color scheme for your controller
+              </FormDescription>
+              <Select onValueChange={handleSkinChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a skin" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CONTROLLER_SKINS.map((skin) => (
+                    <SelectItem key={skin.id} value={skin.id}>
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className="h-4 w-4 rounded-full border"
+                          style={{
+                            backgroundColor: skin.colors.buttonColor,
+                            borderColor: skin.colors.buttonPressedColor,
+                          }}
+                        />
+                        <span>{skin.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+
         {/* Display Options */}
         <div className="space-y-4">
           <FormField
@@ -314,41 +337,23 @@ export function GamepadSettingsForm({
             )}
           />
 
+          {/* Debug/Drift detection Mode */}
           <FormField
             control={form.control}
-            name="showAnalogSticks"
+            name="debugMode"
             render={({ field }) => (
               <FormItem className="flex items-center justify-between">
                 <div>
-                  <FormLabel>Show Analog Sticks</FormLabel>
-                  <FormDescription>Show analog stick movement</FormDescription>
+                  <FormLabel>Drift Detection/Debug</FormLabel>
+                  <FormDescription>
+                    Show stick drift values & debug info
+                  </FormDescription>
                 </div>
                 <FormControl>
                   <Switch
                     checked={field.value}
                     onCheckedChange={(checked) =>
-                      handleFieldChange("showAnalogSticks", checked)
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="showTriggers"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between">
-                <div>
-                  <FormLabel>Show Triggers</FormLabel>
-                  <FormDescription>Show trigger pressure</FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) =>
-                      handleFieldChange("showTriggers", checked)
+                      handleFieldChange("debugMode", checked)
                     }
                   />
                 </FormControl>
@@ -480,13 +485,13 @@ export function GamepadSettingsForm({
             name="scale"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Scale: {field.value.toFixed(2)}x</FormLabel>
+                <FormLabel>Scale: {(field.value ?? 1).toFixed(2)}x</FormLabel>
                 <FormControl>
                   <Slider
                     min={0.1}
                     max={2}
                     step={0.1}
-                    value={[field.value]}
+                    value={[field.value ?? 1]}
                     onValueChange={([value]) =>
                       handleFieldChange("scale", value)
                     }
@@ -501,15 +506,16 @@ export function GamepadSettingsForm({
             name="deadzone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  Deadzone: {(field.value * 100).toFixed(0)}%
-                </FormLabel>
+                <FormLabel>Deadzone: {(field.value ?? 0).toFixed(2)}</FormLabel>
+                <FormDescription>
+                  Values above this threshold will be considered stick drift
+                </FormDescription>
                 <FormControl>
                   <Slider
                     min={0}
-                    max={1}
+                    max={0.4}
                     step={0.01}
-                    value={[field.value]}
+                    value={[field.value ?? 0]}
                     onValueChange={([value]) =>
                       handleFieldChange("deadzone", value)
                     }
@@ -519,28 +525,6 @@ export function GamepadSettingsForm({
             )}
           />
         </div>
-
-        {/* Debug Mode */}
-        <FormField
-          control={form.control}
-          name="debugMode"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
-              <div>
-                <FormLabel>Debug Mode</FormLabel>
-                <FormDescription>Show debug information</FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={(checked) =>
-                    handleFieldChange("debugMode", checked)
-                  }
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
 
         {/* Add Reset Button at the bottom */}
         <div className="flex items-center space-x-2 pt-4 border-t">

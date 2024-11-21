@@ -3,6 +3,9 @@ import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
 import DashboardNavigation from "@/components/DashboardNavigation";
 import { Container } from "@/components/layout/Container";
 import GenericHeader from "@/components/GenericHeader";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { MainNav } from "@/components/Dashboard/MainNav";
+import { NavItem, navItems } from "@/config/navigation";
 
 export const Route = createFileRoute("/_app/widgets")({
   component: SectionsLayout,
@@ -12,59 +15,67 @@ function SectionsLayout() {
   const matches = useMatches();
   const currentRoute = matches[matches.length - 1];
 
-  // Define section-specific content
   const sectionContent = {
+    "/_app/widgets": {
+      category: "Widgets",
+      title: "Widget Gallery",
+      description: "Browse and manage your stream widgets",
+    },
     "/_app/widgets/visualizer": {
       category: "Widgets",
       title: "Visualizer",
-      description: "",
+      description: "Create dynamic visual effects for your stream",
     },
     "/_app/widgets/lyrics": {
       category: "Widgets",
       title: "Lyrics",
-      description: "",
+      description: "Display synchronized lyrics during music playback",
     },
     "/_app/widgets/chat": {
       category: "Widgets",
       title: "Chat",
-      description: "",
+      description: "Customize your stream chat experience",
     },
     "/_app/widgets/alerts": {
       category: "Widgets",
       title: "Alerts",
-      description: "",
+      description: "Set up and customize stream alerts",
     },
     "/_app/widgets/stats": {
       category: "Widgets",
       title: "Stats",
-      description: "",
+      description: "Display real-time statistics and metrics",
     },
     "/_app/widgets/gamepad": {
       category: "Widgets",
       title: "Gamepad",
-      description: "Track and display your controller inputs in real-time",
+      description: "Show controller inputs and game interactions",
     },
   };
 
   const content = sectionContent[
     currentRoute.id as keyof typeof sectionContent
   ] || {
-    category: "Sections",
-    title: "Unknown Section",
-    description: "Section not found",
+    category: "Widgets",
+    title: "Widget Gallery",
+    description: "Browse and manage your stream widgets",
   };
 
   return (
-    <div className="">
+    <div className="flex min-h-screen flex-col">
       <DashboardNavigation />
-      <main className="">
+      <main className="flex-1">
         <Container maxWidth="7xl" isDashboard>
           <GenericHeader
             category={content.category}
             title={content.title}
             description={content.description}
           />
-          <Outlet />
+          <PageBreadcrumb />
+          <MainNav items={navItems as NavItem[]} />
+          <div className="mt-4">
+            <Outlet />
+          </div>
         </Container>
       </main>
     </div>
