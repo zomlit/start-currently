@@ -29,9 +29,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
     <nav
       className={cn(
         "sticky left-0 right-0 top-0 z-40 transition-all duration-300 shadow-sm shadow-violet-900/20",
-        {
-          // "md:pl-28": location.pathname.includes("/dashboard"),
-        },
+
         isScrolled
           ? "bg-white/80 !backdrop-blur-2xl dark:bg-gray-900/20 shadow-violet-900/20"
           : "bg-transparent"
@@ -57,12 +55,14 @@ export function Navigation({ isDashboard }: NavigationProps) {
               </span>
             </Link>
           </div>
-          <div className="hidden md:flex items-center space-x-8">
-            <NavLink to="/" exact>
-              Home
-            </NavLink>
-            <NavLink to="/dashboard">Dashboard</NavLink>
-          </div>
+          {location.pathname === "/" && (
+            <div className="hidden md:flex items-center space-x-8">
+              <NavLink to="/" exact>
+                Home
+              </NavLink>
+              <NavLink to="/dashboard">Dashboard</NavLink>
+            </div>
+          )}
           <div className="flex items-center space-x-4">
             <ModeToggle />
             <div className="relative">

@@ -1,8 +1,6 @@
 import React from "react";
 import { Container } from "@/components/layout/Container";
-import DashboardNavigation from "@/components/DashboardNavigation";
 import DashboardHeader from "@/components/DashboardHeader";
-import { HorizontalNav } from "@/components/Dashboard";
 
 interface SectionLayoutProps {
   children: React.ReactNode;
@@ -25,7 +23,6 @@ export function SectionLayout({
 }: SectionLayoutProps) {
   return (
     <>
-      <DashboardNavigation />
       <Container isDashboard maxWidth="7xl">
         <DashboardHeader
           category={category}
@@ -36,9 +33,6 @@ export function SectionLayout({
           buttonText={buttonText}
           backText=""
         />
-
-        <HorizontalNav />
-
         <div className="mt-8">{children}</div>
       </Container>
     </>

@@ -1,6 +1,12 @@
-import React from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { cn } from "@/lib/utils";
-import { Gamepad } from "lucide-react";
+import { Gamepad, Gamepad2, Gauge, Crosshair, Circle, X } from "lucide-react";
 import DS4Base from "@/icons/gamepad/ds4-base.svg?react";
 import MachoBase from "@/icons/gamepad/macho-base.svg?react";
 import DS4Buttons from "@/icons/gamepad/ds4-base-buttons.svg?react";
@@ -19,6 +25,22 @@ import {
 } from "./gamepad/FaceButtons";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { Bumper, Trigger } from "./gamepad/BumperTrigger";
+import { useRawGamepad } from "@/hooks/useRawGamepad";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/utils/toast";
+import { AnimatePresence, motion } from "framer-motion";
+import { Slider } from "@/components/ui/slider";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -48,14 +70,565 @@ interface GamepadViewerProps {
   username?: string;
   gamepadState?: GamepadState | null;
   isPublicView?: boolean;
+  onSettingsChange?: (settings: Partial<GamepadSettings>) => void;
 }
+
+// Update the formatStickValue function to show 2 decimal places
+const formatStickValue = (value: number): string => {
+  return value.toFixed(2);
+};
+
+// Add a helper to check if stick value exceeds deadzone
+const checkStickDrift = (value: number, deadzone: number = 0.05): boolean => {
+  return Math.abs(value) > deadzone;
+};
+
+// Add helper for calibration
+const calculateRecommendedDeadzone = (axes: number[]): number => {
+  const maxDrift = Math.max(...axes.map((axis) => Math.abs(axis)));
+  // Add a small buffer to the detected drift
+  return Math.min(Math.ceil(maxDrift * 100) / 100 + 0.02, 0.4);
+};
+
+// Helper to identify which sticks are drifting
+const getDriftingSticks = (axes: number[], threshold: number = 0.01) => {
+  const drifts = {
+    left: Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+    right: Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+  };
+
+  return {
+    left: drifts.left > threshold,
+    right: drifts.right > threshold,
+    maxLeft: drifts.left.toFixed(3),
+    maxRight: drifts.right.toFixed(3),
+  };
+};
+
+// Add hysteresis to prevent rapid state changes
+const HYSTERESIS_FACTOR = 1.1;
+const MIN_CHANGE_THRESHOLD = 0.01;
+
+// Centralize drift detection logic
+const useStickDriftDetection = (axes: number[], deadzone: number) => {
+  const [driftState, setDriftState] = useState({
+    isDrifting: false,
+    leftStickDrift: 0,
+    rightStickDrift: 0,
+  });
+
+  const prevAxesRef = useRef(axes);
+  const prevDeadzoneRef = useRef(deadzone);
+
+  useEffect(() => {
+    // Only update if axes or deadzone actually changed
+    if (
+      axes.some((axis, i) => axis !== prevAxesRef.current[i]) ||
+      deadzone !== prevDeadzoneRef.current
+    ) {
+      const leftStickDrift = Math.max(Math.abs(axes[0]), Math.abs(axes[1]));
+      const rightStickDrift = Math.max(Math.abs(axes[2]), Math.abs(axes[3]));
+
+      // Use hysteresis for more stable drift detection
+      const isDrifting =
+        leftStickDrift > deadzone * HYSTERESIS_FACTOR ||
+        rightStickDrift > deadzone * HYSTERESIS_FACTOR;
+
+      setDriftState((prev) => {
+        const shouldUpdate =
+          Math.abs(prev.leftStickDrift - leftStickDrift) >
+            MIN_CHANGE_THRESHOLD ||
+          Math.abs(prev.rightStickDrift - rightStickDrift) >
+            MIN_CHANGE_THRESHOLD ||
+          prev.isDrifting !== isDrifting;
+
+        return shouldUpdate
+          ? { isDrifting, leftStickDrift, rightStickDrift }
+          : prev;
+      });
+
+      // Update refs
+      prevAxesRef.current = axes;
+      prevDeadzoneRef.current = deadzone;
+    }
+  }, [axes, deadzone]);
+
+  return driftState;
+};
+
+// Update status determination functions
+const getDriftValueColor = (drift: number, deadzone: number) => {
+  if (drift > deadzone * HYSTERESIS_FACTOR) return "text-red-400";
+  if (drift > deadzone) return "text-yellow-400";
+  return "text-green-400";
+};
+
+// Add a helper for tracking value history
+interface DriftHistory {
+  values: number[];
+  timestamp: number;
+}
+
+// Update status text to use averaged values
+const getDriftStatusText = (drift: number, deadzone: number) => {
+  const driftPercentage = ((drift / deadzone) * 100).toFixed(1);
+
+  if (drift > deadzone) {
+    return { text: "Drift Detected", color: "text-red-400" };
+  }
+  if (drift > deadzone - 0.01) {
+    return {
+      text: `Potential Drift (${driftPercentage}%)`,
+      color: "text-yellow-400",
+    };
+  }
+  return { text: "OK", color: "text-green-400" };
+};
+
+// Simplify hasAnyDrift to use the same logic
+const hasAnyDrift = (axes: number[], deadzone: number): boolean => {
+  const leftDrift = Math.max(Math.abs(axes[0]), Math.abs(axes[1]));
+  const rightDrift = Math.max(Math.abs(axes[2]), Math.abs(axes[3]));
+
+  return leftDrift > deadzone || rightDrift > deadzone;
+};
+
+// Update the deadzone display color logic to match drift detection
+const getDeadzoneDisplayColor = (
+  value: number | undefined,
+  axes: number[]
+): string => {
+  if (!value || !axes) return "text-muted-foreground";
+
+  // Get max drift values for each stick
+  const leftDrift = Math.max(Math.abs(axes[0]), Math.abs(axes[1]));
+  const rightDrift = Math.max(Math.abs(axes[2]), Math.abs(axes[3]));
+
+  // If any stick is showing drift, show red
+  if (leftDrift > value || rightDrift > value) {
+    return "text-red-500";
+  }
+
+  // If any stick is near the threshold, show yellow
+  if (leftDrift > value - 0.01 || rightDrift > value - 0.01) {
+    return "text-yellow-500";
+  }
+
+  // Otherwise show green
+  return "text-emerald-500";
+};
+
+// Update DeadzoneVisualizer with better styling and layout
+const DeadzoneVisualizer = ({
+  x,
+  y,
+  deadzone,
+}: {
+  x: number;
+  y: number;
+  deadzone: number;
+}) => {
+  const scale = 180;
+  const constrainedX = Math.max(-1, Math.min(1, x));
+  const constrainedY = Math.max(-1, Math.min(1, y));
+
+  const translateX = constrainedX * (scale / 2);
+  const translateY = constrainedY * (scale / 2);
+
+  const currentPosition = Math.max(Math.abs(x), Math.abs(y));
+
+  // Simplified status color logic to match drift detection
+  const getStatusColor = () => {
+    if (currentPosition > deadzone) return "red";
+    if (currentPosition > deadzone - 0.01) return "yellow";
+    return "emerald";
+  };
+
+  const statusColor = getStatusColor();
+  const colorMap = {
+    red: "bg-red-500/50",
+    yellow: "bg-yellow-500/50",
+    emerald: "bg-emerald-500/50",
+  };
+
+  const squareSize = scale * deadzone * 2;
+  const bracketSize = squareSize * 0.15;
+
+  return (
+    <div className="relative h-52 w-52">
+      {/* Background circle */}
+      <div
+        className={cn(
+          "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border transition-colors duration-200",
+          statusColor === "red"
+            ? "border-red-500/20"
+            : statusColor === "yellow"
+              ? "border-yellow-500/20"
+              : "border-violet-500/20"
+        )}
+        style={{
+          width: `${scale * 1.1}px`,
+          height: `${scale * 1.1}px`,
+          boxShadow: "inset 0 0 20px rgba(0,0,0,0.2)",
+        }}
+      />
+      {/* Trail line */}
+      <div
+        className={cn(
+          "absolute left-1/2 top-1/2 origin-left h-[2px]",
+          statusColor === "red"
+            ? "bg-red-500/40"
+            : statusColor === "yellow"
+              ? "bg-yellow-500/40"
+              : "bg-emerald-500/40"
+        )}
+        style={{
+          width: `${Math.sqrt(translateX * translateX + translateY * translateY)}px`,
+          transform: `rotate(${Math.atan2(translateY, translateX)}rad)`,
+          willChange: "transform, width",
+          transition: "none",
+        }}
+      />
+      {/* Crosshair lines */}
+      <div
+        className={cn(
+          "absolute left-1/2 top-1/2 -translate-x-1/2 w-[1px] transition-colors duration-200",
+          statusColor === "red"
+            ? "bg-red-400/30"
+            : statusColor === "yellow"
+              ? "bg-yellow-400/30"
+              : "bg-violet-400/30"
+        )}
+        style={{
+          height: `${squareSize}px`,
+          boxShadow: "0 0 4px rgba(0,0,0,0.1)",
+        }}
+      />
+      <div
+        className={cn(
+          "absolute left-1/2 top-1/2 -translate-y-1/2 h-[1px] transition-colors duration-200",
+          statusColor === "red"
+            ? "bg-red-400/30"
+            : statusColor === "yellow"
+              ? "bg-yellow-400/30"
+              : "bg-violet-400/30"
+        )}
+        style={{
+          width: `${squareSize}px`,
+          boxShadow: "0 0 4px rgba(0,0,0,0.1)",
+        }}
+      />
+      {/* Corner brackets */}
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        style={{
+          width: `${squareSize}px`,
+          height: `${squareSize}px`,
+        }}
+      >
+        {["top-left", "top-right", "bottom-left", "bottom-right"].map(
+          (position) => (
+            <div
+              key={position}
+              className={cn(
+                "absolute border-[1.5px] transition-colors duration-200",
+                statusColor === "red"
+                  ? "border-red-400/50"
+                  : statusColor === "yellow"
+                    ? "border-yellow-400/50"
+                    : "border-violet-400/50",
+                position.includes("top") ? "top-0" : "bottom-0",
+                position.includes("left") ? "left-0" : "right-0",
+                position.includes("top") ? "border-t" : "border-b",
+                position.includes("left") ? "border-l" : "border-r"
+              )}
+              style={{
+                width: bracketSize,
+                height: bracketSize,
+                boxShadow: "0 0 4px rgba(0,0,0,0.1)",
+              }}
+            />
+          )
+        )}
+      </div>
+      {/* Position indicator */}
+      <div
+        className={cn(
+          "absolute left-1/2 top-1/2 h-5 w-5 rounded-full transition-colors duration-200",
+          colorMap[statusColor],
+          "shadow-lg -translate-x-1/2 -translate-y-1/2 backdrop-blur-sm",
+          "ring-[1.5px] ring-offset-1 ring-offset-black/10",
+          {
+            "ring-red-500/70": statusColor === "red",
+            "ring-yellow-500/70": statusColor === "yellow",
+            "ring-emerald-500/70": statusColor === "emerald",
+          }
+        )}
+        style={{
+          transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px))`,
+          willChange: "transform",
+          transition: "none",
+          boxShadow: `0 0 10px ${
+            statusColor === "red"
+              ? "rgba(239, 68, 68, 0.4)"
+              : statusColor === "yellow"
+                ? "rgba(234, 179, 8, 0.4)"
+                : "rgba(16, 185, 129, 0.4)"
+          }`,
+        }}
+      />
+    </div>
+  );
+};
+
+// Update the drift detection to be more strict about safe values
+const hasAnyPotentialDrift = (axes: number[], deadzone: number): boolean => {
+  const leftDrift = Math.max(Math.abs(axes[0]), Math.abs(axes[1]));
+  const rightDrift = Math.max(Math.abs(axes[2]), Math.abs(axes[3]));
+
+  // Consider it safe (no drift) when values are well below deadzone
+  const safeMargin = 0.03; // Increased from 0.01 to 0.03
+  const isSafe =
+    leftDrift < deadzone - safeMargin && rightDrift < deadzone - safeMargin;
+
+  // Only enable calibration when we're definitely not in a safe state
+  return !isSafe;
+};
+
+// Add getStableDriftValue function definition
+const getStableDriftValue = (drift: number): string => {
+  return drift.toFixed(3);
+};
 
 export function GamepadViewer({
   settings,
   username,
   gamepadState,
   isPublicView = false,
+  onSettingsChange,
 }: GamepadViewerProps) {
+  const { axes: rawAxes, isUserInteracting } = useRawGamepad();
+  const deadzone = settings?.deadzone ?? 0.05;
+
+  // Memoize axes to prevent unnecessary re-renders
+  const axes = useMemo(() => {
+    return isPublicView ? gamepadState?.axes || Array(4).fill(0) : rawAxes;
+  }, [isPublicView, gamepadState?.axes, rawAxes]);
+
+  // Use memoized drift detection
+  const { isDrifting, leftStickDrift, rightStickDrift } =
+    useStickDriftDetection(axes, deadzone);
+
+  // Memoize buttons to prevent unnecessary re-renders
+  const buttons = useMemo(() => {
+    return gamepadState?.buttons || Array(16).fill(false);
+  }, [gamepadState?.buttons]);
+
+  // Debounce button state updates
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+  const buttonStateTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    const newState = hasAnyPotentialDrift(axes, deadzone);
+
+    if (buttonStateTimeoutRef.current) {
+      clearTimeout(buttonStateTimeoutRef.current);
+    }
+
+    buttonStateTimeoutRef.current = setTimeout(() => {
+      setIsButtonEnabled(newState);
+    }, 200); // 200ms debounce
+
+    return () => {
+      if (buttonStateTimeoutRef.current) {
+        clearTimeout(buttonStateTimeoutRef.current);
+      }
+    };
+  }, [axes, deadzone]);
+
+  // Add state for tracking drift history
+  const [driftHistory, setDriftHistory] = useState<{
+    left: DriftHistory;
+    right: DriftHistory;
+  }>({
+    left: { values: [], timestamp: Date.now() },
+    right: { values: [], timestamp: Date.now() },
+  });
+
+  // Update drift history and get averaged values
+  useEffect(() => {
+    const now = Date.now();
+    const historyWindow = 1000; // Keep 1 second of history
+
+    setDriftHistory((prev) => {
+      const leftDrift = Math.max(Math.abs(axes[0]), Math.abs(axes[1]));
+      const rightDrift = Math.max(Math.abs(axes[2]), Math.abs(axes[3]));
+
+      // Clean up old values
+      const cleanup = (history: DriftHistory) => ({
+        values: [
+          ...history.values.filter(
+            () => now - history.timestamp < historyWindow
+          ),
+          leftDrift,
+        ],
+        timestamp: now,
+      });
+
+      return {
+        left: cleanup(prev.left),
+        right: cleanup(prev.right),
+      };
+    });
+  }, [axes]);
+
+  // Get averaged drift values
+  const getAveragedDrift = (history: DriftHistory) => {
+    if (history.values.length === 0) return 0;
+    // Bias towards higher values to prevent rapid state changes
+    const sortedValues = [...history.values].sort((a, b) => b - a);
+    return sortedValues[Math.floor(sortedValues.length * 0.25)] || 0;
+  };
+
+  // Use averaged values for status display
+  const leftStatus = getDriftStatusText(
+    getAveragedDrift(driftHistory.left),
+    deadzone
+  );
+  const rightStatus = getDriftStatusText(
+    getAveragedDrift(driftHistory.right),
+    deadzone
+  );
+
+  useEffect(() => {
+    toast.error({
+      title: "Failed to update settings",
+      description: "Please try again later.",
+    });
+  }, []);
+
+  // Update the dialog state to only track open state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Memoize the calibration handler
+  const handleCalibrate = useCallback(() => {
+    if (!onSettingsChange) return;
+    setIsDialogOpen(true);
+  }, [onSettingsChange]);
+
+  // Calculate current drift values inside the dialog component
+  const CalibrationDialog = useMemo(() => {
+    const currentDriftInfo = {
+      left: Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+      right: Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+      maxLeft: getStableDriftValue(
+        Math.max(Math.abs(axes[0]), Math.abs(axes[1]))
+      ),
+      maxRight: getStableDriftValue(
+        Math.max(Math.abs(axes[2]), Math.abs(axes[3]))
+      ),
+    };
+
+    const recommendedDeadzone = calculateRecommendedDeadzone(axes);
+
+    return (
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              <Gauge className="h-5 w-5 text-violet-500" />
+              Deadzone Calibration
+            </DialogTitle>
+            <DialogDescription className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  Current Stick Values:
+                </p>
+                <div className="space-y-2 rounded-md bg-muted p-3 text-sm">
+                  {/* Always show both sticks */}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Left Stick:</span>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        currentDriftInfo.left > deadzone
+                          ? "text-red-500"
+                          : currentDriftInfo.left > deadzone - 0.01
+                            ? "text-yellow-500"
+                            : "text-emerald-500"
+                      )}
+                    >
+                      {currentDriftInfo.maxLeft}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Right Stick:</span>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        currentDriftInfo.right > deadzone
+                          ? "text-red-500"
+                          : currentDriftInfo.right > deadzone - 0.01
+                            ? "text-yellow-500"
+                            : "text-emerald-500"
+                      )}
+                    >
+                      {currentDriftInfo.maxRight}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Deadzone Settings:
+                  </p>
+                  <div className="rounded-md bg-muted p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Current:
+                      </span>
+                      <span className="font-normal text-foreground/75">
+                        {deadzone.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Recommended:
+                      </span>
+                      <span className="font-black text-violet-500">
+                        {recommendedDeadzone.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Status message */}
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    {currentDriftInfo.left > deadzone ||
+                    currentDriftInfo.right > deadzone
+                      ? "Drift detected. Increasing the deadzone may help stabilize your controller."
+                      : "No significant drift detected. Current deadzone appears stable."}
+                  </p>
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              onClick={() => {
+                onSettingsChange?.({ deadzone: recommendedDeadzone });
+                setIsDialogOpen(false);
+              }}
+              className="bg-violet-600 text-white hover:bg-violet-700"
+            >
+              Apply Recommended Setting
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }, [isDialogOpen, axes, deadzone, onSettingsChange]);
+
   if (!gamepadState && settings?.showButtonPresses) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
@@ -75,9 +648,6 @@ export function GamepadViewer({
       </div>
     );
   }
-
-  const buttons = gamepadState?.buttons || Array(16).fill(false);
-  const axes = gamepadState?.axes || Array(4).fill(0);
 
   // Create CSS variables based on controller color
   const getControllerColors = () => {
@@ -166,201 +736,451 @@ export function GamepadViewer({
   };
 
   return (
-    <div
-      className="relative flex h-full w-full flex-col"
-      style={
-        {
-          backgroundColor:
-            safeFormatColor(settings?.backgroundColor) || "transparent",
-          ...getControllerColors(),
-          "--button-color": safeFormatColor(settings?.buttonColor) || "#ffffff",
-          "--button-pressed-color":
-            safeFormatColor(settings?.buttonPressedColor) || "#00ff00",
-        } as React.CSSProperties
-      }
-    >
-      <div className="flex-1 p-4">
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* Debug overlay - only show when debugMode is enabled */}
-          {settings?.debugMode && (
-            <div className="absolute top-2 left-2 z-50 rounded bg-black/80 p-2 text-xs text-white">
-              <div className="space-y-1">
-                <div>
-                  Buttons:{" "}
-                  {buttons
-                    .map((b, i) => (b ? i : ""))
-                    .filter(Boolean)
-                    .join(", ")}
-                </div>
-                <div>
-                  Left Stick: ({axes[0].toFixed(2)}, {axes[1].toFixed(2)})
-                </div>
-                <div>
-                  Right Stick: ({axes[2].toFixed(2)}, {axes[3].toFixed(2)})
-                </div>
-                <div>Button Color: {settings?.buttonColor}</div>
-                <div>Controller Color: {settings?.controllerColor}</div>
-                <div>Scale: {settings?.scale}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Controller render */}
-          <div className="relative w-full" style={{ paddingBottom: "75%" }}>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className={cn(
-                  "controller",
-                  settings?.controllerType || "ds4",
-                  settings?.controllerColor,
-                  "active"
-                )}
-                style={
-                  {
-                    transform: `scale(${settings?.scale || 1})`,
-                    position: "relative",
-                    display: "block",
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    "--button-color": settings?.buttonColor,
-                  } as React.CSSProperties
-                }
-              >
-                {/* Base Controller SVG - Switch between regular and macho base */}
-                {settings?.controllerColor === "macho" ? (
-                  <MachoBase className="absolute inset-0 w-full h-full" />
-                ) : (
-                  <DS4Base className="absolute inset-0 w-full h-full" />
-                )}
-
-                {/* Triggers */}
-                <div className="triggers">
-                  {settings?.showTriggers && (
-                    <>
-                      <div
-                        className={cn("trigger left", buttons[6] && "pressed")}
+    <div className="relative flex h-full w-full flex-col">
+      {CalibrationDialog}
+      <div
+        className="relative flex h-full w-full flex-col"
+        style={
+          {
+            backgroundColor:
+              safeFormatColor(settings?.backgroundColor) || "transparent",
+            ...getControllerColors(),
+            "--button-color":
+              safeFormatColor(settings?.buttonColor) || "#ffffff",
+            "--button-pressed-color":
+              safeFormatColor(settings?.buttonPressedColor) || "#00ff00",
+          } as React.CSSProperties
+        }
+      >
+        <div className="flex-1 p-4">
+          <div className="relative w-full flex items-center justify-center">
+            {/* Debug overlay with animation */}
+            <AnimatePresence>
+              {settings?.debugMode && !isPublicView && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-0 z-50 w-full rounded-lg border border-border/50 bg-gradient/25 p-6 shadow-2xl backdrop-opacity-60 backdrop-invert dark:bg-black/95 bg-white/95"
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                    <div>
+                      <h2 className="text-2xl font-black text-foreground">
+                        Deadzone Tester
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Monitor stick drift and calibrate your controller
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={handleCalibrate}
+                        className="bg-violet-600 text-white hover:bg-violet-700"
                       >
-                        <Trigger pressed={buttons[6]} />
-                      </div>
-                      <div
-                        className={cn("trigger right", buttons[7] && "pressed")}
+                        <Crosshair className="mr-2 h-4 w-4" />
+                        Calibrate
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onSettingsChange?.({ debugMode: false })}
                       >
-                        <Trigger pressed={buttons[7]} />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Bumpers */}
-                <div className="bumpers">
-                  <div className={cn("bumper left", buttons[4] && "pressed")}>
-                    <Bumper pressed={buttons[4]} />
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className={cn("bumper right", buttons[5] && "pressed")}>
-                    <Bumper pressed={buttons[5]} />
-                  </div>
-                </div>
 
-                {/* Face Buttons */}
-                <div className="abxy">
-                  {settings?.showButtonPresses && (
-                    <>
-                      <div>
-                        <CrossButton pressed={buttons[0]} />
+                  {/* Stick Information */}
+                  <div className="mt-6 grid gap-6 md:grid-cols-2">
+                    {/* Left Stick */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-violet-400">
+                        {/* <Gauge className="h-4 w-4" />
+                        <span>Left Stick</span> */}
                       </div>
-                      <div>
-                        <CircleButton pressed={buttons[1]} />
-                      </div>
-                      <div>
-                        <SquareButton pressed={buttons[2]} />
-                      </div>
-                      <div>
-                        <TriangleButton pressed={buttons[3]} />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* D-Pad */}
-                <div className="dpad">
-                  <div className={cn("face up", buttons[12] && "pressed")} />
-                  <div className={cn("face down", buttons[13] && "pressed")} />
-                  <div className={cn("face left", buttons[14] && "pressed")} />
-                  <div className={cn("face right", buttons[15] && "pressed")} />
-                </div>
-
-                {/* Analog Sticks */}
-                {settings?.showAnalogSticks && (
-                  <div
-                    className="sticks absolute"
-                    style={{
-                      top: "58%",
-                      left: "25%",
-                      width: "50%",
-                      height: "20%",
-                    }}
-                  >
-                    <div className="relative w-full h-full">
-                      {/* Left Stick */}
-                      <div
-                        className="absolute"
-                        style={{
-                          bottom: "0",
-                          left: "5%",
-                          transform: `translate(${axes[0] * 20}px, calc(-50% + ${axes[1] * 20}px))`,
-                          width: "26.04%",
-                          height: "89.52%",
-                        }}
-                      >
-                        <DS4Sticks
-                          className={cn(
-                            "w-full h-full",
-                            buttons[10] && "pressed"
-                          )}
-                          style={
-                            {
-                              "--stick-color": buttons[10]
-                                ? safeFormatColor(settings?.buttonPressedColor)
-                                : safeFormatColor(settings?.stickColor),
-                            } as React.CSSProperties
-                          }
+                      <div className="flex justify-center">
+                        <DeadzoneVisualizer
+                          x={axes[0]}
+                          y={axes[1]}
+                          deadzone={deadzone}
                         />
                       </div>
-
-                      {/* Right Stick */}
-                      <div
-                        className="absolute"
-                        style={{
-                          right: "5%",
-                          bottom: "0",
-                          transform: `translate(${axes[2] * 20}px, calc(-50% + ${-axes[3] * 20}px))`,
-                          width: "26.04%",
-                          height: "89.52%",
-                        }}
-                      >
-                        <DS4Sticks
-                          className={cn(
-                            "w-full h-full",
-                            buttons[11] && "pressed"
+                      <div className="rounded-lg bg-card/50 p-3 shadow-sm">
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>X: {formatStickValue(axes[0])}</div>
+                          <div>Y: {formatStickValue(axes[1])}</div>
+                        </div>
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              Current Drift:
+                            </span>
+                            <span
+                              className={getDriftValueColor(
+                                Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+                                deadzone
+                              )}
+                            >
+                              {getStableDriftValue(
+                                Math.max(Math.abs(axes[0]), Math.abs(axes[1]))
+                              )}
+                            </span>
+                          </div>
+                          {!isUserInteracting && (
+                            <div
+                              className={cn(
+                                "mt-1 text-center text-xs font-medium rounded-full py-1",
+                                getDriftStatusText(
+                                  Math.max(
+                                    Math.abs(axes[0]),
+                                    Math.abs(axes[1])
+                                  ),
+                                  deadzone
+                                ).color,
+                                "bg-black/5"
+                              )}
+                            >
+                              {
+                                getDriftStatusText(
+                                  Math.max(
+                                    Math.abs(axes[0]),
+                                    Math.abs(axes[1])
+                                  ),
+                                  deadzone
+                                ).text
+                              }
+                            </div>
                           )}
-                          style={
-                            {
-                              "--stick-color": buttons[11]
-                                ? safeFormatColor(settings?.buttonPressedColor)
-                                : safeFormatColor(settings?.stickColor),
-                            } as React.CSSProperties
-                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Stick */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-violet-400">
+                        {/* <Gauge className="h-4 w-4" />
+                        <span>Right Stick</span> */}
+                      </div>
+                      <div className="flex justify-center">
+                        <DeadzoneVisualizer
+                          x={axes[2]}
+                          y={axes[3]}
+                          deadzone={deadzone}
                         />
+                      </div>
+                      <div className="rounded-lg bg-card/50 p-3 shadow-sm">
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>X: {formatStickValue(axes[2])}</div>
+                          <div>Y: {formatStickValue(axes[3])}</div>
+                        </div>
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              Current Drift:
+                            </span>
+                            <span
+                              className={getDriftValueColor(
+                                Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+                                deadzone
+                              )}
+                            >
+                              {getStableDriftValue(
+                                Math.max(Math.abs(axes[2]), Math.abs(axes[3]))
+                              )}
+                            </span>
+                          </div>
+                          {!isUserInteracting && (
+                            <div
+                              className={cn(
+                                "mt-1 text-center text-xs font-medium rounded-full py-1",
+                                getDriftStatusText(
+                                  Math.max(
+                                    Math.abs(axes[2]),
+                                    Math.abs(axes[3])
+                                  ),
+                                  deadzone
+                                ).color,
+                                "bg-black/5"
+                              )}
+                            >
+                              {
+                                getDriftStatusText(
+                                  Math.max(
+                                    Math.abs(axes[2]),
+                                    Math.abs(axes[3])
+                                  ),
+                                  deadzone
+                                ).text
+                              }
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
 
-                {/* Start/Select Buttons */}
-                <div className="arrows">
-                  <div className={cn("back", buttons[8] && "pressed")} />
-                  <div className={cn("start", buttons[9] && "pressed")} />
+                  {/* Deadzone Slider */}
+                  <div className="mt-6 border-t border-border/50 pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-violet-400">
+                        Deadzone Adjustment
+                      </span>
+                      <span
+                        className={cn(
+                          "text-3xl font-black transition-colors duration-200",
+                          getDeadzoneDisplayColor(deadzone, axes)
+                        )}
+                      >
+                        {deadzone?.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      <Slider
+                        min={0}
+                        max={0.4}
+                        step={0.01}
+                        value={[deadzone ?? 0.05]}
+                        onValueChange={([value]) =>
+                          onSettingsChange?.({ deadzone: value })
+                        }
+                        className="py-2"
+                      />
+                      <div className="relative mt-1 h-6 m-[10px]">
+                        {/* Tick marks */}
+                        {Array.from({ length: 41 }).map((_, i) => {
+                          const value = (i * 0.01).toFixed(2);
+                          const isMajorTick = i % 5 === 0;
+                          return (
+                            <div
+                              key={i}
+                              className={cn(
+                                "absolute -translate-x-1/2",
+                                isMajorTick
+                                  ? "h-3 w-0.5 bg-violet-500/50"
+                                  : "h-2 w-px bg-violet-500/30"
+                              )}
+                              style={{
+                                left: `calc(${(Number(value) / 0.4) * 100}%)`,
+                                top: 0,
+                              }}
+                            >
+                              {isMajorTick && (
+                                <span className="absolute top-3 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
+                                  {value}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Info */}
+                  <div className="mt-4 grid gap-3 border-t border-border/50 pt-4 text-sm md:grid-cols-3">
+                    <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
+                      <span className="text-muted-foreground">Deadzone:</span>{" "}
+                      <span className="font-medium text-violet-400">
+                        {deadzone.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
+                      <span className="text-muted-foreground">
+                        Active Buttons:
+                      </span>{" "}
+                      <span className="font-medium text-violet-400">
+                        {buttons.filter(Boolean).length}
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
+                      <span className="text-muted-foreground">Scale:</span>{" "}
+                      <span className="font-medium text-violet-400">
+                        {settings?.scale?.toFixed(2)}x
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Controller render */}
+            <div className="relative w-full" style={{ paddingBottom: "75%" }}>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className={cn(
+                    "controller",
+                    settings?.controllerType || "ds4",
+                    settings?.controllerColor,
+                    "active"
+                  )}
+                  style={
+                    {
+                      transform: `scale(${settings?.scale || 1})`,
+                      position: "relative",
+                      display: "block",
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      "--button-color": settings?.buttonColor,
+                    } as React.CSSProperties
+                  }
+                >
+                  {/* Base Controller SVG - Switch between regular and macho base */}
+                  {settings?.controllerColor === "macho" ? (
+                    <MachoBase className="absolute inset-0 w-full h-full" />
+                  ) : (
+                    <DS4Base className="absolute inset-0 w-full h-full" />
+                  )}
+
+                  {/* Triggers */}
+                  <div className="triggers">
+                    {settings?.showTriggers && (
+                      <>
+                        <div
+                          className={cn(
+                            "trigger left",
+                            buttons[6] && "pressed"
+                          )}
+                        >
+                          <Trigger pressed={buttons[6]} />
+                        </div>
+                        <div
+                          className={cn(
+                            "trigger right",
+                            buttons[7] && "pressed"
+                          )}
+                        >
+                          <Trigger pressed={buttons[7]} />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Bumpers */}
+                  <div className="bumpers">
+                    <div className={cn("bumper left", buttons[4] && "pressed")}>
+                      <Bumper pressed={buttons[4]} />
+                    </div>
+                    <div
+                      className={cn("bumper right", buttons[5] && "pressed")}
+                    >
+                      <Bumper pressed={buttons[5]} />
+                    </div>
+                  </div>
+
+                  {/* Face Buttons */}
+                  <div className="abxy">
+                    {settings?.showButtonPresses && (
+                      <>
+                        <div>
+                          <CrossButton pressed={buttons[0]} />
+                        </div>
+                        <div>
+                          <CircleButton pressed={buttons[1]} />
+                        </div>
+                        <div>
+                          <SquareButton pressed={buttons[2]} />
+                        </div>
+                        <div>
+                          <TriangleButton pressed={buttons[3]} />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* D-Pad */}
+                  <div className="dpad">
+                    <div className={cn("face up", buttons[12] && "pressed")} />
+                    <div
+                      className={cn("face down", buttons[13] && "pressed")}
+                    />
+                    <div
+                      className={cn("face left", buttons[14] && "pressed")}
+                    />
+                    <div
+                      className={cn("face right", buttons[15] && "pressed")}
+                    />
+                  </div>
+
+                  {/* Analog Sticks */}
+                  {settings?.showAnalogSticks && (
+                    <div
+                      className="sticks absolute"
+                      style={{
+                        top: "58%",
+                        left: "25%",
+                        width: "50%",
+                        height: "20%",
+                      }}
+                    >
+                      <div className="relative w-full h-full">
+                        {/* Left Stick */}
+                        <div
+                          className="absolute"
+                          style={{
+                            bottom: "0",
+                            left: "5%",
+                            transform: `translate(${axes[0] * 20}px, calc(-50% + ${axes[1] * 20}px))`,
+                            width: "26.04%",
+                            height: "89.52%",
+                          }}
+                        >
+                          <DS4Sticks
+                            className={cn(
+                              "w-full h-full",
+                              buttons[10] && "pressed"
+                            )}
+                            style={
+                              {
+                                "--stick-color": buttons[10]
+                                  ? safeFormatColor(
+                                      settings?.buttonPressedColor
+                                    )
+                                  : safeFormatColor(settings?.stickColor),
+                              } as React.CSSProperties
+                            }
+                          />
+                        </div>
+
+                        {/* Right Stick */}
+                        <div
+                          className="absolute"
+                          style={{
+                            right: "5%",
+                            bottom: "0",
+                            transform: `translate(${axes[2] * 20}px, calc(-50% + ${-axes[3] * 20}px))`,
+                            width: "26.04%",
+                            height: "89.52%",
+                          }}
+                        >
+                          <DS4Sticks
+                            className={cn(
+                              "w-full h-full",
+                              buttons[11] && "pressed"
+                            )}
+                            style={
+                              {
+                                "--stick-color": buttons[11]
+                                  ? safeFormatColor(
+                                      settings?.buttonPressedColor
+                                    )
+                                  : safeFormatColor(settings?.stickColor),
+                              } as React.CSSProperties
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Start/Select Buttons */}
+                  <div className="arrows">
+                    <div className={cn("back", buttons[8] && "pressed")} />
+                    <div className={cn("start", buttons[9] && "pressed")} />
+                  </div>
                 </div>
               </div>
             </div>

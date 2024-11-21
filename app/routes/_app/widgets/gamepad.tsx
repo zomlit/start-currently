@@ -9,10 +9,12 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/utils/toast";
+import { toast } from "sonner";
+
 import { GamepadSettingsForm } from "@/components/widget-settings/GamepadSettingsForm";
 import { defaultGamepadSettings } from "@/lib/gamepad-settings";
 import { GamepadSettings, HookGamepadState } from "@/types/gamepad";
+import { useUpdateGamepadSettings } from "@/hooks/useUpdateGamepadSettings";
 
 interface GamepadState {
   buttons: boolean[];
@@ -217,16 +219,11 @@ export function GamepadSection() {
         navigator.clipboard
           .writeText(urlToCopy)
           .then(() => {
-            toast.success({
-              title: "Public URL copied to clipboard",
-              description: urlToCopy,
-            });
+            toast.success("Public URL copied to clipboard");
           })
           .catch((err) => {
             console.error("Failed to copy URL to clipboard:", err);
-            toast.error({
-              title: "Failed to copy URL to clipboard",
-            });
+            toast.error("Failed to copy URL to clipboard");
           });
       }
     },
@@ -238,66 +235,19 @@ export function GamepadSection() {
     ...defaultGamepadSettings,
   });
 
-  // Update the settings change handler
-  const handleSettingsChange = useCallback(
-    async (newSettings: Partial<GamepadSettings>) => {
-      if (!user?.id) return;
+  const { mutateAsync: updateSettings } = useUpdateGamepadSettings();
 
-      const updatedSettings = {
-        ...settings,
-        ...newSettings,
-      };
+  const handleSettingsChange = async (
+    newSettings: Partial<GamepadSettings>
+  ) => {
+    setSettings((current) => ({ ...current, ...newSettings }));
 
-      try {
-        // First try to update existing row
-        const { data, error: selectError } = await supabase
-          .from("GamepadWidget")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (selectError && selectError.code !== "PGRST116") {
-          throw selectError;
-        }
-
-        // If row exists, update it
-        if (data?.id) {
-          const { error: updateError } = await supabase
-            .from("GamepadWidget")
-            .update({
-              settings: updatedSettings,
-              style: "default",
-              layout: {},
-              showPressedButtons: true,
-            })
-            .eq("id", data.id);
-
-          if (updateError) throw updateError;
-        } else {
-          // If no row exists, insert one
-          const { error: insertError } = await supabase
-            .from("GamepadWidget")
-            .insert({
-              user_id: user.id,
-              settings: updatedSettings,
-              style: "default",
-              layout: {},
-              showPressedButtons: true,
-            });
-
-          if (insertError) throw insertError;
-        }
-
-        setSettings(updatedSettings);
-      } catch (error) {
-        console.error("Error updating settings:", error);
-        toast.error({
-          title: "Failed to update settings",
-        });
-      }
-    },
-    [user?.id, settings]
-  );
+    try {
+      await updateSettings(newSettings);
+    } catch (error) {
+      toast.error("Failed to save settings");
+    }
+  };
 
   // Load saved settings on mount
   useEffect(() => {
@@ -366,12 +316,13 @@ export function GamepadSection() {
   // Update GamepadViewer props in the preview
   const GamepadPreview = (
     <div className="flex h-full flex-col">
-      <div className="flex-1 space-y-4 p-4">
+      <div className="flex-1 space-y-4">
         <GamepadViewer
           settings={settings}
           username={user?.username || undefined}
           gamepadState={currentGamepadState}
           isPublicView={false}
+          onSettingsChange={handleSettingsChange}
         />
 
         {/* Stick Values Display */}
@@ -407,7 +358,7 @@ export function GamepadSection() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="rounded-lg border bg-card shadow-sm">
+        <div className="">
           <GamepadSettingsForm
             settings={settings}
             onSettingsChange={handleSettingsChange}
