@@ -41,6 +41,9 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { DPad } from "./gamepad/DPad";
+import { Triggers } from "./gamepad/Triggers";
+import { useGamepadStore } from "@/store/gamepadStore";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -634,7 +637,7 @@ export function GamepadViewer({
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
         <Gamepad className="h-12 w-12 text-muted-foreground/50" />
         <div>
-          <h3 className="text-lg font-semibold text-muted-foreground">
+          <h3 className="text-lg font-semibold text-muted-foreground text-center">
             {isPublicView
               ? "Waiting for controller input..."
               : "No Controller Detected"}
@@ -1035,28 +1038,36 @@ export function GamepadViewer({
                     <DS4Base className="absolute inset-0 w-full h-full" />
                   )}
 
-                  {/* Triggers */}
-                  <div className="triggers">
-                    {settings?.showTriggers && (
-                      <>
-                        <div
-                          className={cn(
-                            "trigger left",
-                            buttons[6] && "pressed"
+                  {/* Triggers Container */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: "-2%",
+                      left: "0%",
+                      width: "100%",
+                      height: "20%",
+                    }}
+                  >
+                    <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
+                      <div className="w-[15%] h-full ml-[5.4%]">
+                        <Triggers
+                          pressed={Number(
+                            useGamepadStore.getState().gamepadState?.buttons[6]
+                              ?.value ?? 0
                           )}
-                        >
-                          <Trigger pressed={buttons[6]} />
-                        </div>
-                        <div
-                          className={cn(
-                            "trigger right",
-                            buttons[7] && "pressed"
+                          side="left"
+                        />
+                      </div>
+                      <div className="w-[15%] h-full mr-[5.4%]">
+                        <Triggers
+                          pressed={Number(
+                            useGamepadStore.getState().gamepadState?.buttons[7]
+                              ?.value ?? 0
                           )}
-                        >
-                          <Trigger pressed={buttons[7]} />
-                        </div>
-                      </>
-                    )}
+                          side="right"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Bumpers */}
@@ -1076,33 +1087,107 @@ export function GamepadViewer({
                     {settings?.showButtonPresses && (
                       <>
                         <div>
-                          <CrossButton pressed={buttons[0]} />
+                          <CrossButton
+                            pressed={buttons[0]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
                         </div>
                         <div>
-                          <CircleButton pressed={buttons[1]} />
+                          <CircleButton
+                            pressed={buttons[1]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
                         </div>
                         <div>
-                          <SquareButton pressed={buttons[2]} />
+                          <SquareButton
+                            pressed={buttons[2]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
                         </div>
                         <div>
-                          <TriangleButton pressed={buttons[3]} />
+                          <TriangleButton
+                            pressed={buttons[3]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
                         </div>
                       </>
                     )}
                   </div>
 
                   {/* D-Pad */}
-                  <div className="dpad">
-                    <div className={cn("face up", buttons[12] && "pressed")} />
-                    <div
-                      className={cn("face down", buttons[13] && "pressed")}
-                    />
-                    <div
-                      className={cn("face left", buttons[14] && "pressed")}
-                    />
-                    <div
-                      className={cn("face right", buttons[15] && "pressed")}
-                    />
+                  <div
+                    className="absolute"
+                    style={{
+                      width: "30%",
+                      height: "30%",
+                      top: "26%",
+                      left: "4.25%",
+                    }}
+                  >
+                    {settings?.showButtonPresses && (
+                      <DPad
+                        pressed={{
+                          up: buttons[12],
+                          down: buttons[13],
+                          left: buttons[14],
+                          right: buttons[15],
+                        }}
+                        color={
+                          settings?.useCustomShapeColors
+                            ? safeFormatColor(settings?.buttonShapeColor)
+                            : undefined
+                        }
+                        pressedColor={
+                          settings?.useCustomShapeColors
+                            ? safeFormatColor(settings?.buttonShapePressedColor)
+                            : undefined
+                        }
+                      />
+                    )}
                   </div>
 
                   {/* Analog Sticks */}

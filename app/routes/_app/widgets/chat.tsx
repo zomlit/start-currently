@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 import ChatSettingsForm from "@/components/widget-settings/ChatSettingsForm";
 import { useChatStore } from "@/store/useChatStore";
-import { useUser } from "@clerk/tanstack-start";
+import { SignIn, useUser } from "@clerk/tanstack-start";
 import {
   DefaultChatSkin,
   CompactChatSkin,
@@ -77,7 +77,20 @@ function ChatSection() {
   }, [settings, messages]);
 
   if (!isUserLoaded || !isSignedIn) {
-    return <div>Please sign in to use the chat widget.</div>;
+    return (
+      <div className="flex min-h-[200px] flex-col items-center justify-center gap-6 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/10 p-8">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <Lock className="h-8 w-8 text-muted-foreground/50" />
+          <h3 className="text-lg font-semibold text-foreground">
+            Authentication Required
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Sign in to access the chat widget and join the conversation
+          </p>
+        </div>
+        <SignIn className="w-full max-w-xs" />
+      </div>
+    );
   }
 
   const scrollToBottom = useCallback(() => {

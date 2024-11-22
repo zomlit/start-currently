@@ -9,6 +9,17 @@ import { NavItem, navItems } from "@/config/navigation";
 
 export const Route = createFileRoute("/_app/widgets")({
   component: SectionsLayout,
+  options: {
+    keepAlive: true,
+    backgroundPolling: true,
+  },
+  loader: async () => {
+    return {
+      keepAlive: true,
+      backgroundPolling: true,
+    };
+  },
+  preload: true,
 });
 
 function SectionsLayout() {

@@ -42,6 +42,9 @@ const gamepadSettingsSchema = z.object({
   scale: z.number().min(0.1).max(2),
   deadzone: z.number().min(0).max(0.4),
   debugMode: z.boolean(),
+  useCustomShapeColors: z.boolean(),
+  buttonShapeColor: z.string(),
+  buttonShapePressedColor: z.string(),
 });
 
 type GamepadSettingsFormProps = {
@@ -185,6 +188,9 @@ export function GamepadSettingsForm({
         scale: 1,
         deadzone: 0,
         debugMode: false,
+        useCustomShapeColors: false,
+        buttonShapeColor: "#ffffff",
+        buttonShapePressedColor: "#000000",
       };
 
       // Reset form to default values
@@ -276,7 +282,7 @@ export function GamepadSettingsForm({
         />
 
         {/* Add Skins dropdown at the top */}
-        <FormField
+        {/* <FormField
           control={form.control}
           name="skin"
           render={({ field }) => (
@@ -310,11 +316,11 @@ export function GamepadSettingsForm({
               </Select>
             </FormItem>
           )}
-        />
+        /> */}
 
         {/* Display Options */}
         <div className="space-y-4">
-          <FormField
+          {/* <FormField
             control={form.control}
             name="showButtonPresses"
             render={({ field }) => (
@@ -335,7 +341,7 @@ export function GamepadSettingsForm({
                 </FormControl>
               </FormItem>
             )}
-          />
+          /> */}
 
           {/* Debug/Drift detection Mode */}
           <FormField
@@ -385,6 +391,8 @@ export function GamepadSettingsForm({
               </FormItem>
             )}
           />
+
+          {/* Add this after the Button Color section */}
 
           <FormField
             control={form.control}
@@ -455,7 +463,82 @@ export function GamepadSettingsForm({
             )}
           />
 
-          <FormField
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="useCustomShapeColors"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <div>
+                    <FormLabel>Custom Shape Colors</FormLabel>
+                    <FormDescription></FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        handleFieldChange("useCustomShapeColors", checked);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="buttonShapeColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Button Shape Color</FormLabel>
+                  <FormDescription></FormDescription>
+                  <FormControl>
+                    <GradientColorPicker
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleFieldChange("buttonShapeColor", formattedColor);
+                      }}
+                      onChangeComplete={field.onBlur}
+                      currentProfile={null}
+                      disabled={!form.watch("useCustomShapeColors")}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="buttonShapePressedColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Button Shape Pressed Color</FormLabel>
+                  <FormDescription></FormDescription>
+                  <FormControl>
+                    <GradientColorPicker
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleFieldChange(
+                          "buttonShapePressedColor",
+                          formattedColor
+                        );
+                      }}
+                      onChangeComplete={field.onBlur}
+                      currentProfile={null}
+                      disabled={!form.watch("useCustomShapeColors")}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* <FormField
             control={form.control}
             name="backgroundColor"
             render={({ field }) => (
@@ -475,7 +558,7 @@ export function GamepadSettingsForm({
                 </FormControl>
               </FormItem>
             )}
-          />
+          /> */}
         </div>
 
         {/* Scale and Deadzone */}

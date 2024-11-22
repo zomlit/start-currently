@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useRef, useCallback, useEffect } from "react";
+import { useGamepadStore } from "@/store/gamepadStore";
 
 interface GamepadState {
   buttons: {
@@ -10,31 +11,19 @@ interface GamepadState {
 }
 
 export function useGamepad(deadzone: number = 0.1) {
-  const [gamepadState, setGamepadState] = useState<GamepadState | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const { setGamepadState, setIsConnected } = useGamepadStore();
   const frameRef = useRef<number>();
   const lastState = useRef<string>("");
+  const gamepadIndex = useRef<number>(-1);
+  const intervalRef = useRef<NodeJS.Timeout>();
 
-  useEffect(() => {
-    const handleGamepadConnected = () => {
-      setIsConnected(true);
-    };
-
-    const handleGamepadDisconnected = () => {
-      setIsConnected(false);
-      setGamepadState(null);
-      lastState.current = "";
-    };
-
-    const handleGamepadInput = () => {
+  const pollGamepad = useCallback(() => {
+    try {
       const gamepads = navigator.getGamepads();
-      const gamepad = gamepads[0];
+      const gamepad = gamepads[gamepadIndex.current];
 
-      if (gamepad) {
-        setIsConnected(true);
-
-        // Create new state
-        const newState: GamepadState = {
+      if (gamepad && gamepad.connected) {
+        const newState = {
           buttons: gamepad.buttons.map((button) => ({
             pressed: button.pressed,
             value: Math.abs(button.value) < deadzone ? 0 : button.value,
@@ -45,38 +34,97 @@ export function useGamepad(deadzone: number = 0.1) {
           timestamp: performance.now(),
         };
 
-        // Create comparison string without timestamp
         const comparisonState = {
           buttons: newState.buttons,
           axes: newState.axes,
         };
         const newStateString = JSON.stringify(comparisonState);
 
-        // Only update if there are actual changes
         if (newStateString !== lastState.current) {
           lastState.current = newStateString;
           setGamepadState(newState);
         }
       }
+    } catch (error) {
+      console.error("Gamepad polling error:", error);
+    }
+  }, [deadzone, setGamepadState]);
 
-      frameRef.current = requestAnimationFrame(handleGamepadInput);
+  const startPolling = useCallback(() => {
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    const poll = () => {
+      pollGamepad();
+      frameRef.current = requestAnimationFrame(poll);
     };
+    frameRef.current = requestAnimationFrame(poll);
 
+    intervalRef.current = setInterval(pollGamepad, 1000 / 60);
+  }, [pollGamepad]);
+
+  const handleGamepadConnected = useCallback(
+    (event: GamepadEvent) => {
+      gamepadIndex.current = event.gamepad.index;
+      setIsConnected(true);
+      startPolling();
+    },
+    [startPolling, setIsConnected]
+  );
+
+  const handleGamepadDisconnected = useCallback(
+    (event: GamepadEvent) => {
+      if (event.gamepad.index === gamepadIndex.current) {
+        gamepadIndex.current = -1;
+        lastState.current = "";
+        setIsConnected(false);
+        setGamepadState(null);
+
+        if (frameRef.current) {
+          cancelAnimationFrame(frameRef.current);
+        }
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      }
+    },
+    [setIsConnected, setGamepadState]
+  );
+
+  useEffect(() => {
     window.addEventListener("gamepadconnected", handleGamepadConnected);
     window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
-    frameRef.current = requestAnimationFrame(handleGamepadInput);
+
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      if (gamepads[i]) {
+        gamepadIndex.current = i;
+        handleGamepadConnected({ gamepad: gamepads[i] } as GamepadEvent);
+        break;
+      }
+    }
 
     return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
       window.removeEventListener("gamepadconnected", handleGamepadConnected);
       window.removeEventListener(
         "gamepaddisconnected",
         handleGamepadDisconnected
       );
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
     };
-  }, [deadzone]);
+  }, [handleGamepadConnected, handleGamepadDisconnected]);
 
-  return { gamepadState, isConnected };
+  return {
+    gamepadState: useGamepadStore((state) => state.gamepadState),
+    isConnected: useGamepadStore((state) => state.isConnected),
+  };
 }
