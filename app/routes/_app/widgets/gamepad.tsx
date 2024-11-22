@@ -368,6 +368,20 @@ export function GamepadSection() {
     </div>
   );
 
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Reset or reinitialize gamepad state if needed
+        setCurrentGamepadState(gamepadState);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [gamepadState]);
+
   return (
     <div className="max-h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
       <WidgetLayout preview={GamepadPreview} settings={GamepadSettings} />
@@ -377,4 +391,14 @@ export function GamepadSection() {
 
 export const Route = createFileRoute("/_app/widgets/gamepad")({
   component: GamepadSection,
+  options: {
+    keepAlive: true,
+  },
+  loader: async () => {
+    return {
+      keepAlive: true,
+      backgroundPolling: true,
+    };
+  },
+  preload: true,
 });

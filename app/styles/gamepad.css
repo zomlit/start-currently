@@ -572,7 +572,7 @@
 
 /*BEGIN PS4 Controller Styling*/
 .controller.ds4 {
-  background: url(/gamepad/ds4/base.svg) no-repeat center;
+  /* background: url(/gamepad/ds4/base.svg) no-repeat center; */
   background-size: contain;
   width: 100%;
   height: 100%;
@@ -600,12 +600,14 @@
 .ds4 .trigger {
   width: 16.84%;
   height: 100%;
-  opacity: 1;
+  opacity: 0.5;
   transition: opacity 0.1s ease;
+  background: var(--trigger-color, #ffffff);
 }
 
 .ds4 .trigger.pressed {
   opacity: 1;
+  background: var(--button-pressed-color, #00ff00);
 }
 
 .ds4 .trigger.left {
@@ -816,54 +818,15 @@
 }
 
 .ds4 .dpad {
-  position: absolute;
-  width: 15.51%;
-  height: 21.04%;
-  top: 30.22%;
-  left: 11.41%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ds4 .face {
-  background: url(/gamepad/ds4/dpad.svg) no-repeat;
-  background-size: 400% 100%;
   position: absolute;
-  opacity: 0;
-}
-
-.ds4 .face.pressed {
-  opacity: 1;
-}
-
-.ds4 .face.up {
-  width: 27.2%;
-  height: 44.44%;
-  left: 30.4%;
-  top: 0;
-  background-position: 0 0;
-}
-
-.ds4 .face.down {
-  width: 27.2%;
-  height: 44.44%;
-  left: 30.4%;
-  bottom: 0;
-  background-position: -34px 0;
-}
-
-.ds4 .face.left {
-  width: 44%;
-  height: 27.78%;
-  top: 30.16%;
-  left: 0;
-  background-position: -68px 0;
-}
-
-.ds4 .face.right {
-  width: 44%;
-  height: 27.78%;
-  top: 30.16%;
-  right: 0;
-  background-position: -123px 0;
+  background-size: auto 100%;
 }
 
 .ds4.half {

@@ -31,6 +31,9 @@ export interface GamepadSettings {
   scale: number;
   deadzone: number;
   debugMode: boolean;
+  useCustomShapeColors?: boolean;
+  buttonShapeColor?: string;
+  buttonShapePressedColor?: string;
 }
 
 export interface GamepadViewerProps {

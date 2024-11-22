@@ -31,21 +31,24 @@ export const CONTROLLER_TYPES: ControllerType[] = [
   },
   {
     id: "dualsense",
-    name: "DualSense",
+    name: "DualSense (Coming Soon)",
     brand: "PlayStation",
     icon: IconBrandPlaystation,
+    disabled: true,
   },
   {
     id: "xbox-one",
-    name: "Xbox One",
+    name: "Xbox One (Coming Soon)",
     brand: "Xbox",
     icon: IconBrandXbox,
+    disabled: true,
   },
   {
     id: "xbox-series",
-    name: "Xbox Series X|S",
+    name: "Xbox Series X|S (Coming Soon)",
     brand: "Xbox",
     icon: IconBrandXbox,
+    disabled: true,
   },
   {
     id: "8bitdo-ultimate-c",
@@ -53,12 +56,6 @@ export const CONTROLLER_TYPES: ControllerType[] = [
     brand: "8BitDo",
     icon: IconBrand8BitDo,
     disabled: true,
-  },
-  {
-    id: "switch-pro",
-    name: "Switch Pro",
-    brand: "Nintendo",
-    icon: IconBrandNintendo,
   },
 ];
 
