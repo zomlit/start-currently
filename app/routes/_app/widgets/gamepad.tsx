@@ -71,7 +71,7 @@ export function GamepadSection() {
   const [currentGamepadState, setCurrentGamepadState] =
     useState<GamepadState | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | null>(null);
   const lastBroadcastRef = useRef<number>(0);
   const BROADCAST_INTERVAL = 16;
   const lastStateRef = useRef<string>("");
@@ -81,7 +81,7 @@ export function GamepadSection() {
     defaultGamepadSettings.deadzone || 0.1
   );
 
-  const channelId = `gamepad:${user?.id}`;
+  const channelId = `gamepad:${user?.username}`;
 
   const lastValidStateRef = useRef<GamepadState>({
     buttons: Array(18).fill(false),
@@ -95,12 +95,9 @@ export function GamepadSection() {
       const now = performance.now();
       if (now - lastBroadcastRef.current < BROADCAST_INTERVAL) return;
 
-      // Transform HookGamepadState to GamepadState
       const transformedState: GamepadState = {
         buttons: state.buttons.map((button) => button.pressed),
-        axes: state.axes.map((value) =>
-          Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
-        ),
+        axes: state.axes,
       };
 
       // Check if the state has changed significantly
@@ -172,9 +169,7 @@ export function GamepadSection() {
     const updateFrame = () => {
       const transformedState: GamepadState = {
         buttons: gamepadState.buttons.map((button) => button.pressed),
-        axes: gamepadState.axes.map((value) =>
-          Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
-        ),
+        axes: gamepadState.axes,
       };
 
       // Check if the state has changed significantly
@@ -240,11 +235,39 @@ export function GamepadSection() {
   const handleSettingsChange = async (
     newSettings: Partial<GamepadSettings>
   ) => {
+    // Update local state by merging with current settings
     setSettings((current) => ({ ...current, ...newSettings }));
 
     try {
-      await updateSettings(newSettings);
+      // Get current settings from database first
+      const { data: currentData, error: fetchError } = await supabase
+        .from("GamepadWidget")
+        .select("settings")
+        .eq("user_id", user?.id)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        throw fetchError;
+      }
+
+      // Merge existing settings with new changes
+      const mergedSettings = {
+        ...(currentData?.settings || {}),
+        ...newSettings,
+      };
+
+      // Update database with merged settings
+      const { error } = await supabase
+        .from("GamepadWidget")
+        .update({
+          settings: mergedSettings,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
     } catch (error) {
+      console.error("Failed to save settings:", error);
       toast.error("Failed to save settings");
     }
   };
@@ -391,14 +414,10 @@ export function GamepadSection() {
 
 export const Route = createFileRoute("/_app/widgets/gamepad")({
   component: GamepadSection,
-  options: {
-    keepAlive: true,
-  },
   loader: async () => {
     return {
       keepAlive: true,
       backgroundPolling: true,
     };
   },
-  preload: true,
 });

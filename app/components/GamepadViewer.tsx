@@ -43,7 +43,6 @@ import {
 } from "@/components/ui/dialog";
 import { DPad } from "./gamepad/DPad";
 import { Triggers } from "./gamepad/Triggers";
-import { useGamepadStore } from "@/store/gamepadStore";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -403,6 +402,31 @@ const getStableDriftValue = (drift: number): string => {
   return drift.toFixed(3);
 };
 
+// Add these helpers at the top with other constants
+const GAMEPAD_UPDATE_INTERVAL = 1000 / 60; // 60fps update rate
+const MOVEMENT_THRESHOLD = 0.01; // Minimum change to consider movement
+
+// Add this helper function
+const hasSignificantChange = (
+  currentState: GamepadState,
+  lastState: GamepadState | null
+): boolean => {
+  if (!lastState) return true;
+
+  // Check if any button state changed
+  const buttonChanged = currentState.buttons.some(
+    (button, i) => button !== lastState.buttons[i]
+  );
+  if (buttonChanged) return true;
+
+  // Check if any axis moved more than threshold
+  const axisChanged = currentState.axes.some(
+    (axis, i) =>
+      Math.abs((axis || 0) - (lastState.axes[i] || 0)) > MOVEMENT_THRESHOLD
+  );
+  return axisChanged;
+};
+
 export function GamepadViewer({
   settings,
   username,
@@ -410,26 +434,42 @@ export function GamepadViewer({
   isPublicView = false,
   onSettingsChange,
 }: GamepadViewerProps) {
+  // Keep these state declarations at the top
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+  const [driftHistory, setDriftHistory] = useState<{
+    left: DriftHistory;
+    right: DriftHistory;
+  }>({
+    left: { values: [], timestamp: Date.now() },
+    right: { values: [], timestamp: Date.now() },
+  });
+
+  // Keep these refs at the top
+  const buttonStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateRef = useRef<number>(0);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // 3. External hooks and derived state
   const { axes: rawAxes, isUserInteracting } = useRawGamepad();
   const deadzone = settings?.deadzone ?? 0.05;
 
-  // Memoize axes to prevent unnecessary re-renders
+  // 4. Memoized values
   const axes = useMemo(() => {
     return isPublicView ? gamepadState?.axes || Array(4).fill(0) : rawAxes;
   }, [isPublicView, gamepadState?.axes, rawAxes]);
+
+  const buttons = useMemo(() => {
+    return gamepadState?.buttons || Array(16).fill(false);
+  }, [gamepadState?.buttons]);
+
+  // Add this ref to track last sent state
+  const lastSentStateRef = useRef<GamepadState | null>(null);
 
   // Use memoized drift detection
   const { isDrifting, leftStickDrift, rightStickDrift } =
     useStickDriftDetection(axes, deadzone);
 
-  // Memoize buttons to prevent unnecessary re-renders
-  const buttons = useMemo(() => {
-    return gamepadState?.buttons || Array(16).fill(false);
-  }, [gamepadState?.buttons]);
-
   // Debounce button state updates
-  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-  const buttonStateTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const newState = hasAnyPotentialDrift(axes, deadzone);
@@ -448,15 +488,6 @@ export function GamepadViewer({
       }
     };
   }, [axes, deadzone]);
-
-  // Add state for tracking drift history
-  const [driftHistory, setDriftHistory] = useState<{
-    left: DriftHistory;
-    right: DriftHistory;
-  }>({
-    left: { values: [], timestamp: Date.now() },
-    right: { values: [], timestamp: Date.now() },
-  });
 
   // Update drift history and get averaged values
   useEffect(() => {
@@ -502,13 +533,6 @@ export function GamepadViewer({
     getAveragedDrift(driftHistory.right),
     deadzone
   );
-
-  useEffect(() => {
-    toast.error({
-      title: "Failed to update settings",
-      description: "Please try again later.",
-    });
-  }, []);
 
   // Update the dialog state to only track open state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -755,8 +779,8 @@ export function GamepadViewer({
           } as React.CSSProperties
         }
       >
-        <div className="flex-1 p-4">
-          <div className="relative w-full flex items-center justify-center">
+        <div className="">
+          <div className="relative w-full flex justify-center">
             {/* Debug overlay with animation */}
             <AnimatePresence>
               {settings?.debugMode && !isPublicView && (
@@ -1010,261 +1034,264 @@ export function GamepadViewer({
             </AnimatePresence>
 
             {/* Controller render */}
-            <div className="relative w-full" style={{ paddingBottom: "75%" }}>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className={cn(
-                    "controller",
-                    settings?.controllerType || "ds4",
-                    settings?.controllerColor,
-                    "active"
-                  )}
-                  style={
-                    {
-                      transform: `scale(${settings?.scale || 1})`,
-                      position: "relative",
-                      display: "block",
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                      "--button-color": settings?.buttonColor,
-                    } as React.CSSProperties
-                  }
-                >
-                  {/* Base Controller SVG - Switch between regular and macho base */}
-                  {settings?.controllerColor === "macho" ? (
-                    <MachoBase className="absolute inset-0 w-full h-full" />
-                  ) : (
-                    <DS4Base className="absolute inset-0 w-full h-full" />
-                  )}
-
-                  {/* Triggers Container */}
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Controller container with aspect ratio */}
+              <div className="relative w-full aspect-[800/592]">
+                {" "}
+                {/* DS4 aspect ratio */}
+                <div className="absolute inset-0 flex items-center justify-center">
                   <div
-                    className="absolute"
-                    style={{
-                      top: "-2%",
-                      left: "0%",
-                      width: "100%",
-                      height: "20%",
-                    }}
-                  >
-                    <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
-                      <div className="w-[15%] h-full ml-[5.4%]">
-                        <Triggers
-                          pressed={Number(
-                            useGamepadStore.getState().gamepadState?.buttons[6]
-                              ?.value ?? 0
-                          )}
-                          side="left"
-                        />
-                      </div>
-                      <div className="w-[15%] h-full mr-[5.4%]">
-                        <Triggers
-                          pressed={Number(
-                            useGamepadStore.getState().gamepadState?.buttons[7]
-                              ?.value ?? 0
-                          )}
-                          side="right"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bumpers */}
-                  <div className="bumpers">
-                    <div className={cn("bumper left", buttons[4] && "pressed")}>
-                      <Bumper pressed={buttons[4]} />
-                    </div>
-                    <div
-                      className={cn("bumper right", buttons[5] && "pressed")}
-                    >
-                      <Bumper pressed={buttons[5]} />
-                    </div>
-                  </div>
-
-                  {/* Face Buttons */}
-                  <div className="abxy">
-                    {settings?.showButtonPresses && (
-                      <>
-                        <div>
-                          <CrossButton
-                            pressed={buttons[0]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                        <div>
-                          <CircleButton
-                            pressed={buttons[1]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                        <div>
-                          <SquareButton
-                            pressed={buttons[2]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                        <div>
-                          <TriangleButton
-                            pressed={buttons[3]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                      </>
+                    className={cn(
+                      "controller",
+                      settings?.controllerType || "ds4",
+                      settings?.controllerColor,
+                      "active"
                     )}
-                  </div>
-
-                  {/* D-Pad */}
-                  <div
-                    className="absolute"
-                    style={{
-                      width: "30%",
-                      height: "30%",
-                      top: "26%",
-                      left: "4.25%",
-                    }}
+                    style={
+                      {
+                        transform: `scale(${settings?.scale || 1})`,
+                        position: "relative",
+                        display: "block",
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        "--button-color": settings?.buttonColor,
+                      } as React.CSSProperties
+                    }
                   >
-                    {settings?.showButtonPresses && (
-                      <DPad
-                        pressed={{
-                          up: buttons[12],
-                          down: buttons[13],
-                          left: buttons[14],
-                          right: buttons[15],
-                        }}
-                        color={
-                          settings?.useCustomShapeColors
-                            ? safeFormatColor(settings?.buttonShapeColor)
-                            : undefined
-                        }
-                        pressedColor={
-                          settings?.useCustomShapeColors
-                            ? safeFormatColor(settings?.buttonShapePressedColor)
-                            : undefined
-                        }
-                      />
+                    {/* Base Controller SVG - Switch between regular and macho base */}
+                    {settings?.controllerColor === "macho" ? (
+                      <MachoBase className="absolute inset-0 w-full h-full" />
+                    ) : (
+                      <DS4Base className="absolute inset-0 w-full h-full" />
                     )}
-                  </div>
 
-                  {/* Analog Sticks */}
-                  {settings?.showAnalogSticks && (
+                    {/* Triggers Container */}
                     <div
-                      className="sticks absolute"
+                      className="absolute"
                       style={{
-                        top: "58%",
-                        left: "25%",
-                        width: "50%",
+                        top: "-2%",
+                        left: "0%",
+                        width: "100%",
                         height: "20%",
                       }}
                     >
-                      <div className="relative w-full h-full">
-                        {/* Left Stick */}
-                        <div
-                          className="absolute"
-                          style={{
-                            bottom: "0",
-                            left: "5%",
-                            transform: `translate(${axes[0] * 20}px, calc(-50% + ${axes[1] * 20}px))`,
-                            width: "26.04%",
-                            height: "89.52%",
-                          }}
-                        >
-                          <DS4Sticks
-                            className={cn(
-                              "w-full h-full",
-                              buttons[10] && "pressed"
-                            )}
-                            style={
-                              {
-                                "--stick-color": buttons[10]
-                                  ? safeFormatColor(
-                                      settings?.buttonPressedColor
-                                    )
-                                  : safeFormatColor(settings?.stickColor),
-                              } as React.CSSProperties
-                            }
+                      <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
+                        <div className="w-[15%] h-full ml-[5.4%]">
+                          <Triggers
+                            pressed={Number(gamepadState?.buttons?.[6] ?? 0)}
+                            side="left"
                           />
                         </div>
-
-                        {/* Right Stick */}
-                        <div
-                          className="absolute"
-                          style={{
-                            right: "5%",
-                            bottom: "0",
-                            transform: `translate(${axes[2] * 20}px, calc(-50% + ${-axes[3] * 20}px))`,
-                            width: "26.04%",
-                            height: "89.52%",
-                          }}
-                        >
-                          <DS4Sticks
-                            className={cn(
-                              "w-full h-full",
-                              buttons[11] && "pressed"
-                            )}
-                            style={
-                              {
-                                "--stick-color": buttons[11]
-                                  ? safeFormatColor(
-                                      settings?.buttonPressedColor
-                                    )
-                                  : safeFormatColor(settings?.stickColor),
-                              } as React.CSSProperties
-                            }
+                        <div className="w-[15%] h-full mr-[5.4%]">
+                          <Triggers
+                            pressed={Number(gamepadState?.buttons?.[7] ?? 0)}
+                            side="right"
                           />
                         </div>
                       </div>
                     </div>
-                  )}
 
-                  {/* Start/Select Buttons */}
-                  <div className="arrows">
-                    <div className={cn("back", buttons[8] && "pressed")} />
-                    <div className={cn("start", buttons[9] && "pressed")} />
+                    {/* Bumpers */}
+                    <div className="bumpers">
+                      <div
+                        className={cn("bumper left", buttons[4] && "pressed")}
+                      >
+                        <Bumper pressed={buttons[4]} />
+                      </div>
+                      <div
+                        className={cn("bumper right", buttons[5] && "pressed")}
+                      >
+                        <Bumper pressed={buttons[5]} />
+                      </div>
+                    </div>
+
+                    {/* Face Buttons */}
+                    <div className="abxy">
+                      {settings?.showButtonPresses && (
+                        <>
+                          <div>
+                            <CrossButton
+                              pressed={buttons[0]}
+                              color={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(settings?.buttonShapeColor)
+                                  : undefined
+                              }
+                              pressedColor={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(
+                                      settings?.buttonShapePressedColor
+                                    )
+                                  : undefined
+                              }
+                            />
+                          </div>
+                          <div>
+                            <CircleButton
+                              pressed={buttons[1]}
+                              color={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(settings?.buttonShapeColor)
+                                  : undefined
+                              }
+                              pressedColor={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(
+                                      settings?.buttonShapePressedColor
+                                    )
+                                  : undefined
+                              }
+                            />
+                          </div>
+                          <div>
+                            <SquareButton
+                              pressed={buttons[2]}
+                              color={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(settings?.buttonShapeColor)
+                                  : undefined
+                              }
+                              pressedColor={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(
+                                      settings?.buttonShapePressedColor
+                                    )
+                                  : undefined
+                              }
+                            />
+                          </div>
+                          <div>
+                            <TriangleButton
+                              pressed={buttons[3]}
+                              color={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(settings?.buttonShapeColor)
+                                  : undefined
+                              }
+                              pressedColor={
+                                settings?.useCustomShapeColors
+                                  ? safeFormatColor(
+                                      settings?.buttonShapePressedColor
+                                    )
+                                  : undefined
+                              }
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* D-Pad */}
+                    <div
+                      className="absolute"
+                      style={{
+                        width: "30%",
+                        height: "30%",
+                        top: "26%",
+                        left: "4.25%",
+                      }}
+                    >
+                      {settings?.showButtonPresses && (
+                        <DPad
+                          pressed={{
+                            up: buttons[12],
+                            down: buttons[13],
+                            left: buttons[14],
+                            right: buttons[15],
+                          }}
+                          color={
+                            settings?.useCustomShapeColors
+                              ? safeFormatColor(settings?.buttonShapeColor)
+                              : undefined
+                          }
+                          pressedColor={
+                            settings?.useCustomShapeColors
+                              ? safeFormatColor(
+                                  settings?.buttonShapePressedColor
+                                )
+                              : undefined
+                          }
+                        />
+                      )}
+                    </div>
+
+                    {/* Analog Sticks */}
+                    {settings?.showAnalogSticks && (
+                      <div
+                        className="sticks absolute"
+                        style={{
+                          top: "58%",
+                          left: "25%",
+                          width: "50%",
+                          height: "20%",
+                        }}
+                      >
+                        <div className="relative w-full h-full">
+                          {/* Left Stick */}
+                          <div
+                            className="absolute"
+                            style={{
+                              bottom: "0",
+                              left: "5%",
+                              transform: `translate(${axes[0] * 20}px, calc(-50% + ${axes[1] * 20}px))`,
+                              width: "26.04%",
+                              height: "89.52%",
+                            }}
+                          >
+                            <DS4Sticks
+                              className={cn(
+                                "w-full h-full",
+                                buttons[10] && "pressed"
+                              )}
+                              style={
+                                {
+                                  "--stick-color": buttons[10]
+                                    ? safeFormatColor(
+                                        settings?.buttonPressedColor
+                                      )
+                                    : safeFormatColor(settings?.stickColor),
+                                } as React.CSSProperties
+                              }
+                            />
+                          </div>
+
+                          {/* Right Stick */}
+                          <div
+                            className="absolute"
+                            style={{
+                              right: "5%",
+                              bottom: "0",
+                              transform: `translate(${axes[2] * 20}px, calc(-50% + ${axes[3] * 20}px))`,
+                              width: "26.04%",
+                              height: "89.52%",
+                            }}
+                          >
+                            <DS4Sticks
+                              className={cn(
+                                "w-full h-full",
+                                buttons[11] && "pressed"
+                              )}
+                              style={
+                                {
+                                  "--stick-color": buttons[11]
+                                    ? safeFormatColor(
+                                        settings?.buttonPressedColor
+                                      )
+                                    : safeFormatColor(settings?.stickColor),
+                                } as React.CSSProperties
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Start/Select Buttons */}
+                    <div className="arrows">
+                      <div className={cn("back", buttons[8] && "pressed")} />
+                      <div className={cn("start", buttons[9] && "pressed")} />
+                    </div>
                   </div>
                 </div>
               </div>

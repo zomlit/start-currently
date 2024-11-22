@@ -45,6 +45,8 @@ const gamepadSettingsSchema = z.object({
   useCustomShapeColors: z.boolean(),
   buttonShapeColor: z.string(),
   buttonShapePressedColor: z.string(),
+  hideWhenInactive: z.boolean(),
+  inactivityTimeout: z.number().min(1).max(60),
 });
 
 type GamepadSettingsFormProps = {
@@ -127,17 +129,7 @@ export function GamepadSettingsForm({
 
   const { watch, setValue } = form;
 
-  // Update form values when settings change
-  useEffect(() => {
-    setValue("scale", settings.scale);
-    setValue("deadzone", settings.deadzone);
-    // Update other fields as necessary
-  }, [settings, setValue]);
-
-  // Watch all form values for immediate UI updates
-  const formValues = form.watch();
-
-  // Update form when settings change from outside
+  // Update form values when settings change from outside
   useEffect(() => {
     if (JSON.stringify(form.getValues()) !== JSON.stringify(settings)) {
       form.reset(settings);
@@ -146,28 +138,25 @@ export function GamepadSettingsForm({
 
   // Debounced handler for server updates
   const debouncedServerUpdate = useDebouncedCallback(
-    (values: GamepadSettings) => {
+    (values: Partial<GamepadSettings>) => {
       onSettingsChange(values);
     },
     1000 // 1 second debounce
   );
 
-  // Effect to handle server updates
-  useEffect(() => {
-    debouncedServerUpdate(formValues);
-  }, [formValues, debouncedServerUpdate]);
-
-  // Immediate local update handler
+  // Immediate local update handler for individual field changes
   const handleFieldChange = (field: keyof GamepadSettings, value: any) => {
     setValue(field, value);
-    onSettingsChange({ [field]: value });
+    // Only send the changed field
+    debouncedServerUpdate({ [field]: value });
   };
 
   // Add handler for skin changes
   const handleSkinChange = (skinId: string) => {
     const skin = CONTROLLER_SKINS.find((s) => s.id === skinId);
     if (skin) {
-      onSettingsChange(skin.colors);
+      // Use debounced update for skin changes too
+      debouncedServerUpdate(skin.colors);
     }
   };
 
@@ -191,6 +180,8 @@ export function GamepadSettingsForm({
         useCustomShapeColors: false,
         buttonShapeColor: "#ffffff",
         buttonShapePressedColor: "#000000",
+        hideWhenInactive: false,
+        inactivityTimeout: 30,
       };
 
       // Reset form to default values
@@ -366,6 +357,59 @@ export function GamepadSettingsForm({
               </FormItem>
             )}
           />
+
+          {/* Hide When Inactive */}
+          <FormField
+            control={form.control}
+            name="hideWhenInactive"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between">
+                <div>
+                  <FormLabel>Hide When Inactive</FormLabel>
+                  <FormDescription>
+                    Hide the controller when no buttons are pressed
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) =>
+                      handleFieldChange("hideWhenInactive", checked)
+                    }
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {/* Only show timeout slider when hideWhenInactive is enabled */}
+          {form.watch("hideWhenInactive") && (
+            <FormField
+              control={form.control}
+              name="inactivityTimeout"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Inactivity Timeout: {field.value} seconds
+                  </FormLabel>
+                  <FormDescription>
+                    Time to wait before hiding the controller
+                  </FormDescription>
+                  <FormControl>
+                    <Slider
+                      min={1}
+                      max={60}
+                      step={1}
+                      value={[field.value]}
+                      onValueChange={([value]) =>
+                        handleFieldChange("inactivityTimeout", value)
+                      }
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         {/* Colors */}

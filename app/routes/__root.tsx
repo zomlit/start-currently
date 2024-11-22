@@ -4,8 +4,8 @@ import {
   ScrollRestoration,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Meta, Scripts } from "@tanstack/start";
 import type { QueryClient } from "@tanstack/react-query";
 import { AccessControl } from "@/components/AccessControl";
@@ -127,8 +127,8 @@ function RootDocument({ children }: { children: ReactNode }) {
         <div className="relative flex min-h-screen flex-col">
           <main className="flex-1">{children}</main>
           <ScrollRestoration />
-          <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-left" />
+          {/* <TanStackRouterDevtools position="bottom-right" />
+          <ReactQueryDevtools buttonPosition="bottom-left" /> */}
           <Scripts />
         </div>
       </body>

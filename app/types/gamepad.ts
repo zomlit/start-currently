@@ -34,6 +34,8 @@ export interface GamepadSettings {
   useCustomShapeColors?: boolean;
   buttonShapeColor?: string;
   buttonShapePressedColor?: string;
+  hideWhenInactive: boolean;
+  inactivityTimeout: number;
 }
 
 export interface GamepadViewerProps {
@@ -60,4 +62,10 @@ export interface ControllerColor {
   name: string;
   hex: string;
   className: string;
+}
+
+export interface GamepadButton {
+  pressed: boolean;
+  touched: boolean;
+  value: number;
 }
