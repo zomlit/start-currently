@@ -18,6 +18,8 @@ export const defaultGamepadSettings: GamepadSettings = {
   scale: 1,
   deadzone: 0.1,
   debugMode: false,
+  hideWhenInactive: false,
+  inactivityTimeout: 10,
 };
 
 export type GamepadSettings = typeof defaultGamepadSettings;

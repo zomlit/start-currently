@@ -8,6 +8,7 @@ export function useRawGamepad() {
   const prevAxes = useRef([0, 0, 0, 0]);
   const frameRef = useRef<number>();
   const intervalRef = useRef<NodeJS.Timeout>();
+  const axesRef = useRef(axes); // Ref to hold the current axes value
 
   // Memoize the gamepad update function
   const updateGamepad = useCallback(() => {
@@ -23,8 +24,9 @@ export function useRawGamepad() {
       );
 
       // Only update state if there's a significant change
-      if (JSON.stringify(newAxes) !== JSON.stringify(axes)) {
+      if (JSON.stringify(newAxes) !== JSON.stringify(axesRef.current)) {
         setAxes(newAxes);
+        axesRef.current = newAxes; // Update the ref with the new axes
       }
 
       const INTERACTION_THRESHOLD = 0.15;
@@ -43,7 +45,7 @@ export function useRawGamepad() {
 
       prevAxes.current = newAxes;
     }
-  }, [axes]); // Only depend on axes
+  }, []); // No dependencies on axes
 
   // Set up polling in a separate effect
   useEffect(() => {
