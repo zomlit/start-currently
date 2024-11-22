@@ -78,12 +78,12 @@
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
     "node-vibrant": "^3.1.6",
-    "react": "^18.3.1",
+    "react": "^19.0.0-rc.1",
     "react-beautiful-dnd": "^13.1.1",
     "react-best-gradient-color-picker": "^3.0.11",
     "react-confetti": "^6.1.0",
     "react-custom-roulette": "^1.4.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.0.0-rc.1",
     "react-hook-form": "^7.53.2",
     "react-inner-image-zoom": "^3.0.2",
     "react-resizable-panels": "^2.1.7",
@@ -112,12 +112,16 @@
     "webfontloader": "^1.6.28",
     "ws": "^8.18.0",
     "zod": "^3.23.8",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.1",
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
+  },
+  "overrides": {
+    "@types/react": "npm:types-react@rc",
+    "@types/react-dom": "npm:types-react-dom@rc"
   },
   "devDependencies": {
     "@types/node": "^22.9.1",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",

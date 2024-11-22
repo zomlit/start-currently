@@ -44,6 +44,12 @@ import {
 import { DPad } from "./gamepad/DPad";
 import { Triggers } from "./gamepad/Triggers";
 import { useGamepadStore } from "@/store/gamepadStore";
+import { DriftReportCharts } from "@/components/gamepad/DriftReportCharts";
+import {
+  generateDriftReport,
+  exportDriftReportAsCSV,
+} from "@/lib/gamepad-utils";
+import type { DriftReport } from "@/lib/gamepad-utils";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -424,12 +430,14 @@ export function GamepadViewer({
 
   // Memoize buttons to prevent unnecessary re-renders
   const buttons = useMemo(() => {
-    return gamepadState?.buttons || Array(16).fill(false);
+    return (
+      gamepadState?.buttons || Array(16).fill({ pressed: false, value: 0 })
+    );
   }, [gamepadState?.buttons]);
 
   // Debounce button state updates
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-  const buttonStateTimeoutRef = useRef<NodeJS.Timeout>();
+  const buttonStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const newState = hasAnyPotentialDrift(axes, deadzone);
@@ -632,6 +640,123 @@ export function GamepadViewer({
     );
   }, [isDialogOpen, axes, deadzone, onSettingsChange]);
 
+  const [driftReports, setDriftReports] = useState<DriftReport[]>([]);
+  const [isCollecting, setIsCollecting] = useState(false);
+  const collectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCollectionTimeRef = useRef<number>(Date.now());
+
+  // Update the data collection effect
+  useEffect(() => {
+    if (!settings?.debugMode || !isCollecting || !axes) return;
+
+    // Cleanup previous interval
+    if (collectionIntervalRef.current) {
+      clearInterval(collectionIntervalRef.current);
+      collectionIntervalRef.current = null;
+    }
+
+    const collectData = () => {
+      const now = Date.now();
+      // Only collect if at least 1 second has passed since last collection
+      if (now - lastCollectionTimeRef.current >= 1000) {
+        const report: DriftReport = {
+          timestamp: new Date().toISOString(),
+          leftStick: {
+            drift: Math.max(Math.abs(axes[0] || 0), Math.abs(axes[1] || 0)),
+            x: axes[0] || 0,
+            y: axes[1] || 0,
+            exceedsDeadzone:
+              Math.max(Math.abs(axes[0] || 0), Math.abs(axes[1] || 0)) >
+              deadzone,
+          },
+          rightStick: {
+            drift: Math.max(Math.abs(axes[2] || 0), Math.abs(axes[3] || 0)),
+            x: axes[2] || 0,
+            y: axes[3] || 0,
+            exceedsDeadzone:
+              Math.max(Math.abs(axes[2] || 0), Math.abs(axes[3] || 0)) >
+              deadzone,
+          },
+          deadzone,
+        };
+
+        setDriftReports((prev) => [...prev, report]);
+        lastCollectionTimeRef.current = now;
+      }
+    };
+
+    // Initial collection
+    collectData();
+
+    // Set up interval for subsequent collections
+    collectionIntervalRef.current = setInterval(collectData, 1000);
+
+    return () => {
+      if (collectionIntervalRef.current) {
+        clearInterval(collectionIntervalRef.current);
+        collectionIntervalRef.current = null;
+      }
+    };
+  }, [isCollecting, axes, deadzone, settings?.debugMode]);
+
+  // Update the collection toggle handler
+  const handleCollectionToggle = useCallback(() => {
+    if (!settings?.debugMode) return;
+
+    setIsCollecting((prev) => {
+      const newState = !prev;
+      if (newState) {
+        setDriftReports([]);
+        lastCollectionTimeRef.current = Date.now();
+      }
+      return newState;
+    });
+  }, [settings?.debugMode]);
+
+  // Clear collected data when debug mode is disabled
+  useEffect(() => {
+    if (!settings?.debugMode) {
+      setDriftReports([]);
+      setIsCollecting(false);
+      if (collectionIntervalRef.current) {
+        clearInterval(collectionIntervalRef.current);
+        collectionIntervalRef.current = null;
+      }
+    }
+  }, [settings?.debugMode]);
+
+  // Update the collection controls JSX
+  const CollectionControls = (
+    <div className="mb-4 flex items-center justify-between rounded-lg bg-card/50 p-3">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Samples:</span>
+        <Badge variant="secondary">{driftReports.length}</Badge>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={isCollecting ? "destructive" : "default"}
+          onClick={handleCollectionToggle}
+          className={cn(
+            "transition-colors duration-200",
+            isCollecting
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-violet-600 hover:bg-violet-700"
+          )}
+        >
+          {isCollecting ? (
+            <>
+              <span className="mr-2 animate-pulse">●</span>
+              Stop Collection ({driftReports.length})
+            </>
+          ) : (
+            "Start Collection"
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
   if (!gamepadState && settings?.showButtonPresses) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
@@ -738,6 +863,33 @@ export function GamepadViewer({
     }
   };
 
+  // Update the toast calls to use the correct method
+  const handleExportReport = () => {
+    if (driftReports.length === 0) {
+      toast.error({
+        title: "No Data Available",
+        description: "Start collecting data before exporting a report.",
+      });
+      return;
+    }
+
+    const csv = exportDriftReportAsCSV(driftReports);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gamepad-drift-report-${new Date().toISOString()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success({
+      title: "Report Exported Successfully",
+      description: `Exported ${driftReports.length} samples to CSV file.`,
+    });
+  };
+
   return (
     <div className="relative flex h-full w-full flex-col">
       {CalibrationDialog}
@@ -765,7 +917,11 @@ export function GamepadViewer({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-0 z-50 w-full rounded-lg border border-border/50 bg-gradient/25 p-6 shadow-2xl backdrop-opacity-60 backdrop-invert dark:bg-black/95 bg-white/95"
+                  className={cn(
+                    "absolute top-0 z-50 w-full rounded-lg border border-border/50",
+                    "bg-gradient/25 p-6 shadow-2xl backdrop-opacity-60 backdrop-invert",
+                    "dark:bg-black/95 bg-white/95"
+                  )}
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between border-b border-border/50 pb-4">
@@ -795,7 +951,6 @@ export function GamepadViewer({
                       </Button>
                     </div>
                   </div>
-
                   {/* Stick Information */}
                   <div className="mt-6 grid gap-6 md:grid-cols-2">
                     {/* Left Stick */}
@@ -924,7 +1079,6 @@ export function GamepadViewer({
                       </div>
                     </div>
                   </div>
-
                   {/* Deadzone Slider */}
                   <div className="mt-6 border-t border-border/50 pt-4">
                     <div className="flex items-center justify-between">
@@ -981,7 +1135,54 @@ export function GamepadViewer({
                       </div>
                     </div>
                   </div>
+                  {/* Monitoring & Reports Section */}
+                  <div className="mt-6 border-t border-border/50 pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-medium text-violet-400">
+                        Monitoring & Reports
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={driftReports.length === 0}
+                          onClick={handleExportReport}
+                          className={cn(
+                            "transition-colors duration-200",
+                            driftReports.length === 0 && "opacity-50"
+                          )}
+                        >
+                          Export Report
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDriftReports([])}
+                        >
+                          Clear Data
+                        </Button>
+                      </div>
+                    </div>
 
+                    {/* Sample count and collection controls */}
+                    {CollectionControls}
+
+                    {/* Drift Report Charts */}
+                    {driftReports.length > 0 ? (
+                      <DriftReportCharts reports={driftReports} />
+                    ) : (
+                      <div className="flex h-[200px] items-center justify-center rounded-lg bg-card/50">
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground">
+                            No drift data collected yet
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Click "Start Collection" to begin monitoring
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   {/* Footer Info */}
                   <div className="mt-4 grid gap-3 border-t border-border/50 pt-4 text-sm md:grid-cols-3">
                     <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
@@ -1051,19 +1252,13 @@ export function GamepadViewer({
                     <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
                       <div className="w-[15%] h-full ml-[5.4%]">
                         <Triggers
-                          pressed={Number(
-                            useGamepadStore.getState().gamepadState?.buttons[6]
-                              ?.value ?? 0
-                          )}
+                          pressed={Number(gamepadState?.buttons[6]?.value ?? 0)}
                           side="left"
                         />
                       </div>
                       <div className="w-[15%] h-full mr-[5.4%]">
                         <Triggers
-                          pressed={Number(
-                            useGamepadStore.getState().gamepadState?.buttons[7]
-                              ?.value ?? 0
-                          )}
+                          pressed={Number(gamepadState?.buttons[7]?.value ?? 0)}
                           side="right"
                         />
                       </div>
@@ -1072,13 +1267,21 @@ export function GamepadViewer({
 
                   {/* Bumpers */}
                   <div className="bumpers">
-                    <div className={cn("bumper left", buttons[4] && "pressed")}>
-                      <Bumper pressed={buttons[4]} />
+                    <div
+                      className={cn(
+                        "bumper left",
+                        buttons[4]?.pressed && "pressed"
+                      )}
+                    >
+                      <Bumper pressed={buttons[4]?.pressed ?? false} />
                     </div>
                     <div
-                      className={cn("bumper right", buttons[5] && "pressed")}
+                      className={cn(
+                        "bumper right",
+                        buttons[5]?.pressed && "pressed"
+                      )}
                     >
-                      <Bumper pressed={buttons[5]} />
+                      <Bumper pressed={buttons[5]?.pressed ?? false} />
                     </div>
                   </div>
 
@@ -1088,7 +1291,7 @@ export function GamepadViewer({
                       <>
                         <div>
                           <CrossButton
-                            pressed={buttons[0]}
+                            pressed={buttons[0]?.pressed ?? false}
                             color={
                               settings?.useCustomShapeColors
                                 ? safeFormatColor(settings?.buttonShapeColor)
@@ -1105,7 +1308,7 @@ export function GamepadViewer({
                         </div>
                         <div>
                           <CircleButton
-                            pressed={buttons[1]}
+                            pressed={buttons[1]?.pressed ?? false}
                             color={
                               settings?.useCustomShapeColors
                                 ? safeFormatColor(settings?.buttonShapeColor)
@@ -1122,7 +1325,7 @@ export function GamepadViewer({
                         </div>
                         <div>
                           <SquareButton
-                            pressed={buttons[2]}
+                            pressed={buttons[2]?.pressed ?? false}
                             color={
                               settings?.useCustomShapeColors
                                 ? safeFormatColor(settings?.buttonShapeColor)
@@ -1139,7 +1342,7 @@ export function GamepadViewer({
                         </div>
                         <div>
                           <TriangleButton
-                            pressed={buttons[3]}
+                            pressed={buttons[3]?.pressed ?? false}
                             color={
                               settings?.useCustomShapeColors
                                 ? safeFormatColor(settings?.buttonShapeColor)
@@ -1171,10 +1374,10 @@ export function GamepadViewer({
                     {settings?.showButtonPresses && (
                       <DPad
                         pressed={{
-                          up: buttons[12],
-                          down: buttons[13],
-                          left: buttons[14],
-                          right: buttons[15],
+                          up: buttons[12]?.pressed ?? false,
+                          down: buttons[13]?.pressed ?? false,
+                          left: buttons[14]?.pressed ?? false,
+                          right: buttons[15]?.pressed ?? false,
                         }}
                         color={
                           settings?.useCustomShapeColors
@@ -1216,11 +1419,11 @@ export function GamepadViewer({
                           <DS4Sticks
                             className={cn(
                               "w-full h-full",
-                              buttons[10] && "pressed"
+                              buttons[10]?.pressed && "pressed"
                             )}
                             style={
                               {
-                                "--stick-color": buttons[10]
+                                "--stick-color": buttons[10]?.pressed
                                   ? safeFormatColor(
                                       settings?.buttonPressedColor
                                     )
@@ -1236,7 +1439,7 @@ export function GamepadViewer({
                           style={{
                             right: "5%",
                             bottom: "0",
-                            transform: `translate(${axes[2] * 20}px, calc(-50% + ${-axes[3] * 20}px))`,
+                            transform: `translate(${axes[2] * 20}px, calc(-50% + ${axes[3] * 20}px))`,
                             width: "26.04%",
                             height: "89.52%",
                           }}
@@ -1244,11 +1447,11 @@ export function GamepadViewer({
                           <DS4Sticks
                             className={cn(
                               "w-full h-full",
-                              buttons[11] && "pressed"
+                              buttons[11]?.pressed && "pressed"
                             )}
                             style={
                               {
-                                "--stick-color": buttons[11]
+                                "--stick-color": buttons[11]?.pressed
                                   ? safeFormatColor(
                                       settings?.buttonPressedColor
                                     )
@@ -1263,8 +1466,12 @@ export function GamepadViewer({
 
                   {/* Start/Select Buttons */}
                   <div className="arrows">
-                    <div className={cn("back", buttons[8] && "pressed")} />
-                    <div className={cn("start", buttons[9] && "pressed")} />
+                    <div
+                      className={cn("back", buttons[8]?.pressed && "pressed")}
+                    />
+                    <div
+                      className={cn("start", buttons[9]?.pressed && "pressed")}
+                    />
                   </div>
                 </div>
               </div>

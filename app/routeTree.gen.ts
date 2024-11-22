@@ -31,6 +31,8 @@ import { Route as AppWidgetsStatsImport } from './routes/_app/widgets/stats'
 import { Route as AppWidgetsOverlayImport } from './routes/_app/widgets/overlay'
 import { Route as AppWidgetsLyricsImport } from './routes/_app/widgets/lyrics'
 import { Route as AppWidgetsGamepadImport } from './routes/_app/widgets/gamepad'
+import { Route as AppWidgetsGameoverlayImport } from './routes/_app/widgets/gameoverlay'
+import { Route as AppWidgetsGameOverlayImport } from './routes/_app/widgets/game-overlay'
 import { Route as AppWidgetsChatImport } from './routes/_app/widgets/chat'
 import { Route as AppWidgetsAlertsImport } from './routes/_app/widgets/alerts'
 import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
@@ -158,6 +160,18 @@ const AppWidgetsLyricsRoute = AppWidgetsLyricsImport.update({
 const AppWidgetsGamepadRoute = AppWidgetsGamepadImport.update({
   id: '/gamepad',
   path: '/gamepad',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsGameoverlayRoute = AppWidgetsGameoverlayImport.update({
+  id: '/gameoverlay',
+  path: '/gameoverlay',
+  getParentRoute: () => AppWidgetsRoute,
+} as any)
+
+const AppWidgetsGameOverlayRoute = AppWidgetsGameOverlayImport.update({
+  id: '/game-overlay',
+  path: '/game-overlay',
   getParentRoute: () => AppWidgetsRoute,
 } as any)
 
@@ -352,6 +366,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWidgetsChatImport
       parentRoute: typeof AppWidgetsImport
     }
+    '/_app/widgets/game-overlay': {
+      id: '/_app/widgets/game-overlay'
+      path: '/game-overlay'
+      fullPath: '/widgets/game-overlay'
+      preLoaderRoute: typeof AppWidgetsGameOverlayImport
+      parentRoute: typeof AppWidgetsImport
+    }
+    '/_app/widgets/gameoverlay': {
+      id: '/_app/widgets/gameoverlay'
+      path: '/gameoverlay'
+      fullPath: '/widgets/gameoverlay'
+      preLoaderRoute: typeof AppWidgetsGameoverlayImport
+      parentRoute: typeof AppWidgetsImport
+    }
     '/_app/widgets/gamepad': {
       id: '/_app/widgets/gamepad'
       path: '/gamepad'
@@ -486,6 +514,8 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 interface AppWidgetsRouteChildren {
   AppWidgetsAlertsRoute: typeof AppWidgetsAlertsRoute
   AppWidgetsChatRoute: typeof AppWidgetsChatRoute
+  AppWidgetsGameOverlayRoute: typeof AppWidgetsGameOverlayRoute
+  AppWidgetsGameoverlayRoute: typeof AppWidgetsGameoverlayRoute
   AppWidgetsGamepadRoute: typeof AppWidgetsGamepadRoute
   AppWidgetsLyricsRoute: typeof AppWidgetsLyricsRoute
   AppWidgetsOverlayRoute: typeof AppWidgetsOverlayRoute
@@ -497,6 +527,8 @@ interface AppWidgetsRouteChildren {
 const AppWidgetsRouteChildren: AppWidgetsRouteChildren = {
   AppWidgetsAlertsRoute: AppWidgetsAlertsRoute,
   AppWidgetsChatRoute: AppWidgetsChatRoute,
+  AppWidgetsGameOverlayRoute: AppWidgetsGameOverlayRoute,
+  AppWidgetsGameoverlayRoute: AppWidgetsGameoverlayRoute,
   AppWidgetsGamepadRoute: AppWidgetsGamepadRoute,
   AppWidgetsLyricsRoute: AppWidgetsLyricsRoute,
   AppWidgetsOverlayRoute: AppWidgetsOverlayRoute,
@@ -568,6 +600,8 @@ export interface FileRoutesByFullPath {
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/widgets/chat': typeof AppWidgetsChatRoute
+  '/widgets/game-overlay': typeof AppWidgetsGameOverlayRoute
+  '/widgets/gameoverlay': typeof AppWidgetsGameoverlayRoute
   '/widgets/gamepad': typeof AppWidgetsGamepadRoute
   '/widgets/lyrics': typeof AppWidgetsLyricsRoute
   '/widgets/overlay': typeof AppWidgetsOverlayRoute
@@ -597,6 +631,8 @@ export interface FileRoutesByTo {
   '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/widgets/chat': typeof AppWidgetsChatRoute
+  '/widgets/game-overlay': typeof AppWidgetsGameOverlayRoute
+  '/widgets/gameoverlay': typeof AppWidgetsGameoverlayRoute
   '/widgets/gamepad': typeof AppWidgetsGamepadRoute
   '/widgets/lyrics': typeof AppWidgetsLyricsRoute
   '/widgets/overlay': typeof AppWidgetsOverlayRoute
@@ -631,6 +667,8 @@ export interface FileRoutesById {
   '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/_app/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/_app/widgets/chat': typeof AppWidgetsChatRoute
+  '/_app/widgets/game-overlay': typeof AppWidgetsGameOverlayRoute
+  '/_app/widgets/gameoverlay': typeof AppWidgetsGameoverlayRoute
   '/_app/widgets/gamepad': typeof AppWidgetsGamepadRoute
   '/_app/widgets/lyrics': typeof AppWidgetsLyricsRoute
   '/_app/widgets/overlay': typeof AppWidgetsOverlayRoute
@@ -663,6 +701,8 @@ export interface FileRouteTypes {
     | '/teampicker/$bracketId'
     | '/widgets/alerts'
     | '/widgets/chat'
+    | '/widgets/game-overlay'
+    | '/widgets/gameoverlay'
     | '/widgets/gamepad'
     | '/widgets/lyrics'
     | '/widgets/overlay'
@@ -691,6 +731,8 @@ export interface FileRouteTypes {
     | '/teampicker/$bracketId'
     | '/widgets/alerts'
     | '/widgets/chat'
+    | '/widgets/game-overlay'
+    | '/widgets/gameoverlay'
     | '/widgets/gamepad'
     | '/widgets/lyrics'
     | '/widgets/overlay'
@@ -723,6 +765,8 @@ export interface FileRouteTypes {
     | '/_app/teampicker/$bracketId'
     | '/_app/widgets/alerts'
     | '/_app/widgets/chat'
+    | '/_app/widgets/game-overlay'
+    | '/_app/widgets/gameoverlay'
     | '/_app/widgets/gamepad'
     | '/_app/widgets/lyrics'
     | '/_app/widgets/overlay'
@@ -829,6 +873,8 @@ export const routeTree = rootRoute
       "children": [
         "/_app/widgets/alerts",
         "/_app/widgets/chat",
+        "/_app/widgets/game-overlay",
+        "/_app/widgets/gameoverlay",
         "/_app/widgets/gamepad",
         "/_app/widgets/lyrics",
         "/_app/widgets/overlay",
@@ -871,6 +917,14 @@ export const routeTree = rootRoute
     },
     "/_app/widgets/chat": {
       "filePath": "_app/widgets/chat.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/game-overlay": {
+      "filePath": "_app/widgets/game-overlay.tsx",
+      "parent": "/_app/widgets"
+    },
+    "/_app/widgets/gameoverlay": {
+      "filePath": "_app/widgets/gameoverlay.tsx",
       "parent": "/_app/widgets"
     },
     "/_app/widgets/gamepad": {

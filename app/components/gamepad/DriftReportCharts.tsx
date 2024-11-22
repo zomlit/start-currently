@@ -125,8 +125,8 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
         <Tabs defaultValue="drift" className="space-y-4">
           <TabsList>
             <TabsTrigger value="drift">Drift Over Time</TabsTrigger>
-            <TabsTrigger value="heatmap">Drift Heatmap</TabsTrigger>
-            <TabsTrigger value="positions">Stick Positions</TabsTrigger>
+            {/* <TabsTrigger value="heatmap">Drift Heatmap</TabsTrigger>
+            <TabsTrigger value="positions">Stick Positions</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="drift" className="space-y-4">
@@ -219,9 +219,8 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value="heatmap" className="space-y-4">
+          {/* <TabsContent value="heatmap" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {/* Left Stick Heatmap */}
               <div>
                 <h3 className="text-sm font-medium mb-2">
                   Left Stick Drift Pattern
@@ -268,7 +267,6 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
                           return null;
                         }}
                       />
-                      {/* Deadzone circle */}
                       <circle
                         cx="50%"
                         cy="50%"
@@ -295,7 +293,6 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
                 </div>
               </div>
 
-              {/* Right Stick Heatmap */}
               <div>
                 <h3 className="text-sm font-medium mb-2">
                   Right Stick Drift Pattern
@@ -342,7 +339,6 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
                           return null;
                         }}
                       />
-                      {/* Deadzone circle */}
                       <circle
                         cx="50%"
                         cy="50%"
@@ -369,7 +365,6 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
                 </div>
               </div>
 
-              {/* Legend */}
               <div className="col-span-2 mb-4">
                 <div className="rounded-lg bg-muted/50 p-3">
                   <div className="grid grid-cols-5 gap-2 text-sm">
@@ -401,9 +396,9 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
                 </div>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent> */}
 
-          <TabsContent value="positions" className="space-y-4">
+          {/* <TabsContent value="positions" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -466,7 +461,7 @@ export function DriftReportCharts({ reports }: DriftReportChartsProps) {
                 </ResponsiveContainer>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </CardContent>
     </Card>

@@ -17,7 +17,10 @@ import { GamepadSettings, HookGamepadState } from "@/types/gamepad";
 import { useUpdateGamepadSettings } from "@/hooks/useUpdateGamepadSettings";
 
 interface GamepadState {
-  buttons: boolean[];
+  buttons: {
+    pressed: boolean;
+    value: number;
+  }[];
   axes: number[];
 }
 
@@ -59,10 +62,15 @@ function hasSignificantAxisChange(
 }
 
 function hasButtonStateChanged(
-  oldButtons: boolean[],
-  newButtons: boolean[]
+  oldButtons: { pressed: boolean; value: number }[],
+  newButtons: { pressed: boolean; value: number }[]
 ): boolean {
-  return newButtons.some((value, index) => value !== oldButtons[index]);
+  return newButtons.some((value, index) => {
+    const oldButton = oldButtons[index];
+    return (
+      value.pressed !== oldButton.pressed || value.value !== oldButton.value
+    );
+  });
 }
 
 export function GamepadSection() {
@@ -71,7 +79,7 @@ export function GamepadSection() {
   const [currentGamepadState, setCurrentGamepadState] =
     useState<GamepadState | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | null>(null);
   const lastBroadcastRef = useRef<number>(0);
   const BROADCAST_INTERVAL = 16;
   const lastStateRef = useRef<string>("");
@@ -84,9 +92,21 @@ export function GamepadSection() {
   const channelId = `gamepad:${user?.id}`;
 
   const lastValidStateRef = useRef<GamepadState>({
-    buttons: Array(18).fill(false),
+    buttons: Array(18).fill({ pressed: false, value: 0 }),
     axes: Array(4).fill(0),
   });
+
+  const transformGamepadState = (state: HookGamepadState): GamepadState => {
+    return {
+      buttons: state.buttons.map((button) => ({
+        pressed: button.pressed,
+        value: button.value,
+      })),
+      axes: state.axes.map((value) =>
+        Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
+      ),
+    };
+  };
 
   const broadcastGamepadState = useCallback(
     async (state: HookGamepadState) => {
@@ -95,13 +115,7 @@ export function GamepadSection() {
       const now = performance.now();
       if (now - lastBroadcastRef.current < BROADCAST_INTERVAL) return;
 
-      // Transform HookGamepadState to GamepadState
-      const transformedState: GamepadState = {
-        buttons: state.buttons.map((button) => button.pressed),
-        axes: state.axes.map((value) =>
-          Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
-        ),
-      };
+      const transformedState = transformGamepadState(state);
 
       // Check if the state has changed significantly
       const hasSignificantChange =
@@ -116,7 +130,6 @@ export function GamepadSection() {
 
       if (!hasSignificantChange) return;
 
-      // Update the last valid state
       lastValidStateRef.current = transformedState;
       lastBroadcastRef.current = now;
 
@@ -170,14 +183,8 @@ export function GamepadSection() {
     if (!gamepadState) return;
 
     const updateFrame = () => {
-      const transformedState: GamepadState = {
-        buttons: gamepadState.buttons.map((button) => button.pressed),
-        axes: gamepadState.axes.map((value) =>
-          Math.abs(value) < defaultGamepadSettings.deadzone ? 0 : value
-        ),
-      };
+      const transformedState = transformGamepadState(gamepadState);
 
-      // Check if the state has changed significantly
       const hasSignificantChange =
         hasSignificantAxisChange(
           lastValidStateRef.current.axes,
@@ -202,6 +209,7 @@ export function GamepadSection() {
     return () => {
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
       }
     };
   }, [gamepadState, broadcastGamepadState]);
@@ -391,9 +399,6 @@ export function GamepadSection() {
 
 export const Route = createFileRoute("/_app/widgets/gamepad")({
   component: GamepadSection,
-  options: {
-    keepAlive: true,
-  },
   loader: async () => {
     return {
       keepAlive: true,

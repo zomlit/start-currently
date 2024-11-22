@@ -127,8 +127,12 @@ function RootDocument({ children }: { children: ReactNode }) {
         <div className="relative flex min-h-screen flex-col">
           <main className="flex-1">{children}</main>
           <ScrollRestoration />
-          <TanStackRouterDevtools position="bottom-right" />
-          <ReactQueryDevtools buttonPosition="bottom-left" />
+          {process.env.NODE_ENV === "development" && (
+            <>
+              <TanStackRouterDevtools position="bottom-right" />
+              <ReactQueryDevtools buttonPosition="bottom-left" />
+            </>
+          )}
           <Scripts />
         </div>
       </body>

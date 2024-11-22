@@ -7,6 +7,10 @@ interface GamepadState {
     value: number;
   }[];
   axes: number[];
+  triggers: {
+    left: number;
+    right: number;
+  };
   timestamp: number;
 }
 
@@ -31,12 +35,23 @@ export function useGamepad(deadzone: number = 0.1) {
           axes: gamepad.axes.map((axis) =>
             Math.abs(axis) < deadzone ? 0 : axis
           ),
+          triggers: {
+            left:
+              Math.abs(gamepad.buttons[6].value) < deadzone
+                ? 0
+                : gamepad.buttons[6].value,
+            right:
+              Math.abs(gamepad.buttons[7].value) < deadzone
+                ? 0
+                : gamepad.buttons[7].value,
+          },
           timestamp: performance.now(),
         };
 
         const comparisonState = {
           buttons: newState.buttons,
           axes: newState.axes,
+          triggers: newState.triggers,
         };
         const newStateString = JSON.stringify(comparisonState);
 
