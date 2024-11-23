@@ -15,38 +15,48 @@ export function WidgetLayout({ preview, settings }: WidgetLayoutProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   return (
-    <div className="h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
-      <ResizablePanelGroup
-        direction={isDesktop ? "horizontal" : "vertical"}
-        className="h-full"
-        onLayout={(sizes: number[]) => {
-          if (sizes[0] !== 72 || sizes[1] !== 28) {
-            return [72, 28];
-          }
-          return sizes;
-        }}
-      >
-        <ResizablePanel
-          defaultSize={72}
-          minSize={50}
-          className="relative bg-gradient/5 lg:flex-row overflow-hidden"
+    <div className="min-h-[calc(100vh-var(--header-height)-var(--nav-height))] h-full overflow-auto">
+      {isDesktop ? (
+        // Desktop layout - horizontal split
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full min-h-full"
         >
-          {preview}
-        </ResizablePanel>
-        {isDesktop && <ResizableHandle withHandle />}
-        <ResizablePanel
-          defaultSize={28}
-          minSize={20}
-          className="min-w-[20rem] rounded-br-3xl bg-gradient/15 overflow-hidden"
-        >
-          <div className="h-full flex flex-col">
-            <h3 className="flex-none text-lg font-bold p-6 pb-2">Settings</h3>
-            <div className="flex-1 overflow-y-auto min-h-0">
-              <div className="p-6 pt-2">{settings}</div>
+          <ResizablePanel
+            defaultSize={72}
+            minSize={28}
+            className="relative bg-gradient/5 min-h-full"
+          >
+            {preview}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel
+            defaultSize={28}
+            minSize={28}
+            className="bg-gradient/15 min-h-full"
+          >
+            <div className="h-full flex flex-col min-h-full">
+              <h3 className="flex-none text-lg font-bold p-6 pb-2">Settings</h3>
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-6 pt-2">{settings}</div>
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        // Mobile layout - stacked vertically without resizing
+        <div className="flex flex-col min-h-full">
+          <div className="flex-1 min-h-[50vh] bg-gradient/5">{preview}</div>
+          <div className="min-h-[50vh] bg-gradient/15">
+            <div className="h-full flex flex-col">
+              <h3 className="flex-none text-lg font-bold p-6 pb-2">Settings</h3>
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-6 pt-2">{settings}</div>
+              </div>
             </div>
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      )}
     </div>
   );
 }

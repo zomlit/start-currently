@@ -7,7 +7,7 @@ import { supabase } from "@/utils/supabase/client";
 import { useGamepad } from "@/hooks/useGamepad";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Gauge } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -213,23 +213,6 @@ export function GamepadSection() {
     loadSettings();
   }, [user?.id]);
 
-  const renderStickValues = (axes: number[]) => {
-    return (
-      <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-        <div>
-          <p className="font-semibold">Left Stick</p>
-          <p>X: {axes[0]?.toFixed(4) || "0.0000"}</p>
-          <p>Y: {axes[1]?.toFixed(4) || "0.0000"}</p>
-        </div>
-        <div>
-          <p className="font-semibold">Right Stick</p>
-          <p>X: {axes[2]?.toFixed(4) || "0.0000"}</p>
-          <p>Y: {axes[3]?.toFixed(4) || "0.0000"}</p>
-        </div>
-      </div>
-    );
-  };
-
   // Update GamepadViewer props in the preview
   const GamepadPreview = (
     <div className="flex h-full flex-col">
@@ -248,13 +231,6 @@ export function GamepadSection() {
           isPublicView={false}
           onSettingsChange={handleSettingsChange}
         />
-
-        {/* Stick Values Display - Only show when gamepadState exists */}
-        {gamepadState && (
-          <div className="mx-auto max-w-md rounded-lg border bg-card p-4 shadow-sm">
-            {renderStickValues(gamepadState.axes)}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -279,6 +255,25 @@ export function GamepadSection() {
             <Copy className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Add Drift Tool Button */}
+        <div className="mt-4">
+          <Button
+            onClick={() =>
+              handleSettingsChange({ debugMode: !settings.debugMode })
+            }
+            variant={settings.debugMode ? "default" : "outline"}
+            className="w-full"
+            disabled={!isGamepadConnected}
+          >
+            <Gauge className="mr-2 h-4 w-4" />
+            {!isGamepadConnected
+              ? "No Controller Detected"
+              : settings.debugMode
+                ? "Close Drift Tool"
+                : "Open Drift Tool"}
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -293,8 +288,12 @@ export function GamepadSection() {
   );
 
   return (
-    <div className="max-h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
-      <WidgetLayout preview={GamepadPreview} settings={GamepadSettings} />
+    <div className="h-full overflow-hidden">
+      <WidgetLayout
+        preview={GamepadPreview}
+        settings={GamepadSettings}
+        className="min-h-[500px]" // Ensure minimum height
+      />
     </div>
   );
 }

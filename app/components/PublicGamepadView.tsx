@@ -119,34 +119,77 @@ export function PublicGamepadView() {
     [setGamepadState, updateConnectionState, settings.deadzone]
   );
 
-  // Update the channel subscription
+  // Subscribe to both gamepad state and settings changes
   useEffect(() => {
-    if (!username) return;
+    if (!username || !userId) return;
 
     let mounted = true;
-    console.log("Setting up gamepad channel for:", username);
 
+    // Create channels for both gamepad state and settings
     const gamepadChannel = supabase.channel(`gamepad:${username}`, {
       config: { broadcast: { self: false } },
     });
 
+    // Subscribe to settings changes in realtime
+    const settingsSubscription = supabase
+      .channel("settings_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "GamepadWidget",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (!mounted) return;
+          console.log("Settings update received:", payload);
+
+          const newSettings = {
+            ...defaultGamepadSettings,
+            ...(payload.new.settings || {}),
+            ...(payload.new.gamepad_settings || {}),
+            showButtonPresses: payload.new.showPressedButtons ?? true,
+            style: payload.new.style,
+            layout: payload.new.layout,
+          };
+
+          // Only update if there are actual changes
+          if (!areSettingsEqual(settings, newSettings)) {
+            console.log("Applying new settings:", newSettings);
+            setSettings(newSettings as GamepadSettings);
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to gamepad state updates
     gamepadChannel
       .on("broadcast", { event: "gamepadState" }, ({ payload }) => {
-        console.log("Received gamepad state:", payload);
         if (!mounted || !payload?.gamepadState) return;
 
-        handleGamepadState(payload.gamepadState);
+        const state = payload.gamepadState;
+        const hasActivity =
+          state.buttons.some((button) => button) ||
+          state.axes.some(
+            (axis) => Math.abs(axis) > (settings.deadzone ?? 0.05)
+          );
+
+        if (hasActivity) {
+          setLastActivityTime(Date.now());
+          setIsInactive(false);
+        }
+
+        setGamepadState(state);
       })
-      .subscribe((status) => {
-        console.log("Channel status:", status);
-      });
+      .subscribe();
 
     return () => {
-      console.log("Cleaning up gamepad channel");
       mounted = false;
       gamepadChannel.unsubscribe();
+      settingsSubscription.unsubscribe();
     };
-  }, [username, handleGamepadState]);
+  }, [username, userId]); // Only depend on username and userId
 
   // Separate effect to handle inactivity check
   useEffect(() => {
@@ -241,14 +284,6 @@ export function PublicGamepadView() {
           className="flex h-full w-full flex-col justify-center space-y-4"
         >
           <Gamepad className="h-12 w-12 text-muted-foreground/50" />
-          {/* <div>
-            <h3 className="text-lg font-semibold text-muted-foreground text-center">
-              Waiting for controller input...
-            </h3>
-            <p className="text-sm text-muted-foreground/75 text-center">
-              Controller inactive for {settings.inactivityTimeout} seconds
-            </p>
-          </div> */}
         </motion.div>
       ) : (
         <motion.div

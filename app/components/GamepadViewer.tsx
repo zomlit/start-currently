@@ -763,10 +763,10 @@ export function GamepadViewer({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col">
+    <div className="relative w-full h-full flex flex-col">
       {CalibrationDialog}
       <div
-        className="relative flex h-full w-full flex-col"
+        className="relative flex-1 w-full h-full"
         style={
           {
             backgroundColor:
@@ -779,519 +779,498 @@ export function GamepadViewer({
           } as React.CSSProperties
         }
       >
-        <div className="">
-          <div className="relative w-full flex justify-center">
-            {/* Debug overlay with animation */}
-            <AnimatePresence>
-              {settings?.debugMode && !isPublicView && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute top-0 z-50 w-full rounded-lg border border-border/50 bg-gradient/25 p-6 shadow-2xl backdrop-opacity-60 backdrop-invert dark:bg-black/95 bg-white/95"
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-border/50 pb-4">
-                    <div>
-                      <h2 className="text-2xl font-black text-foreground">
-                        Deadzone Tester
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        Monitor stick drift and calibrate your controller
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        onClick={handleCalibrate}
-                        className="bg-violet-600 text-white hover:bg-violet-700"
-                      >
-                        <Crosshair className="mr-2 h-4 w-4" />
-                        Calibrate
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onSettingsChange?.({ debugMode: false })}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+        <div className="w-full h-full flex items-center justify-center min-h-[687px]">
+          {/* Debug overlay with animation */}
+          <AnimatePresence>
+            {settings?.debugMode && !isPublicView && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-0 z-50 w-full bg-gradient/25 p-6 shadow-2xl backdrop-opacity-60 backdrop-invert dark:bg-black/95 bg-white/95"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-foreground">
+                      Deadzone Tester
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Monitor stick drift and calibrate your controller
+                    </p>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={handleCalibrate}
+                      className="bg-violet-600 text-white hover:bg-violet-700"
+                    >
+                      <Crosshair className="mr-2 h-4 w-4" />
+                      Calibrate
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onSettingsChange?.({ debugMode: false })}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
 
-                  {/* Stick Information */}
-                  <div className="mt-6 grid gap-6 md:grid-cols-2">
-                    {/* Left Stick */}
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-violet-400">
-                        {/* <Gauge className="h-4 w-4" />
-                        <span>Left Stick</span> */}
+                {/* Stick Information */}
+                <div className="mt-6 grid gap-6 md:grid-cols-2">
+                  {/* Left Stick */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2 text-sm font-medium text-violet-400">
+                      {/* <Gauge className="h-4 w-4" />
+                      <span>Left Stick</span> */}
+                    </div>
+                    <div className="flex justify-center">
+                      <DeadzoneVisualizer
+                        x={axes[0]}
+                        y={axes[1]}
+                        deadzone={deadzone}
+                      />
+                    </div>
+                    <div className="rounded-lg bg-card/50 p-3 shadow-sm">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>X: {formatStickValue(axes[0])}</div>
+                        <div>Y: {formatStickValue(axes[1])}</div>
                       </div>
-                      <div className="flex justify-center">
-                        <DeadzoneVisualizer
-                          x={axes[0]}
-                          y={axes[1]}
-                          deadzone={deadzone}
-                        />
-                      </div>
-                      <div className="rounded-lg bg-card/50 p-3 shadow-sm">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>X: {formatStickValue(axes[0])}</div>
-                          <div>Y: {formatStickValue(axes[1])}</div>
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Current Drift:
+                          </span>
+                          <span
+                            className={getDriftValueColor(
+                              Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+                              deadzone
+                            )}
+                          >
+                            {getStableDriftValue(
+                              Math.max(Math.abs(axes[0]), Math.abs(axes[1]))
+                            )}
+                          </span>
                         </div>
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              Current Drift:
-                            </span>
-                            <span
-                              className={getDriftValueColor(
+                        {!isUserInteracting && (
+                          <div
+                            className={cn(
+                              "mt-1 text-center text-xs font-medium rounded-full py-1",
+                              getDriftStatusText(
                                 Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
                                 deadzone
-                              )}
-                            >
-                              {getStableDriftValue(
-                                Math.max(Math.abs(axes[0]), Math.abs(axes[1]))
-                              )}
-                            </span>
+                              ).color,
+                              "bg-black/5"
+                            )}
+                          >
+                            {
+                              getDriftStatusText(
+                                Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+                                deadzone
+                              ).text
+                            }
                           </div>
-                          {!isUserInteracting && (
-                            <div
-                              className={cn(
-                                "mt-1 text-center text-xs font-medium rounded-full py-1",
-                                getDriftStatusText(
-                                  Math.max(
-                                    Math.abs(axes[0]),
-                                    Math.abs(axes[1])
-                                  ),
-                                  deadzone
-                                ).color,
-                                "bg-black/5"
-                              )}
-                            >
-                              {
-                                getDriftStatusText(
-                                  Math.max(
-                                    Math.abs(axes[0]),
-                                    Math.abs(axes[1])
-                                  ),
-                                  deadzone
-                                ).text
-                              }
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Right Stick */}
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-violet-400">
-                        {/* <Gauge className="h-4 w-4" />
-                        <span>Right Stick</span> */}
+                  {/* Right Stick */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2 text-sm font-medium text-violet-400">
+                      {/* <Gauge className="h-4 w-4" />
+                      <span>Right Stick</span> */}
+                    </div>
+                    <div className="flex justify-center">
+                      <DeadzoneVisualizer
+                        x={axes[2]}
+                        y={axes[3]}
+                        deadzone={deadzone}
+                      />
+                    </div>
+                    <div className="rounded-lg bg-card/50 p-3 shadow-sm">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>X: {formatStickValue(axes[2])}</div>
+                        <div>Y: {formatStickValue(axes[3])}</div>
                       </div>
-                      <div className="flex justify-center">
-                        <DeadzoneVisualizer
-                          x={axes[2]}
-                          y={axes[3]}
-                          deadzone={deadzone}
-                        />
-                      </div>
-                      <div className="rounded-lg bg-card/50 p-3 shadow-sm">
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>X: {formatStickValue(axes[2])}</div>
-                          <div>Y: {formatStickValue(axes[3])}</div>
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Current Drift:
+                          </span>
+                          <span
+                            className={getDriftValueColor(
+                              Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+                              deadzone
+                            )}
+                          >
+                            {getStableDriftValue(
+                              Math.max(Math.abs(axes[2]), Math.abs(axes[3]))
+                            )}
+                          </span>
                         </div>
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              Current Drift:
-                            </span>
-                            <span
-                              className={getDriftValueColor(
+                        {!isUserInteracting && (
+                          <div
+                            className={cn(
+                              "mt-1 text-center text-xs font-medium rounded-full py-1",
+                              getDriftStatusText(
                                 Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
                                 deadzone
-                              )}
-                            >
-                              {getStableDriftValue(
-                                Math.max(Math.abs(axes[2]), Math.abs(axes[3]))
-                              )}
-                            </span>
+                              ).color,
+                              "bg-black/5"
+                            )}
+                          >
+                            {
+                              getDriftStatusText(
+                                Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+                                deadzone
+                              ).text
+                            }
                           </div>
-                          {!isUserInteracting && (
-                            <div
-                              className={cn(
-                                "mt-1 text-center text-xs font-medium rounded-full py-1",
-                                getDriftStatusText(
-                                  Math.max(
-                                    Math.abs(axes[2]),
-                                    Math.abs(axes[3])
-                                  ),
-                                  deadzone
-                                ).color,
-                                "bg-black/5"
-                              )}
-                            >
-                              {
-                                getDriftStatusText(
-                                  Math.max(
-                                    Math.abs(axes[2]),
-                                    Math.abs(axes[3])
-                                  ),
-                                  deadzone
-                                ).text
-                              }
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Deadzone Slider */}
-                  <div className="mt-6 border-t border-border/50 pt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-violet-400">
-                        Deadzone Adjustment
-                      </span>
-                      <span
-                        className={cn(
-                          "text-3xl font-black transition-colors duration-200",
-                          getDeadzoneDisplayColor(deadzone, axes)
                         )}
-                      >
-                        {deadzone?.toFixed(2)}
-                      </span>
+                      </div>
                     </div>
-                    <div className="mt-2">
-                      <Slider
-                        min={0}
-                        max={0.4}
-                        step={0.01}
-                        value={[deadzone ?? 0.05]}
-                        onValueChange={([value]) =>
-                          onSettingsChange?.({ deadzone: value })
-                        }
-                        className="py-2"
-                      />
-                      <div className="relative mt-1 h-6 m-[10px]">
-                        {/* Tick marks */}
-                        {Array.from({ length: 41 }).map((_, i) => {
-                          const value = (i * 0.01).toFixed(2);
-                          const isMajorTick = i % 5 === 0;
-                          return (
-                            <div
-                              key={i}
-                              className={cn(
-                                "absolute -translate-x-1/2",
-                                isMajorTick
-                                  ? "h-3 w-0.5 bg-violet-500/50"
-                                  : "h-2 w-px bg-violet-500/30"
-                              )}
-                              style={{
-                                left: `calc(${(Number(value) / 0.4) * 100}%)`,
-                                top: 0,
-                              }}
-                            >
-                              {isMajorTick && (
-                                <span className="absolute top-3 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
-                                  {value}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
+                  </div>
+                </div>
+
+                {/* Deadzone Slider */}
+                <div className="mt-6 border-t border-border/50 pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-violet-400">
+                      Deadzone Adjustment
+                    </span>
+                    <span
+                      className={cn(
+                        "text-3xl font-black transition-colors duration-200",
+                        getDeadzoneDisplayColor(deadzone, axes)
+                      )}
+                    >
+                      {deadzone?.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <Slider
+                      min={0}
+                      max={0.4}
+                      step={0.01}
+                      value={[deadzone ?? 0.05]}
+                      onValueChange={([value]) =>
+                        onSettingsChange?.({ deadzone: value })
+                      }
+                      className="py-2"
+                    />
+                    <div className="relative mt-1 h-6 m-[10px]">
+                      {/* Tick marks */}
+                      {Array.from({ length: 41 }).map((_, i) => {
+                        const value = (i * 0.01).toFixed(2);
+                        const isMajorTick = i % 5 === 0;
+                        return (
+                          <div
+                            key={i}
+                            className={cn(
+                              "absolute -translate-x-1/2",
+                              isMajorTick
+                                ? "h-3 w-0.5 bg-violet-500/50"
+                                : "h-2 w-px bg-violet-500/30"
+                            )}
+                            style={{
+                              left: `calc(${(Number(value) / 0.4) * 100}%)`,
+                              top: 0,
+                            }}
+                          >
+                            {isMajorTick && (
+                              <span className="absolute top-3 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
+                                {value}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Info */}
+                <div className="mt-4 grid gap-3 border-t border-border/50 pt-4 text-sm md:grid-cols-3">
+                  <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
+                    <span className="text-muted-foreground">Deadzone:</span>{" "}
+                    <span className="font-medium text-violet-400">
+                      {deadzone.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
+                    <span className="text-muted-foreground">
+                      Active Buttons:
+                    </span>{" "}
+                    <span className="font-medium text-violet-400">
+                      {buttons.filter(Boolean).length}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
+                    <span className="text-muted-foreground">Scale:</span>{" "}
+                    <span className="font-medium text-violet-400">
+                      {settings?.scale?.toFixed(2)}x
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Controller container */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            <div className="relative w-full aspect-[800/592] max-h-full">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className={cn(
+                    "controller",
+                    settings?.controllerType || "ds4",
+                    settings?.controllerColor,
+                    "active"
+                  )}
+                  style={
+                    {
+                      transform: `scale(${settings?.scale || 1})`,
+                      position: "relative",
+                      display: "block",
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      "--button-color": settings?.buttonColor,
+                    } as React.CSSProperties
+                  }
+                >
+                  {/* Base Controller SVG - Switch between regular and macho base */}
+                  {settings?.controllerColor === "macho" ? (
+                    <MachoBase className="absolute inset-0 w-full h-full" />
+                  ) : (
+                    <DS4Base className="absolute inset-0 w-full h-full" />
+                  )}
+
+                  {/* Triggers Container */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: "-2%",
+                      left: "0%",
+                      width: "100%",
+                      height: "20%",
+                    }}
+                  >
+                    <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
+                      <div className="w-[15%] h-full ml-[5.4%]">
+                        <Triggers
+                          pressed={Number(gamepadState?.buttons?.[6] ?? 0)}
+                          side="left"
+                        />
+                      </div>
+                      <div className="w-[15%] h-full mr-[5.4%]">
+                        <Triggers
+                          pressed={Number(gamepadState?.buttons?.[7] ?? 0)}
+                          side="right"
+                        />
                       </div>
                     </div>
                   </div>
 
-                  {/* Footer Info */}
-                  <div className="mt-4 grid gap-3 border-t border-border/50 pt-4 text-sm md:grid-cols-3">
-                    <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
-                      <span className="text-muted-foreground">Deadzone:</span>{" "}
-                      <span className="font-medium text-violet-400">
-                        {deadzone.toFixed(2)}
-                      </span>
+                  {/* Bumpers */}
+                  <div className="bumpers">
+                    <div className={cn("bumper left", buttons[4] && "pressed")}>
+                      <Bumper pressed={buttons[4]} />
                     </div>
-                    <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
-                      <span className="text-muted-foreground">
-                        Active Buttons:
-                      </span>{" "}
-                      <span className="font-medium text-violet-400">
-                        {buttons.filter(Boolean).length}
-                      </span>
-                    </div>
-                    <div className="rounded-lg bg-card/50 p-2 text-center shadow-sm">
-                      <span className="text-muted-foreground">Scale:</span>{" "}
-                      <span className="font-medium text-violet-400">
-                        {settings?.scale?.toFixed(2)}x
-                      </span>
+                    <div
+                      className={cn("bumper right", buttons[5] && "pressed")}
+                    >
+                      <Bumper pressed={buttons[5]} />
                     </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
-            {/* Controller render */}
-            <div className="relative w-full h-full flex items-center justify-center">
-              {/* Controller container with aspect ratio */}
-              <div className="relative w-full aspect-[800/592]">
-                {" "}
-                {/* DS4 aspect ratio */}
-                <div className="absolute inset-0 flex items-center justify-center">
+                  {/* Face Buttons */}
+                  <div className="abxy">
+                    {settings?.showButtonPresses && (
+                      <>
+                        <div>
+                          <CrossButton
+                            pressed={buttons[0]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div>
+                          <CircleButton
+                            pressed={buttons[1]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div>
+                          <SquareButton
+                            pressed={buttons[2]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div>
+                          <TriangleButton
+                            pressed={buttons[3]}
+                            color={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(settings?.buttonShapeColor)
+                                : undefined
+                            }
+                            pressedColor={
+                              settings?.useCustomShapeColors
+                                ? safeFormatColor(
+                                    settings?.buttonShapePressedColor
+                                  )
+                                : undefined
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* D-Pad */}
                   <div
-                    className={cn(
-                      "controller",
-                      settings?.controllerType || "ds4",
-                      settings?.controllerColor,
-                      "active"
-                    )}
-                    style={
-                      {
-                        transform: `scale(${settings?.scale || 1})`,
-                        position: "relative",
-                        display: "block",
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain",
-                        "--button-color": settings?.buttonColor,
-                      } as React.CSSProperties
-                    }
+                    className="absolute"
+                    style={{
+                      width: "30%",
+                      height: "30%",
+                      top: "26%",
+                      left: "4.25%",
+                    }}
                   >
-                    {/* Base Controller SVG - Switch between regular and macho base */}
-                    {settings?.controllerColor === "macho" ? (
-                      <MachoBase className="absolute inset-0 w-full h-full" />
-                    ) : (
-                      <DS4Base className="absolute inset-0 w-full h-full" />
+                    {settings?.showButtonPresses && (
+                      <DPad
+                        pressed={{
+                          up: buttons[12],
+                          down: buttons[13],
+                          left: buttons[14],
+                          right: buttons[15],
+                        }}
+                        color={
+                          settings?.useCustomShapeColors
+                            ? safeFormatColor(settings?.buttonShapeColor)
+                            : undefined
+                        }
+                        pressedColor={
+                          settings?.useCustomShapeColors
+                            ? safeFormatColor(settings?.buttonShapePressedColor)
+                            : undefined
+                        }
+                      />
                     )}
+                  </div>
 
-                    {/* Triggers Container */}
+                  {/* Analog Sticks */}
+                  {settings?.showAnalogSticks && (
                     <div
-                      className="absolute"
+                      className="sticks absolute"
                       style={{
-                        top: "-2%",
-                        left: "0%",
-                        width: "100%",
+                        top: "58%",
+                        left: "25%",
+                        width: "50%",
                         height: "20%",
                       }}
                     >
-                      <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
-                        <div className="w-[15%] h-full ml-[5.4%]">
-                          <Triggers
-                            pressed={Number(gamepadState?.buttons?.[6] ?? 0)}
-                            side="left"
-                          />
-                        </div>
-                        <div className="w-[15%] h-full mr-[5.4%]">
-                          <Triggers
-                            pressed={Number(gamepadState?.buttons?.[7] ?? 0)}
-                            side="right"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bumpers */}
-                    <div className="bumpers">
-                      <div
-                        className={cn("bumper left", buttons[4] && "pressed")}
-                      >
-                        <Bumper pressed={buttons[4]} />
-                      </div>
-                      <div
-                        className={cn("bumper right", buttons[5] && "pressed")}
-                      >
-                        <Bumper pressed={buttons[5]} />
-                      </div>
-                    </div>
-
-                    {/* Face Buttons */}
-                    <div className="abxy">
-                      {settings?.showButtonPresses && (
-                        <>
-                          <div>
-                            <CrossButton
-                              pressed={buttons[0]}
-                              color={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(settings?.buttonShapeColor)
-                                  : undefined
-                              }
-                              pressedColor={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(
-                                      settings?.buttonShapePressedColor
-                                    )
-                                  : undefined
-                              }
-                            />
-                          </div>
-                          <div>
-                            <CircleButton
-                              pressed={buttons[1]}
-                              color={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(settings?.buttonShapeColor)
-                                  : undefined
-                              }
-                              pressedColor={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(
-                                      settings?.buttonShapePressedColor
-                                    )
-                                  : undefined
-                              }
-                            />
-                          </div>
-                          <div>
-                            <SquareButton
-                              pressed={buttons[2]}
-                              color={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(settings?.buttonShapeColor)
-                                  : undefined
-                              }
-                              pressedColor={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(
-                                      settings?.buttonShapePressedColor
-                                    )
-                                  : undefined
-                              }
-                            />
-                          </div>
-                          <div>
-                            <TriangleButton
-                              pressed={buttons[3]}
-                              color={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(settings?.buttonShapeColor)
-                                  : undefined
-                              }
-                              pressedColor={
-                                settings?.useCustomShapeColors
-                                  ? safeFormatColor(
-                                      settings?.buttonShapePressedColor
-                                    )
-                                  : undefined
-                              }
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* D-Pad */}
-                    <div
-                      className="absolute"
-                      style={{
-                        width: "30%",
-                        height: "30%",
-                        top: "26%",
-                        left: "4.25%",
-                      }}
-                    >
-                      {settings?.showButtonPresses && (
-                        <DPad
-                          pressed={{
-                            up: buttons[12],
-                            down: buttons[13],
-                            left: buttons[14],
-                            right: buttons[15],
+                      <div className="relative w-full h-full">
+                        {/* Left Stick */}
+                        <div
+                          className="absolute"
+                          style={{
+                            bottom: "0",
+                            left: "5%",
+                            transform: `translate(${axes[0] * 20}px, calc(-50% + ${axes[1] * 20}px))`,
+                            width: "26.04%",
+                            height: "89.52%",
                           }}
-                          color={
-                            settings?.useCustomShapeColors
-                              ? safeFormatColor(settings?.buttonShapeColor)
-                              : undefined
-                          }
-                          pressedColor={
-                            settings?.useCustomShapeColors
-                              ? safeFormatColor(
-                                  settings?.buttonShapePressedColor
-                                )
-                              : undefined
-                          }
-                        />
-                      )}
-                    </div>
+                        >
+                          <DS4Sticks
+                            className={cn(
+                              "w-full h-full",
+                              buttons[10] && "pressed"
+                            )}
+                            style={
+                              {
+                                "--stick-color": buttons[10]
+                                  ? safeFormatColor(
+                                      settings?.buttonPressedColor
+                                    )
+                                  : safeFormatColor(settings?.stickColor),
+                              } as React.CSSProperties
+                            }
+                          />
+                        </div>
 
-                    {/* Analog Sticks */}
-                    {settings?.showAnalogSticks && (
-                      <div
-                        className="sticks absolute"
-                        style={{
-                          top: "58%",
-                          left: "25%",
-                          width: "50%",
-                          height: "20%",
-                        }}
-                      >
-                        <div className="relative w-full h-full">
-                          {/* Left Stick */}
-                          <div
-                            className="absolute"
-                            style={{
-                              bottom: "0",
-                              left: "5%",
-                              transform: `translate(${axes[0] * 20}px, calc(-50% + ${axes[1] * 20}px))`,
-                              width: "26.04%",
-                              height: "89.52%",
-                            }}
-                          >
-                            <DS4Sticks
-                              className={cn(
-                                "w-full h-full",
-                                buttons[10] && "pressed"
-                              )}
-                              style={
-                                {
-                                  "--stick-color": buttons[10]
-                                    ? safeFormatColor(
-                                        settings?.buttonPressedColor
-                                      )
-                                    : safeFormatColor(settings?.stickColor),
-                                } as React.CSSProperties
-                              }
-                            />
-                          </div>
-
-                          {/* Right Stick */}
-                          <div
-                            className="absolute"
-                            style={{
-                              right: "5%",
-                              bottom: "0",
-                              transform: `translate(${axes[2] * 20}px, calc(-50% + ${axes[3] * 20}px))`,
-                              width: "26.04%",
-                              height: "89.52%",
-                            }}
-                          >
-                            <DS4Sticks
-                              className={cn(
-                                "w-full h-full",
-                                buttons[11] && "pressed"
-                              )}
-                              style={
-                                {
-                                  "--stick-color": buttons[11]
-                                    ? safeFormatColor(
-                                        settings?.buttonPressedColor
-                                      )
-                                    : safeFormatColor(settings?.stickColor),
-                                } as React.CSSProperties
-                              }
-                            />
-                          </div>
+                        {/* Right Stick */}
+                        <div
+                          className="absolute"
+                          style={{
+                            right: "5%",
+                            bottom: "0",
+                            transform: `translate(${axes[2] * 20}px, calc(-50% + ${axes[3] * 20}px))`,
+                            width: "26.04%",
+                            height: "89.52%",
+                          }}
+                        >
+                          <DS4Sticks
+                            className={cn(
+                              "w-full h-full",
+                              buttons[11] && "pressed"
+                            )}
+                            style={
+                              {
+                                "--stick-color": buttons[11]
+                                  ? safeFormatColor(
+                                      settings?.buttonPressedColor
+                                    )
+                                  : safeFormatColor(settings?.stickColor),
+                              } as React.CSSProperties
+                            }
+                          />
                         </div>
                       </div>
-                    )}
-
-                    {/* Start/Select Buttons */}
-                    <div className="arrows">
-                      <div className={cn("back", buttons[8] && "pressed")} />
-                      <div className={cn("start", buttons[9] && "pressed")} />
                     </div>
+                  )}
+
+                  {/* Start/Select Buttons */}
+                  <div className="arrows">
+                    <div className={cn("back", buttons[8] && "pressed")} />
+                    <div className={cn("start", buttons[9] && "pressed")} />
                   </div>
                 </div>
               </div>
