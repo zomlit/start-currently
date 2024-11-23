@@ -84,116 +84,69 @@ export function PublicGamepadView() {
     [setStoreIsConnected]
   );
 
-  // Setup Supabase realtime subscription for both gamepad state and settings
+  // Update the gamepad state handler
+  const handleGamepadState = useCallback(
+    (state: GamepadState) => {
+      if (!state.buttons || !state.axes) {
+        console.log("Invalid gamepad state received:", state);
+        return;
+      }
+
+      // Set connected states when we receive any state
+      updateConnectionState(true);
+
+      // Check for actual activity
+      const hasActivity =
+        state.buttons.some((button) => button) ||
+        state.axes.some((axis) => Math.abs(axis) > (settings.deadzone ?? 0.05));
+
+      console.log("Activity check:", {
+        hasActivity,
+        buttons: state.buttons,
+        axes: state.axes,
+        timestamp: Date.now(),
+      });
+
+      if (hasActivity) {
+        console.log("Activity detected, resetting timer");
+        setLastActivityTime(Date.now());
+        setIsInactive(false);
+      }
+
+      // Always update the gamepad state
+      setGamepadState(state);
+    },
+    [setGamepadState, updateConnectionState, settings.deadzone]
+  );
+
+  // Update the channel subscription
   useEffect(() => {
     if (!username) return;
 
     let mounted = true;
-    let lastActivityTimestamp = Date.now();
+    console.log("Setting up gamepad channel for:", username);
 
-    // Create channels for both gamepad state and settings
     const gamepadChannel = supabase.channel(`gamepad:${username}`, {
       config: { broadcast: { self: false } },
     });
 
-    const settingsChannel = supabase.channel(`settings:${username}`, {
-      config: {
-        broadcast: { self: false },
-        postgres_changes: [
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "GamepadWidget",
-            filter: `username=eq.${username}`,
-          },
-        ],
-      },
-    });
-
-    // Subscribe to gamepad state updates
     gamepadChannel
       .on("broadcast", { event: "gamepadState" }, ({ payload }) => {
+        console.log("Received gamepad state:", payload);
         if (!mounted || !payload?.gamepadState) return;
 
-        const state = payload.gamepadState;
-
-        // Check for actual changes in state
-        const hasActivity =
-          state.buttons.some((button) => button) ||
-          state.axes.some(
-            (axis) => Math.abs(axis) > (settings.deadzone ?? 0.05)
-          );
-
-        // Only update activity time if there's actual input
-        if (hasActivity) {
-          console.log("Activity detected, resetting timer");
-          setLastActivityTime(Date.now());
-          setIsInactive(false);
-        }
-
-        // Always update the gamepad state
-        setGamepadState(state);
-        lastStateRef.current = state;
+        handleGamepadState(payload.gamepadState);
       })
-      .subscribe();
-
-    // Subscribe to settings changes
-    settingsChannel
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "GamepadWidget",
-        },
-        (payload) => {
-          if (!mounted) return;
-
-          const newSettings = {
-            ...defaultGamepadSettings, // Start with defaults
-            ...(payload.new.settings || {}),
-            ...(payload.new.gamepad_settings || {}),
-            showButtonPresses: payload.new.showPressedButtons ?? true,
-            style: payload.new.style || defaultGamepadSettings.style,
-            layout: payload.new.layout || defaultGamepadSettings.layout,
-            hideWhenInactive:
-              payload.new.settings?.hideWhenInactive ??
-              defaultGamepadSettings.hideWhenInactive,
-          } as GamepadSettings;
-
-          // Find what's actually changing
-          const changes = findSettingsDiff(settings, newSettings);
-
-          if (Object.keys(changes).length > 0) {
-            console.log(
-              "Actual settings changes:",
-              Object.fromEntries(
-                Object.entries(changes).filter(
-                  ([_, change]) => change.old !== change.new
-                )
-              )
-            );
-            setSettings(newSettings);
-          }
-        }
-      )
-      .subscribe();
-
-    // Handle disconnection based on activity
-    const checkConnection = setInterval(() => {
-      if (!mounted) return;
-      if (Date.now() - lastActivityTimestamp > 3000) {
-        updateConnectionState(false);
-      }
-    }, 1000);
+      .subscribe((status) => {
+        console.log("Channel status:", status);
+      });
 
     return () => {
+      console.log("Cleaning up gamepad channel");
       mounted = false;
-      clearInterval(checkConnection);
       gamepadChannel.unsubscribe();
-      settingsChannel.unsubscribe();
     };
-  }, [username, setGamepadState, updateConnectionState, settings.deadzone]);
+  }, [username, handleGamepadState]);
 
   // Separate effect to handle inactivity check
   useEffect(() => {

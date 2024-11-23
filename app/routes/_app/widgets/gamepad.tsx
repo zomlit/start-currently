@@ -45,161 +45,60 @@ const BUTTON_MAPPINGS = [
 const TOKEN_REFRESH_BUFFER = 60 * 1000; // Refresh 60 seconds before expiry
 const TOKEN_UPDATE_INTERVAL = 60 * 1000; // Check token every 60 seconds
 
-// Add these helper functions at the top level
-const AXIS_THRESHOLD = 0.05; // Minimum change in axis value to trigger an update
-
-function hasSignificantAxisChange(
-  oldAxes: number[],
-  newAxes: number[]
-): boolean {
-  return newAxes.some((value, index) => {
-    const oldValue = oldAxes[index] || 0;
-    return Math.abs(value - oldValue) > AXIS_THRESHOLD;
-  });
-}
-
-function hasButtonStateChanged(
-  oldButtons: boolean[],
-  newButtons: boolean[]
-): boolean {
-  return newButtons.some((value, index) => value !== oldButtons[index]);
-}
+const DRIFT_THRESHOLD = 0.15; // Only filter movements below this threshold
 
 export function GamepadSection() {
   const { user } = useUser();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const [currentGamepadState, setCurrentGamepadState] =
     useState<GamepadState | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const frameRef = useRef<number | null>(null);
-  const lastBroadcastRef = useRef<number>(0);
-  const BROADCAST_INTERVAL = 16;
-  const lastStateRef = useRef<string>("");
+  const [settings, setSettings] = useState<GamepadSettings>({
+    ...defaultGamepadSettings,
+  });
 
   // Use the useGamepad hook with the default deadzone
   const { gamepadState, isConnected: isGamepadConnected } = useGamepad(
     defaultGamepadSettings.deadzone || 0.1
   );
 
-  const channelId = `gamepad:${user?.username}`;
-
-  const lastValidStateRef = useRef<GamepadState>({
-    buttons: Array(18).fill(false),
-    axes: Array(4).fill(0),
-  });
-
-  const broadcastGamepadState = useCallback(
-    async (state: HookGamepadState) => {
-      if (!user?.id || !channelRef.current || !state) return;
-
-      const now = performance.now();
-      if (now - lastBroadcastRef.current < BROADCAST_INTERVAL) return;
-
-      const transformedState: GamepadState = {
-        buttons: state.buttons.map((button) => button.pressed),
-        axes: state.axes,
-      };
-
-      // Check if the state has changed significantly
-      const hasSignificantChange =
-        hasSignificantAxisChange(
-          lastValidStateRef.current.axes,
-          transformedState.axes
-        ) ||
-        hasButtonStateChanged(
-          lastValidStateRef.current.buttons,
-          transformedState.buttons
-        );
-
-      if (!hasSignificantChange) return;
-
-      // Update the last valid state
-      lastValidStateRef.current = transformedState;
-      lastBroadcastRef.current = now;
-
-      try {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "gamepadState",
-          payload: { gamepadState: transformedState },
-        });
-      } catch (error) {
-        console.error("Error broadcasting gamepad state:", error);
-      }
-    },
-    [user?.id]
-  );
-
   // Setup Supabase channel
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !user?.username) return;
 
-    const channel = supabase.channel(channelId, {
+    const channel = supabase.channel(`gamepad:${user.username}`, {
       config: {
         broadcast: { self: false },
-        presence: { key: user.id },
       },
     });
 
-    channel
-      .on("broadcast", { event: "gamepadState" }, (payload) => {
-        if (payload.payload?.gamepadState) {
-          setCurrentGamepadState(payload.payload.gamepadState);
-        }
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          channelRef.current = channel;
-          setIsConnected(true);
-        } else {
-          setIsConnected(false);
-        }
-      });
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        channelRef.current = channel;
+      }
+    });
 
     return () => {
       channel.unsubscribe();
       channelRef.current = null;
     };
-  }, [user?.id, channelId]);
+  }, [user?.id, user?.username]);
 
-  // Use RAF for smoother updates
+  // Watch gamepadState and broadcast changes
   useEffect(() => {
-    if (!gamepadState) return;
+    if (!channelRef.current || !gamepadState) return;
 
-    const updateFrame = () => {
-      const transformedState: GamepadState = {
-        buttons: gamepadState.buttons.map((button) => button.pressed),
-        axes: gamepadState.axes,
-      };
-
-      // Check if the state has changed significantly
-      const hasSignificantChange =
-        hasSignificantAxisChange(
-          lastValidStateRef.current.axes,
-          transformedState.axes
-        ) ||
-        hasButtonStateChanged(
-          lastValidStateRef.current.buttons,
-          transformedState.buttons
-        );
-
-      if (hasSignificantChange) {
-        setCurrentGamepadState(transformedState);
-        broadcastGamepadState(gamepadState);
-        lastValidStateRef.current = transformedState;
-      }
-
-      frameRef.current = requestAnimationFrame(updateFrame);
-    };
-
-    frameRef.current = requestAnimationFrame(updateFrame);
-
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, [gamepadState, broadcastGamepadState]);
+    // Send the state directly
+    channelRef.current.send({
+      type: "broadcast",
+      event: "gamepadState",
+      payload: {
+        gamepadState: {
+          buttons: gamepadState.buttons.map((button) => button.pressed),
+          axes: gamepadState.axes,
+        },
+      },
+    });
+  }, [gamepadState]);
 
   // Get the public URL
   const publicUrl = user?.username
@@ -224,11 +123,6 @@ export function GamepadSection() {
     },
     [user?.username]
   );
-
-  // Initialize settings with the imported default
-  const [settings, setSettings] = useState<GamepadSettings>({
-    ...defaultGamepadSettings,
-  });
 
   const { mutateAsync: updateSettings } = useUpdateGamepadSettings();
 
@@ -339,19 +233,26 @@ export function GamepadSection() {
   // Update GamepadViewer props in the preview
   const GamepadPreview = (
     <div className="flex h-full flex-col">
-      <div className="flex-1 space-y-4">
+      <div className="flex-1">
         <GamepadViewer
           settings={settings}
           username={user?.username || undefined}
-          gamepadState={currentGamepadState}
+          gamepadState={
+            gamepadState
+              ? {
+                  buttons: gamepadState.buttons.map((button) => button.pressed),
+                  axes: gamepadState.axes,
+                }
+              : null
+          }
           isPublicView={false}
           onSettingsChange={handleSettingsChange}
         />
 
-        {/* Stick Values Display */}
-        {currentGamepadState && (
+        {/* Stick Values Display - Only show when gamepadState exists */}
+        {gamepadState && (
           <div className="mx-auto max-w-md rounded-lg border bg-card p-4 shadow-sm">
-            {renderStickValues(currentGamepadState.axes)}
+            {renderStickValues(gamepadState.axes)}
           </div>
         )}
       </div>
@@ -390,20 +291,6 @@ export function GamepadSection() {
       </div>
     </div>
   );
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        // Reset or reinitialize gamepad state if needed
-        setCurrentGamepadState(gamepadState);
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [gamepadState]);
 
   return (
     <div className="max-h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
