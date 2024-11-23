@@ -4,11 +4,19 @@ import type { ComponentProps } from "react";
 import { useThemeStore } from "@/store/themeStore";
 
 function Toaster(props: ComponentProps<typeof Sonner>) {
-  const theme = useThemeStore();
+  const { theme } = useThemeStore();
+
+  // Get the actual theme based on system preference
+  const resolvedTheme =
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme;
 
   return (
     <Sonner
-      theme={theme.theme as "light" | "dark"}
+      theme={resolvedTheme as "light" | "dark"}
       style={{ zIndex: 999 }}
       className="toaster group"
       toastOptions={{

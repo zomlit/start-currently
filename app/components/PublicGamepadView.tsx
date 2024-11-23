@@ -13,6 +13,7 @@ import type { GamepadSettings, GamepadState } from "@/types/gamepad";
 import { useGamepadStore } from "@/store/gamepadStore";
 import { Gamepad } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 // Add this helper function at the top
 const areSettingsEqual = (
@@ -75,9 +76,50 @@ export function PublicGamepadView() {
   // Add a ref to track the last state to prevent unnecessary updates
   const lastStateRef = useRef<GamepadState | null>(null);
 
-  // Combine the connection state updates
+  // Add last connection state ref to track changes
+  const lastConnectionStateRef = useRef<boolean>(false);
+
+  // Add gamepad connection event listener
+  useEffect(() => {
+    const handleGamepadConnected = (event: GamepadEvent) => {
+      console.log("Gamepad connected:", event.gamepad);
+      toast.success(`Controller ${event.gamepad.id} Connected`, {
+        description: "Now receiving controller input",
+      });
+    };
+
+    const handleGamepadDisconnected = (event: GamepadEvent) => {
+      console.log("Gamepad disconnected:", event.gamepad);
+      toast.error(`Controller ${event.gamepad.id} Disconnected`, {
+        description: "Waiting for controller to reconnect...",
+      });
+    };
+
+    window.addEventListener("gamepadconnected", handleGamepadConnected);
+    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+
+    return () => {
+      window.removeEventListener("gamepadconnected", handleGamepadConnected);
+      window.removeEventListener(
+        "gamepaddisconnected",
+        handleGamepadDisconnected
+      );
+    };
+  }, []);
+
+  // Update the connection state handler
   const updateConnectionState = useCallback(
     (isConnected: boolean) => {
+      // Only show toast if connection state has changed
+      if (lastConnectionStateRef.current !== isConnected) {
+        if (isConnected) {
+          console.log("Controller activity detected");
+        } else {
+          console.log("Controller activity stopped");
+        }
+        lastConnectionStateRef.current = isConnected;
+      }
+
       setIsConnected(isConnected);
       setStoreIsConnected(isConnected);
     },
@@ -92,28 +134,21 @@ export function PublicGamepadView() {
         return;
       }
 
-      // Set connected states when we receive any state
+      // Set connected state when we receive any state
       updateConnectionState(true);
 
       // Check for actual activity
       const hasActivity =
-        state.buttons.some((button) => button) ||
-        state.axes.some((axis) => Math.abs(axis) > (settings.deadzone ?? 0.05));
-
-      console.log("Activity check:", {
-        hasActivity,
-        buttons: state.buttons,
-        axes: state.axes,
-        timestamp: Date.now(),
-      });
+        state.buttons.some((button: boolean) => button) ||
+        state.axes.some(
+          (axis: number) => Math.abs(axis) > (settings.deadzone ?? 0.05)
+        );
 
       if (hasActivity) {
-        console.log("Activity detected, resetting timer");
         setLastActivityTime(Date.now());
         setIsInactive(false);
       }
 
-      // Always update the gamepad state
       setGamepadState(state);
     },
     [setGamepadState, updateConnectionState, settings.deadzone]
@@ -170,9 +205,9 @@ export function PublicGamepadView() {
 
         const state = payload.gamepadState;
         const hasActivity =
-          state.buttons.some((button) => button) ||
+          state.buttons.some((button: boolean) => button) ||
           state.axes.some(
-            (axis) => Math.abs(axis) > (settings.deadzone ?? 0.05)
+            (axis: number) => Math.abs(axis) > (settings.deadzone ?? 0.05)
           );
 
         if (hasActivity) {
@@ -271,36 +306,60 @@ export function PublicGamepadView() {
     loadSettings();
   }, [username]);
 
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const checkConnection = () => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - lastActivityTime;
+
+      // Consider disconnected if no activity for 3 seconds
+      if (timeSinceLastActivity > 3000 && isConnected) {
+        updateConnectionState(false);
+      }
+    };
+
+    // Check connection status every second
+    const intervalId = setInterval(checkConnection, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [lastActivityTime, isConnected, updateConnectionState]);
+
   // Update the render logic to use AnimatePresence
   return (
-    <AnimatePresence mode="wait">
-      {shouldHideController ? (
-        <motion.div
-          key="inactive"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex h-full w-full flex-col justify-center space-y-4"
-        >
-          <Gamepad className="h-12 w-12 text-muted-foreground/50" />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="active"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <GamepadViewer
-            settings={settings}
-            username={username}
-            gamepadState={gamepadState}
-            isPublicView={true}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        {shouldHideController ? (
+          <motion.div
+            key="inactive"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex h-full w-full flex-col justify-center space-y-4"
+          >
+            <Gamepad className="h-12 w-12 text-muted-foreground/50" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="active"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <GamepadViewer
+              settings={settings}
+              username={username}
+              gamepadState={gamepadState}
+              isPublicView={true}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

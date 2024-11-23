@@ -1,21 +1,13 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import { useGamepadStore } from "@/store/gamepadStore";
-
-interface GamepadState {
-  buttons: {
-    pressed: boolean;
-    value: number;
-  }[];
-  axes: number[];
-  timestamp: number;
-}
+import type { HookGamepadState } from "@/types/gamepad";
 
 export function useGamepad(deadzone: number = 0.1) {
   const { setGamepadState, setIsConnected } = useGamepadStore();
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
   const lastState = useRef<string>("");
   const gamepadIndex = useRef<number>(-1);
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const pollGamepad = useCallback(() => {
     try {
@@ -23,7 +15,7 @@ export function useGamepad(deadzone: number = 0.1) {
       const gamepad = gamepads[gamepadIndex.current];
 
       if (gamepad && gamepad.connected) {
-        const newState = {
+        const newState: HookGamepadState = {
           buttons: gamepad.buttons.map((button) => ({
             pressed: button.pressed,
             value: Math.abs(button.value) < deadzone ? 0 : button.value,
@@ -64,6 +56,7 @@ export function useGamepad(deadzone: number = 0.1) {
     };
     frameRef.current = requestAnimationFrame(poll);
 
+    // Backup interval for when tab is not focused
     intervalRef.current = setInterval(pollGamepad, 1000 / 60);
   }, [pollGamepad]);
 
@@ -72,6 +65,16 @@ export function useGamepad(deadzone: number = 0.1) {
       gamepadIndex.current = event.gamepad.index;
       setIsConnected(true);
       startPolling();
+
+      // Dispatch custom event for connection status
+      window.dispatchEvent(
+        new CustomEvent("gamepadConnectionChange", {
+          detail: {
+            connected: true,
+            gamepad: event.gamepad,
+          },
+        })
+      );
     },
     [startPolling, setIsConnected]
   );
@@ -90,6 +93,16 @@ export function useGamepad(deadzone: number = 0.1) {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }
+
+        // Dispatch custom event for connection status
+        window.dispatchEvent(
+          new CustomEvent("gamepadConnectionChange", {
+            detail: {
+              connected: false,
+              gamepad: event.gamepad,
+            },
+          })
+        );
       }
     },
     [setIsConnected, setGamepadState]
@@ -99,6 +112,7 @@ export function useGamepad(deadzone: number = 0.1) {
     window.addEventListener("gamepadconnected", handleGamepadConnected);
     window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
 
+    // Check for already connected gamepads
     const gamepads = navigator.getGamepads();
     for (let i = 0; i < gamepads.length; i++) {
       if (gamepads[i]) {

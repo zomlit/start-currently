@@ -74,12 +74,13 @@ export const Route = createRootRouteWithContext<{
         ],
   }),
 
-  beforeLoad: async () => {
-    return {};
+  errorComponent: (props) => {
+    return (
+      <RootDocument>
+        <DefaultCatchBoundary {...props} />
+      </RootDocument>
+    );
   },
-  errorComponent: ({ error, reset }) => (
-    <DefaultCatchBoundary error={error} reset={reset} />
-  ),
   notFoundComponent: () => <NotFound />,
   component: RootComponent,
 });
