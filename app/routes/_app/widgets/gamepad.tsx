@@ -3,9 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useUser } from "@clerk/tanstack-start";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 import { GamepadViewer } from "@/components/GamepadViewer";
-import { supabase } from "@/utils/supabase/client";
 import { useGamepad } from "@/hooks/useGamepad";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Copy, Gauge } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,12 +16,17 @@ import {
   HookGamepadState,
   isGamepadButtonState,
 } from "@/types/gamepad";
-import { useUpdateGamepadSettings } from "@/hooks/useUpdateGamepadSettings";
+import {
+  useUpdateGamepadSettings,
+  useGamepadSettings,
+} from "@/hooks/useUpdateGamepadSettings";
 
 import DS4Base from "@/icons/gamepad/ds4-base.svg?react";
 import MachoBase from "@/icons/gamepad/macho-base.svg?react";
 import DS4Buttons from "@/icons/gamepad/ds4-base-buttons.svg?react";
 import DS4Sticks from "@/icons/gamepad/ds4-sticks.svg?react";
+
+import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 
 interface GamepadState {
   buttons: boolean[];
@@ -58,58 +61,63 @@ const DRIFT_THRESHOLD = 0.15; // Only filter movements below this threshold
 
 function GamepadSection() {
   const { user } = useUser();
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const workerRef = useRef<Worker | null>(null);
   const [currentGamepadState, setCurrentGamepadState] =
     useState<GamepadState | null>(null);
-  const [settings, setSettings] = useState<GamepadSettings>({
-    ...defaultGamepadSettings,
-  });
-
-  // Use the useGamepad hook with the default deadzone
-  const { gamepadState, isConnected: isGamepadConnected } = useGamepad(
-    defaultGamepadSettings.deadzone || 0.1
+  const [settings, setSettings] = useState<GamepadSettings>(
+    defaultGamepadSettings
   );
 
-  // Setup Supabase channel
+  // Use the useGamepad hook with settings.deadzone or fallback
+  const { gamepadState, isConnected: isGamepadConnected } = useGamepad(
+    settings?.deadzone || defaultGamepadSettings.deadzone
+  );
+
+  // Add visibility tracking
+  const isVisible = useVisibilityChange();
+  const lastFrameTimeRef = useRef<number>(0);
+  const MIN_FRAME_TIME = 1000 / 60; // Target 60fps
+
+  // Initialize worker on client-side only
   useEffect(() => {
-    if (!user?.id || !user?.username) return;
+    if (typeof window !== "undefined") {
+      workerRef.current = new Worker(
+        new URL("@/workers/gamepad.worker.ts", import.meta.url)
+      );
 
-    const channel = supabase.channel(`gamepad:${user.username}`, {
-      config: {
-        broadcast: { self: false },
-      },
-    });
+      // Cleanup worker on unmount
+      return () => {
+        workerRef.current?.terminate();
+        workerRef.current = null;
+      };
+    }
+  }, []);
 
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        channelRef.current = channel;
-      }
-    });
+  // Update the gamepad state processing
+  useEffect(() => {
+    if (!gamepadState || !user?.id) return;
+
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        type: "INIT",
+        gamepadState,
+        userId: user.id,
+      });
+
+      workerRef.current.onmessage = async (event) => {
+        const { type, state } = event.data;
+        if (type === "STATE_UPDATE") {
+          setCurrentGamepadState(state);
+        }
+      };
+    }
 
     return () => {
-      channel.unsubscribe();
-      channelRef.current = null;
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: "CLEANUP" });
+      }
     };
-  }, [user?.id, user?.username]);
-
-  // Watch gamepadState and broadcast changes
-  useEffect(() => {
-    if (!channelRef.current || !gamepadState) return;
-
-    // Send the state directly
-    channelRef.current.send({
-      type: "broadcast",
-      event: "gamepadState",
-      payload: {
-        gamepadState: {
-          buttons: gamepadState.buttons.map((button) =>
-            isGamepadButtonState(button) ? button.pressed : button
-          ),
-          axes: gamepadState.axes,
-        },
-      },
-    });
-  }, [gamepadState]);
+  }, [gamepadState, user?.id]);
 
   // Get the public URL
   const publicUrl = user?.username
@@ -136,93 +144,60 @@ function GamepadSection() {
   );
 
   const { mutateAsync: updateSettings } = useUpdateGamepadSettings();
+  const { data: savedSettings, isLoading } = useGamepadSettings(user?.id);
 
   const handleSettingsChange = async (
     newSettings: Partial<GamepadSettings>
   ) => {
-    // Update local state by merging with current settings
-    setSettings((current) => ({ ...current, ...newSettings }));
-
     try {
-      // Get current settings from database first
-      const { data: currentData, error: fetchError } = await supabase
-        .from("GamepadWidget")
-        .select("settings")
-        .eq("user_id", user?.id)
-        .single();
-
-      if (fetchError && fetchError.code !== "PGRST116") {
-        throw fetchError;
-      }
-
-      // Merge existing settings with new changes
-      const mergedSettings = {
-        ...(currentData?.settings || {}),
+      // Create a properly typed merged settings object
+      const mergedSettings: GamepadSettings = {
+        ...settings,
         ...newSettings,
       };
 
-      // Update database with merged settings
-      const { error } = await supabase
-        .from("GamepadWidget")
-        .update({
-          settings: mergedSettings,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user?.id);
+      // Update local state with properly typed object
+      setSettings(mergedSettings);
 
-      if (error) throw error;
+      // Use the mutation to update settings in the database
+      await updateSettings({
+        userId: user?.id,
+        settings: mergedSettings, // Send complete settings object
+      });
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast.error("Failed to save settings");
     }
   };
 
-  // Load saved settings on mount
+  // Load saved settings when data is available
   useEffect(() => {
-    async function loadSettings() {
-      if (!user?.id) return;
-
-      try {
-        // Try to get existing settings
-        const { data, error } = await supabase
-          .from("GamepadWidget")
-          .select("settings")
-          .eq("user_id", user.id)
-          .single();
-
-        if (error) {
-          // If no row exists, create one with default settings
-          if (error.code === "PGRST116") {
-            const { error: insertError } = await supabase
-              .from("GamepadWidget")
-              .insert({
-                user_id: user.id,
-                settings: defaultGamepadSettings,
-                style: "default",
-                layout: {},
-                showPressedButtons: true,
-              });
-
-            if (insertError) throw insertError;
-            setSettings(defaultGamepadSettings);
-            return;
-          }
-          throw error;
-        }
-
-        if (data?.settings) {
-          setSettings({
-            ...defaultGamepadSettings,
-            ...data.settings,
-          });
-        }
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      }
+    if (savedSettings?.settings) {
+      // Ensure we have a complete settings object
+      setSettings({
+        ...defaultGamepadSettings,
+        ...savedSettings.settings,
+      });
+    } else if (!isLoading && user?.id) {
+      // Only create default settings if we've finished loading and no settings exist
+      updateSettings({
+        userId: user.id,
+        settings: defaultGamepadSettings,
+      }).catch((error) => {
+        console.error("Error creating default settings:", error);
+      });
     }
+  }, [savedSettings, isLoading, user?.id]);
 
-    loadSettings();
-  }, [user?.id]);
+  // Don't render until we have a user
+  if (!user) {
+    return null;
+  }
+
+  // Don't render until we have settings
+  if (!settings) {
+    return null; // Or a loading spinner
+  }
 
   // Update GamepadViewer props in the preview
   const GamepadPreview = (

@@ -2,19 +2,24 @@ import { cn } from "@/lib/utils";
 
 interface TriggersProps {
   pressed: number;
-  className?: string;
   side: "left" | "right";
 }
 
-export function Triggers({ pressed, className, side }: TriggersProps) {
-  const pressure = Math.max(0, Math.min(1, pressed));
+export function Triggers({ pressed, side }: TriggersProps) {
+  const safePressed = Math.min(Math.max(Number(pressed) || 0, 0), 1);
 
   return (
     <div className="relative w-full h-full">
       <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 100 91"
-        className={cn("w-full h-full", className)}
+        viewBox="0 0 100 100"
+        className={cn(
+          "absolute inset-0 w-full h-full",
+          side === "left" ? "origin-left" : "origin-right"
+        )}
+        style={{
+          opacity: safePressed,
+          transform: `scaleX(${side === "left" ? 1 : -1})`,
+        }}
       >
         <path
           fill="var(--button-color)"
@@ -33,7 +38,7 @@ export function Triggers({ pressed, className, side }: TriggersProps) {
               : "M99.2 90.8s-32.7-3.2-50.6-3.2S.3 90 .3 90s3.1-44.7 4.8-52c1.7-7.3 7.7-21.3 16.9-27.9C31.2 3.5 34 0 44.8 0s25.4 6.4 34.6 21.4c9.2 15 19.8 69.4 19.8 69.4Z"
           }
           style={{
-            opacity: pressure,
+            opacity: safePressed,
             transition: "opacity 50ms linear",
           }}
         />

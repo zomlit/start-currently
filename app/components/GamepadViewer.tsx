@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { DPad } from "./gamepad/DPad";
 import { Triggers } from "./gamepad/Triggers";
+import { useGamepadContext } from "@/providers/GamepadProvider";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -434,6 +435,12 @@ export function GamepadViewer({
   isPublicView = false,
   onSettingsChange,
 }: GamepadViewerProps) {
+  const { gamepadState: contextGamepadState, isConnected } =
+    useGamepadContext();
+
+  // Use either passed gamepadState or context state
+  const finalGamepadState = gamepadState || contextGamepadState;
+
   // Keep these state declarations at the top
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const [driftHistory, setDriftHistory] = useState<{
@@ -455,12 +462,12 @@ export function GamepadViewer({
 
   // 4. Memoized values
   const axes = useMemo(() => {
-    return isPublicView ? gamepadState?.axes || Array(4).fill(0) : rawAxes;
-  }, [isPublicView, gamepadState?.axes, rawAxes]);
+    return isPublicView ? finalGamepadState?.axes || Array(4).fill(0) : rawAxes;
+  }, [isPublicView, finalGamepadState?.axes, rawAxes]);
 
   const buttons = useMemo(() => {
-    return gamepadState?.buttons || Array(16).fill(false);
-  }, [gamepadState?.buttons]);
+    return finalGamepadState?.buttons || Array(16).fill(false);
+  }, [finalGamepadState?.buttons]);
 
   // Add this ref to track last sent state
   const lastSentStateRef = useRef<GamepadState | null>(null);
@@ -577,7 +584,7 @@ export function GamepadViewer({
                     <span className="text-muted-foreground">Left Stick:</span>
                     <span
                       className={cn(
-                        "font-medium",
+                        "font-medium text-lg",
                         currentDriftInfo.left > deadzone
                           ? "text-red-500"
                           : currentDriftInfo.left > deadzone - 0.01
@@ -592,7 +599,7 @@ export function GamepadViewer({
                     <span className="text-muted-foreground">Right Stick:</span>
                     <span
                       className={cn(
-                        "font-medium",
+                        "font-medium text-lg",
                         currentDriftInfo.right > deadzone
                           ? "text-red-500"
                           : currentDriftInfo.right > deadzone - 0.01
@@ -613,7 +620,7 @@ export function GamepadViewer({
                       <span className="text-sm text-muted-foreground">
                         Current:
                       </span>
-                      <span className="font-normal text-foreground/75">
+                      <span className="font-normal text-foreground/75 text-lg">
                         {deadzone.toFixed(2)}
                       </span>
                     </div>
@@ -621,13 +628,14 @@ export function GamepadViewer({
                       <span className="text-sm text-muted-foreground">
                         Recommended:
                       </span>
-                      <span className="font-black text-violet-500">
+                      <span className="font-black text-violet-500 text-lg">
                         {recommendedDeadzone.toFixed(2)}
                       </span>
                     </div>
                   </div>
+
                   {/* Status message */}
-                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                  <p className="mt-2 text-center text-sm text-muted-foreground">
                     {currentDriftInfo.left > deadzone ||
                     currentDriftInfo.right > deadzone
                       ? "Drift detected. Increasing the deadzone may help stabilize your controller."
@@ -656,7 +664,7 @@ export function GamepadViewer({
     );
   }, [isDialogOpen, axes, deadzone, onSettingsChange]);
 
-  if (!gamepadState && settings?.showButtonPresses) {
+  if (!finalGamepadState && settings?.showButtonPresses) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
         <Gamepad className="h-12 w-12 text-muted-foreground/50" />
@@ -779,7 +787,7 @@ export function GamepadViewer({
           } as React.CSSProperties
         }
       >
-        <div className="w-full h-full flex items-center justify-center min-h-[687px]">
+        <div className="w-full h-full flex items-center justify-center lg:min-h-[687px]">
           {/* Debug overlay with animation */}
           <AnimatePresence>
             {settings?.debugMode && !isPublicView && (
@@ -788,7 +796,14 @@ export function GamepadViewer({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-0 z-50 w-full bg-gradient/25 p-6 shadow-2xl backdrop-opacity-60 backdrop-invert dark:bg-black/95 bg-white/95"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  zIndex: 50,
+                  width: "100%",
+                  padding: "1.5rem",
+                }}
+                className="bg-gradient/25 shadow-2xl backdrop-opacity-60 backdrop-invert dark:bg-black/95 bg-white/95"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-border/50 pb-4">
@@ -1021,7 +1036,7 @@ export function GamepadViewer({
           </AnimatePresence>
 
           {/* Controller container */}
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full  items-center justify-center">
             <div className="relative w-full aspect-[800/592] max-h-full">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div
@@ -1063,13 +1078,13 @@ export function GamepadViewer({
                     <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
                       <div className="w-[15%] h-full ml-[5.4%]">
                         <Triggers
-                          pressed={Number(gamepadState?.buttons?.[6] ?? 0)}
+                          pressed={Number(finalGamepadState?.buttons?.[6] ?? 0)}
                           side="left"
                         />
                       </div>
                       <div className="w-[15%] h-full mr-[5.4%]">
                         <Triggers
-                          pressed={Number(gamepadState?.buttons?.[7] ?? 0)}
+                          pressed={Number(finalGamepadState?.buttons?.[7] ?? 0)}
                           side="right"
                         />
                       </div>

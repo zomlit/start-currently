@@ -7,9 +7,11 @@ export default defineConfig({
   server: {
     preset: "node-server",
   },
+  hmr: {
+    overlay: false,
+  },
   vite: {
     css: {
-      postcss: true,
       modules: {
         localsConvention: "camelCase",
       },
