@@ -13,8 +13,17 @@ import { toast } from "sonner";
 
 import { GamepadSettingsForm } from "@/components/widget-settings/GamepadSettingsForm";
 import { defaultGamepadSettings } from "@/lib/gamepad-settings";
-import { GamepadSettings, HookGamepadState } from "@/types/gamepad";
+import {
+  GamepadSettings,
+  HookGamepadState,
+  isGamepadButtonState,
+} from "@/types/gamepad";
 import { useUpdateGamepadSettings } from "@/hooks/useUpdateGamepadSettings";
+
+import DS4Base from "@/icons/gamepad/ds4-base.svg?react";
+import MachoBase from "@/icons/gamepad/macho-base.svg?react";
+import DS4Buttons from "@/icons/gamepad/ds4-base-buttons.svg?react";
+import DS4Sticks from "@/icons/gamepad/ds4-sticks.svg?react";
 
 interface GamepadState {
   buttons: boolean[];
@@ -47,7 +56,7 @@ const TOKEN_UPDATE_INTERVAL = 60 * 1000; // Check token every 60 seconds
 
 const DRIFT_THRESHOLD = 0.15; // Only filter movements below this threshold
 
-export function GamepadSection() {
+function GamepadSection() {
   const { user } = useUser();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const [currentGamepadState, setCurrentGamepadState] =
@@ -93,7 +102,9 @@ export function GamepadSection() {
       event: "gamepadState",
       payload: {
         gamepadState: {
-          buttons: gamepadState.buttons.map((button) => button.pressed),
+          buttons: gamepadState.buttons.map((button) =>
+            isGamepadButtonState(button) ? button.pressed : button
+          ),
           axes: gamepadState.axes,
         },
       },
@@ -223,7 +234,9 @@ export function GamepadSection() {
           gamepadState={
             gamepadState
               ? {
-                  buttons: gamepadState.buttons.map((button) => button.pressed),
+                  buttons: gamepadState.buttons.map((button) =>
+                    isGamepadButtonState(button) ? button.pressed : button
+                  ),
                   axes: gamepadState.axes,
                 }
               : null

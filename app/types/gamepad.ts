@@ -4,7 +4,7 @@ import type { FunctionComponent, SVGProps } from "react";
 type GamepadWidgetRow = Database["public"]["Tables"]["GamepadWidget"]["Row"];
 
 export interface GamepadState {
-  buttons: boolean[];
+  buttons: { pressed: boolean }[] | boolean[];
   axes: number[];
 }
 
@@ -68,4 +68,10 @@ export interface GamepadButton {
   pressed: boolean;
   touched: boolean;
   value: number;
+}
+
+export function isGamepadButtonState(
+  button: { pressed: boolean } | boolean
+): button is { pressed: boolean } {
+  return typeof button === "object" && "pressed" in button;
 }
