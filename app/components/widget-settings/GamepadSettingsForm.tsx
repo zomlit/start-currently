@@ -27,6 +27,12 @@ import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const gamepadSettingsSchema = z.object({
   controllerType: z.string(),
@@ -195,465 +201,375 @@ export function GamepadSettingsForm({
 
   return (
     <Form {...form}>
-      <form className="space-y-6 mt-4">
-        {/* Controller Type */}
-        <FormField
-          control={form.control}
-          name="controllerType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Controller Type</FormLabel>
-              <Select
-                onValueChange={(value) =>
-                  handleFieldChange("controllerType", value)
-                }
-                value={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a controller type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {CONTROLLER_TYPES.map((controller) => {
-                    const Icon = controller.icon;
-                    return (
-                      <SelectItem
-                        key={controller.id}
-                        value={controller.id}
-                        disabled={controller.disabled}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Icon className="h-4 w-4" />
-                          <span>{controller.name}</span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
-
-        {/* Controller Color */}
-        <FormField
-          control={form.control}
-          name="controllerColor"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Controller Color</FormLabel>
-              <Select
-                onValueChange={(value) =>
-                  handleFieldChange("controllerColor", value)
-                }
-                value={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a color" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {CONTROLLER_COLORS.map((color) => (
-                    <SelectItem key={color.id} value={color.id}>
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className="h-4 w-4 rounded-full border"
-                          style={{ backgroundColor: color.hex }}
-                        />
-                        <span>{color.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
-
-        {/* Add Skins dropdown at the top */}
-        {/* <FormField
-          control={form.control}
-          name="skin"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Skins</FormLabel>
-              <FormDescription>
-                Choose a preset color scheme for your controller
-              </FormDescription>
-              <Select onValueChange={handleSkinChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a skin" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {CONTROLLER_SKINS.map((skin) => (
-                    <SelectItem key={skin.id} value={skin.id}>
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className="h-4 w-4 rounded-full border"
-                          style={{
-                            backgroundColor: skin.colors.buttonColor,
-                            borderColor: skin.colors.buttonPressedColor,
-                          }}
-                        />
-                        <span>{skin.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        /> */}
-
-        {/* Display Options */}
-        <div className="space-y-4">
-          {/* <FormField
-            control={form.control}
-            name="showButtonPresses"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between">
-                <div>
-                  <FormLabel>Show Button Presses</FormLabel>
-                  <FormDescription>
-                    Highlight buttons when pressed
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) =>
-                      handleFieldChange("showButtonPresses", checked)
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          /> */}
-
-          {/* Debug/Drift detection Mode */}
-          <FormField
-            control={form.control}
-            name="debugMode"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between">
-                <div>
-                  <FormLabel>Drift Detection/Debug</FormLabel>
-                  <FormDescription>
-                    Show stick drift values & debug info
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) =>
-                      handleFieldChange("debugMode", checked)
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {/* Hide When Inactive */}
-          <FormField
-            control={form.control}
-            name="hideWhenInactive"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between">
-                <div>
-                  <FormLabel>Hide When Inactive</FormLabel>
-                  <FormDescription>
-                    Hide the controller when no buttons are pressed
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) =>
-                      handleFieldChange("hideWhenInactive", checked)
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {/* Only show timeout slider when hideWhenInactive is enabled */}
-          {form.watch("hideWhenInactive") && (
-            <FormField
-              control={form.control}
-              name="inactivityTimeout"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Inactivity Timeout: {field.value} seconds
-                  </FormLabel>
-                  <FormDescription>
-                    Time to wait before hiding the controller
-                  </FormDescription>
-                  <FormControl>
+      <form className="space-y-4">
+        <Accordion type="multiple" className="w-full">
+          {/* General Settings Section */}
+          <AccordionItem value="general">
+            <AccordionTrigger>General Settings</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              {/* <FormField
+                control={form.control}
+                name="backgroundColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Background Color</FormLabel>
+                    <GradientColorPicker
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleFieldChange("backgroundColor", formattedColor);
+                      }}
+                      onChangeComplete={field.onBlur}
+                      currentProfile={null}
+                    />
+                  </FormItem>
+                )}
+              /> */}
+              <FormField
+                control={form.control}
+                name="scale"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Scale: {(field.value ?? 1).toFixed(2)}x
+                    </FormLabel>
                     <Slider
-                      min={1}
-                      max={60}
-                      step={1}
-                      value={[field.value]}
+                      min={0.1}
+                      max={2}
+                      step={0.1}
+                      value={[field.value ?? 1]}
                       onValueChange={([value]) =>
-                        handleFieldChange("inactivityTimeout", value)
+                        handleFieldChange("scale", value)
                       }
                     />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Colors */}
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="buttonColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Button Color</FormLabel>
-                <FormControl>
-                  <GradientColorPicker
-                    color={safeFormatColor(field.value)}
-                    onChange={(color) => {
-                      const formattedColor = safeFormatColor(color);
-                      field.onChange(formattedColor);
-                      handleFieldChange("buttonColor", formattedColor);
-                    }}
-                    onChangeComplete={field.onBlur}
-                    currentProfile={null}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          {/* Controller Settings Section */}
+          <AccordionItem value="controller">
+            <AccordionTrigger>Controller Settings</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="controllerType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Controller Type</FormLabel>
+                    <Select
+                      onValueChange={(value) =>
+                        handleFieldChange("controllerType", value)
+                      }
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a controller type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CONTROLLER_TYPES.map((controller) => {
+                          const Icon = controller.icon;
+                          return (
+                            <SelectItem
+                              key={controller.id}
+                              value={controller.id}
+                              disabled={controller.disabled}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <Icon className="h-4 w-4" />
+                                <span>{controller.name}</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
 
-          {/* Add this after the Button Color section */}
+              <FormField
+                control={form.control}
+                name="controllerColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Controller Color</FormLabel>
+                    <Select
+                      onValueChange={(value) =>
+                        handleFieldChange("controllerColor", value)
+                      }
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a color" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CONTROLLER_COLORS.map((color) => (
+                          <SelectItem key={color.id} value={color.id}>
+                            <div className="flex items-center space-x-2">
+                              <div
+                                className="h-4 w-4 rounded-full border"
+                                style={{ backgroundColor: color.hex }}
+                              />
+                              <span>{color.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-          <FormField
-            control={form.control}
-            name="buttonPressedColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Button Pressed Color</FormLabel>
-                <FormDescription>
-                  Color of the buttons when pressed
-                </FormDescription>
-                <FormControl>
-                  <GradientColorPicker
-                    color={safeFormatColor(field.value)}
-                    onChange={(color) => {
-                      const formattedColor = safeFormatColor(color);
-                      field.onChange(formattedColor);
-                      handleFieldChange("buttonPressedColor", formattedColor);
-                    }}
-                    onChangeComplete={field.onBlur}
-                    currentProfile={null}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="stickColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stick Color</FormLabel>
-                <FormControl>
-                  <GradientColorPicker
-                    color={safeFormatColor(field.value)}
-                    onChange={(color) => {
-                      const formattedColor = safeFormatColor(color);
-                      field.onChange(formattedColor);
-                      handleFieldChange("stickColor", formattedColor);
-                    }}
-                    onChangeComplete={field.onBlur}
-                    currentProfile={null}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="triggerColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Trigger Color</FormLabel>
-                <FormControl>
-                  <GradientColorPicker
-                    color={safeFormatColor(field.value)}
-                    onChange={(color) => {
-                      const formattedColor = safeFormatColor(color);
-                      field.onChange(formattedColor);
-                      handleFieldChange("triggerColor", formattedColor);
-                    }}
-                    onChangeComplete={field.onBlur}
-                    currentProfile={null}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="useCustomShapeColors"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between">
-                  <div>
-                    <FormLabel>Custom Shape Colors</FormLabel>
-                    <FormDescription></FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        handleFieldChange("useCustomShapeColors", checked);
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="buttonShapeColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Button Shape Color</FormLabel>
-                  <FormDescription></FormDescription>
-                  <FormControl>
+          {/* Colors Section */}
+          <AccordionItem value="colors">
+            <AccordionTrigger>Colors</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="buttonColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Button Color</FormLabel>
                     <GradientColorPicker
                       color={safeFormatColor(field.value)}
                       onChange={(color) => {
                         const formattedColor = safeFormatColor(color);
                         field.onChange(formattedColor);
-                        handleFieldChange("buttonShapeColor", formattedColor);
+                        handleFieldChange("buttonColor", formattedColor);
                       }}
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
-                      disabled={!form.watch("useCustomShapeColors")}
                     />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="buttonShapePressedColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Button Shape Pressed Color</FormLabel>
-                  <FormDescription></FormDescription>
-                  <FormControl>
+              <FormField
+                control={form.control}
+                name="buttonPressedColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Button Pressed Color</FormLabel>
                     <GradientColorPicker
                       color={safeFormatColor(field.value)}
                       onChange={(color) => {
                         const formattedColor = safeFormatColor(color);
                         field.onChange(formattedColor);
-                        handleFieldChange(
-                          "buttonShapePressedColor",
-                          formattedColor
-                        );
+                        handleFieldChange("buttonPressedColor", formattedColor);
                       }}
                       onChangeComplete={field.onBlur}
                       currentProfile={null}
-                      disabled={!form.watch("useCustomShapeColors")}
                     />
-                  </FormControl>
-                </FormItem>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="stickColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stick Color</FormLabel>
+                    <GradientColorPicker
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleFieldChange("stickColor", formattedColor);
+                      }}
+                      onChangeComplete={field.onBlur}
+                      currentProfile={null}
+                    />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="triggerColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trigger Color</FormLabel>
+                    <GradientColorPicker
+                      color={safeFormatColor(field.value)}
+                      onChange={(color) => {
+                        const formattedColor = safeFormatColor(color);
+                        field.onChange(formattedColor);
+                        handleFieldChange("triggerColor", formattedColor);
+                      }}
+                      onChangeComplete={field.onBlur}
+                      currentProfile={null}
+                    />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="useCustomShapeColors"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <div>
+                        <FormLabel>Custom Shape Colors</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            handleFieldChange("useCustomShapeColors", checked);
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch("useCustomShapeColors") && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="buttonShapeColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Button Shape Color</FormLabel>
+                          <GradientColorPicker
+                            color={safeFormatColor(field.value)}
+                            onChange={(color) => {
+                              const formattedColor = safeFormatColor(color);
+                              field.onChange(formattedColor);
+                              handleFieldChange(
+                                "buttonShapeColor",
+                                formattedColor
+                              );
+                            }}
+                            onChangeComplete={field.onBlur}
+                            currentProfile={null}
+                          />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buttonShapePressedColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Button Shape Pressed Color</FormLabel>
+                          <GradientColorPicker
+                            color={safeFormatColor(field.value)}
+                            onChange={(color) => {
+                              const formattedColor = safeFormatColor(color);
+                              field.onChange(formattedColor);
+                              handleFieldChange(
+                                "buttonShapePressedColor",
+                                formattedColor
+                              );
+                            }}
+                            onChangeComplete={field.onBlur}
+                            currentProfile={null}
+                          />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Behavior Section */}
+          <AccordionItem value="behavior">
+            <AccordionTrigger>Behavior</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="hideWhenInactive"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between">
+                    <div>
+                      <FormLabel>Hide When Inactive</FormLabel>
+                      <FormDescription>
+                        Hide the controller when no buttons are pressed
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(checked) =>
+                          handleFieldChange("hideWhenInactive", checked)
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Only show timeout slider when hideWhenInactive is true */}
+              {form.watch("hideWhenInactive") && (
+                <FormField
+                  control={form.control}
+                  name="inactivityTimeout"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Inactivity Timeout: {field.value} seconds
+                      </FormLabel>
+                      <FormDescription>
+                        Time to wait before hiding the controller
+                      </FormDescription>
+                      <Slider
+                        min={1}
+                        max={60}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={([value]) =>
+                          handleFieldChange("inactivityTimeout", value)
+                        }
+                      />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-          </div>
 
-          {/* <FormField
-            control={form.control}
-            name="backgroundColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Background Color</FormLabel>
-                <FormControl>
-                  <GradientColorPicker
-                    color={safeFormatColor(field.value)}
-                    onChange={(color) => {
-                      const formattedColor = safeFormatColor(color);
-                      field.onChange(formattedColor);
-                      handleFieldChange("backgroundColor", formattedColor);
-                    }}
-                    onChangeComplete={field.onBlur}
-                    currentProfile={null}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          /> */}
-        </div>
+              <FormField
+                control={form.control}
+                name="deadzone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Deadzone: {(field.value ?? 0).toFixed(2)}
+                    </FormLabel>
+                    <FormDescription>
+                      Values above this threshold will be considered stick drift
+                    </FormDescription>
+                    <Slider
+                      min={0}
+                      max={0.4}
+                      step={0.01}
+                      value={[field.value ?? 0]}
+                      onValueChange={([value]) =>
+                        handleFieldChange("deadzone", value)
+                      }
+                    />
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-        {/* Scale and Deadzone */}
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="scale"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Scale: {(field.value ?? 1).toFixed(2)}x</FormLabel>
-                <FormControl>
-                  <Slider
-                    min={0.1}
-                    max={2}
-                    step={0.1}
-                    value={[field.value ?? 1]}
-                    onValueChange={([value]) =>
-                      handleFieldChange("scale", value)
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="deadzone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Deadzone: {(field.value ?? 0).toFixed(2)}</FormLabel>
-                <FormDescription>
-                  Values above this threshold will be considered stick drift
-                </FormDescription>
-                <FormControl>
-                  <Slider
-                    min={0}
-                    max={0.4}
-                    step={0.01}
-                    value={[field.value ?? 0]}
-                    onValueChange={([value]) =>
-                      handleFieldChange("deadzone", value)
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Add Reset Button at the bottom */}
+        {/* Reset Button */}
         <div className="flex items-center space-x-2 pt-4 border-t">
           <Button
             type="button"
