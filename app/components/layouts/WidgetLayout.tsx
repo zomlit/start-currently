@@ -9,9 +9,14 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 interface WidgetLayoutProps {
   preview: React.ReactNode;
   settings: React.ReactNode;
+  className?: string;
 }
 
-export function WidgetLayout({ preview, settings }: WidgetLayoutProps) {
+export function WidgetLayout({
+  preview,
+  settings,
+  className,
+}: WidgetLayoutProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   return (
