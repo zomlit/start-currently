@@ -12,6 +12,7 @@ import { AccessControl } from "@/components/AccessControl";
 
 import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
+import { GamepadProvider } from "@/providers/GamepadProvider";
 import appCss from "@/styles/app.css?url";
 import gamepadCss from "@/styles/gamepad.css?url";
 import { dark } from "@clerk/themes";
@@ -106,12 +107,15 @@ function RootComponent() {
           formContainer: "backdrop-blur-[14px]",
           userButtonPopoverCard: "backdrop-blur-[14px]",
           organizationSwitcherPopoverCard: "backdrop-blur-[14px]",
+          formResendCodeLink: "text-violet-200",
         },
       }}
     >
       <RootDocument>
         <AccessControl>
-          <Outlet />
+          <GamepadProvider>
+            <Outlet />
+          </GamepadProvider>
         </AccessControl>
       </RootDocument>
     </ClerkProvider>

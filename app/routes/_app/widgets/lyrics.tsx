@@ -436,7 +436,7 @@ function LyricsSection() {
         {FadeOverlay}
         <div
           ref={lyricsContainerRef}
-          className="h-screen w-full overflow-y-auto scrollbar-hide relative z-20"
+          className="w-full overflow-y-auto scrollbar-hide relative z-20"
           style={{
             fontFamily: `'${settings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
             scrollBehavior: "smooth",
@@ -446,7 +446,7 @@ function LyricsSection() {
           <div className="text-center">
             {isLyricsLoading ? (
               <div className="flex items-center justify-center h-full">
-                <Spinner className="w-[30px] h-[30px]" />
+                <Spinner className="w-[30px] h-[30px] dark:fill-white" />
               </div>
             ) : lyrics?.length ? (
               renderLyrics(lyrics, false)
@@ -488,7 +488,7 @@ function LyricsSection() {
       {isLyricsLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <Spinner className="w-[30px] h-[30px]" />
+            <Spinner className="w-[30px] h-[30px] dark:fill-white" />
             <p className="text-muted-foreground">Loading settings...</p>
           </div>
         </div>

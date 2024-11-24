@@ -33,10 +33,12 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
-import { lazy, Suspense } from 'react';
-const Wheel = lazy(() => import('react-custom-roulette').then(mod => ({ 
-  default: mod.Wheel 
-})));
+import { lazy, Suspense } from "react";
+const Wheel = lazy(() =>
+  import("react-custom-roulette").then((mod) => ({
+    default: mod.Wheel,
+  }))
+);
 
 interface WheelData {
   option: string;
@@ -407,7 +409,7 @@ const WheelSpin: React.FC = () => {
               initial={{ x: -100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="bg-white dark:bg-white/10 p-6 rounded-lg shadow-lg"
+              className="bg-white dark:bg-white/5 p-6 rounded-lg shadow-lg"
             >
               <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
                 Game Settings
@@ -572,7 +574,7 @@ const WheelSpin: React.FC = () => {
             >
               <div className="mb-8 w-full max-w-md relative">
                 <Suspense fallback={<div>Loading wheel...</div>}>
-                  {typeof window !== 'undefined' && (
+                  {typeof window !== "undefined" && (
                     <Wheel
                       mustStartSpinning={mustSpin}
                       prizeNumber={prizeNumber}
@@ -581,21 +583,37 @@ const WheelSpin: React.FC = () => {
                         setMustSpin(false);
                         let fullText: string;
                         if (selectedPreset === "Custom") {
-                          fullText = customPreset[prizeNumber] || "No item selected";
+                          fullText =
+                            customPreset[prizeNumber] || "No item selected";
                         } else if (selectedPreset === "Twitch Chat") {
-                          fullText = data[prizeNumber]?.option || "No user selected";
+                          fullText =
+                            data[prizeNumber]?.option || "No user selected";
                         } else {
-                          fullText = presets[selectedPreset]?.[prizeNumber] || "No item selected";
+                          fullText =
+                            presets[selectedPreset]?.[prizeNumber] ||
+                            "No item selected";
                         }
                         setResult(fullText);
                         setShowModal(true);
                         triggerConfetti();
                       }}
                       backgroundColors={[
-                        "#2563EB", "#059669", "#D97706", "#DC2626", "#7C3AED",
-                        "#DB2777", "#4F46E5", "#0D9488", "#BE185D", "#059669",
-                        "#8B5CF6", "#D97706", "#3B82F6", "#10B981", "#EF4444",
-                        "#6366F1"
+                        "#2563EB",
+                        "#059669",
+                        "#D97706",
+                        "#DC2626",
+                        "#7C3AED",
+                        "#DB2777",
+                        "#4F46E5",
+                        "#0D9488",
+                        "#BE185D",
+                        "#059669",
+                        "#8B5CF6",
+                        "#D97706",
+                        "#3B82F6",
+                        "#10B981",
+                        "#EF4444",
+                        "#6366F1",
                       ]}
                       textColors={["#ffffff"]}
                       outerBorderColor="#18181b"

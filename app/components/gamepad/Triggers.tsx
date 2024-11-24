@@ -3,9 +3,16 @@ import { cn } from "@/lib/utils";
 interface TriggersProps {
   pressed: number;
   side: "left" | "right";
+  color?: string;
+  pressedColor?: string;
 }
 
-export function Triggers({ pressed, side }: TriggersProps) {
+export function Triggers({
+  pressed,
+  side,
+  color = "#1a1a1a",
+  pressedColor = "#ffffff",
+}: TriggersProps) {
   const safePressed = Math.min(Math.max(Number(pressed) || 0, 0), 1);
 
   return (
@@ -17,12 +24,11 @@ export function Triggers({ pressed, side }: TriggersProps) {
           side === "left" ? "origin-left" : "origin-right"
         )}
         style={{
-          opacity: safePressed,
-          transform: `scaleX(${side === "left" ? 1 : -1})`,
+          transform: `scaleX(${side === "left" ? 1 : 1})`,
         }}
       >
         <path
-          fill="var(--button-color)"
+          fill={color}
           d={
             side === "left"
               ? "M.9 90.8s32.7-3.2 50.6-3.2S99.8 90 99.8 90 96.7 45.3 95 38c-1.7-7.3-7.7-21.3-16.9-27.9C68.9 3.5 66.1 0 55.3 0S29.9 6.4 20.7 21.4C11.5 36.4.9 90.8.9 90.8Z"
@@ -31,7 +37,7 @@ export function Triggers({ pressed, side }: TriggersProps) {
           opacity={0.8}
         />
         <path
-          fill="var(--button-pressed-color)"
+          fill={pressedColor}
           d={
             side === "left"
               ? "M.9 90.8s32.7-3.2 50.6-3.2S99.8 90 99.8 90 96.7 45.3 95 38c-1.7-7.3-7.7-21.3-16.9-27.9C68.9 3.5 66.1 0 55.3 0S29.9 6.4 20.7 21.4C11.5 36.4.9 90.8.9 90.8Z"
@@ -44,7 +50,7 @@ export function Triggers({ pressed, side }: TriggersProps) {
         />
         <path
           fill="#fff"
-          opacity={0.08}
+          opacity={0.08 * (1 - safePressed)}
           d={
             side === "left"
               ? "m65.4 65.7-3.2 2.6a6.71 6.71 0 0 0-2 4.5H70v-2.6h-6.2a6.71 6.71 0 0 1 2.1-1.9c.992-.573 1.9-1.28 2.7-2.1a4.77 4.77 0 0 0 1.3-3.3 4.219 4.219 0 0 0-1.4-3.3 5.13 5.13 0 0 0-3.5-1.2c-3.1 0-4.7 1.7-4.7 5H63c0-1.8.7-2.7 2.1-2.7a1.83 1.83 0 0 1 2 2.1 3.63 3.63 0 0 1-1.7 2.9Zm-8.5 4.4h-7.1V58.5h-3v14.3h10.1v-2.7Z"

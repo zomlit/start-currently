@@ -16,7 +16,7 @@ export function MainNav({ items }: MainNavProps) {
   return (
     <div className="mb-2">
       <nav className="hidden md:block">
-        <div className="rounded-lg bg-white/10 p-2">
+        <div className="rounded-lg bg-white/5 p-2">
           <div className="flex flex-col">
             <div className="flex items-center space-x-4">
               {items.map((item) => {

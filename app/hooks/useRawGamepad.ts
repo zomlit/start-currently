@@ -1,78 +1,80 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-export function useRawGamepad() {
-  const [axes, setAxes] = useState<number[]>([0, 0, 0, 0]);
-  const [isUserInteracting, setIsUserInteracting] = useState(false);
-  const lastMovementTime = useRef(0);
-  const movementTimeout = useRef<NodeJS.Timeout>();
-  const prevAxes = useRef([0, 0, 0, 0]);
+interface RawGamepadState {
+  axes: number[];
+  isUserInteracting: boolean;
+}
+
+export function useRawGamepad(deadzone: number = 0.05) {
+  const [state, setState] = useState<RawGamepadState>({
+    axes: Array(4).fill(0),
+    isUserInteracting: false,
+  });
+
+  const lastUpdateRef = useRef<number>(0);
   const frameRef = useRef<number>();
-  const intervalRef = useRef<NodeJS.Timeout>();
-  const axesRef = useRef(axes); // Ref to hold the current axes value
+  const interactionTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Memoize the gamepad update function
-  const updateGamepad = useCallback(() => {
+  const handleGamepadInput = useCallback(() => {
     const gamepads = navigator.getGamepads();
     const gamepad = gamepads[0];
 
-    if (gamepad) {
-      const newAxes = [...gamepad.axes];
-      const maxMovement = Math.max(
-        ...newAxes.map((axis, index) =>
-          Math.abs(axis - prevAxes.current[index])
-        )
-      );
+    if (!gamepad) return;
 
-      // Only update state if there's a significant change
-      if (JSON.stringify(newAxes) !== JSON.stringify(axesRef.current)) {
-        setAxes(newAxes);
-        axesRef.current = newAxes; // Update the ref with the new axes
+    const axes = gamepad.axes.map((axis) =>
+      Math.abs(axis) < deadzone ? 0 : axis
+    );
+
+    // Only update state if axes have changed
+    setState((prev) => {
+      const hasChanged = axes.some((axis, i) => axis !== prev.axes[i]);
+      if (!hasChanged) return prev;
+
+      const isInteracting = axes.some((axis) => Math.abs(axis) > deadzone);
+
+      // Clear existing timeout
+      if (interactionTimeoutRef.current) {
+        clearTimeout(interactionTimeoutRef.current);
       }
 
-      const INTERACTION_THRESHOLD = 0.15;
-      if (maxMovement > INTERACTION_THRESHOLD) {
-        lastMovementTime.current = Date.now();
-        setIsUserInteracting(true);
-
-        if (movementTimeout.current) {
-          clearTimeout(movementTimeout.current);
-        }
-
-        movementTimeout.current = setTimeout(() => {
-          setIsUserInteracting(false);
+      // Set new timeout if user is interacting
+      if (isInteracting) {
+        interactionTimeoutRef.current = setTimeout(() => {
+          setState((prev) => ({ ...prev, isUserInteracting: false }));
         }, 1000);
       }
 
-      prevAxes.current = newAxes;
-    }
-  }, []); // No dependencies on axes
+      return {
+        axes,
+        isUserInteracting: isInteracting,
+      };
+    });
+  }, [deadzone]);
 
-  // Set up polling in a separate effect
   useEffect(() => {
-    const POLL_INTERVAL = 1000 / 60;
-
-    const poll = () => {
-      updateGamepad();
-      frameRef.current = requestAnimationFrame(poll);
+    const updateGamepadState = (timestamp: number) => {
+      if (timestamp - lastUpdateRef.current >= 16) {
+        // ~60fps
+        handleGamepadInput();
+        lastUpdateRef.current = timestamp;
+      }
+      frameRef.current = requestAnimationFrame(updateGamepadState);
     };
 
-    // Start polling
-    frameRef.current = requestAnimationFrame(poll);
-    intervalRef.current = setInterval(updateGamepad, POLL_INTERVAL);
+    frameRef.current = requestAnimationFrame(updateGamepadState);
 
-    // Cleanup
     return () => {
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
       }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      if (movementTimeout.current) {
-        clearTimeout(movementTimeout.current);
+      if (interactionTimeoutRef.current) {
+        clearTimeout(interactionTimeoutRef.current);
       }
     };
-  }, [updateGamepad]); // Only depend on the memoized update function
+  }, [handleGamepadInput]);
 
-  return { axes, isUserInteracting };
+  return {
+    axes: state.axes,
+    isUserInteracting: state.isUserInteracting,
+  };
 }
