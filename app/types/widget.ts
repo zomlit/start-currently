@@ -103,3 +103,10 @@ export const WidgetSchema = z.object({
 });
 
 export type Widget = z.infer<typeof WidgetSchema>;
+
+export type WidgetType =
+  | "visualizer"
+  | "lyrics"
+  | "gamepad"
+  | "chat"
+  | "overlay";

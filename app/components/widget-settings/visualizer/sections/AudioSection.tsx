@@ -1,14 +1,18 @@
+import React from "react";
 import {
-  AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  AccordionContent,
 } from "@/components/ui/accordion";
 import {
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
+  FormDescription,
 } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -16,9 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { UseFormReturn } from "react-hook-form";
+import IconMicrophone from "@icons/outline/microphone-2.svg?react";
+import MicrophoneSelect from "@/components/MicrophoneSelect";
 
 interface AudioSectionProps {
   form: UseFormReturn<any>;
@@ -27,15 +31,57 @@ interface AudioSectionProps {
 export function AudioSection({ form }: AudioSectionProps) {
   return (
     <AccordionItem value="audio">
-      <AccordionTrigger>Audio Settings</AccordionTrigger>
+      <AccordionTrigger>
+        <div className="flex items-center space-x-2">
+          <IconMicrophone className="h-6 w-6" />
+          <span>Audio Settings</span>
+        </div>
+      </AccordionTrigger>
       <AccordionContent className="space-y-4 p-2">
+        <FormField
+          control={form.control}
+          name="specificSettings.micEnabled"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Microphone Input</FormLabel>
+                <FormDescription>
+                  Use microphone input instead of audio playback
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {form.watch("specificSettings.micEnabled") && (
+          <FormField
+            control={form.control}
+            name="specificSettings.selectedMicId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Select Microphone</FormLabel>
+                <MicrophoneSelect
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="specificSettings.channelLayout"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Channel Layout</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select channel layout" />
@@ -44,7 +90,10 @@ export function AudioSection({ form }: AudioSectionProps) {
                 <SelectContent>
                   <SelectItem value="single">Single</SelectItem>
                   <SelectItem value="dual-combined">Dual Combined</SelectItem>
-                  <SelectItem value="dual-separate">Dual Separate</SelectItem>
+                  <SelectItem value="dual-horizontal">
+                    Dual Horizontal
+                  </SelectItem>
+                  <SelectItem value="dual-vertical">Dual Vertical</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>
@@ -57,53 +106,19 @@ export function AudioSection({ form }: AudioSectionProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Frequency Scale</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select frequency scale" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="linear">Linear</SelectItem>
                   <SelectItem value="bark">Bark</SelectItem>
+                  <SelectItem value="linear">Linear</SelectItem>
+                  <SelectItem value="log">Logarithmic</SelectItem>
                   <SelectItem value="mel">Mel</SelectItem>
                 </SelectContent>
               </Select>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="specificSettings.linearAmplitude"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
-              <FormLabel>Linear Amplitude</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="specificSettings.linearBoost"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Linear Boost</FormLabel>
-              <FormControl>
-                <Slider
-                  value={[field.value]}
-                  onValueChange={([value]) => field.onChange(value)}
-                  min={1}
-                  max={5}
-                  step={0.1}
-                />
-              </FormControl>
             </FormItem>
           )}
         />
@@ -114,7 +129,7 @@ export function AudioSection({ form }: AudioSectionProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Weighting Filter</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select weighting filter" />
@@ -125,6 +140,7 @@ export function AudioSection({ form }: AudioSectionProps) {
                   <SelectItem value="B">B-weighting</SelectItem>
                   <SelectItem value="C">C-weighting</SelectItem>
                   <SelectItem value="D">D-weighting</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>
@@ -133,10 +149,15 @@ export function AudioSection({ form }: AudioSectionProps) {
 
         <FormField
           control={form.control}
-          name="specificSettings.micEnabled"
+          name="specificSettings.linearAmplitude"
           render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
-              <FormLabel>Enable Microphone Input</FormLabel>
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Linear Amplitude</FormLabel>
+                <FormDescription>
+                  Use linear amplitude scaling instead of logarithmic
+                </FormDescription>
+              </div>
               <FormControl>
                 <Switch
                   checked={field.value}
@@ -146,6 +167,27 @@ export function AudioSection({ form }: AudioSectionProps) {
             </FormItem>
           )}
         />
+
+        {form.watch("specificSettings.linearAmplitude") && (
+          <FormField
+            control={form.control}
+            name="specificSettings.linearBoost"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Linear Boost: {field.value.toFixed(1)}x</FormLabel>
+                <FormControl>
+                  <Slider
+                    value={[field.value]}
+                    onValueChange={([value]) => field.onChange(value)}
+                    min={1}
+                    max={5}
+                    step={0.1}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
       </AccordionContent>
     </AccordionItem>
   );

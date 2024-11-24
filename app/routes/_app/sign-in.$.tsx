@@ -20,7 +20,7 @@ function SignInPage() {
   return (
     <>
       <Container maxWidth="full" isDashboard>
-        <div className="min-h-screen w-full overflow-hidden lg:grid lg:grid-cols-2">
+        {/* <div className="min-h-screen w-full overflow-hidden lg:grid lg:grid-cols-2">
           <div className="flex items-center justify-center py-12">
             <div className="mx-auto grid w-[350px] gap-6">
               <div className="grid gap-2 text-center">
@@ -96,11 +96,14 @@ function SignInPage() {
               className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
-        </div>
+        </div> */}
 
         <div className="flex items-center justify-center w-full h-screen">
           <div className="w-auto relative">
             <div className="relative z-20 backdrop-blur-lg rounded-lg shadow-xl">
+              <div className="flex justify-center">
+                <CircleDot className={`mb-10 w-16 fill-primary`} />
+              </div>
               <SignIn
                 routing="path"
                 path="/sign-in"

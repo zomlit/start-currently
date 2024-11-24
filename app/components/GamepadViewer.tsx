@@ -664,7 +664,7 @@ export function GamepadViewer({
     );
   }, [isDialogOpen, axes, deadzone, onSettingsChange]);
 
-  if (!finalGamepadState && settings?.showButtonPresses) {
+  if (!finalGamepadState) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
         <Gamepad className="h-12 w-12 text-muted-foreground/50" />
@@ -1078,14 +1078,36 @@ export function GamepadViewer({
                     <div className="relative w-full h-full flex justify-between px-[9%] mx-auto">
                       <div className="w-[15%] h-full ml-[5.4%]">
                         <Triggers
-                          pressed={Number(finalGamepadState?.buttons?.[6] ?? 0)}
+                          pressed={
+                            Number(
+                              typeof finalGamepadState?.buttons?.[6] ===
+                                "object"
+                                ? finalGamepadState?.buttons?.[6].value
+                                : finalGamepadState?.buttons?.[6]
+                            ) ?? 0
+                          }
                           side="left"
+                          color={settings?.triggerColor || "#1a1a1a"}
+                          pressedColor={
+                            settings?.buttonPressedColor || "#ffffff"
+                          }
                         />
                       </div>
                       <div className="w-[15%] h-full mr-[5.4%]">
                         <Triggers
-                          pressed={Number(finalGamepadState?.buttons?.[7] ?? 0)}
+                          pressed={
+                            Number(
+                              typeof finalGamepadState?.buttons?.[7] ===
+                                "object"
+                                ? finalGamepadState?.buttons?.[7].value
+                                : finalGamepadState?.buttons?.[7]
+                            ) ?? 0
+                          }
                           side="right"
+                          color={settings?.triggerColor || "#1a1a1a"}
+                          pressedColor={
+                            settings?.buttonPressedColor || "#ffffff"
+                          }
                         />
                       </div>
                     </div>

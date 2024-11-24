@@ -26,7 +26,7 @@ export default function HeroSection() {
             ) : isSignedIn ? (
               <AnimatedLink
                 to="/dashboard"
-                text={`HEY ${user?.username || "USER"} GO TO DASHBOARD`}
+                text={`GET STARTED`}
                 glowColors="bg-gradient-to-r from-[#44BCFF] via-[#FF44EC] to-[#FF675E]"
                 focusRingColor="ring-0"
                 focusRingWidth="ring-0"
@@ -36,13 +36,14 @@ export default function HeroSection() {
                 focusVisibleRingOffsetWidth="ring-offset-0"
                 focusBoxShadow="shadow-none"
                 focusVisibleBoxShadow="shadow-none"
-                className="uppercase focus:outline-none"
+                className="uppercase focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 glowOpacity={0.5}
+                disabled={!isSignedIn}
               />
             ) : (
               <AnimatedLink
-                to="/dashboard"
-                text="DASHBOARD"
+                to="/sign-in"
+                text="SIGN IN"
                 glowColors="bg-gradient-to-r from-[#44BCFF] via-[#FF44EC] to-[#FF675E]"
                 focusRingColor="ring-0"
                 focusRingWidth="ring-0"
