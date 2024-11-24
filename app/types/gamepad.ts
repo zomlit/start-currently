@@ -3,9 +3,15 @@ import type { FunctionComponent, SVGProps } from "react";
 
 type GamepadWidgetRow = Database["public"]["Tables"]["GamepadWidget"]["Row"];
 
+export interface GamepadButtonState {
+  pressed: boolean;
+  value: number;
+}
+
 export interface GamepadState {
-  buttons: { pressed: boolean }[] | boolean[];
+  buttons: GamepadButtonState[];
   axes: number[];
+  timestamp?: number;
 }
 
 export interface HookGamepadState {

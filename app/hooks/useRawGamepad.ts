@@ -12,8 +12,8 @@ export function useRawGamepad(deadzone: number = 0.05) {
   });
 
   const lastUpdateRef = useRef<number>(0);
-  const frameRef = useRef<number>();
-  const interactionTimeoutRef = useRef<NodeJS.Timeout>();
+  const frameRef = useRef<number | undefined>(undefined);
+  const interactionTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const handleGamepadInput = useCallback(() => {
     const gamepads = navigator.getGamepads();

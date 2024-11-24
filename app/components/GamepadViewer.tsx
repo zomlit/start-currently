@@ -15,6 +15,7 @@ import type {
   GamepadSettings,
   GamepadState,
   HookGamepadState,
+  GamepadButtonState,
 } from "@/types/gamepad";
 import { CONTROLLER_COLORS } from "@/lib/gamepad-settings";
 import {
@@ -428,6 +429,14 @@ const hasSignificantChange = (
   return axisChanged;
 };
 
+// Add these constants at the top of the file
+const PS_BUTTON_COLORS = {
+  cross: "#5989FF", // Blue
+  circle: "#FF4242", // Red
+  square: "#FF4FD0", // Pink
+  triangle: "#7FFF4F", // Green
+};
+
 export function GamepadViewer({
   settings,
   username,
@@ -439,7 +448,38 @@ export function GamepadViewer({
     useGamepadContext();
 
   // Use either passed gamepadState or context state
-  const finalGamepadState = gamepadState || contextGamepadState;
+  const finalGamepadState = useMemo(() => {
+    const state = gamepadState || contextGamepadState;
+    if (!state) return null;
+
+    // Transform the state to match expected format - same as PublicGamepadView
+    return {
+      buttons: state.buttons.map((button: any, index: number) => {
+        // For triggers (buttons 6 and 7), preserve the analog value
+        if (index === 6 || index === 7) {
+          const value = typeof button === "object" ? button.value : button;
+          return {
+            pressed: typeof button === "object" ? button.pressed : !!button,
+            value: typeof value === "number" ? value : button ? 1 : 0,
+          };
+        }
+
+        // For all other buttons, just use pressed state
+        return {
+          pressed: typeof button === "object" ? button.pressed : !!button,
+          value: 0, // Digital buttons don't have analog values
+        };
+      }),
+      axes: state.axes,
+    };
+  }, [gamepadState, contextGamepadState]);
+
+  // Debug logging
+  console.log("GamepadViewer transformed state:", {
+    finalGamepadState,
+    trigger6: finalGamepadState?.buttons?.[6],
+    trigger7: finalGamepadState?.buttons?.[7],
+  });
 
   // Keep these state declarations at the top
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
@@ -468,9 +508,6 @@ export function GamepadViewer({
   const buttons = useMemo(() => {
     return finalGamepadState?.buttons || Array(16).fill(false);
   }, [finalGamepadState?.buttons]);
-
-  // Add this ref to track last sent state
-  const lastSentStateRef = useRef<GamepadState | null>(null);
 
   // Use memoized drift detection
   const { isDrifting, leftStickDrift, rightStickDrift } =
@@ -770,6 +807,45 @@ export function GamepadViewer({
     }
   };
 
+  // Update the button rendering logic
+  const renderButton = (index: number, ButtonComponent: any) => {
+    const buttonState = finalGamepadState?.buttons[index];
+    const isPressed =
+      typeof buttonState === "object" ? buttonState.pressed : !!buttonState;
+
+    // Use custom colors only when enabled
+    const buttonColor = settings?.useCustomShapeColors
+      ? settings?.buttonShapeColor
+      : getDefaultButtonColor(index);
+    const pressedColor = settings?.useCustomShapeColors
+      ? settings?.buttonShapePressedColor
+      : settings?.buttonPressedColor;
+
+    return (
+      <ButtonComponent
+        pressed={isPressed}
+        color={buttonColor || "#1a1a1a"}
+        pressedColor={pressedColor || "#ffffff"}
+      />
+    );
+  };
+
+  // Add helper function to get default button colors
+  const getDefaultButtonColor = (buttonIndex: number): string => {
+    switch (buttonIndex) {
+      case 0: // Cross
+        return PS_BUTTON_COLORS.cross;
+      case 1: // Circle
+        return PS_BUTTON_COLORS.circle;
+      case 2: // Square
+        return PS_BUTTON_COLORS.square;
+      case 3: // Triangle
+        return PS_BUTTON_COLORS.triangle;
+      default:
+        return "#1a1a1a";
+    }
+  };
+
   return (
     <div className="relative w-full h-full flex flex-col">
       {CalibrationDialog}
@@ -870,25 +946,23 @@ export function GamepadViewer({
                             )}
                           </span>
                         </div>
-                        {!isUserInteracting && (
-                          <div
-                            className={cn(
-                              "mt-1 text-center text-xs font-medium rounded-full py-1",
-                              getDriftStatusText(
-                                Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
-                                deadzone
-                              ).color,
-                              "bg-black/5"
-                            )}
-                          >
-                            {
-                              getDriftStatusText(
-                                Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
-                                deadzone
-                              ).text
-                            }
-                          </div>
-                        )}
+                        <div
+                          className={cn(
+                            "mt-1 text-center text-xs font-medium rounded-full py-1",
+                            getDriftStatusText(
+                              Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+                              deadzone
+                            ).color,
+                            "bg-black/5"
+                          )}
+                        >
+                          {
+                            getDriftStatusText(
+                              Math.max(Math.abs(axes[0]), Math.abs(axes[1])),
+                              deadzone
+                            ).text
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -927,25 +1001,23 @@ export function GamepadViewer({
                             )}
                           </span>
                         </div>
-                        {!isUserInteracting && (
-                          <div
-                            className={cn(
-                              "mt-1 text-center text-xs font-medium rounded-full py-1",
-                              getDriftStatusText(
-                                Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
-                                deadzone
-                              ).color,
-                              "bg-black/5"
-                            )}
-                          >
-                            {
-                              getDriftStatusText(
-                                Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
-                                deadzone
-                              ).text
-                            }
-                          </div>
-                        )}
+                        <div
+                          className={cn(
+                            "mt-1 text-center text-xs font-medium rounded-full py-1",
+                            getDriftStatusText(
+                              Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+                              deadzone
+                            ).color,
+                            "bg-black/5"
+                          )}
+                        >
+                          {
+                            getDriftStatusText(
+                              Math.max(Math.abs(axes[2]), Math.abs(axes[3])),
+                              deadzone
+                            ).text
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1079,12 +1151,12 @@ export function GamepadViewer({
                       <div className="w-[15%] h-full ml-[5.4%]">
                         <Triggers
                           pressed={
-                            Number(
-                              typeof finalGamepadState?.buttons?.[6] ===
-                                "object"
-                                ? finalGamepadState?.buttons?.[6].value
-                                : finalGamepadState?.buttons?.[6]
-                            ) ?? 0
+                            typeof finalGamepadState?.buttons?.[6] === "object"
+                              ? finalGamepadState.buttons[6].value
+                              : typeof finalGamepadState?.buttons?.[6] ===
+                                  "number"
+                                ? finalGamepadState.buttons[6]
+                                : 0
                           }
                           side="left"
                           color={settings?.triggerColor || "#1a1a1a"}
@@ -1096,12 +1168,12 @@ export function GamepadViewer({
                       <div className="w-[15%] h-full mr-[5.4%]">
                         <Triggers
                           pressed={
-                            Number(
-                              typeof finalGamepadState?.buttons?.[7] ===
-                                "object"
-                                ? finalGamepadState?.buttons?.[7].value
-                                : finalGamepadState?.buttons?.[7]
-                            ) ?? 0
+                            typeof finalGamepadState?.buttons?.[7] === "object"
+                              ? finalGamepadState.buttons[7].value
+                              : typeof finalGamepadState?.buttons?.[7] ===
+                                  "number"
+                                ? finalGamepadState.buttons[7]
+                                : 0
                           }
                           side="right"
                           color={settings?.triggerColor || "#1a1a1a"}
@@ -1115,13 +1187,37 @@ export function GamepadViewer({
 
                   {/* Bumpers */}
                   <div className="bumpers">
-                    <div className={cn("bumper left", buttons[4] && "pressed")}>
-                      <Bumper pressed={buttons[4]} />
+                    <div
+                      className={cn(
+                        "bumper left",
+                        typeof finalGamepadState?.buttons[4] === "object"
+                          ? finalGamepadState?.buttons[4].pressed
+                          : !!finalGamepadState?.buttons[4] && "pressed"
+                      )}
+                    >
+                      <Bumper
+                        pressed={
+                          typeof finalGamepadState?.buttons[4] === "object"
+                            ? finalGamepadState?.buttons[4].pressed
+                            : !!finalGamepadState?.buttons[4]
+                        }
+                      />
                     </div>
                     <div
-                      className={cn("bumper right", buttons[5] && "pressed")}
+                      className={cn(
+                        "bumper right",
+                        typeof finalGamepadState?.buttons[5] === "object"
+                          ? finalGamepadState?.buttons[5].pressed
+                          : !!finalGamepadState?.buttons[5] && "pressed"
+                      )}
                     >
-                      <Bumper pressed={buttons[5]} />
+                      <Bumper
+                        pressed={
+                          typeof finalGamepadState?.buttons[5] === "object"
+                            ? finalGamepadState?.buttons[5].pressed
+                            : !!finalGamepadState?.buttons[5]
+                        }
+                      />
                     </div>
                   </div>
 
@@ -1129,74 +1225,10 @@ export function GamepadViewer({
                   <div className="abxy">
                     {settings?.showButtonPresses && (
                       <>
-                        <div>
-                          <CrossButton
-                            pressed={buttons[0]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                        <div>
-                          <CircleButton
-                            pressed={buttons[1]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                        <div>
-                          <SquareButton
-                            pressed={buttons[2]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
-                        <div>
-                          <TriangleButton
-                            pressed={buttons[3]}
-                            color={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(settings?.buttonShapeColor)
-                                : undefined
-                            }
-                            pressedColor={
-                              settings?.useCustomShapeColors
-                                ? safeFormatColor(
-                                    settings?.buttonShapePressedColor
-                                  )
-                                : undefined
-                            }
-                          />
-                        </div>
+                        <div>{renderButton(0, CrossButton)}</div>
+                        <div>{renderButton(1, CircleButton)}</div>
+                        <div>{renderButton(2, SquareButton)}</div>
+                        <div>{renderButton(3, TriangleButton)}</div>
                       </>
                     )}
                   </div>
@@ -1214,20 +1246,32 @@ export function GamepadViewer({
                     {settings?.showButtonPresses && (
                       <DPad
                         pressed={{
-                          up: buttons[12],
-                          down: buttons[13],
-                          left: buttons[14],
-                          right: buttons[15],
+                          up:
+                            typeof finalGamepadState?.buttons[12] === "object"
+                              ? finalGamepadState?.buttons[12].pressed
+                              : !!finalGamepadState?.buttons[12],
+                          down:
+                            typeof finalGamepadState?.buttons[13] === "object"
+                              ? finalGamepadState?.buttons[13].pressed
+                              : !!finalGamepadState?.buttons[13],
+                          left:
+                            typeof finalGamepadState?.buttons[14] === "object"
+                              ? finalGamepadState?.buttons[14].pressed
+                              : !!finalGamepadState?.buttons[14],
+                          right:
+                            typeof finalGamepadState?.buttons[15] === "object"
+                              ? finalGamepadState?.buttons[15].pressed
+                              : !!finalGamepadState?.buttons[15],
                         }}
                         color={
                           settings?.useCustomShapeColors
-                            ? safeFormatColor(settings?.buttonShapeColor)
-                            : undefined
+                            ? settings?.buttonShapeColor
+                            : settings?.buttonColor || "#1a1a1a"
                         }
                         pressedColor={
                           settings?.useCustomShapeColors
-                            ? safeFormatColor(settings?.buttonShapePressedColor)
-                            : undefined
+                            ? settings?.buttonShapePressedColor
+                            : settings?.buttonPressedColor || "#ffffff"
                         }
                       />
                     )}
@@ -1259,11 +1303,19 @@ export function GamepadViewer({
                           <DS4Sticks
                             className={cn(
                               "w-full h-full",
-                              buttons[10] && "pressed"
+                              (typeof finalGamepadState?.buttons[10] ===
+                              "object"
+                                ? finalGamepadState?.buttons[10].pressed
+                                : !!finalGamepadState?.buttons[10]) && "pressed"
                             )}
                             style={
                               {
-                                "--stick-color": buttons[10]
+                                "--stick-color": (
+                                  typeof finalGamepadState?.buttons[10] ===
+                                  "object"
+                                    ? finalGamepadState?.buttons[10].pressed
+                                    : !!finalGamepadState?.buttons[10]
+                                )
                                   ? safeFormatColor(
                                       settings?.buttonPressedColor
                                     )
@@ -1287,11 +1339,19 @@ export function GamepadViewer({
                           <DS4Sticks
                             className={cn(
                               "w-full h-full",
-                              buttons[11] && "pressed"
+                              (typeof finalGamepadState?.buttons[11] ===
+                              "object"
+                                ? finalGamepadState?.buttons[11].pressed
+                                : !!finalGamepadState?.buttons[11]) && "pressed"
                             )}
                             style={
                               {
-                                "--stick-color": buttons[11]
+                                "--stick-color": (
+                                  typeof finalGamepadState?.buttons[11] ===
+                                  "object"
+                                    ? finalGamepadState?.buttons[11].pressed
+                                    : !!finalGamepadState?.buttons[11]
+                                )
                                   ? safeFormatColor(
                                       settings?.buttonPressedColor
                                     )

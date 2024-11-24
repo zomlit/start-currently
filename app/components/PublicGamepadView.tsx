@@ -9,12 +9,15 @@ import { useParams } from "@tanstack/react-router";
 import { GamepadViewer } from "@/components/GamepadViewer";
 import { supabase } from "@/utils/supabase/client";
 import { defaultGamepadSettings } from "@/lib/gamepad-settings";
-import type { GamepadSettings, GamepadState } from "@/types/gamepad";
+import type {
+  GamepadSettings,
+  GamepadState,
+  GamepadButtonState,
+} from "@/types/gamepad";
 import { useGamepadStore } from "@/store/gamepadStore";
 import { Gamepad } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { useGamepadContext } from "@/providers/GamepadProvider";
 
 // Add this helper function at the top
 const areSettingsEqual = (
@@ -59,15 +62,6 @@ const findSettingsDiff = (
   return changes;
 };
 
-// Add type for gamepad state
-type GamepadButtonState = boolean | { pressed: boolean };
-
-interface GamepadState {
-  buttons: GamepadButtonState[];
-  axes: number[];
-  timestamp?: number;
-}
-
 export function PublicGamepadView() {
   const { username } = useParams({ from: "/$username/gamepad" });
   const [settings, setSettings] = useState<GamepadSettings>(
@@ -77,221 +71,158 @@ export function PublicGamepadView() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isInactive, setIsInactive] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
+  const [remoteGamepadState, setRemoteGamepadState] =
+    useState<GamepadState | null>(null);
   const inactivityTimeout = (settings.inactivityTimeout || 10) * 1000;
 
-  // Use the context instead of managing connection state locally
-  const { gamepadState, isConnected } = useGamepadContext();
+  // Remove local gamepad context usage
   const { setGamepadState } = useGamepadStore();
+  const lastConnectionStateRef = useRef<boolean>(false);
 
-  // Remove setIsConnected from here since we're using context
+  // Update the connection state handler
   const updateConnectionState = useCallback((connected: boolean) => {
     if (lastConnectionStateRef.current !== connected) {
       if (connected) {
         console.log("Controller activity detected");
+        toast.success("Controller connected", {
+          description: "Now receiving controller input",
+        });
       } else {
         console.log("Controller activity stopped");
+        toast.error("Controller disconnected", {
+          description: "Waiting for controller to reconnect...",
+        });
       }
       lastConnectionStateRef.current = connected;
     }
   }, []);
 
-  // Update the connection check effect
+  // Subscribe to settings changes
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    if (!username) return;
 
-    const checkConnection = () => {
-      const now = Date.now();
-      const timeSinceLastActivity = now - lastActivityTime;
+    // First get the user_id
+    const getUserId = async () => {
+      const { data: profileData } = await supabase
+        .from("UserProfile")
+        .select("user_id")
+        .eq("username", username)
+        .single();
 
-      // Consider disconnected if no activity for 3 seconds
-      if (timeSinceLastActivity > 3000 && isConnected) {
-        updateConnectionState(false);
+      if (profileData?.user_id) {
+        // Subscribe to settings changes in realtime
+        const settingsSubscription = supabase
+          .channel("settings_changes")
+          .on(
+            "postgres_changes",
+            {
+              event: "*", // Listen to all changes
+              schema: "public",
+              table: "GamepadWidget",
+              filter: `user_id=eq.${profileData.user_id}`,
+            },
+            (payload) => {
+              console.log("Settings update received:", payload);
+
+              if (payload.new) {
+                // Update settings with the new values
+                const newSettings = {
+                  ...defaultGamepadSettings,
+                  ...(payload.new.settings || {}),
+                  ...(payload.new.gamepad_settings || {}),
+                  showButtonPresses: payload.new.showPressedButtons ?? true,
+                  style: payload.new.style,
+                  layout: payload.new.layout,
+                };
+
+                console.log("Applying new settings:", newSettings);
+                setSettings(newSettings as GamepadSettings);
+              }
+            }
+          )
+          .subscribe();
+
+        return () => {
+          settingsSubscription.unsubscribe();
+        };
       }
     };
 
-    // Check connection status every second
-    const intervalId = setInterval(checkConnection, 1000);
+    getUserId();
+  }, [username]);
 
-    return () => {
-      clearInterval(intervalId);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [lastActivityTime, isConnected, updateConnectionState]);
-
-  // Add a ref to track the last state to prevent unnecessary updates
-  const lastStateRef = useRef<GamepadState | null>(null);
-
-  // Add last connection state ref to track changes
-  const lastConnectionStateRef = useRef<boolean>(false);
-
-  // Add gamepad connection event listener
+  // Subscribe to gamepad state updates
   useEffect(() => {
-    const handleGamepadConnected = (event: GamepadEvent) => {
-      console.log("Gamepad connected:", event.gamepad);
-      toast.success(`Controller ${event.gamepad.id} Connected`, {
-        description: "Now receiving controller input",
-      });
-    };
+    if (!username) return;
 
-    const handleGamepadDisconnected = (event: GamepadEvent) => {
-      console.log("Gamepad disconnected:", event.gamepad);
-      toast.error(`Controller ${event.gamepad.id} Disconnected`, {
-        description: "Waiting for controller to reconnect...",
-      });
-    };
-
-    window.addEventListener("gamepadconnected", handleGamepadConnected);
-    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
-
-    return () => {
-      window.removeEventListener("gamepadconnected", handleGamepadConnected);
-      window.removeEventListener(
-        "gamepaddisconnected",
-        handleGamepadDisconnected
-      );
-    };
-  }, []);
-
-  // Update the gamepad state handler
-  const handleGamepadState = useCallback(
-    (state: GamepadState) => {
-      if (!state.buttons || !state.axes) {
-        console.log("Invalid gamepad state received:", state);
-        return;
-      }
-
-      // Set connected state when we receive any state
-      updateConnectionState(true);
-
-      // Check for actual activity
-      const hasActivity =
-        state.buttons.some((button) =>
-          typeof button === "boolean" ? button : button.pressed
-        ) ||
-        state.axes.some(
-          (axis: number) => Math.abs(axis) > (settings.deadzone ?? 0.05)
-        );
-
-      if (hasActivity) {
-        console.log("Activity detected:", {
-          buttons: state.buttons,
-          axes: state.axes,
-        });
-        setLastActivityTime(Date.now());
-        setIsInactive(false);
-      }
-
-      setGamepadState(state);
-    },
-    [setGamepadState, updateConnectionState, settings.deadzone]
-  );
-
-  // Subscribe to both gamepad state and settings changes
-  useEffect(() => {
-    if (!username || !userId) return;
-
-    let mounted = true;
-
-    // Create channels for both gamepad state and settings
     const gamepadChannel = supabase.channel(`gamepad:${username}`, {
       config: { broadcast: { self: false } },
     });
 
-    // Subscribe to settings changes in realtime
-    const settingsSubscription = supabase
-      .channel("settings_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "GamepadWidget",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          if (!mounted) return;
-          console.log("Settings update received:", payload);
-
-          const newSettings = {
-            ...defaultGamepadSettings,
-            ...(payload.new.settings || {}),
-            ...(payload.new.gamepad_settings || {}),
-            showButtonPresses: payload.new.showPressedButtons ?? true,
-            style: payload.new.style,
-            layout: payload.new.layout,
-          };
-
-          // Only update if there are actual changes
-          if (!areSettingsEqual(settings, newSettings)) {
-            console.log("Applying new settings:", newSettings);
-            setSettings(newSettings as GamepadSettings);
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to gamepad state updates
     gamepadChannel
       .on("broadcast", { event: "gamepadState" }, ({ payload }) => {
-        if (!mounted || !payload?.gamepadState) return;
+        if (!payload?.gamepadState) return;
 
         const state = payload.gamepadState;
+
+        // Transform the state to match expected format
+        const transformedState = {
+          buttons: state.buttons.map((button: any, index: number) => {
+            // For triggers (buttons 6 and 7), preserve the analog value
+            if (index === 6 || index === 7) {
+              const value = typeof button === "object" ? button.value : button;
+              return {
+                pressed: typeof button === "object" ? button.pressed : !!button,
+                value: typeof value === "number" ? value : button ? 1 : 0,
+              };
+            }
+
+            // For all other buttons, just use pressed state
+            return {
+              pressed: typeof button === "object" ? button.pressed : !!button,
+              value: 0, // Digital buttons don't have analog values
+            };
+          }),
+          axes: state.axes,
+        };
+
         const hasActivity =
-          state.buttons.some((button) =>
-            typeof button === "boolean" ? button : button.pressed
-          ) ||
-          state.axes.some(
+          transformedState.buttons.some((button) => button.pressed) ||
+          transformedState.axes.some(
             (axis: number) => Math.abs(axis) > (settings.deadzone ?? 0.05)
           );
 
         if (hasActivity) {
-          console.log("Activity detected:", {
-            buttons: state.buttons,
-            axes: state.axes,
-          });
           setLastActivityTime(Date.now());
           setIsInactive(false);
+          updateConnectionState(true);
         }
 
-        setGamepadState(state);
+        setRemoteGamepadState(transformedState);
+        setGamepadState(transformedState);
       })
       .subscribe();
 
     return () => {
-      mounted = false;
       gamepadChannel.unsubscribe();
-      settingsSubscription.unsubscribe();
     };
-  }, [username, userId]); // Only depend on username and userId
+  }, [username, settings.deadzone, updateConnectionState, setGamepadState]);
 
-  // Separate effect to handle inactivity check
+  // Check for inactivity
   useEffect(() => {
-    if (!settings.hideWhenInactive) {
-      setIsInactive(false);
-      return;
-    }
-
     const checkInactivity = () => {
       const now = Date.now();
       const timeSinceLastActivity = now - lastActivityTime;
 
-      console.log({
-        now,
-        lastActivityTime,
-        timeSinceLastActivity,
-        inactivityTimeout,
-        hideWhenInactive: settings.hideWhenInactive,
-        shouldHide: timeSinceLastActivity > inactivityTimeout,
-      });
-
-      // Update isInactive state based on timeout
-      setIsInactive(timeSinceLastActivity > inactivityTimeout);
+      if (timeSinceLastActivity > inactivityTimeout) {
+        setIsInactive(true);
+        updateConnectionState(false);
+      }
     };
 
-    // Check every second
-    const interval = setInterval(checkInactivity, 1000);
-    return () => clearInterval(interval);
-  }, [lastActivityTime, inactivityTimeout, settings.hideWhenInactive]);
+    const intervalId = setInterval(checkInactivity, 1000);
+    return () => clearInterval(intervalId);
+  }, [lastActivityTime, inactivityTimeout, updateConnectionState]);
 
   // Only hide if both conditions are met
   const shouldHideController = settings.hideWhenInactive && isInactive;
@@ -302,6 +233,7 @@ export function PublicGamepadView() {
       if (!username) return;
 
       try {
+        // First get the user_id
         const { data: profileData } = await supabase
           .from("UserProfile")
           .select("user_id")
@@ -312,9 +244,7 @@ export function PublicGamepadView() {
           throw new Error("User not found");
         }
 
-        console.log("Found user:", profileData.user_id); // Debug log
-        setUserId(profileData.user_id);
-
+        // Then get the settings
         const { data: widgetData } = await supabase
           .from("GamepadWidget")
           .select(
@@ -324,8 +254,7 @@ export function PublicGamepadView() {
           .single();
 
         if (widgetData) {
-          console.log("Found widget settings:", widgetData); // Debug log
-          const combinedSettings = {
+          const newSettings = {
             ...defaultGamepadSettings,
             ...(widgetData.settings || {}),
             ...(widgetData.gamepad_settings || {}),
@@ -333,11 +262,11 @@ export function PublicGamepadView() {
             style: widgetData.style,
             layout: widgetData.layout,
           };
-          setSettings(combinedSettings as GamepadSettings);
+
+          setSettings(newSettings as GamepadSettings);
         }
       } catch (error) {
-        console.error("Error loading gamepad settings:", error);
-        setError("Failed to load gamepad settings");
+        console.error("Error loading settings:", error);
       }
     }
 
@@ -377,7 +306,7 @@ export function PublicGamepadView() {
             <GamepadViewer
               settings={settings}
               username={username}
-              gamepadState={gamepadState}
+              gamepadState={remoteGamepadState}
               isPublicView={true}
             />
           </motion.div>
