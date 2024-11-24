@@ -5,7 +5,7 @@ export function useGamepad(deadzone: number = 0.05) {
   const [gamepadState, setGamepadState] = useState<GamepadState | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const lastUpdateRef = useRef<number>(0);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
 
   const handleGamepadInput = useCallback(() => {
     const gamepads = navigator.getGamepads();

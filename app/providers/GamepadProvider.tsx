@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { useUser } from "@clerk/tanstack-start";
 import { supabase } from "@/utils/supabase/client";
 import { useGamepad } from "@/hooks/useGamepad";
@@ -9,9 +16,10 @@ import type {
 import { RealtimeClient } from "@supabase/supabase-js";
 import {
   GamepadState,
-  HookGamepadState,
-  isGamepadButtonState,
-} from "@/types/gamepad";
+  hasSignificantChange,
+  DEFAULT_DEADZONE,
+} from "@/utils/gamepad";
+import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 
 interface GamepadContextType {
   gamepadState: GamepadState | null;
@@ -37,29 +45,110 @@ const realtime = new RealtimeClient(
   }
 );
 
-// Add a helper function to filter axes values based on deadzone
-function filterAxes(axes: number[], deadzone: number): number[] {
-  return axes.map((value) => (Math.abs(value) > deadzone ? value : 0));
-}
-
 export function GamepadProvider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const { gamepadState: hookGamepadState, isConnected } = useGamepad(0.05);
+  const workerRef = useRef<Worker | null>(null);
+  const [gamepadState, setGamepadState] = useState<GamepadState | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const lastStateRef = useRef<GamepadState | null>(null);
-  const DEFAULT_DEADZONE = 0.15;
 
-  // Setup Supabase channel using realtime client directly
+  // Add polling in main thread to ensure continuous updates
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let frameId: number;
+    let lastTime = 0;
+    const FRAME_TIME = 1000 / 60; // 60fps
+
+    const pollGamepad = (timestamp: number) => {
+      if (timestamp - lastTime >= FRAME_TIME) {
+        const gamepads = navigator.getGamepads();
+        const gamepad = gamepads[0];
+
+        if (gamepad) {
+          // Transform the state to match expected format
+          const state: GamepadState = {
+            buttons: gamepad.buttons.map((button, index) => {
+              // For triggers (buttons 6 and 7), preserve the analog value
+              if (index === 6 || index === 7) {
+                return {
+                  pressed: button.pressed,
+                  value: button.value, // Keep the raw analog value
+                };
+              }
+              // For all other buttons, just use pressed state
+              return {
+                pressed: button.pressed,
+                value: button.pressed ? 1 : 0,
+              };
+            }),
+            axes: gamepad.axes.map((axis) =>
+              Math.abs(axis) < DEFAULT_DEADZONE ? 0 : axis
+            ),
+            timestamp: Date.now(),
+          };
+
+          // Only broadcast if there's a significant change
+          if (
+            hasSignificantChange(state, lastStateRef.current, DEFAULT_DEADZONE)
+          ) {
+            if (
+              window.location.pathname === "/widgets/gamepad" &&
+              channelRef.current &&
+              user?.username
+            ) {
+              console.log("Broadcasting state with trigger values:", {
+                left: state.buttons[6].value,
+                right: state.buttons[7].value,
+              });
+
+              channelRef.current
+                .send({
+                  type: "broadcast",
+                  event: "gamepadState",
+                  payload: { gamepadState: state },
+                })
+                .catch((error: any) => {
+                  if (!error?.message?.includes("429")) {
+                    console.error(
+                      "[GamepadProvider] Error broadcasting state:",
+                      error
+                    );
+                  }
+                });
+            }
+
+            setGamepadState(state);
+            setIsConnected(true);
+            lastStateRef.current = state;
+          }
+        }
+
+        lastTime = timestamp;
+      }
+      frameId = requestAnimationFrame(pollGamepad);
+    };
+
+    frameId = requestAnimationFrame(pollGamepad);
+
+    // Keep polling even when tab is not focused
+    const visibilityHandler = () => {
+      if (document.hidden) {
+        frameId = requestAnimationFrame(pollGamepad);
+      }
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      document.removeEventListener("visibilitychange", visibilityHandler);
+    };
+  }, [user?.username]);
+
+  // Setup Supabase channel
   useEffect(() => {
     if (!user?.id || !user?.username) return;
-
-    console.log("[Channel] Attempting to connect with config:", {
-      url: `${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/realtime/v1/websocket`,
-      apiKey:
-        import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 8) + "...",
-      channel: `gamepad:${user.username}`,
-      userId: user.id,
-    });
 
     const channel = realtime.channel(`gamepad:${user.username}`, {
       config: {
@@ -70,121 +159,21 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
-    channel
-      .on(
-        "broadcast",
-        { event: "gamepadState" },
-        ({ payload }: { payload: { gamepadState: GamepadState } }) => {
-          console.log("[Channel] Received gamepad state:", payload);
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === "SUBSCRIBED") {
-          channelRef.current = channel;
-          console.log("[Channel] Connected successfully!");
-        }
-
-        if (status === "CHANNEL_ERROR") {
-          console.error("[Channel] Error subscribing:", {
-            message: err?.message,
-            error: err,
-          });
-        }
-
-        if (status === "TIMED_OUT") {
-          console.error("[Channel] Realtime server did not respond in time");
-        }
-
-        if (status === "CLOSED") {
-          console.error("[Channel] Realtime channel was unexpectedly closed");
-        }
-      });
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        channelRef.current = channel;
+        console.log("[Channel] Connected successfully!");
+      }
+    });
 
     return () => {
-      console.log("[Channel] Cleaning up subscription");
       channel.unsubscribe();
       channelRef.current = null;
     };
   }, [user?.id, user?.username]);
 
-  // Handle gamepad state updates
-  useEffect(() => {
-    if (!hookGamepadState || !user?.id || !channelRef.current) return;
-
-    // Get the filtered axes based on deadzone
-    const filteredAxes = filterAxes(hookGamepadState.axes, DEFAULT_DEADZONE);
-
-    // Create transformed state with filtered axes
-    const transformedState: GamepadState = {
-      buttons: hookGamepadState.buttons.map((button) =>
-        isGamepadButtonState(button) ? button.pressed : button
-      ),
-      axes: filteredAxes,
-    };
-
-    // Check for any changes in button states or significant axis movement
-    const hasButtonStateChange = lastStateRef.current
-      ? transformedState.buttons.some(
-          (pressed, index) => pressed !== lastStateRef.current?.buttons[index]
-        )
-      : transformedState.buttons.some((pressed) => pressed);
-
-    const hasSignificantMovement = filteredAxes.some((value) => value !== 0);
-
-    // Send update if there are any changes in buttons or significant movement
-    if (hasButtonStateChange || hasSignificantMovement) {
-      // Always send state to ensure button releases are captured
-      channelRef.current
-        .send({
-          type: "broadcast",
-          event: "gamepadState",
-          payload: { gamepadState: transformedState },
-        })
-        .catch((error: any) => {
-          if (!error?.message?.includes("429")) {
-            console.error("Error broadcasting gamepad state:", error);
-          }
-        });
-
-      lastStateRef.current = transformedState;
-    } else if (lastStateRef.current) {
-      // If no current input but we had previous input, send a zero state
-      const hasAnyPreviousInput =
-        lastStateRef.current.buttons.some((pressed) => pressed) ||
-        lastStateRef.current.axes.some((value) => value !== 0);
-
-      if (hasAnyPreviousInput) {
-        const zeroState: GamepadState = {
-          buttons: new Array(transformedState.buttons.length).fill(false),
-          axes: new Array(transformedState.axes.length).fill(0),
-        };
-
-        channelRef.current
-          .send({
-            type: "broadcast",
-            event: "gamepadState",
-            payload: { gamepadState: zeroState },
-          })
-          .catch((error: any) => {
-            if (!error?.message?.includes("429")) {
-              console.error("Error broadcasting gamepad state:", error);
-            }
-          });
-
-        lastStateRef.current = zeroState;
-      }
-    }
-  }, [hookGamepadState, user?.id]);
-
   const value = {
-    gamepadState: hookGamepadState
-      ? {
-          buttons: hookGamepadState.buttons.map((button) =>
-            isGamepadButtonState(button) ? button.pressed : button
-          ),
-          axes: filterAxes(hookGamepadState.axes, DEFAULT_DEADZONE),
-        }
-      : null,
+    gamepadState,
     isConnected,
   };
 
