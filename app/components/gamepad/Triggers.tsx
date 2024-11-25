@@ -14,7 +14,6 @@ export function Triggers({
   pressedColor = "#ffffff",
 }: TriggersProps) {
   const pressure = Math.min(Math.max(Number(pressed) || 0, 0), 1);
-  console.log("Trigger pressure:", pressure);
 
   return (
     <div className="relative w-full h-full">

@@ -1,15 +1,6 @@
-import {
-  Eye,
-  MessageCircle,
-  Bell,
-  BarChart2,
-  LayoutDashboard,
-  Users,
-  Gamepad,
-  Grid2x2,
-  CircleDot,
-} from "lucide-react";
+import { LayoutDashboard, Users, Grid2x2, CircleDot } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { widgetSubmenuItems } from "./widgets";
 import MicrophoneIcon from "@icons/outline/microphone-2.svg?react";
 
 export type NavSubItem = {
@@ -27,7 +18,7 @@ export type NavItem = {
   submenu?: readonly NavSubItem[];
 };
 
-export const navItems: readonly NavItem[] = [
+export const navItems = [
   {
     id: "dashboard",
     text: "Dashboard",
@@ -38,44 +29,7 @@ export const navItems: readonly NavItem[] = [
     id: "widgets",
     text: "Widgets",
     icon: Grid2x2,
-    submenu: [
-      {
-        id: "visualizer",
-        link: "/widgets/visualizer",
-        text: "Visualizer",
-        icon: Eye,
-      },
-      {
-        id: "lyrics",
-        link: "/widgets/lyrics",
-        text: "Lyrics",
-        icon: MicrophoneIcon,
-      },
-      {
-        id: "chat",
-        link: "/widgets/chat",
-        text: "Chat",
-        icon: MessageCircle,
-      },
-      {
-        id: "alerts",
-        link: "/widgets/alerts",
-        text: "Alerts",
-        icon: Bell,
-      },
-      {
-        id: "stats",
-        link: "/widgets/stats",
-        text: "Stats",
-        icon: BarChart2,
-      },
-      {
-        id: "gamepad",
-        link: "/widgets/gamepad",
-        text: "Gamepad",
-        icon: Gamepad,
-      },
-    ],
+    submenu: widgetSubmenuItems,
   },
   {
     id: "wheelspin",
