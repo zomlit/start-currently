@@ -8,8 +8,6 @@ import React, {
   useMemo,
 } from "react";
 import { useUser } from "@clerk/tanstack-start";
-import { supabase } from "@/utils/supabase/client";
-import { useGamepad } from "@/hooks/useGamepad";
 import type {
   RealtimeChannel,
   RealtimeChannelSendResponse,
@@ -20,18 +18,34 @@ import {
   hasSignificantChange,
   DEFAULT_DEADZONE,
 } from "@/utils/gamepad";
-import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 
+// Add extension types
+interface ExtensionMessage {
+  type: string;
+  username?: string;
+}
+
+interface ExtensionResponse {
+  success: boolean;
+  channelId?: string;
+  id?: string;
+}
+
+// Update the context type
 interface GamepadContextType {
   gamepadState: GamepadState | null;
   isConnected: boolean;
+  isExtensionEnabled: boolean;
   setEnabled: (enabled: boolean) => void;
+  toggleExtension: () => void;
 }
 
 const GamepadContext = createContext<GamepadContextType>({
   gamepadState: null,
   isConnected: false,
+  isExtensionEnabled: false,
   setEnabled: () => {},
+  toggleExtension: () => {},
 });
 
 // Create a new RealtimeClient with worker and heartbeat config
@@ -43,7 +57,7 @@ const realtime = new RealtimeClient(
       vsn: "1.0.0",
     },
     worker: true,
-    heartbeatIntervalMs: 15000,
+    heartbeatIntervalMs: 25000,
     timeout: 30000,
   }
 );
@@ -81,18 +95,133 @@ const setupZeroTimeout = () => {
   };
 };
 
+// Add Chrome extension types
+declare global {
+  interface Window {
+    chrome?: {
+      runtime?: {
+        sendMessage: (
+          extensionId: string,
+          message: any,
+          callback?: (response: any) => void
+        ) => void;
+        onMessage: {
+          addListener: (
+            callback: (
+              message: any,
+              sender: chrome.runtime.MessageSender,
+              sendResponse: (response?: any) => void
+            ) => void
+          ) => void;
+          removeListener: (callback: any) => void;
+        };
+      };
+    };
+  }
+}
+
+// Update the getExtensionId function to use an environment variable
+const getExtensionId = async (): Promise<string | null> => {
+  if (typeof window === "undefined" || !window.chrome?.runtime) {
+    console.log("Chrome extension API not available");
+    return null;
+  }
+
+  try {
+    // Get the extension ID from environment variable
+    const extensionId = import.meta.env.VITE_CHROME_EXTENSION_ID;
+
+    if (!extensionId) {
+      console.log("Extension ID not configured in environment variables");
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      window.chrome?.runtime?.sendMessage(
+        extensionId,
+        { type: "GET_EXTENSION_ID" },
+        (response) => {
+          if (window.chrome?.runtime?.lastError) {
+            console.log(
+              "Extension not found:",
+              window.chrome.runtime.lastError
+            );
+            resolve(null);
+            return;
+          }
+
+          if (response?.success && response?.id) {
+            console.log("Extension found with ID:", response.id);
+            resolve(response.id);
+          } else {
+            console.log("Invalid extension response:", response);
+            resolve(null);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    console.log("Error checking extension:", error);
+    return null;
+  }
+};
+
+// Update extension message handling
+const setupExtensionListeners = (
+  extensionId: string,
+  callback: (state: GamepadState) => void
+) => {
+  if (!window.chrome?.runtime?.onMessage) return () => {};
+
+  const handleMessage = (
+    message: any,
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (response?: any) => void
+  ) => {
+    if (sender.id !== extensionId) return;
+
+    if (message.type === "GAMEPAD_STATE" && message.state) {
+      callback(message.state);
+    }
+    sendResponse({ received: true });
+  };
+
+  window.chrome?.runtime?.onMessage.addListener(handleMessage);
+  return () => window.chrome?.runtime?.onMessage.removeListener(handleMessage);
+};
+
 export function GamepadProvider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const workerRef = useRef<SharedWorker | null>(null);
   const [gamepadState, setGamepadState] = useState<GamepadState | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [extensionId, setExtensionId] = useState<string | null>(null);
+  const [isExtensionEnabled, setIsExtensionEnabled] = useState(false);
   const lastStateRef = useRef<GamepadState | null>(null);
-  const lastPollTime = useRef<number>(0);
-  const POLL_INTERVAL = 1000 / 60; // 60fps
   const [isEnabled, setEnabled] = useState(true);
 
-  // Add a broadcast helper
+  // Move hasStateChanged before other hooks that use it
+  const hasStateChanged = useCallback(
+    (oldState: GamepadState | null, newState: GamepadState) => {
+      if (!oldState) return true;
+
+      // Check for significant changes
+      const hasButtonChanges = newState.buttons.some(
+        (button, index) => button.pressed !== oldState.buttons[index]?.pressed
+      );
+
+      const hasAxisChanges = newState.axes.some((axis, index) => {
+        const oldAxis = oldState.axes[index] || 0;
+        return Math.abs(axis - oldAxis) > DEFAULT_DEADZONE;
+      });
+
+      return hasButtonChanges || hasAxisChanges;
+    },
+    []
+  );
+
+  // Move broadcastState after hasStateChanged
   const broadcastState = useCallback(
     (state: GamepadState) => {
       if (channelRef.current && user?.username) {
@@ -120,93 +249,185 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     [user?.username]
   );
 
-  // Add state comparison helper
-  const hasStateChanged = useCallback(
-    (oldState: GamepadState | null, newState: GamepadState) => {
-      if (!oldState) return true;
-
-      // Check for significant changes
-      const hasButtonChanges = newState.buttons.some(
-        (button, index) => button.pressed !== oldState.buttons[index]?.pressed
-      );
-
-      const hasAxisChanges = newState.axes.some((axis, index) => {
-        const oldAxis = oldState.axes[index] || 0;
-        return Math.abs(axis - oldAxis) > DEFAULT_DEADZONE;
-      });
-
-      return hasButtonChanges || hasAxisChanges;
-    },
-    []
-  );
-
-  // Update the polling logic
+  // Check for extension on mount
   useEffect(() => {
-    if (typeof window === "undefined" || !isEnabled) return;
+    getExtensionId().then((id) => {
+      setExtensionId(id);
+      setIsExtensionEnabled(!!id);
+    });
+  }, []);
 
-    // Create polling worker
-    const pollWorker = new Worker(
-      new URL("../workers/gamepad-poll.worker.ts", import.meta.url).href,
-      { type: "module" }
-    );
+  // Update the extension setup effect
+  useEffect(() => {
+    if (!user?.username || !isExtensionEnabled) return;
 
-    // Use setInterval for more reliable polling
-    const pollInterval = setInterval(() => {
+    console.log("Checking extension availability...");
+    getExtensionId().then((id) => {
+      if (id) {
+        console.log("Extension found, setting up channel...");
+        setExtensionId(id);
+
+        // Setup channel with extension
+        window.chrome?.runtime?.sendMessage(
+          id,
+          {
+            type: "SETUP_GAMEPAD_CHANNEL",
+            username: user.username,
+          } as ExtensionMessage,
+          (response: ExtensionResponse) => {
+            if (window.chrome?.runtime?.lastError) {
+              console.error(
+                "Failed to setup extension channel:",
+                window.chrome.runtime.lastError
+              );
+              setIsExtensionEnabled(false);
+              return;
+            }
+
+            if (response?.success) {
+              console.log(
+                "Extension channel setup successful:",
+                response.channelId
+              );
+
+              // Setup message listener
+              const messageListener = (
+                message: any,
+                sender: chrome.runtime.MessageSender,
+                sendResponse: (response?: any) => void
+              ) => {
+                // Only process messages from our extension
+                if (sender.id !== id) return;
+
+                if (message.type === "GAMEPAD_STATE" && message.state) {
+                  const state: GamepadState = {
+                    buttons: message.state.buttons.map((button: any) => ({
+                      pressed: button.pressed,
+                      value: button.value || (button.pressed ? 1 : 0),
+                    })),
+                    axes: message.state.axes,
+                    timestamp: Date.now(),
+                  };
+
+                  console.log(
+                    "[GamepadProvider] Received gamepad state:",
+                    state
+                  );
+                  setGamepadState(state);
+                  setIsConnected(true);
+                  lastStateRef.current = state;
+                  broadcastState(state);
+                }
+
+                // Always send a response
+                sendResponse({ received: true });
+              };
+
+              // Add the listener
+              if (window.chrome?.runtime?.onMessage) {
+                window.chrome.runtime.onMessage.addListener(messageListener);
+                console.log("[GamepadProvider] Added message listener");
+              }
+            } else {
+              console.error("Extension setup failed:", response);
+              setIsExtensionEnabled(false);
+            }
+          }
+        );
+      } else {
+        console.log("Extension not found, disabling...");
+        setIsExtensionEnabled(false);
+      }
+    });
+  }, [user?.username, isExtensionEnabled, broadcastState]);
+
+  // Update the polling effect to ensure it broadcasts to Supabase
+  useEffect(() => {
+    if (!isEnabled || !user?.username) return;
+
+    // If extension is not available, use web API
+    if (!isExtensionEnabled) {
+      const setZeroTimeout = setupZeroTimeout();
+      let isPolling = true;
+
+      const pollGamepad = () => {
+        if (!isPolling) return;
+
+        const gamepads = navigator.getGamepads();
+        const gamepad = gamepads[0];
+
+        if (gamepad) {
+          const state: GamepadState = {
+            buttons: gamepad.buttons.map((button, index) => ({
+              pressed: button.pressed,
+              value:
+                index === 6 || index === 7
+                  ? button.value
+                  : button.pressed
+                    ? 1
+                    : 0,
+            })),
+            axes: gamepad.axes.map((axis) =>
+              Math.abs(axis) < DEFAULT_DEADZONE ? 0 : axis
+            ),
+            timestamp: Date.now(),
+          };
+
+          // Only update if state has changed significantly
+          if (hasStateChanged(lastStateRef.current, state)) {
+            console.log("[GamepadProvider] Web API state update:", state);
+            setGamepadState(state);
+            lastStateRef.current = state;
+            broadcastState(state);
+          }
+        }
+
+        // Schedule next poll immediately
+        setZeroTimeout(pollGamepad);
+      };
+
+      // Start polling
+      setZeroTimeout(pollGamepad);
+
+      // Handle gamepad connect/disconnect
+      const handleGamepadConnected = () => {
+        console.log("[GamepadProvider] Gamepad connected via Web API");
+        setIsConnected(true);
+        isPolling = true;
+        setZeroTimeout(pollGamepad);
+      };
+
+      const handleGamepadDisconnected = () => {
+        console.log("[GamepadProvider] Gamepad disconnected via Web API");
+        setIsConnected(false);
+        isPolling = false;
+      };
+
+      window.addEventListener("gamepadconnected", handleGamepadConnected);
+      window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+
+      // Check if gamepad is already connected
       const gamepads = navigator.getGamepads();
-      const gamepad = gamepads[0];
-
-      if (gamepad) {
-        const state = {
-          buttons: gamepad.buttons.map((button, index) => ({
-            pressed: button.pressed,
-            value:
-              index === 6 || index === 7
-                ? button.value
-                : button.pressed
-                  ? 1
-                  : 0,
-          })),
-          axes: gamepad.axes.map((axis) =>
-            Math.abs(axis) < DEFAULT_DEADZONE ? 0 : axis
-          ),
-          timestamp: Date.now(),
-        };
-
-        // Send state to poll worker
-        pollWorker.postMessage({
-          type: "GAMEPAD_EVENT",
-          state,
-        });
+      if (gamepads[0]) {
+        handleGamepadConnected();
       }
-    }, 16); // ~60fps
 
-    // Start the worker polling
-    pollWorker.postMessage({ type: "START_POLLING" });
-
-    // Handle messages from poll worker
-    pollWorker.onmessage = (event) => {
-      const { type, state } = event.data;
-      if (type === "GAMEPAD_STATE" && state) {
-        // Send to shared worker
-        workerRef.current?.port.postMessage({
-          type: "UPDATE_STATE",
-          state,
-          timestamp: Date.now(),
-        });
-
-        // Update local state
-        setGamepadState(state);
-        lastStateRef.current = state;
-        broadcastState(state);
-      }
-    };
-
-    return () => {
-      clearInterval(pollInterval);
-      pollWorker.postMessage({ type: "STOP_POLLING" });
-      pollWorker.terminate();
-    };
-  }, [isEnabled, broadcastState]);
+      return () => {
+        isPolling = false;
+        window.removeEventListener("gamepadconnected", handleGamepadConnected);
+        window.removeEventListener(
+          "gamepaddisconnected",
+          handleGamepadDisconnected
+        );
+      };
+    }
+  }, [
+    isEnabled,
+    isExtensionEnabled,
+    user?.username,
+    hasStateChanged,
+    broadcastState,
+  ]);
 
   // Update the shared worker message handler
   useEffect(() => {
@@ -268,11 +489,15 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, user?.username, isEnabled, broadcastState]);
 
-  // Setup Supabase channel
+  // Update the Supabase channel setup
   useEffect(() => {
     if (!user?.id || !user?.username) return;
 
-    const channel = realtime.channel(`gamepad:${user.username}`, {
+    // Use consistent channel naming
+    const channelName = `gamepad:${user.username}`;
+    console.log("[GamepadProvider] Setting up channel:", channelName);
+
+    const channel = realtime.channel(channelName, {
       config: {
         broadcast: { self: false },
         presence: {
@@ -284,13 +509,41 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
         channelRef.current = channel;
-        console.log("[Channel] Connected successfully!");
+        console.log("[Channel] Connected successfully to:", channelName);
+      } else {
+        console.log("[Channel] Status for", channelName, ":", status);
       }
     });
 
+    // Keep connection alive
+    const keepAlive = setInterval(() => {
+      if (channelRef.current) {
+        channelRef.current
+          .send({
+            type: "broadcast",
+            event: "gamepadState",
+            payload: { timestamp: Date.now() },
+          })
+          .catch((error) => {
+            if (!error?.message?.includes("429")) {
+              console.error(
+                "[Channel] Keep-alive error for",
+                channelName,
+                ":",
+                error
+              );
+            }
+          });
+      }
+    }, 15000);
+
     return () => {
-      channel.unsubscribe();
-      channelRef.current = null;
+      clearInterval(keepAlive);
+      if (channelRef.current) {
+        console.log("[Channel] Cleaning up channel:", channelName);
+        channel.unsubscribe();
+        channelRef.current = null;
+      }
     };
   }, [user?.id, user?.username]);
 
@@ -309,13 +562,79 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     }
   }, [gamepadState]);
 
+  // Add toggle callback
+  const toggleExtension = useCallback(() => {
+    if (!isExtensionEnabled && user?.username) {
+      // When enabling, check if extension exists first
+      getExtensionId().then((id) => {
+        if (id) {
+          console.log("Extension found, enabling...");
+          setExtensionId(id);
+          setIsExtensionEnabled(true);
+        } else {
+          console.log("Extension not found, cannot enable");
+          toast.error("Chrome extension not found. Please install it first.");
+        }
+      });
+    } else {
+      // When disabling, just turn it off
+      console.log("Disabling extension...");
+      setIsExtensionEnabled(false);
+      setExtensionId(null);
+    }
+  }, [isExtensionEnabled, user?.username]);
+
+  // Add message listener for extension events
+  useEffect(() => {
+    if (!isExtensionEnabled) return;
+
+    const handleExtensionMessage = (event: MessageEvent) => {
+      // Only accept messages from our extension
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+      console.log("[GamepadProvider] Received extension message:", event.data);
+
+      switch (event.data.type) {
+        case "GAMEPAD_STATE":
+          const state: GamepadState = {
+            buttons: event.data.state.buttons.map((button: any) => ({
+              pressed: button.pressed,
+              value: button.value || (button.pressed ? 1 : 0),
+            })),
+            axes: event.data.state.axes,
+            timestamp: event.data.timestamp,
+          };
+
+          console.log("[GamepadProvider] Processing gamepad state:", state);
+          setGamepadState(state);
+          setIsConnected(true);
+          lastStateRef.current = state;
+          broadcastState(state);
+          break;
+
+        case "CONTENT_SCRIPT_READY":
+          console.log("[GamepadProvider] Content script ready");
+          break;
+      }
+    };
+
+    window.addEventListener("message", handleExtensionMessage);
+
+    return () => {
+      window.removeEventListener("message", handleExtensionMessage);
+    };
+  }, [isExtensionEnabled, broadcastState]);
+
+  // Update context value
   const value = useMemo(
     () => ({
       gamepadState,
       isConnected: !!gamepadState,
+      isExtensionEnabled,
       setEnabled,
+      toggleExtension,
     }),
-    [gamepadState]
+    [gamepadState, isExtensionEnabled, toggleExtension]
   );
 
   console.log("[GamepadProvider] Current state:", {
@@ -335,5 +654,11 @@ export function useGamepadProvider() {
   if (!context) {
     throw new Error("useGamepadProvider must be used within GamepadProvider");
   }
-  return context;
+  return {
+    gamepadState: context.gamepadState,
+    isConnected: context.isConnected,
+    isExtensionEnabled: context.isExtensionEnabled,
+    setEnabled: context.setEnabled,
+    toggleExtension: context.toggleExtension,
+  };
 }

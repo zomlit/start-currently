@@ -26,13 +26,14 @@ import { GamepadSettings } from "@/types/gamepad";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Gamepad2 } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useGamepadProvider } from "@/providers/GamepadProvider";
 
 const gamepadSettingsSchema = z.object({
   controllerType: z.string(),
@@ -199,10 +200,43 @@ export function GamepadSettingsForm({
     }
   };
 
+  // Add extension state
+  const { isExtensionEnabled, toggleExtension } = useGamepadProvider();
+
   return (
     <Form {...form}>
       <form className="space-y-4">
         <Accordion type="multiple" className="w-full">
+          {/* Add Extension Settings Section */}
+          <AccordionItem value="extension">
+            <AccordionTrigger>Input Method</AccordionTrigger>
+            <AccordionContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">
+                    {isExtensionEnabled ? "Using Extension" : "Using Web API"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {isExtensionEnabled
+                      ? "Controller inputs will work even when minimized"
+                      : "Controller inputs require window focus"}
+                  </div>
+                </div>
+                <Button
+                  onClick={toggleExtension}
+                  variant={isExtensionEnabled ? "default" : "outline"}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Gamepad2 className="h-4 w-4" />
+                  {isExtensionEnabled
+                    ? "Disable Extension"
+                    : "Enable Extension"}
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* General Settings Section */}
           <AccordionItem value="general">
             <AccordionTrigger>General Settings</AccordionTrigger>

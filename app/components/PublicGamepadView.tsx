@@ -291,14 +291,12 @@ export function PublicGamepadView() {
   useEffect(() => {
     if (!username) return;
 
-    addLog(
-      `Initializing gamepad channel for user: ${username}`,
-      "system",
-      "info"
-    );
+    // Use consistent channel naming
+    const channelName = `gamepad:${username}`;
+    addLog(`Initializing gamepad channel: ${channelName}`, "system", "info");
 
     if (!channelRef.current) {
-      channelRef.current = supabase.channel(`gamepad:${username}`, {
+      channelRef.current = supabase.channel(channelName, {
         config: {
           broadcast: { self: false },
           presence: { key: "gamepad" },
@@ -372,7 +370,11 @@ export function PublicGamepadView() {
           }
         )
         .subscribe((status: string) => {
-          addLog(`Channel subscription status: ${status}`, "system", "info");
+          addLog(
+            `Channel subscription status for ${channelName}: ${status}`,
+            "system",
+            "info"
+          );
         });
     }
 
