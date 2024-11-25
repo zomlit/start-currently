@@ -25,7 +25,6 @@ import { Route as UsernameGamepadImport } from './routes/$username/gamepad'
 import { Route as LyricsLyricsIndexImport } from './routes/_lyrics/lyrics.index'
 import { Route as AppWidgetsIndexImport } from './routes/_app/widgets/index'
 import { Route as AppWheelspinIndexImport } from './routes/_app/wheelspin/index'
-import { Route as AppTeampickerIndexImport } from './routes/_app/teampicker/index'
 import { Route as AppPricingIndexImport } from './routes/_app/pricing/index'
 import { Route as AppWidgetsVisualizerImport } from './routes/_app/widgets/visualizer'
 import { Route as AppWidgetsStatsImport } from './routes/_app/widgets/stats'
@@ -34,7 +33,6 @@ import { Route as AppWidgetsLyricsImport } from './routes/_app/widgets/lyrics'
 import { Route as AppWidgetsGamepadImport } from './routes/_app/widgets/gamepad'
 import { Route as AppWidgetsChatImport } from './routes/_app/widgets/chat'
 import { Route as AppWidgetsAlertsImport } from './routes/_app/widgets/alerts'
-import { Route as AppTeampickerBracketIdImport } from './routes/_app/teampicker/$bracketId'
 import { Route as AppSignUpSplatImport } from './routes/_app/sign-up.$'
 import { Route as AppSignInSplatImport } from './routes/_app/sign-in.$'
 import { Route as AppCheckoutSuccessImport } from './routes/_app/checkout.success'
@@ -126,12 +124,6 @@ const AppWheelspinIndexRoute = AppWheelspinIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
-const AppTeampickerIndexRoute = AppTeampickerIndexImport.update({
-  id: '/teampicker/',
-  path: '/teampicker/',
-  getParentRoute: () => AppRoute,
-} as any)
-
 const AppPricingIndexRoute = AppPricingIndexImport.update({
   id: '/pricing/',
   path: '/pricing/',
@@ -178,12 +170,6 @@ const AppWidgetsAlertsRoute = AppWidgetsAlertsImport.update({
   id: '/alerts',
   path: '/alerts',
   getParentRoute: () => AppWidgetsRoute,
-} as any)
-
-const AppTeampickerBracketIdRoute = AppTeampickerBracketIdImport.update({
-  id: '/teampicker/$bracketId',
-  path: '/teampicker/$bracketId',
-  getParentRoute: () => AppRoute,
 } as any)
 
 const AppSignUpSplatRoute = AppSignUpSplatImport.update({
@@ -345,13 +331,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSignUpSplatImport
       parentRoute: typeof AppImport
     }
-    '/_app/teampicker/$bracketId': {
-      id: '/_app/teampicker/$bracketId'
-      path: '/teampicker/$bracketId'
-      fullPath: '/teampicker/$bracketId'
-      preLoaderRoute: typeof AppTeampickerBracketIdImport
-      parentRoute: typeof AppImport
-    }
     '/_app/widgets/alerts': {
       id: '/_app/widgets/alerts'
       path: '/alerts'
@@ -406,13 +385,6 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof AppPricingIndexImport
-      parentRoute: typeof AppImport
-    }
-    '/_app/teampicker/': {
-      id: '/_app/teampicker/'
-      path: '/teampicker'
-      fullPath: '/teampicker'
-      preLoaderRoute: typeof AppTeampickerIndexImport
       parentRoute: typeof AppImport
     }
     '/_app/wheelspin/': {
@@ -532,9 +504,7 @@ interface AppRouteChildren {
   AppCheckoutSuccessRoute: typeof AppCheckoutSuccessRoute
   AppSignInSplatRoute: typeof AppSignInSplatRoute
   AppSignUpSplatRoute: typeof AppSignUpSplatRoute
-  AppTeampickerBracketIdRoute: typeof AppTeampickerBracketIdRoute
   AppPricingIndexRoute: typeof AppPricingIndexRoute
-  AppTeampickerIndexRoute: typeof AppTeampickerIndexRoute
   AppWheelspinIndexRoute: typeof AppWheelspinIndexRoute
 }
 
@@ -547,9 +517,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCheckoutSuccessRoute: AppCheckoutSuccessRoute,
   AppSignInSplatRoute: AppSignInSplatRoute,
   AppSignUpSplatRoute: AppSignUpSplatRoute,
-  AppTeampickerBracketIdRoute: AppTeampickerBracketIdRoute,
   AppPricingIndexRoute: AppPricingIndexRoute,
-  AppTeampickerIndexRoute: AppTeampickerIndexRoute,
   AppWheelspinIndexRoute: AppWheelspinIndexRoute,
 }
 
@@ -580,7 +548,6 @@ export interface FileRoutesByFullPath {
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
-  '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/widgets/chat': typeof AppWidgetsChatRoute
   '/widgets/gamepad': typeof AppWidgetsGamepadRoute
@@ -589,7 +556,6 @@ export interface FileRoutesByFullPath {
   '/widgets/stats': typeof AppWidgetsStatsRoute
   '/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/pricing': typeof AppPricingIndexRoute
-  '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
   '/widgets/': typeof AppWidgetsIndexRoute
   '/lyrics': typeof LyricsLyricsIndexRoute
@@ -610,7 +576,6 @@ export interface FileRoutesByTo {
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/sign-in/$': typeof AppSignInSplatRoute
   '/sign-up/$': typeof AppSignUpSplatRoute
-  '/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/widgets/chat': typeof AppWidgetsChatRoute
   '/widgets/gamepad': typeof AppWidgetsGamepadRoute
@@ -619,7 +584,6 @@ export interface FileRoutesByTo {
   '/widgets/stats': typeof AppWidgetsStatsRoute
   '/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/pricing': typeof AppPricingIndexRoute
-  '/teampicker': typeof AppTeampickerIndexRoute
   '/wheelspin': typeof AppWheelspinIndexRoute
   '/widgets': typeof AppWidgetsIndexRoute
   '/lyrics': typeof LyricsLyricsIndexRoute
@@ -645,7 +609,6 @@ export interface FileRoutesById {
   '/_app/checkout/success': typeof AppCheckoutSuccessRoute
   '/_app/sign-in/$': typeof AppSignInSplatRoute
   '/_app/sign-up/$': typeof AppSignUpSplatRoute
-  '/_app/teampicker/$bracketId': typeof AppTeampickerBracketIdRoute
   '/_app/widgets/alerts': typeof AppWidgetsAlertsRoute
   '/_app/widgets/chat': typeof AppWidgetsChatRoute
   '/_app/widgets/gamepad': typeof AppWidgetsGamepadRoute
@@ -654,7 +617,6 @@ export interface FileRoutesById {
   '/_app/widgets/stats': typeof AppWidgetsStatsRoute
   '/_app/widgets/visualizer': typeof AppWidgetsVisualizerRoute
   '/_app/pricing/': typeof AppPricingIndexRoute
-  '/_app/teampicker/': typeof AppTeampickerIndexRoute
   '/_app/wheelspin/': typeof AppWheelspinIndexRoute
   '/_app/widgets/': typeof AppWidgetsIndexRoute
   '/_lyrics/lyrics/': typeof LyricsLyricsIndexRoute
@@ -678,7 +640,6 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/sign-in/$'
     | '/sign-up/$'
-    | '/teampicker/$bracketId'
     | '/widgets/alerts'
     | '/widgets/chat'
     | '/widgets/gamepad'
@@ -687,7 +648,6 @@ export interface FileRouteTypes {
     | '/widgets/stats'
     | '/widgets/visualizer'
     | '/pricing'
-    | '/teampicker'
     | '/wheelspin'
     | '/widgets/'
     | '/lyrics'
@@ -707,7 +667,6 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/sign-in/$'
     | '/sign-up/$'
-    | '/teampicker/$bracketId'
     | '/widgets/alerts'
     | '/widgets/chat'
     | '/widgets/gamepad'
@@ -716,7 +675,6 @@ export interface FileRouteTypes {
     | '/widgets/stats'
     | '/widgets/visualizer'
     | '/pricing'
-    | '/teampicker'
     | '/wheelspin'
     | '/widgets'
     | '/lyrics'
@@ -740,7 +698,6 @@ export interface FileRouteTypes {
     | '/_app/checkout/success'
     | '/_app/sign-in/$'
     | '/_app/sign-up/$'
-    | '/_app/teampicker/$bracketId'
     | '/_app/widgets/alerts'
     | '/_app/widgets/chat'
     | '/_app/widgets/gamepad'
@@ -749,7 +706,6 @@ export interface FileRouteTypes {
     | '/_app/widgets/stats'
     | '/_app/widgets/visualizer'
     | '/_app/pricing/'
-    | '/_app/teampicker/'
     | '/_app/wheelspin/'
     | '/_app/widgets/'
     | '/_lyrics/lyrics/'
@@ -807,9 +763,7 @@ export const routeTree = rootRoute
         "/_app/checkout/success",
         "/_app/sign-in/$",
         "/_app/sign-up/$",
-        "/_app/teampicker/$bracketId",
         "/_app/pricing/",
-        "/_app/teampicker/",
         "/_app/wheelspin/"
       ]
     },
@@ -887,10 +841,6 @@ export const routeTree = rootRoute
       "filePath": "_app/sign-up.$.tsx",
       "parent": "/_app"
     },
-    "/_app/teampicker/$bracketId": {
-      "filePath": "_app/teampicker/$bracketId.tsx",
-      "parent": "/_app"
-    },
     "/_app/widgets/alerts": {
       "filePath": "_app/widgets/alerts.tsx",
       "parent": "/_app/widgets"
@@ -921,10 +871,6 @@ export const routeTree = rootRoute
     },
     "/_app/pricing/": {
       "filePath": "_app/pricing/index.tsx",
-      "parent": "/_app"
-    },
-    "/_app/teampicker/": {
-      "filePath": "_app/teampicker/index.tsx",
       "parent": "/_app"
     },
     "/_app/wheelspin/": {
