@@ -1,53 +1,58 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import dotenv from "dotenv";
+import { exec } from "child_process";
+import fs from "fs/promises";
+import path from "path";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+async function buildExtension() {
+  console.log("🔨 Building extension...");
 
-console.log("🔨 Building extension...");
+  try {
+    const extensionDir = path.join(process.cwd(), "app/extensions/chrome");
+    const distDir = path.join(extensionDir, "dist");
 
-// Load environment variables
-const result = dotenv.config();
-if (result.error) {
-  console.error("❌ Error loading .env file:", result.error);
-  process.exit(1);
+    // Ensure dist directory exists
+    await fs.mkdir(distDir, { recursive: true });
+
+    // Copy necessary files
+    const filesToCopy = [
+      "manifest.json",
+      "background.js",
+      "content.js",
+      "popup.html",
+      "popup.js",
+      "offscreen.html",
+      "offscreen.js",
+      "offscreen-ready.js",
+      "offscreen-init.js",
+      "reload-script.js",
+      "icon-generator.js",
+    ];
+
+    // Copy each file
+    for (const file of filesToCopy) {
+      await fs
+        .copyFile(path.join(extensionDir, file), path.join(distDir, file))
+        .catch((err) => {
+          console.warn(`⚠️ Warning: Could not copy ${file}:`, err.message);
+        });
+    }
+
+    // Copy directories
+    const directoriesToCopy = ["icons", "images", "fonts"];
+    for (const dir of directoriesToCopy) {
+      await fs
+        .cp(path.join(extensionDir, dir), path.join(distDir, dir), {
+          recursive: true,
+        })
+        .catch((err) => {
+          console.warn(`⚠️ Warning: Could not copy ${dir}:`, err.message);
+        });
+    }
+
+    console.log("✅ Extension built successfully!");
+  } catch (error) {
+    console.error("❌ Failed to build extension:", error);
+    process.exit(1);
+  }
 }
 
-// Create dist directory if it doesn't exist
-const distDir = path.resolve(__dirname, "../app/extensions/chrome/dist");
-if (!fs.existsSync(distDir)) {
-  fs.mkdirSync(distDir, { recursive: true });
-}
-
-// Read the config template
-const templatePath = path.resolve(
-  __dirname,
-  "../app/extensions/chrome/src/config.template.ts"
-);
-const configDistPath = path.resolve(distDir, "config.js");
-
-console.log("📖 Reading config template from:", templatePath);
-
-try {
-  let configContent = fs.readFileSync(templatePath, "utf8");
-  console.log("✅ Config template loaded");
-
-  // Replace placeholders with actual values
-  configContent = configContent.replace(
-    "__SUPABASE_URL__",
-    process.env.VITE_PUBLIC_SUPABASE_URL || ""
-  );
-  configContent = configContent.replace(
-    "__SUPABASE_ANON_KEY__",
-    process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || ""
-  );
-
-  // Write to dist directory
-  fs.writeFileSync(configDistPath, configContent);
-  console.log("\n✅ Config file generated in dist directory!");
-  console.log("📍 Location:", configDistPath);
-} catch (error) {
-  console.error("\n❌ Error updating config:", error);
-  process.exit(1);
-}
+buildExtension();

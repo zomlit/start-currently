@@ -6,4 +6,5 @@ dist
 build
 .cache
 .output
-.vinxi 
+.vinxi
+app/extensions 

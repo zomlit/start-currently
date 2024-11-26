@@ -12,6 +12,37 @@ let isCreatingOffscreen = false;
 // Add state tracking for offscreen document
 let offscreenReady = false;
 
+// Add state tracking
+let isEnabled = true;
+
+// Add registration tracking
+const registeredTabs = new Map(); // Track registration time per tab
+
+// Load initial state and initialize
+async function loadStateAndInitialize() {
+  const result = await chrome.storage.sync.get(["enabled"]);
+  isEnabled = result.enabled !== false; // Default to true if not set
+
+  if (isEnabled) {
+    await initialize();
+  } else {
+    // Close offscreen document if it exists when disabled
+    try {
+      const exists = await chrome.offscreen.hasDocument();
+      if (exists) {
+        await chrome.offscreen.closeDocument();
+      }
+    } catch (error) {
+      console.error("Error closing offscreen document:", error);
+    }
+  }
+
+  await updateIcon(isEnabled);
+}
+
+// Call on startup
+loadStateAndInitialize();
+
 // Helper function to check if service worker is ready
 function isServiceWorkerReady() {
   return new Promise((resolve) => {
@@ -239,8 +270,134 @@ function generateChannelId(username) {
   return channelId;
 }
 
-// Update setupChannel function to wait for offscreen document
+// Add helper to ensure content script is loaded
+async function ensureContentScriptLoaded(tabId) {
+  try {
+    // Check if tab exists
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab) {
+      throw new Error("Tab does not exist");
+    }
+
+    // Check if recently registered
+    const lastRegistration = registeredTabs.get(tabId);
+    const now = Date.now();
+    if (lastRegistration && now - lastRegistration < 5000) {
+      console.log("⏳ Tab recently registered:", tabId);
+      return true;
+    }
+
+    // If tab is not ready, inject content script
+    if (!readyTabs.has(tabId)) {
+      console.log("📝 Injecting content script into tab:", tabId);
+
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ["content.js"],
+      });
+
+      // Wait for content script to register
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Content script registration timeout"));
+        }, 5000);
+
+        const checkInterval = setInterval(() => {
+          if (readyTabs.has(tabId)) {
+            clearInterval(checkInterval);
+            clearTimeout(timeout);
+            resolve();
+          }
+        }, 100);
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Failed to ensure content script:", error);
+    return false;
+  }
+}
+
+// Update sendMessageToTabWithRetry
+async function sendMessageToTabWithRetry(tabId, message, maxRetries = 3) {
+  let attempt = 0;
+  const retryDelay = 1000;
+
+  while (attempt < maxRetries) {
+    try {
+      // Ensure content script is loaded first
+      const isReady = await ensureContentScriptLoaded(tabId);
+      if (!isReady) {
+        throw new Error("Could not load content script");
+      }
+
+      // Send message with timeout
+      const response = await Promise.race([
+        new Promise((resolve, reject) => {
+          chrome.tabs.sendMessage(tabId, message, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(response);
+            }
+          });
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Send timeout")), 2000)
+        ),
+      ]);
+
+      console.log("✅ Message sent successfully to tab:", tabId);
+      return response;
+    } catch (error) {
+      attempt++;
+      console.log(
+        `❌ Attempt ${attempt}/${maxRetries} failed for tab ${tabId}:`,
+        error
+      );
+
+      // Remove from ready set if there was an error
+      readyTabs.delete(tabId);
+
+      if (attempt < maxRetries) {
+        console.log(`⏳ Waiting ${retryDelay}ms before retry...`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+// Update setupChannel to handle disabled state gracefully
 async function setupChannel(username) {
+  // Check if monitoring is disabled
+  const result = await chrome.storage.sync.get(["enabled"]);
+  if (result.enabled === false) {
+    console.log("🛑 Monitoring is currently disabled");
+    // Notify tabs about disabled state
+    const tabs = await chrome.tabs.query({
+      url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
+    });
+
+    await Promise.allSettled(
+      tabs.map(async (tab) => {
+        if (!tab.id) return;
+        try {
+          await sendMessageToTabWithRetry(tab.id, {
+            type: "MONITORING_STATE_CHANGED",
+            enabled: false,
+          });
+        } catch (error) {
+          console.log("Failed to notify tab of disabled state:", error);
+        }
+      })
+    );
+
+    return null; // Return null instead of throwing error
+  }
+
   const channelId = generateChannelId(username);
   await chrome.storage.sync.set({ channelId });
   console.log("🎮 Channel setup for user:", username, "with ID:", channelId);
@@ -304,7 +461,7 @@ async function setupChannel(username) {
     };
 
     // Send to all tabs with retries
-    await Promise.all(tabs.map(sendMessageToTab));
+    await Promise.allSettled(tabs.map(sendMessageToTab));
 
     return channelId;
   } catch (error) {
@@ -327,75 +484,6 @@ async function setupChannel(username) {
   }
 }
 
-// Add helper for sending messages to tabs
-async function sendMessageToTabWithRetry(tabId, message, maxRetries = 3) {
-  let attempt = 0;
-  const retryDelay = 1000; // 1 second between retries
-
-  while (attempt < maxRetries) {
-    try {
-      // Check if tab still exists
-      const tab = await chrome.tabs.get(tabId).catch(() => null);
-      if (!tab) {
-        console.log("🚫 Tab no longer exists:", tabId);
-        readyTabs.delete(tabId);
-        reconnectingTabs.delete(tabId);
-        throw new Error("Tab no longer exists");
-      }
-
-      // Inject content script if needed
-      if (!readyTabs.has(tabId)) {
-        console.log("📝 Injecting content script into tab:", tabId);
-        try {
-          await chrome.scripting.executeScript({
-            target: { tabId },
-            files: ["content.js"],
-          });
-          // Wait for content script to initialize
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        } catch (error) {
-          console.log("⚠️ Script injection failed:", error);
-        }
-      }
-
-      // Send message with timeout
-      const response = await Promise.race([
-        new Promise((resolve, reject) => {
-          chrome.tabs.sendMessage(tabId, message, (response) => {
-            if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
-            } else {
-              resolve(response);
-            }
-          });
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Send timeout")), 2000)
-        ),
-      ]);
-
-      console.log("✅ Message sent successfully to tab:", tabId);
-      return response;
-    } catch (error) {
-      attempt++;
-      console.log(
-        `❌ Attempt ${attempt}/${maxRetries} failed for tab ${tabId}:`,
-        error
-      );
-
-      // Remove from ready set if there was an error
-      readyTabs.delete(tabId);
-
-      if (attempt < maxRetries) {
-        console.log(`⏳ Waiting ${retryDelay}ms before retry...`);
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-      } else {
-        throw error;
-      }
-    }
-  }
-}
-
 // Listen for messages
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   console.log("📨 Received message:", message, "from:", sender);
@@ -406,52 +494,28 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (message.type === "CONTENT_SCRIPT_READY") {
-    console.log("📝 Content script ready in tab:", sender.tab?.id);
-    if (sender.tab?.id) {
-      readyTabs.add(sender.tab.id);
-      reconnectingTabs.delete(sender.tab.id);
+    const tabId = sender.tab?.id;
+    if (!tabId) return;
+
+    // Check if tab was recently registered
+    const lastRegistration = registeredTabs.get(tabId);
+    const now = Date.now();
+    if (lastRegistration && now - lastRegistration < 5000) {
+      // 5 second cooldown
+      console.log("⏳ Ignoring duplicate registration for tab:", tabId);
+      sendResponse({ success: false, error: "Already registered" });
+      return true;
     }
+
+    console.log("📝 Content script ready in tab:", tabId);
+    readyTabs.add(tabId);
+    reconnectingTabs.delete(tabId);
+    registeredTabs.set(tabId, now);
     sendResponse({ success: true });
     return true;
   }
 
-  if (message.type === "GAMEPAD_STATE") {
-    console.log("🎮 Received gamepad state:", {
-      buttons: message.state.buttons.map((b) => b.pressed),
-      axes: message.state.axes,
-    });
-
-    try {
-      const tabs = await chrome.tabs.query({
-        url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
-      });
-
-      console.log("📤 Found tabs to forward to:", tabs.length);
-
-      // Send to each tab with retries
-      await Promise.allSettled(
-        tabs.map(async (tab) => {
-          if (!tab.id) return;
-
-          try {
-            await sendMessageToTabWithRetry(tab.id, {
-              type: "GAMEPAD_STATE",
-              state: message.state,
-              timestamp: Date.now(),
-            });
-          } catch (error) {
-            console.error(
-              `💔 Failed to send to tab ${tab.id} after retries:`,
-              error
-            );
-            readyTabs.delete(tab.id);
-          }
-        })
-      );
-    } catch (error) {
-      console.error("Failed to forward gamepad state:", error);
-    }
-
+  if (message.type === "GAMEPAD_STATE" && !isEnabled) {
     sendResponse({ success: true });
     return true;
   } else if (message.type === "CONSOLE") {
@@ -468,7 +532,6 @@ chrome.runtime.onMessageExternal.addListener(
   async (message, sender, sendResponse) => {
     console.log("📨 External message:", message, "from:", sender.origin);
 
-    // Allow messages from both livestreaming.tools and localhost
     if (
       sender.origin === "https://livestreaming.tools" ||
       sender.origin === "http://localhost:3000"
@@ -478,35 +541,18 @@ chrome.runtime.onMessageExternal.addListener(
           try {
             console.log("🎮 Setting up channel for:", message.username);
             const channelId = await setupChannel(message.username);
-            console.log("✅ Channel setup successful:", channelId);
 
-            // Send initial state to web page - use Promise.all
-            const tabs = await chrome.tabs.query({
-              url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
-            });
-
-            await Promise.all(
-              tabs.map(async (tab) => {
-                if (tab.id) {
-                  try {
-                    await chrome.tabs.sendMessage(tab.id, {
-                      type: "CHANNEL_READY",
-                      channelId,
-                      username: message.username,
-                    });
-                    console.log("✅ Sent channel ready to tab:", tab.id);
-                  } catch (error) {
-                    console.error(
-                      "Failed to send channel ready to tab:",
-                      tab.id,
-                      error
-                    );
-                  }
-                }
-              })
-            );
-
-            sendResponse({ success: true, channelId });
+            if (channelId === null) {
+              // Monitoring is disabled - send success but indicate disabled state
+              sendResponse({
+                success: true,
+                disabled: true,
+                message: "Monitoring is currently disabled",
+              });
+            } else {
+              console.log("✅ Channel setup successful:", channelId);
+              sendResponse({ success: true, channelId });
+            }
           } catch (error) {
             console.error("❌ Channel setup failed:", error);
             sendResponse({ success: false, error: error.message });
@@ -547,6 +593,7 @@ setInterval(async () => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   readyTabs.delete(tabId);
   reconnectingTabs.delete(tabId);
+  registeredTabs.delete(tabId);
   console.log("🧹 Cleaned up tab:", tabId);
 });
 
@@ -554,6 +601,8 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "complete") {
     reconnectingTabs.delete(tabId);
+    // Clear registration on page load
+    registeredTabs.delete(tabId);
   }
 });
 
@@ -564,5 +613,173 @@ chrome.runtime.onUpdateAvailable.addListener(() => {
     chrome.offscreen.closeDocument();
   } catch (error) {
     console.log("Note: Cleanup error (expected):", error);
+  }
+});
+
+// Update icon generation function
+async function createDisabledIcon(size) {
+  const canvas = new OffscreenCanvas(size, size);
+  const ctx = canvas.getContext("2d");
+
+  // Load original icon
+  const response = await fetch(chrome.runtime.getURL(`icons/icon${size}.png`));
+  const blob = await response.blob();
+  const imageBitmap = await createImageBitmap(blob);
+
+  // Draw original icon
+  ctx.drawImage(imageBitmap, 0, 0);
+
+  // Apply grayscale and opacity
+  const imageData = ctx.getImageData(0, 0, size, size);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    data[i] = avg; // R
+    data[i + 1] = avg; // G
+    data[i + 2] = avg; // B
+    data[i + 3] = Math.floor(data[i + 3] * 0.5); // A (50% opacity)
+  }
+
+  return imageData; // Return ImageData directly
+}
+
+// Update icon state management
+let disabledIconUrls = null;
+
+// Function to generate and cache disabled icons
+async function getDisabledIcons() {
+  if (disabledIconUrls) return disabledIconUrls;
+
+  const sizes = [16, 32, 48, 128];
+  const icons = {};
+
+  for (const size of sizes) {
+    icons[size] = await createDisabledIcon(size);
+  }
+
+  disabledIconUrls = icons;
+  return icons;
+}
+
+// Update icon helper
+async function updateIcon(enabled) {
+  try {
+    if (enabled) {
+      chrome.action.setIcon({
+        path: {
+          16: "icons/icon16.png",
+          32: "icons/icon32.png",
+          48: "icons/icon48.png",
+          128: "icons/icon128.png",
+        },
+      });
+    } else {
+      const disabledIcons = await getDisabledIcons();
+      chrome.action.setIcon({
+        imageData: {
+          16: disabledIcons[16],
+          32: disabledIcons[32],
+          48: disabledIcons[48],
+          128: disabledIcons[128],
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Failed to update icon:", error);
+  }
+}
+
+// Update the toggle handler
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "TOGGLE_MONITORING") {
+    isEnabled = message.enabled;
+
+    // Store the state
+    chrome.storage.sync.set({ enabled: isEnabled });
+
+    // Send immediate response
+    sendResponse({ success: true });
+
+    // Handle state change asynchronously
+    (async () => {
+      try {
+        await updateIcon(isEnabled);
+
+        if (!isEnabled) {
+          // Close offscreen document if it exists
+          const exists = await chrome.offscreen.hasDocument();
+          if (exists) {
+            await chrome.offscreen.closeDocument();
+          }
+          offscreenReady = false;
+          isInitialized = false;
+        } else {
+          // Reinitialize if enabled
+          await initialize();
+        }
+
+        // Notify all tabs about state change
+        const tabs = await chrome.tabs.query({
+          url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
+        });
+
+        for (const tab of tabs) {
+          if (tab.id) {
+            try {
+              await chrome.tabs.sendMessage(tab.id, {
+                type: "MONITORING_STATE_CHANGED",
+                enabled: isEnabled,
+              });
+            } catch (error) {
+              console.error("Failed to notify tab:", tab.id, error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error handling toggle:", error);
+      }
+    })();
+
+    return true;
+  }
+
+  // Block gamepad state messages when disabled
+  if (message.type === "GAMEPAD_STATE" && !isEnabled) {
+    sendResponse({ success: true });
+    return true;
+  }
+
+  // ... rest of message handling ...
+});
+
+// Add to background.js
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "GAMEPAD_STATE") {
+    // Forward gamepad state to all tabs immediately
+    chrome.tabs.query(
+      {
+        url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
+      },
+      (tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.id) {
+            chrome.tabs
+              .sendMessage(tab.id, {
+                type: "GAMEPAD_STATE",
+                state: message.state,
+                timestamp: Date.now(),
+              })
+              .catch((error) => {
+                console.error("Failed to send gamepad state to tab:", error);
+              });
+          }
+        });
+      }
+    );
+
+    // Send immediate response
+    sendResponse({ success: true });
+    return true;
   }
 });

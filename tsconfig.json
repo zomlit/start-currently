@@ -19,5 +19,13 @@
       "@icons/*": ["./app/icons/*"]
     },
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".vinxi",
+    ".output",
+    "app/extensions"
+  ]
 }
