@@ -703,7 +703,7 @@ export function GamepadViewer({
       <div className="flex h-full w-full flex-col items-center justify-center space-y-4">
         <Gamepad className="h-12 w-12 text-muted-foreground/50" />
         <div>
-          <h3 className="text-lg font-semibold text-muted-foreground text-center">
+          <h3 className="text-lg font-blac text-muted-foreground text-center">
             {isPublicView
               ? "Waiting for controller input..."
               : "No Controller Detected"}
