@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ['nodejs_18', 'bun']
+nixLibs = ['libuuid', 'libGL']
+
+[phases.install]
+cmds = ['bun i --frozen-lockfile']
+dependsOn = ['setup']
+cacheDirectories = ['/root/.bun', 'node_modules']
+
+[phases.build]
+cmds = ['bun run build']
+dependsOn = ['install']
+cacheDirectories = ['node_modules/.cache']
+
+[start]
+cmd = 'bun run start' 

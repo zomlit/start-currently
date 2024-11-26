@@ -1,5 +1,9 @@
-node_modules
 .git
-.vinxi
+.github
+node_modules
+.next
+.nuxt
 dist
-.output 
+build
+.output
+*.log 

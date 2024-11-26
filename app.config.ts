@@ -36,4 +36,10 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    cache: {
+      enabled: true,
+      paths: ["node_modules", ".vinxi", ".output", "/root/.bun"],
+    },
+  },
 });
