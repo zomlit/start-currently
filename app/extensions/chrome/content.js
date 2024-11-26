@@ -8,6 +8,22 @@ const BASE_DELAY = 1000;
 let reloadCheckInterval;
 let pingInterval;
 
+// Add state tracking for gamepad
+let lastGamepadState = null;
+
+// Add debounce helper at the top
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // Helper to check if extension context is valid
 function isContextValid() {
   try {
@@ -186,6 +202,28 @@ function destructor() {
   // Clean up message listeners safely
   safeRemoveMessageListener(messageHandler);
 
+  // Clear gamepad state
+  lastGamepadState = null;
+
+  // Notify webpage about cleanup with final state
+  try {
+    window.postMessage(
+      {
+        source: "GAMEPAD_EXTENSION",
+        type: "GAMEPAD_STATE",
+        state: {
+          buttons: Array(16).fill({ pressed: false, value: 0, touched: false }),
+          axes: Array(4).fill(0),
+          timestamp: Date.now(),
+          final: true, // Indicate this is a cleanup state
+        },
+      },
+      window.location.origin
+    );
+  } catch (error) {
+    console.error("[Content] Failed to send final state:", error);
+  }
+
   // Notify webpage about cleanup
   try {
     window.postMessage(
@@ -247,24 +285,147 @@ function messageHandler(message, sender, sendResponse) {
   return true;
 }
 
-// Add helper function for gamepad state handling
+// Update handleGamepadState function
 function handleGamepadState(message, sendResponse) {
   console.log("[Content] Processing gamepad state:", message.state);
 
-  const forwardedMessage = {
-    source: "GAMEPAD_EXTENSION",
-    type: "GAMEPAD_STATE",
-    state: {
-      buttons: message.state.buttons,
-      axes: message.state.axes,
-      timestamp: message.timestamp || Date.now(),
-    },
+  // Create current state with normalized values
+  const currentState = {
+    buttons: message.state.buttons.map((b) => ({
+      pressed: !!b.pressed,
+      value: Number(b.value || 0),
+      touched: !!b.touched,
+    })),
+    axes: message.state.axes.map((axis) => {
+      const value = Number(axis || 0);
+      // More precise deadzone handling
+      const deadzone = 0.1;
+      return Math.abs(value) < deadzone ? 0 : parseFloat(value.toFixed(4));
+    }),
+    timestamp: message.timestamp || Date.now(),
   };
 
-  // Use a more reliable message posting mechanism
-  queueMicrotask(() => {
+  // Function to check if state has meaningfully changed
+  const hasStateChanged = () => {
+    if (!lastGamepadState) return true;
+
+    // Check buttons for any changes
+    const buttonsChanged = currentState.buttons.some((button, index) => {
+      const lastButton = lastGamepadState.buttons[index] || {
+        pressed: false,
+        value: 0,
+        touched: false,
+      };
+      return (
+        button.pressed !== lastButton.pressed ||
+        Math.abs(button.value - lastButton.value) > 0.01 ||
+        button.touched !== lastButton.touched
+      );
+    });
+
+    // Check axes for any changes, including return to center
+    const axesChanged = currentState.axes.some((axis, index) => {
+      const lastAxis = lastGamepadState.axes[index] || 0;
+      // Use a very small threshold for stick movement
+      return Math.abs(axis - lastAxis) > 0.001;
+    });
+
+    return buttonsChanged || axesChanged;
+  };
+
+  // Debounced function to send state updates
+  const sendStateUpdate = debounce((state) => {
+    const forwardedMessage = {
+      source: "GAMEPAD_EXTENSION",
+      type: "GAMEPAD_STATE",
+      state: {
+        buttons: state.buttons,
+        axes: state.axes,
+        timestamp: state.timestamp,
+        changes: {
+          buttons: state.buttons
+            .map((button, index) => {
+              const lastButton = lastGamepadState?.buttons[index] || {
+                pressed: false,
+                value: 0,
+                touched: false,
+              };
+              const changed =
+                button.pressed !== lastButton.pressed ||
+                Math.abs(button.value - lastButton.value) > 0.01 ||
+                button.touched !== lastButton.touched;
+
+              return {
+                index,
+                changed,
+                released: lastButton.pressed && !button.pressed,
+                pressed: !lastButton.pressed && button.pressed,
+                value: button.value,
+              };
+            })
+            .filter((b) => b.changed),
+          axes: state.axes
+            .map((axis, index) => {
+              const lastAxis = lastGamepadState?.axes[index] || 0;
+              const changed = Math.abs(axis - lastAxis) > 0.001;
+              const returnedToCenter = lastAxis !== 0 && axis === 0;
+
+              return {
+                index,
+                changed,
+                value: axis,
+                returnedToCenter,
+                previousValue: lastAxis,
+              };
+            })
+            .filter((a) => a.changed),
+        },
+      },
+    };
+
+    // Only log significant changes
+    if (forwardedMessage.state.changes.buttons.length > 0) {
+      const pressed = forwardedMessage.state.changes.buttons.filter(
+        (b) => b.pressed
+      );
+      const released = forwardedMessage.state.changes.buttons.filter(
+        (b) => b.released
+      );
+
+      if (pressed.length > 0) {
+        console.log(
+          "[Content] Buttons pressed:",
+          pressed.map((b) => b.index).join(", ")
+        );
+      }
+      if (released.length > 0) {
+        console.log(
+          "[Content] Buttons released:",
+          released.map((b) => b.index).join(", ")
+        );
+      }
+    }
+
+    if (forwardedMessage.state.changes.axes.length > 0) {
+      const recentered = forwardedMessage.state.changes.axes.filter(
+        (a) => a.returnedToCenter
+      );
+      if (recentered.length > 0) {
+        console.log(
+          "[Content] Axes returned to center:",
+          recentered.map((a) => a.index).join(", ")
+        );
+      }
+    }
+
     window.postMessage(forwardedMessage, window.location.origin);
-  });
+    lastGamepadState = JSON.parse(JSON.stringify(state));
+  }, 16); // ~60fps
+
+  // Only process state if it has changed
+  if (hasStateChanged()) {
+    sendStateUpdate(currentState);
+  }
 
   sendResponse({ success: true });
 }
