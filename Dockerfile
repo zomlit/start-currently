@@ -1,37 +1,19 @@
 # Build stage
-FROM oven/bun:1 as builder
-
-# Enable BuildKit cache mount
-RUN --mount=type=cache,target=/root/.bun \
-    --mount=type=cache,target=/app/node_modules
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1727136237
 
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy package files
 COPY package.json bun.lockb ./
 
-# Install dependencies with caching
-RUN --mount=type=cache,target=/root/.bun \
-    --mount=type=cache,target=/app/node_modules \
-    bun i --frozen-lockfile
+# Install dependencies
+RUN bun i --frozen-lockfile
 
-# Copy source code
+# Copy the rest of the application
 COPY . .
 
-# Build with caching
-RUN --mount=type=cache,target=/app/.vinxi \
-    --mount=type=cache,target=/app/.output \
-    bun run build
+# Build the application
+RUN NODE_ENV=production bun x vinxi build
 
-# Production stage
-FROM nginx:alpine
-
-WORKDIR /usr/share/nginx/html/
-
-# Copy built assets from builder
-COPY --from=builder /app/.output/public .
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"] 
+# Start the application
+CMD ["bun", "x", "vinxi", "start"] 

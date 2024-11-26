@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun clean && vinxi dev",
-    "build": "vinxi build",
-    "start": "vinxi start",
+    "build": "NODE_ENV=production bun x vinxi build",
+    "start": "NODE_ENV=production bun x vinxi start",
     "clean": "rm -rf app.config.timestamp_*",
     "lint": "prettier --check '**/*' --ignore-unknown && eslint --ext .ts,.tsx ./app",
     "format": "prettier --write '**/*' --ignore-unknown",
