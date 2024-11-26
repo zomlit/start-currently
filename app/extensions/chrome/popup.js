@@ -1,6 +1,7 @@
 // Get UI elements
 const toggleInput = document.getElementById("toggleExtension");
-const statusText = document.getElementById("status");
+const connectionStatus = document.getElementById("connectionStatus");
+const currentInput = document.getElementById("currentInput");
 const root = document.getElementById("root");
 
 // Ensure visibility when popup opens
@@ -17,44 +18,74 @@ chrome.storage.sync.get(["enabled"], (result) => {
 // Handle toggle changes
 toggleInput.addEventListener("change", (e) => {
   const enabled = e.target.checked;
-
-  // Save state
   chrome.storage.sync.set({ enabled }, () => {
-    // Update status after state is saved
     updateStatus(enabled);
-
-    // Notify background script without expecting response
     chrome.runtime.sendMessage({ type: "TOGGLE_MONITORING", enabled });
   });
 });
 
 function updateStatus(enabled) {
-  statusText.textContent = enabled
-    ? "Monitoring gamepad inputs"
+  connectionStatus.className = enabled
+    ? "inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-yellow-500/20 text-yellow-500"
+    : "inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-red-500/20 text-red-500";
+  connectionStatus.textContent = enabled ? "Waiting..." : "Disabled";
+  currentInput.className = enabled
+    ? "text-sm text-white/80 font-medium text-center py-1 rounded bg-white/5 min-h-[28px]"
+    : "text-sm text-white/40 font-medium text-center py-1 rounded bg-white/5 min-h-[28px]";
+  currentInput.textContent = enabled
+    ? "Waiting for input..."
     : "Monitoring paused";
-  statusText.className = `status ${enabled ? "active" : ""}`;
-  gamepadInfo.classList.toggle("opacity-50", !enabled);
-  gamepadInfo.classList.toggle("pointer-events-none", !enabled);
 }
 
-// Listen for system theme changes
-window
-  .matchMedia("(prefers-color-scheme: dark)")
-  .addEventListener("change", (e) => {
-    // The theme has changed, but we don't need to do anything
-    // since CSS handles the changes automatically
-    console.log("Theme changed to:", e.matches ? "dark" : "light");
-  });
+// Function to update gamepad display
+function updateGamepadDisplay(state) {
+  if (!state) {
+    connectionStatus.className =
+      "inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-red-500/20 text-red-500";
+    connectionStatus.textContent = "Disconnected";
+    currentInput.textContent = "No controller detected";
+    return;
+  }
 
-// Add gamepad state handling
-const gamepadInfo = document.getElementById("gamepadInfo");
-const connectionStatus = document.getElementById("connectionStatus");
-const gamepadName = document.getElementById("gamepadName");
-const buttonGrid = document.getElementById("buttonGrid");
-const leftStick = document.getElementById("leftStick");
-const rightStick = document.getElementById("rightStick");
+  // Update connection status
+  connectionStatus.className =
+    "inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-green-500/20 text-green-500";
+  connectionStatus.textContent = "Connected";
 
-// Button labels
+  // Get active buttons
+  const activeButtons = state.buttons
+    .map((button, index) => (button.pressed ? BUTTON_LABELS[index] : null))
+    .filter(Boolean);
+
+  // Get active axes
+  const activeAxes = state.axes
+    .map((axis, index) =>
+      Math.abs(axis) > 0.1
+        ? `${["LX", "LY", "RX", "RY"][index]}: ${axis.toFixed(2)}`
+        : null
+    )
+    .filter(Boolean);
+
+  // Update current input display
+  if (activeButtons.length > 0 || activeAxes.length > 0) {
+    currentInput.textContent =
+      [...activeButtons, ...activeAxes].join(" + ") || "Waiting for input...";
+  } else {
+    currentInput.textContent = "Waiting for input...";
+  }
+}
+
+// Listen for gamepad state updates
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === "GAMEPAD_STATE") {
+    updateGamepadDisplay(message.state);
+  }
+});
+
+// Request initial state
+chrome.runtime.sendMessage({ type: "GET_GAMEPAD_STATE" });
+
+// Button labels (keep for input display)
 const BUTTON_LABELS = [
   "A",
   "B",
@@ -73,67 +104,3 @@ const BUTTON_LABELS = [
   "←",
   "→",
 ];
-
-// Create button indicators
-BUTTON_LABELS.forEach((label, index) => {
-  const button = document.createElement("div");
-  button.className =
-    "aspect-square rounded bg-white/10 flex items-center justify-center text-xs font-semibold text-white/60 transition-all";
-  button.id = `button-${index}`;
-  button.textContent = label;
-  buttonGrid.appendChild(button);
-});
-
-// Function to update gamepad display
-function updateGamepadDisplay(state) {
-  if (!state) {
-    connectionStatus.className =
-      "inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-red-500/20 text-red-500";
-    connectionStatus.textContent = "No Controller";
-    gamepadName.textContent = "-";
-    return;
-  }
-
-  connectionStatus.className =
-    "inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-green-500/20 text-green-500";
-  connectionStatus.textContent = "Connected";
-  gamepadName.textContent = state.id || "Generic Gamepad";
-
-  // Update buttons
-  state.buttons.forEach((button, index) => {
-    const buttonEl = document.getElementById(`button-${index}`);
-    if (buttonEl) {
-      buttonEl.className = `aspect-square rounded flex items-center justify-center text-xs font-semibold transition-all ${
-        button.pressed
-          ? "bg-purple-600 text-white scale-95"
-          : "bg-white/10 text-white/60"
-      }`;
-    }
-  });
-
-  // Update sticks with more responsive movement
-  if (state.axes.length >= 4) {
-    const SCALE = 24;
-
-    // Left stick (axes 0-1)
-    const leftX = state.axes[0] * SCALE;
-    const leftY = state.axes[1] * SCALE;
-    leftStick.style.transform = `translate(calc(-50% + ${leftX}px), calc(-50% + ${leftY}px))`;
-
-    // Right stick (axes 2-3)
-    const rightX = state.axes[2] * SCALE;
-    const rightY = state.axes[3] * SCALE;
-    rightStick.style.transform = `translate(calc(-50% + ${rightX}px), calc(-50% + ${rightY}px))`;
-  }
-}
-
-// Listen for gamepad state updates
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "GAMEPAD_STATE") {
-    updateGamepadDisplay(message.state);
-  }
-  // Don't return true since we don't need to send a response
-});
-
-// Request initial state without expecting response
-chrome.runtime.sendMessage({ type: "GET_GAMEPAD_STATE" });
