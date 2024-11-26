@@ -584,7 +584,8 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
               label: "Install",
               onClick: () =>
                 window.open(
-                  "https://chromewebstore.google.com/detail/gamepad-input-for-twitch/jgjgjgjgjgjgjgjgjgjgjgjgjgjgjgjg",
+                  import.meta.env.VITE_CHROME_STORE_URL ||
+                    "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
                   "_blank"
                 ),
             },
