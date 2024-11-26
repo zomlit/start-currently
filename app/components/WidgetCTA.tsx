@@ -60,7 +60,9 @@ export function WidgetCTA({
             </div>
             <div>
               <h3 className="font-bold text-lg">{title}</h3>
-              <p className="text-md font-light text-white/70">{description}</p>
+              <p className="text-md font-light dark:text-white/70">
+                {description}
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
