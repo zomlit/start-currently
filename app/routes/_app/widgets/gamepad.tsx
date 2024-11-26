@@ -245,16 +245,51 @@ function GamepadSection() {
     }
   }, []);
 
+  const [extensionError, setExtensionError] = useState<string | null>(null);
+
+  // Add extension error handling
+  useEffect(() => {
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+      if (event.data.type === "EXTENSION_ERROR") {
+        setExtensionError(
+          event.data.error?.message || "Extension communication failed"
+        );
+        toast.error("Gamepad extension error: " + event.data.error?.message);
+      } else if (event.data.type === "CONTENT_SCRIPT_READY") {
+        setExtensionError(null);
+        console.log("Extension connected with ID:", event.data.extensionId);
+      }
+    };
+
+    window.addEventListener("message", handleExtensionMessage);
+    return () => window.removeEventListener("message", handleExtensionMessage);
+  }, []);
+
+  // Update the CTA to show extension status
   return (
     <>
       <WidgetCTA
         title="Chrome Extension"
-        description="Install our Chrome extension to keep gamepad inputs working when minimized (great for dual streaming setups!)"
+        description={
+          extensionError
+            ? `Extension error: ${extensionError}. Please check if the extension is installed and enabled.`
+            : "Install our Chrome extension to keep gamepad inputs working when minimized (great for dual streaming setups!)"
+        }
         icon={Chrome}
         primaryAction={{
-          label: "Install Extension",
+          label: extensionError
+            ? "Troubleshoot Extension"
+            : "Install Extension",
           icon: Download,
-          onClick: () => window.open("CHROME_STORE_URL", "_blank"),
+          onClick: () =>
+            window.open(
+              extensionError && window.chrome?.runtime?.id
+                ? `chrome://extensions/?id=${window.chrome.runtime.id}`
+                : import.meta.env.VITE_CHROME_STORE_URL || "CHROME_STORE_URL",
+              "_blank"
+            ),
         }}
       />
       <div className="h-full overflow-hidden">

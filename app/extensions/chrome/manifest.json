@@ -15,18 +15,29 @@
   "content_scripts": [
     {
       "matches": ["https://livestreaming.tools/*", "http://localhost:3000/*"],
-      "js": ["content.js"]
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
     }
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_title": "Gamepad Monitor (Running in background)"
   },
   "web_accessible_resources": [
     {
-      "resources": ["dist/config.js", "offscreen.js", "offscreen.html"],
+      "resources": [
+        "dist/config.js",
+        "offscreen.js",
+        "offscreen-init.js",
+        "offscreen.html",
+        "icons/ds4/*",
+        "icons/xbox/*",
+        "icons/switch/*"
+      ],
       "matches": ["<all_urls>"]
     }
   ]

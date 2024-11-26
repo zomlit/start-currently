@@ -1,11 +1,56 @@
 console.log("🎮 Service worker loaded");
 
+// Add at the top of the file
+let isInitialized = false;
+const readyTabs = new Set();
+
+// Add initialization function
+async function initialize() {
+  if (isInitialized) return;
+
+  console.log("🎮 Service worker initializing");
+
+  try {
+    // Create offscreen document
+    await createOffscreen();
+
+    // Get current channel ID if exists
+    const { channelId } = await chrome.storage.sync.get("channelId");
+    if (channelId) {
+      console.log("🔄 Reinitializing channel:", channelId);
+      // Wait for offscreen document to be ready
+      setTimeout(() => {
+        chrome.runtime.sendMessage({
+          type: "INIT_CHANNEL",
+          channelId,
+        });
+      }, 1000);
+    }
+
+    isInitialized = true;
+    console.log("✅ Service worker initialized");
+  } catch (error) {
+    console.error("❌ Initialization error:", error);
+  }
+}
+
+// Call initialize on install/update/startup
+chrome.runtime.onInstalled.addListener(initialize);
+chrome.runtime.onStartup.addListener(initialize);
+
+// Initialize immediately
+initialize();
+
+// Add reload detection
+chrome.runtime.onSuspend.addListener(() => {
+  console.log("🔄 Extension being reloaded");
+  isInitialized = false;
+  readyTabs.clear();
+});
+
 // Function to generate a secure channel ID
 function generateChannelId(username) {
-  // Generate a random UUID for security
-  const uuid = crypto.randomUUID();
-  // Hash the username and UUID together
-  const channelId = `gamepad:${username}:${uuid}`;
+  const channelId = `gamepad:${username}`;
   console.log("Generated channel ID:", channelId);
   return channelId;
 }
@@ -16,104 +61,138 @@ async function setupChannel(username) {
   await chrome.storage.sync.set({ channelId });
   console.log("🎮 Channel setup for user:", username, "with ID:", channelId);
 
-  // Create offscreen document if it doesn't exist
+  // Create offscreen document if needed
   await createOffscreen();
 
-  // Wait for offscreen document to be ready
-  setTimeout(() => {
-    // Send new channel ID to offscreen document
-    chrome.runtime
-      .sendMessage({
-        type: "INIT_CHANNEL",
-        channelId,
-      })
-      .catch((error) => {
-        console.error("Failed to send INIT_CHANNEL:", error);
-      });
-  }, 1000);
+  // Send channel ID to offscreen document
+  try {
+    // Use a Promise to handle the response
+    await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        {
+          type: "INIT_CHANNEL",
+          channelId,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(response);
+          }
+        }
+      );
+    });
+
+    console.log("✅ Sent channel ID to offscreen document");
+  } catch (error) {
+    console.error("Failed to send INIT_CHANNEL:", error);
+  }
 
   return channelId;
 }
 
 async function createOffscreen() {
   try {
-    if (await chrome.offscreen.hasDocument()) {
-      console.log("✅ Offscreen document already exists");
+    // Check if document exists
+    const existing = await chrome.offscreen.hasDocument();
 
-      // Get current channel ID if exists
-      const { channelId } = await chrome.storage.sync.get("channelId");
-      if (channelId) {
-        console.log("🔄 Reinitializing channel:", channelId);
-        // Wait for offscreen document to be ready
-        setTimeout(() => {
-          chrome.runtime.sendMessage({
-            type: "INIT_CHANNEL",
-            channelId,
-          });
-        }, 1000);
-      }
+    if (existing) {
+      console.log("✅ Offscreen document already exists");
       return;
     }
 
+    // Create new document
     await chrome.offscreen.createDocument({
       url: "offscreen.html",
       reasons: ["DOM_SCRAPING"],
       justification: "Monitor gamepad inputs in background",
     });
+
     console.log("✅ Created new offscreen document");
 
-    // Get current channel ID if exists
-    const { channelId } = await chrome.storage.sync.get("channelId");
-    if (channelId) {
-      console.log("🔄 Initializing channel:", channelId);
-      // Wait for offscreen document to be ready
+    // Wait for document to be ready
+    return new Promise((resolve) => {
+      const checkReady = (message, sender) => {
+        if (message.type === "OFFSCREEN_READY") {
+          chrome.runtime.onMessage.removeListener(checkReady);
+          resolve();
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(checkReady);
+
+      // Timeout after 5 seconds
       setTimeout(() => {
-        chrome.runtime.sendMessage({
-          type: "INIT_CHANNEL",
-          channelId,
-        });
-      }, 1000);
-    }
+        chrome.runtime.onMessage.removeListener(checkReady);
+        resolve();
+      }, 5000);
+    });
   } catch (error) {
     console.error("❌ Creation error:", error);
   }
 }
 
-// Start monitoring on install
-chrome.runtime.onInstalled.addListener(async () => {
-  console.log("🎮 Extension installed/updated");
-  await createOffscreen();
-});
-
 // Listen for messages
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   console.log("📨 Received message:", message, "from:", sender);
 
-  if (message.type === "GAMEPAD_STATE") {
-    // Forward gamepad state to all extension contexts and web page
-    try {
-      // Forward to extension contexts
-      chrome.runtime.sendMessage(message);
+  if (message.type === "PING") {
+    sendResponse({ success: true });
+    return true;
+  }
 
-      // Forward to web page
-      const tabs = await chrome.tabs.query({ active: true });
-      tabs.forEach((tab) => {
-        if (tab.id) {
-          chrome.tabs
-            .sendMessage(tab.id, {
-              type: "GAMEPAD_STATE",
-              state: message.state,
-              timestamp: Date.now(),
-            })
-            .catch((error) => {
-              console.error("Failed to send to tab:", error);
-            });
-        }
+  if (message.type === "CONTENT_SCRIPT_READY") {
+    console.log("📝 Content script ready in tab:", sender.tab?.id);
+    if (sender.tab?.id) {
+      readyTabs.add(sender.tab.id);
+    }
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === "GAMEPAD_STATE") {
+    console.log("🎮 Received gamepad state:", {
+      buttons: message.state.buttons.map((b) => b.pressed),
+      axes: message.state.axes,
+    });
+
+    try {
+      // Query for ALL tabs
+      const tabs = await chrome.tabs.query({
+        url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
       });
+
+      console.log("📤 Found tabs to forward to:", tabs.length);
+
+      // Send to each tab
+      for (const tab of tabs) {
+        if (!tab.id) continue;
+
+        try {
+          // Check if tab is ready
+          if (!readyTabs.has(tab.id)) {
+            console.log("⚠️ Tab not ready, attempting to send anyway:", tab.id);
+          }
+
+          await chrome.tabs.sendMessage(tab.id, {
+            type: "GAMEPAD_STATE",
+            state: message.state,
+            timestamp: Date.now(),
+          });
+          console.log("✅ Sent to tab:", tab.id);
+        } catch (error) {
+          console.error("❌ Failed to send to tab:", tab.id, error);
+          // Remove tab from ready set if there's an error
+          readyTabs.delete(tab.id);
+        }
+      }
     } catch (error) {
       console.error("Failed to forward gamepad state:", error);
     }
+
+    // Always send response
     sendResponse({ success: true });
+    return true;
   } else if (message.type === "CONSOLE") {
     const prefix = "📄 [Offscreen]";
     console[message.logType](prefix, ...message.args);
@@ -140,21 +219,31 @@ chrome.runtime.onMessageExternal.addListener(
             const channelId = await setupChannel(message.username);
             console.log("✅ Channel setup successful:", channelId);
 
-            // Send initial state to web page
-            const tabs = await chrome.tabs.query({ active: true });
-            tabs.forEach((tab) => {
-              if (tab.id) {
-                chrome.tabs
-                  .sendMessage(tab.id, {
-                    type: "CHANNEL_READY",
-                    channelId,
-                    username: message.username,
-                  })
-                  .catch((error) => {
-                    console.error("Failed to send channel ready:", error);
-                  });
-              }
+            // Send initial state to web page - use Promise.all
+            const tabs = await chrome.tabs.query({
+              url: ["https://livestreaming.tools/*", "http://localhost:3000/*"],
             });
+
+            await Promise.all(
+              tabs.map(async (tab) => {
+                if (tab.id) {
+                  try {
+                    await chrome.tabs.sendMessage(tab.id, {
+                      type: "CHANNEL_READY",
+                      channelId,
+                      username: message.username,
+                    });
+                    console.log("✅ Sent channel ready to tab:", tab.id);
+                  } catch (error) {
+                    console.error(
+                      "Failed to send channel ready to tab:",
+                      tab.id,
+                      error
+                    );
+                  }
+                }
+              })
+            );
 
             sendResponse({ success: true, channelId });
           } catch (error) {
@@ -180,7 +269,7 @@ chrome.runtime.onMessageExternal.addListener(
       sendResponse({ success: false, error: "Unauthorized sender" });
     }
 
-    return true; // Keep the message channel open for async response
+    return true; // Keep the message channel open
   }
 );
 
@@ -192,3 +281,9 @@ setInterval(async () => {
     createOffscreen();
   }
 }, 20000);
+
+// Add cleanup for closed tabs
+chrome.tabs.onRemoved.addListener((tabId) => {
+  readyTabs.delete(tabId);
+  console.log("🧹 Cleaned up tab:", tabId);
+});
