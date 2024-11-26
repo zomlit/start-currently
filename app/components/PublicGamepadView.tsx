@@ -18,6 +18,9 @@ import { useGamepadStore } from "@/store/gamepadStore";
 import { Gamepad } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import debounce from "lodash/debounce";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useGamepadProvider } from "@/providers/GamepadProvider";
 
 // Add this helper function at the top
 const areSettingsEqual = (
@@ -62,6 +65,90 @@ const findSettingsDiff = (
   return changes;
 };
 
+// Create a collapsible log entry component
+const LogEntry = React.memo(({ log }: { log: string }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Check if this is a raw state log
+  if (typeof log !== "string" || !log) {
+    return null;
+  }
+
+  if (log.includes("Raw state received:")) {
+    try {
+      // Extract timestamp and icons (everything before the actual JSON)
+      const jsonStartIndex = log.indexOf('{"axes"');
+      if (jsonStartIndex === -1) return null;
+
+      const prefix = log.substring(0, jsonStartIndex).trim();
+      const jsonStr = log.substring(jsonStartIndex);
+      const jsonData = JSON.parse(jsonStr);
+
+      // Create a condensed summary
+      const summary = {
+        axes: jsonData.axes.some((v: number) => v !== 0)
+          ? jsonData.axes.map((v: number) => v.toFixed(2)).join(", ")
+          : "0",
+        buttons: jsonData.buttons.filter((b: any) => b.pressed).length,
+      };
+
+      return (
+        <div className="border-l-2 border-blue-500/50 pl-2">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-2 w-full text-left hover:bg-white/5 rounded px-1"
+          >
+            <span
+              className="transform transition-transform duration-200"
+              style={{
+                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+              }}
+            >
+              ▶
+            </span>
+            <span className="flex-1">
+              {prefix}{" "}
+              <span className="text-gray-400">
+                {`[Axes: ${summary.axes}] [Active Buttons: ${summary.buttons}]`}
+              </span>
+            </span>
+          </button>
+          {isExpanded && (
+            <pre className="mt-1 pl-6 text-xs overflow-x-auto bg-black/20 p-2 rounded">
+              {JSON.stringify(jsonData, null, 2)}
+            </pre>
+          )}
+        </div>
+      );
+    } catch (e) {
+      // Fallback to regular log if JSON parsing fails
+      return (
+        <div className="border-l-2 border-blue-500/50 pl-2 whitespace-pre-wrap">
+          {log}
+        </div>
+      );
+    }
+  }
+
+  // Regular log entry
+  return (
+    <div className="border-l-2 border-blue-500/50 pl-2 whitespace-pre-wrap">
+      {log}
+    </div>
+  );
+});
+
+// Add type for the payload
+type GamepadWidgetPayload = {
+  new: {
+    settings?: Record<string, any>;
+    gamepad_settings?: Record<string, any>;
+    showPressedButtons?: boolean;
+    style?: string;
+    layout?: string;
+  };
+};
+
 export function PublicGamepadView() {
   const { username } = useParams({ from: "/$username/gamepad" });
   const [settings, setSettings] = useState<GamepadSettings>(
@@ -74,6 +161,14 @@ export function PublicGamepadView() {
   const [remoteGamepadState, setRemoteGamepadState] =
     useState<GamepadState | null>(null);
   const inactivityTimeout = (settings.inactivityTimeout || 10) * 1000;
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const maxLogs = 50; // Keep last 50 logs
+  const [lastButtonState, setLastButtonState] = useState<{
+    [key: number]: number;
+  }>({});
+  const BUTTON_DEBOUNCE_TIME = 100; // ms between same button events
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const lastStateRef = useRef<GamepadState | null>(null);
 
   // Remove local gamepad context usage
   const { setGamepadState } = useGamepadStore();
@@ -121,7 +216,7 @@ export function PublicGamepadView() {
               table: "GamepadWidget",
               filter: `user_id=eq.${profileData.user_id}`,
             },
-            (payload) => {
+            (payload: { new: GamepadWidgetPayload["new"] }) => {
               console.log("Settings update received:", payload);
 
               if (payload.new) {
@@ -151,62 +246,183 @@ export function PublicGamepadView() {
     getUserId();
   }, [username]);
 
+  // Enhanced log helper with source and type information
+  const addLog = useCallback(
+    (
+      message: string,
+      source: "worker" | "supabase" | "system",
+      type: "button" | "axis" | "info" | "error"
+    ) => {
+      setDebugLogs((prev) => {
+        if (!Array.isArray(prev)) return [message];
+        const timestamp = new Date().toISOString().split("T")[1].split(".")[0];
+        const sourceColor = {
+          worker: "🟦",
+          supabase: "🟩",
+          system: "⬜",
+        }[source];
+        const typeIcon = {
+          button: "🔘",
+          axis: "↔️",
+          info: "ℹ️",
+          error: "❌",
+        }[type];
+        const newLog = `${timestamp} ${sourceColor} ${typeIcon} ${message}`;
+        return [...prev, newLog].slice(-maxLogs);
+      });
+    },
+    []
+  );
+
+  // Debounced button handler
+  const handleButtonPress = useCallback(
+    debounce((buttonIndex: number, timestamp: number) => {
+      const lastPress = lastButtonState[buttonIndex] || 0;
+      if (timestamp - lastPress > BUTTON_DEBOUNCE_TIME) {
+        setLastButtonState((prev) => ({ ...prev, [buttonIndex]: timestamp }));
+        return true;
+      }
+      return false;
+    }, 50),
+    [lastButtonState]
+  );
+
   // Subscribe to gamepad state updates
   useEffect(() => {
     if (!username) return;
 
-    const gamepadChannel = supabase.channel(`gamepad:${username}`, {
-      config: { broadcast: { self: false } },
-    });
+    // Use consistent channel naming
+    const channelName = `gamepad:${username}`;
+    addLog(`Initializing gamepad channel: ${channelName}`, "system", "info");
 
-    gamepadChannel
-      .on("broadcast", { event: "gamepadState" }, ({ payload }) => {
-        if (!payload?.gamepadState) return;
+    if (!channelRef.current) {
+      channelRef.current = supabase.channel(channelName, {
+        config: {
+          broadcast: { self: false },
+          presence: { key: "gamepad" },
+        },
+      });
 
-        const state = payload.gamepadState;
-
-        // Transform the state to match expected format
-        const transformedState = {
-          buttons: state.buttons.map((button: any, index: number) => {
-            // For triggers (buttons 6 and 7), preserve the analog value
-            if (index === 6 || index === 7) {
-              const value = typeof button === "object" ? button.value : button;
-              return {
-                pressed: typeof button === "object" ? button.pressed : !!button,
-                value: typeof value === "number" ? value : button ? 1 : 0,
-              };
+      channelRef.current
+        .on(
+          "broadcast",
+          { event: "gamepadState" },
+          ({ payload }: { payload: { gamepadState: GamepadState } }) => {
+            if (!payload?.gamepadState) {
+              addLog("Received empty gamepad state", "supabase", "error");
+              return;
             }
 
-            // For all other buttons, just use pressed state
-            return {
-              pressed: typeof button === "object" ? button.pressed : !!button,
-              value: 0, // Digital buttons don't have analog values
-            };
-          }),
-          axes: state.axes,
-        };
+            const state = payload.gamepadState;
+            const now = Date.now();
 
-        const hasActivity =
-          transformedState.buttons.some((button) => button.pressed) ||
-          transformedState.axes.some(
-            (axis: number) => Math.abs(axis) > (settings.deadzone ?? 0.05)
+            // Add debug logging for state updates
+            addLog(
+              `Raw state received: ${JSON.stringify(state)}`,
+              "supabase",
+              "info"
+            );
+
+            // Track both pressed and released buttons
+            const pressedButtons = state.buttons
+              .map((b: GamepadButtonState, i: number) => (b.pressed ? i : -1))
+              .filter((i: number) => i !== -1);
+
+            const releasedButtons =
+              lastStateRef.current?.buttons
+                .map((b: GamepadButtonState, i: number) =>
+                  b.pressed && !state.buttons[i].pressed ? i : -1
+                )
+                .filter((i: number) => i !== -1) || [];
+
+            if (pressedButtons.length > 0) {
+              addLog(
+                `Buttons pressed: ${pressedButtons.join(", ")} (source: broadcast)`,
+                "supabase",
+                "button"
+              );
+            }
+
+            if (releasedButtons.length > 0) {
+              addLog(
+                `Buttons released: ${releasedButtons.join(", ")} (source: broadcast)`,
+                "supabase",
+                "button"
+              );
+            }
+
+            // Force a UI update even if the window is not focused
+            requestAnimationFrame(() => {
+              setRemoteGamepadState(state);
+              lastStateRef.current = state;
+            });
+
+            // Update activity state
+            const hasActivity =
+              pressedButtons.length > 0 ||
+              state.axes.some((axis) => Math.abs(axis) > settings.deadzone);
+
+            if (hasActivity) {
+              setLastActivityTime(now);
+              setIsInactive(false);
+              updateConnectionState(true);
+            }
+          }
+        )
+        .subscribe((status: string) => {
+          addLog(
+            `Channel subscription status for ${channelName}: ${status}`,
+            "system",
+            "info"
           );
+        });
+    }
 
-        if (hasActivity) {
-          setLastActivityTime(Date.now());
-          setIsInactive(false);
-          updateConnectionState(true);
-        }
+    // Add page visibility handling
+    const handleVisibilityChange = () => {
+      const isVisible = document.visibilityState === "visible";
+      addLog(
+        `Visibility changed: ${document.visibilityState}`,
+        "system",
+        "info"
+      );
 
-        setRemoteGamepadState(transformedState);
-        setGamepadState(transformedState);
-      })
-      .subscribe();
+      // Force reconnect when page becomes visible
+      if (isVisible && channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current.subscribe();
+        addLog(
+          "Reconnecting channel after visibility change",
+          "system",
+          "info"
+        );
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Keep connection alive even when minimized
+    const keepAlive = setInterval(() => {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "keepalive",
+          payload: { timestamp: Date.now() },
+        });
+      }
+    }, 15000); // Reduced to 15 seconds for more frequent updates
 
     return () => {
-      gamepadChannel.unsubscribe();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(keepAlive);
+
+      if (channelRef.current) {
+        addLog("Cleaning up channel", "system", "info");
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
     };
-  }, [username, settings.deadzone, updateConnectionState, setGamepadState]);
+  }, [username, settings.deadzone, updateConnectionState, addLog]);
 
   // Check for inactivity
   useEffect(() => {
@@ -273,7 +489,137 @@ export function PublicGamepadView() {
     loadSettings();
   }, [username]);
 
-  // Update the render logic to use AnimatePresence
+  // Update the DebugOverlayContent component
+  const DebugOverlayContent = React.memo(({ logs }: { logs: string[] }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    }, [logs]);
+
+    return (
+      <div className="fixed bottom-4 left-2 right-2 w-full bg-black/80 text-white rounded-lg shadow-lg overflow-hidden p-10">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-semibold">Debug Log</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDebugLogs([])}
+              className="text-xs bg-red-500/20 hover:bg-red-500/40 px-2 py-1 rounded"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+        <div
+          ref={scrollRef}
+          className="text-xs font-mono h-96 overflow-y-auto space-y-1 scroll-smooth"
+        >
+          {logs.map((log, i) => (
+            <LogEntry key={i} log={log} />
+          ))}
+        </div>
+      </div>
+    );
+  });
+
+  useEffect(() => {
+    if (!username) return;
+
+    try {
+      // Initialize connection with extension
+      window.addEventListener("message", (event) => {
+        // Only accept messages from our extension
+        if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+        if (event.data.type === "GAMEPAD_STATE") {
+          const state = event.data.state;
+          requestAnimationFrame(() => {
+            setRemoteGamepadState(state);
+            lastStateRef.current = state;
+
+            const hasActivity =
+              state.buttons.some((b: GamepadButtonState) => b.pressed) ||
+              state.axes.some(
+                (axis: number) => Math.abs(axis) > settings.deadzone
+              );
+
+            if (hasActivity) {
+              setLastActivityTime(Date.now());
+              setIsInactive(false);
+              updateConnectionState(true);
+            }
+          });
+        }
+      });
+
+      // Log connection status
+      addLog(
+        `Initialized gamepad monitoring for ${username}`,
+        "system",
+        "info"
+      );
+    } catch (error) {
+      console.error("Failed to initialize gamepad monitoring:", error);
+      addLog(`Failed to initialize: ${error}`, "system", "error");
+    }
+  }, [username, settings.deadzone, updateConnectionState, addLog]);
+
+  // Remove worker log listener
+  useEffect(() => {
+    const handleExtensionLog = (event: MessageEvent) => {
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+      if (event.data.type !== "DEBUG_LOG") return;
+
+      console.log("[Extension Event]", event.data.message);
+      addLog(event.data.message, "extension", "info");
+    };
+
+    window.addEventListener("message", handleExtensionLog);
+    console.log("[PublicGamepadView] Added extension log listener");
+
+    return () => {
+      window.removeEventListener("message", handleExtensionLog);
+      console.log("[PublicGamepadView] Removed extension log listener");
+    };
+  }, [addLog]);
+
+  // Remove or disable any direct gamepad API usage
+  useEffect(() => {
+    // Prevent direct gamepad API usage in public view
+    const preventGamepadAPI = (e: Event) => {
+      e.stopPropagation();
+    };
+
+    window.addEventListener("gamepadconnected", preventGamepadAPI, true);
+    window.addEventListener("gamepaddisconnected", preventGamepadAPI, true);
+
+    return () => {
+      window.removeEventListener("gamepadconnected", preventGamepadAPI, true);
+      window.removeEventListener(
+        "gamepaddisconnected",
+        preventGamepadAPI,
+        true
+      );
+    };
+  }, []);
+
+  // Add this near the top of the component with other hooks
+  const { setEnabled } = useGamepadProvider();
+
+  // Add this effect to disable GamepadProvider in public view
+  useEffect(() => {
+    // Disable GamepadProvider state updates in public view
+    setEnabled(false);
+
+    return () => {
+      // Re-enable when component unmounts
+      setEnabled(true);
+    };
+  }, [setEnabled]);
+
+  // Update the render logic
   return (
     <>
       <AnimatePresence mode="wait">
@@ -308,10 +654,15 @@ export function PublicGamepadView() {
               username={username}
               gamepadState={remoteGamepadState}
               isPublicView={true}
+              disableDirectInput={true}
+              onSettingsChange={undefined}
             />
           </motion.div>
         )}
       </AnimatePresence>
+      {process.env.NODE_ENV === "development" && (
+        <DebugOverlayContent logs={debugLogs} />
+      )}
     </>
   );
 }
