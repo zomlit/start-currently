@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Gamepad Monitor Extension",
+  "name": "Currently Gamepad Monitor Extension",
   "version": "1.0",
   "description": "Monitors gamepad inputs even when the window is minimized",
   "icons": {
@@ -16,9 +16,10 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Gamepad Monitor (Running in background)"
+    "default_title": "Currently Gamepad Monitor",
+    "default_popup": "popup.html"
   },
-  "permissions": ["offscreen", "storage", "tabs"],
+  "permissions": ["offscreen", "storage", "tabs", "scripting"],
   "host_permissions": [
     "https://*.supabase.co/*",
     "https://livestreaming.tools/*",
@@ -43,11 +44,20 @@
     {
       "resources": [
         "dist/config.js",
+        "dist/popup.css",
         "offscreen.js",
         "offscreen-init.js",
-        "offscreen.html"
+        "offscreen-ready.js",
+        "reload-script.js",
+        "offscreen.html",
+        "icon-generator.js",
+        "images/bg.webp",
+        "init.js"
       ],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }
