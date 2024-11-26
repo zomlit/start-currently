@@ -5,8 +5,25 @@
     <script src="supabase.min.js"></script>
     <script src="dist/config.js" type="module"></script>
     <script src="offscreen.js" type="module"></script>
+    <script src="offscreen-init.js" defer></script>
   </head>
   <body>
     <!-- Offscreen document for gamepad monitoring -->
+    <div id="icons" style="display: none">
+      <!-- DS4 Icons -->
+      <img src="icons/ds4/base.svg" alt="DS4 Base" />
+      <img src="icons/ds4/buttons.svg" alt="DS4 Buttons" />
+      <img src="icons/ds4/sticks.svg" alt="DS4 Sticks" />
+
+      <!-- Xbox Icons -->
+      <img src="icons/xbox/base.svg" alt="Xbox Base" />
+      <img src="icons/xbox/buttons.svg" alt="Xbox Buttons" />
+      <img src="icons/xbox/sticks.svg" alt="Xbox Sticks" />
+
+      <!-- Switch Pro Icons -->
+      <img src="icons/switch/base.svg" alt="Switch Base" />
+      <img src="icons/switch/buttons.svg" alt="Switch Buttons" />
+      <img src="icons/switch/sticks.svg" alt="Switch Sticks" />
+    </div>
   </body>
 </html>

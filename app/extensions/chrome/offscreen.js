@@ -1,4 +1,4 @@
-console.log("🎮 Offscreen document loaded");
+console.log("🎮 Offscreen script starting");
 
 // Import config
 const { config } = await import("./dist/config.js");
@@ -90,9 +90,10 @@ function pollGamepads() {
       const state = {
         buttons: gamepad.buttons.map((btn, index) => {
           const lastButtonState = lastButtonStates.get(index);
+          const isPressed = btn.pressed;
 
           // Handle button press
-          if (btn.pressed) {
+          if (isPressed) {
             lastButtonStates.set(index, {
               pressed: true,
               timestamp: now,
@@ -101,39 +102,39 @@ function pollGamepads() {
             return { pressed: true, value: btn.value || 1 };
           }
 
-          // Handle button release
-          if (!btn.pressed && lastButtonState?.pressed) {
-            lastButtonStates.delete(index);
+          // Handle button release - IMPORTANT: Always send release state
+          if (!isPressed) {
+            // If it was previously pressed, we need to send the release
+            if (lastButtonState?.pressed) {
+              lastButtonStates.delete(index);
+              // Force an update on release
+              lastState = null;
+            }
             return { pressed: false, value: 0 };
           }
 
           return { pressed: false, value: 0 };
         }),
-        // Improved analog stick handling
         axes: gamepad.axes.map((axis) => {
-          // Apply deadzone with smoother transition
           const absAxis = Math.abs(axis);
           if (absAxis < DEADZONE) return 0;
-
-          // Normalize the value above deadzone
           const normalizedAxis =
             Math.sign(axis) * ((absAxis - DEADZONE) / (1 - DEADZONE));
-
-          return Number(normalizedAxis.toFixed(3)); // Limit decimal places
+          return Number(normalizedAxis.toFixed(3));
         }),
         timestamp: now,
       };
 
-      // Send if there's activity
+      // Send if there's activity OR if any button was just released
       const hasActivity =
         state.buttons.some((btn) => btn.pressed) ||
         state.axes.some((axis) => Math.abs(axis) > 0);
 
-      if (
-        hasActivity ||
-        !lastState ||
-        hasSignificantAxisChange(lastState, state)
-      ) {
+      const hasButtonRelease = lastState?.buttons.some(
+        (btn, i) => btn.pressed && !state.buttons[i].pressed
+      );
+
+      if (hasActivity || hasButtonRelease || !lastState) {
         // Send to extension
         chrome.runtime.sendMessage({
           type: "GAMEPAD_STATE",

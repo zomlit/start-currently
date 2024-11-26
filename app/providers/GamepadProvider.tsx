@@ -19,6 +19,7 @@ import {
   DEFAULT_DEADZONE,
 } from "@/utils/gamepad";
 import { toast } from "@/utils/toast";
+import type { chrome } from "@/types/chrome";
 
 // Add extension types
 interface ExtensionMessage {
@@ -131,7 +132,6 @@ const getExtensionId = async (): Promise<string | null> => {
   }
 
   try {
-    // Get the extension ID from environment variable
     const extensionId = import.meta.env.VITE_CHROME_EXTENSION_ID;
 
     if (!extensionId) {
@@ -639,6 +639,51 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("message", handleExtensionMessage);
     };
   }, [isExtensionEnabled, broadcastState]);
+
+  // Update the message handling effect
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Accept messages from any origin during development
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+      console.log("[GamepadProvider] Received message:", event.data);
+
+      switch (event.data.type) {
+        case "GAMEPAD_STATE":
+          try {
+            const state: GamepadState = {
+              buttons: event.data.state.buttons.map((button: any) => ({
+                pressed: button.pressed,
+                value: button.value || (button.pressed ? 1 : 0),
+              })),
+              axes: event.data.state.axes,
+              timestamp: event.data.timestamp,
+            };
+
+            console.log("[GamepadProvider] Processing gamepad state:", state);
+            setGamepadState(state);
+            setIsConnected(true);
+            lastStateRef.current = state;
+            broadcastState(state);
+          } catch (error) {
+            console.error("[GamepadProvider] Failed to process state:", error);
+          }
+          break;
+
+        case "CONTENT_SCRIPT_READY":
+          console.log("[GamepadProvider] Content script ready");
+          break;
+
+        case "EXTENSION_ERROR":
+          console.error("[GamepadProvider] Extension error:", event.data.error);
+          setIsConnected(false);
+          break;
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [broadcastState]);
 
   // Update context value
   const value = useMemo(
