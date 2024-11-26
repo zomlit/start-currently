@@ -1,0 +1,20 @@
+version: 3
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      cache:
+        enabled: true
+        mounts:
+          - type: cache
+            target: /root/.bun
+          - type: cache
+            target: /app/node_modules
+          - type: cache
+            target: /app/.vinxi
+          - type: cache
+            target: /app/.output
+    environment:
+      - NODE_ENV=production
+    # ... rest of config

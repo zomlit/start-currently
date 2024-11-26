@@ -1,163 +1,155 @@
-// Add reload handling
-let registrationInterval;
-
-const registerContentScript = () => {
-  console.log("[Content] Registering content script");
-  try {
-    chrome.runtime.sendMessage(
-      {
-        type: "CONTENT_SCRIPT_READY",
-        url: window.location.href,
-      },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          console.error(
-            "[Content] Registration failed:",
-            chrome.runtime.lastError
-          );
-          // If extension is reloading, retry after a delay
-          setTimeout(registerContentScript, 1000);
-        } else {
-          console.log("[Content] Registration successful:", response);
-        }
-      }
-    );
-  } catch (error) {
-    console.error("[Content] Registration error:", error);
-    // If extension is reloading, retry after a delay
-    setTimeout(registerContentScript, 1000);
-  }
+// State management - declare once at the top
+const STATE = {
+  isMonitoringEnabled: true,
+  lastGamepadState: null,
+  isReloading: false,
+  isRegistered: false,
+  registrationTimeout: null,
 };
 
-// Start registration process
-const startRegistration = () => {
-  // Clear existing interval if any
-  if (registrationInterval) {
-    clearInterval(registrationInterval);
-  }
-
-  // Register immediately
-  registerContentScript();
-
-  // Set up periodic registration
-  registrationInterval = setInterval(registerContentScript, 5000);
-};
-
-// Start initial registration
-startRegistration();
-
-// Handle extension reload
-const handleExtensionReload = () => {
-  console.log("[Content] Extension reload detected");
-  // Clear existing interval
-  if (registrationInterval) {
-    clearInterval(registrationInterval);
-  }
-  // Restart registration process
-  setTimeout(startRegistration, 1000);
-};
-
-// Add error handler for extension invalidation
-try {
-  chrome.runtime.onMessage.addListener(() => {
-    if (chrome.runtime.lastError) {
-      handleExtensionReload();
-    }
-  });
-} catch (error) {
-  handleExtensionReload();
-}
-
-// Update message listener to handle CHANNEL_READY
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("[Content] Received message:", message, "from:", sender);
-
-  if (message.type === "CHANNEL_READY") {
-    console.log("[Content] Forwarding channel ready to webpage");
-    window.postMessage(
-      {
-        source: "GAMEPAD_EXTENSION",
-        type: "CHANNEL_READY",
-        channelId: message.channelId,
-        username: message.username,
-      },
-      window.location.origin
-    );
-    sendResponse({ success: true });
-    return true;
-  }
-
-  if (message.type === "PING") {
-    console.log("[Content] Responding to ping");
-    sendResponse({ success: true });
-    return true;
-  }
-
-  if (message.type === "GAMEPAD_STATE") {
-    console.log("[Content] Processing gamepad state:", message.state);
-
-    const forwardedMessage = {
-      source: "GAMEPAD_EXTENSION",
-      type: "GAMEPAD_STATE",
-      state: {
-        buttons: message.state.buttons,
-        axes: message.state.axes,
-        timestamp: message.timestamp || Date.now(),
-      },
-    };
-
-    console.log("[Content] Forwarding to webpage:", forwardedMessage);
-
-    // Try multiple times to ensure delivery
-    const attempts = [
-      () => window.postMessage(forwardedMessage, window.location.origin),
-      () => window.postMessage(forwardedMessage, "*"),
-      () => window.top?.postMessage(forwardedMessage, "*"),
-      () => window.parent?.postMessage(forwardedMessage, "*"),
-    ];
-
-    for (const attempt of attempts) {
-      try {
-        attempt();
-      } catch (error) {
-        console.error("[Content] Forward attempt failed:", error);
-      }
-    }
-
-    sendResponse({ success: true });
-    return true;
-  }
-
-  return true; // Keep the message channel open
+// Load initial state
+chrome.storage.sync.get(["enabled"], (result) => {
+  STATE.isMonitoringEnabled = result.enabled !== false;
+  console.log("[Content] Loaded initial state:", STATE.isMonitoringEnabled);
 });
 
-// Announce content script is ready immediately
-console.log("[Content] Script loaded and ready");
-window.postMessage(
-  {
-    source: "GAMEPAD_EXTENSION",
-    type: "CONTENT_SCRIPT_READY",
-    extensionId: chrome.runtime.id,
-  },
-  "*"
+function handleGamepadState(message, sendResponse) {
+  if (!STATE.isMonitoringEnabled) {
+    sendResponse({ success: true });
+    return;
+  }
+
+  // Create normalized state
+  const normalizedState = {
+    buttons: message.state.buttons.map((b) => ({
+      pressed: !!b.pressed,
+      value: Number(b.value || 0),
+      touched: !!b.touched,
+    })),
+    axes: message.state.axes.map((axis) => {
+      const value = Number(axis || 0);
+      return Math.abs(value) < 0.1 ? 0 : value; // Apply deadzone
+    }),
+    timestamp: message.timestamp || Date.now(),
+    connected: true,
+  };
+
+  // Forward state to webpage immediately
+  window.postMessage(
+    {
+      source: "GAMEPAD_EXTENSION",
+      type: "GAMEPAD_STATE",
+      state: normalizedState,
+    },
+    window.location.origin
+  );
+
+  // Also send connection state
+  window.postMessage(
+    {
+      source: "GAMEPAD_EXTENSION",
+      type: "GAMEPAD_CONNECTION_STATE",
+      connected: true,
+    },
+    window.location.origin
+  );
+
+  // Log state for debugging
+  console.log("[Content] Forwarding gamepad state:", {
+    buttons: normalizedState.buttons.filter((b) => b.pressed).length,
+    axes: normalizedState.axes.filter((a) => Math.abs(a) > 0.1),
+  });
+
+  // Update last state
+  STATE.lastGamepadState = normalizedState;
+
+  sendResponse({ success: true });
+}
+
+// Message handler
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("[Content] Received message:", message.type);
+
+  switch (message.type) {
+    case "GAMEPAD_STATE":
+      handleGamepadState(message, sendResponse);
+      break;
+
+    case "MONITORING_STATE_CHANGED":
+      STATE.isMonitoringEnabled = message.enabled;
+      console.log(
+        "[Content] Monitoring state changed:",
+        STATE.isMonitoringEnabled
+      );
+
+      // Send state to webpage
+      window.postMessage(
+        {
+          source: "GAMEPAD_EXTENSION",
+          type: "MONITORING_STATE_CHANGED",
+          enabled: STATE.isMonitoringEnabled,
+        },
+        window.location.origin
+      );
+
+      // If disabled, send final state
+      if (!STATE.isMonitoringEnabled) {
+        window.postMessage(
+          {
+            source: "GAMEPAD_EXTENSION",
+            type: "GAMEPAD_STATE",
+            state: {
+              buttons: Array(16).fill({
+                pressed: false,
+                value: 0,
+                touched: false,
+              }),
+              axes: Array(4).fill(0),
+              timestamp: Date.now(),
+              final: true,
+              connected: false,
+            },
+          },
+          window.location.origin
+        );
+      }
+
+      sendResponse({ success: true });
+      break;
+
+    case "CONTENT_SCRIPT_READY":
+      if (!STATE.isRegistered) {
+        STATE.isRegistered = true;
+        console.log("[Content] Content script registered");
+        sendResponse({ success: true });
+      } else {
+        console.log("[Content] Already registered");
+        sendResponse({ success: false, error: "Already registered" });
+      }
+      break;
+
+    default:
+      console.log("[Content] Unknown message type:", message.type);
+      sendResponse({ success: false, error: "Unknown message type" });
+  }
+
+  return true;
+});
+
+// Add initialization message
+console.log(
+  "[Content] Content script initialized with monitoring:",
+  STATE.isMonitoringEnabled
 );
 
-// Keep connection alive
-setInterval(() => {
-  chrome.runtime.sendMessage({ type: "PING" }, (response) => {
+// Send ready message
+chrome.runtime.sendMessage(
+  { type: "CONTENT_SCRIPT_READY", url: window.location.href },
+  (response) => {
     if (chrome.runtime.lastError) {
-      console.error("[Content] Connection lost:", chrome.runtime.lastError);
-      const errorMessage = {
-        source: "GAMEPAD_EXTENSION",
-        type: "EXTENSION_ERROR",
-        error: chrome.runtime.lastError,
-      };
-      try {
-        window.postMessage(errorMessage, window.location.origin);
-        window.postMessage(errorMessage, "*");
-      } catch (error) {
-        console.error("[Content] Failed to send error message:", error);
-      }
+      console.error("[Content] Registration failed:", chrome.runtime.lastError);
+    } else {
+      console.log("[Content] Registration successful:", response);
     }
-  });
-}, 5000);
+  }
+);
