@@ -111,6 +111,14 @@ module.exports = {
             backgroundPosition: "250% 0%",
           },
         },
+        gradient: {
+          "0%, 100%": {
+            "background-position": "0% 50%",
+          },
+          "50%": {
+            "background-position": "100% 50%",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -118,9 +126,16 @@ module.exports = {
         aurora: "aurora 60s linear infinite",
         panVideo: "panVideo 60s ease-in-out infinite",
         shine: "shine 3s linear infinite",
+        gradient: "gradient 3s ease infinite",
       },
       backgroundImage: {
         gradient: "linear-gradient(var(--gradient-from), var(--gradient-to))",
+      },
+      backgroundSize: {
+        auto: "auto",
+        cover: "cover",
+        contain: "contain",
+        "200%": "200%",
       },
     },
   },

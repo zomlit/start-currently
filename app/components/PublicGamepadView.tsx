@@ -287,141 +287,109 @@ export function PublicGamepadView() {
     [lastButtonState]
   );
 
+  // Add frame tracking with higher FPS
+  const frameRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number>(0);
+  const TARGET_FPS = 120; // Increased from 60 to 120
+  const FRAME_TIME = 1000 / TARGET_FPS;
+  const DEBOUNCE_TIME = 16; // Reduced for more responsive feel
+
   // Subscribe to gamepad state updates
   useEffect(() => {
     if (!username) return;
 
-    // Use consistent channel naming
-    const channelName = `gamepad:${username}`;
-    addLog(`Initializing gamepad channel: ${channelName}`, "system", "info");
+    try {
+      // Initialize Supabase channel
+      const channel = supabase
+        .channel(`gamepad:${username}`)
+        .on("broadcast", { event: "gamepadState" }, ({ payload }) => {
+          if (!payload?.gamepadState) return;
 
-    if (!channelRef.current) {
-      channelRef.current = supabase.channel(channelName, {
-        config: {
-          broadcast: { self: false },
-          presence: { key: "gamepad" },
-        },
-      });
+          // Use performance.now() for more accurate timing
+          const now = performance.now();
+          const timeSinceLastFrame = now - lastFrameTimeRef.current;
 
-      channelRef.current
-        .on(
-          "broadcast",
-          { event: "gamepadState" },
-          ({ payload }: { payload: { gamepadState: GamepadState } }) => {
-            if (!payload?.gamepadState) {
-              addLog("Received empty gamepad state", "supabase", "error");
-              return;
-            }
+          // Cancel any pending frame
+          if (frameRef.current) {
+            cancelAnimationFrame(frameRef.current);
+          }
 
-            const state = payload.gamepadState;
-            const now = Date.now();
-
-            // Add debug logging for state updates
-            addLog(
-              `Raw state received: ${JSON.stringify(state)}`,
-              "supabase",
-              "info"
-            );
-
-            // Track both pressed and released buttons
-            const pressedButtons = state.buttons
-              .map((b: GamepadButtonState, i: number) => (b.pressed ? i : -1))
-              .filter((i: number) => i !== -1);
-
-            const releasedButtons =
-              lastStateRef.current?.buttons
-                .map((b: GamepadButtonState, i: number) =>
-                  b.pressed && !state.buttons[i].pressed ? i : -1
-                )
-                .filter((i: number) => i !== -1) || [];
-
-            if (pressedButtons.length > 0) {
-              addLog(
-                `Buttons pressed: ${pressedButtons.join(", ")} (source: broadcast)`,
-                "supabase",
-                "button"
-              );
-            }
-
-            if (releasedButtons.length > 0) {
-              addLog(
-                `Buttons released: ${releasedButtons.join(", ")} (source: broadcast)`,
-                "supabase",
-                "button"
-              );
-            }
-
-            // Force a UI update even if the window is not focused
-            requestAnimationFrame(() => {
+          // Schedule new frame if enough time has passed
+          if (timeSinceLastFrame >= FRAME_TIME) {
+            frameRef.current = requestAnimationFrame(() => {
+              const state = payload.gamepadState;
               setRemoteGamepadState(state);
               lastStateRef.current = state;
+
+              // Log state changes
+              const activeButtons = state.buttons.filter(
+                (b: { pressed: boolean }) => b.pressed
+              ).length;
+              const activeAxes = state.axes.filter(
+                (a: number) => Math.abs(a) > settings.deadzone
+              ).length;
+
+              if (activeButtons > 0 || activeAxes > 0) {
+                addLog(
+                  `Raw state received: [Axes: ${activeAxes}] [Active Buttons: ${activeButtons}]`,
+                  "supabase",
+                  "info"
+                );
+              }
+
+              // Track activity
+              const hasActivity =
+                state.buttons.some((b: { pressed: boolean }) => b.pressed) ||
+                state.axes.some(
+                  (axis: number) => Math.abs(axis) > settings.deadzone
+                );
+
+              if (hasActivity) {
+                setLastActivityTime(now);
+                setIsInactive(false);
+                updateConnectionState(true);
+
+                // Log button presses
+                state.buttons.forEach(
+                  (button: { pressed: boolean }, index: number) => {
+                    if (button.pressed) {
+                      addLog(`Buttons pressed: ${index}`, "supabase", "button");
+                    }
+                  }
+                );
+              }
+
+              lastFrameTimeRef.current = now;
             });
-
-            // Update activity state
-            const hasActivity =
-              pressedButtons.length > 0 ||
-              state.axes.some((axis) => Math.abs(axis) > settings.deadzone);
-
-            if (hasActivity) {
-              setLastActivityTime(now);
-              setIsInactive(false);
-              updateConnectionState(true);
-            }
           }
-        )
-        .subscribe((status: string) => {
+        })
+        .subscribe((status) => {
           addLog(
-            `Channel subscription status for ${channelName}: ${status}`,
+            `Channel subscription status for gamepad:${username}: ${status}`,
             "system",
             "info"
           );
         });
-    }
 
-    // Add page visibility handling
-    const handleVisibilityChange = () => {
-      const isVisible = document.visibilityState === "visible";
+      // Log connection status
       addLog(
-        `Visibility changed: ${document.visibilityState}`,
+        `Initialized gamepad monitoring for ${username}`,
         "system",
         "info"
       );
 
-      // Force reconnect when page becomes visible
-      if (isVisible && channelRef.current) {
-        channelRef.current.unsubscribe();
-        channelRef.current.subscribe();
-        addLog(
-          "Reconnecting channel after visibility change",
-          "system",
-          "info"
-        );
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    // Keep connection alive even when minimized
-    const keepAlive = setInterval(() => {
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: "broadcast",
-          event: "keepalive",
-          payload: { timestamp: Date.now() },
-        });
-      }
-    }, 15000); // Reduced to 15 seconds for more frequent updates
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      clearInterval(keepAlive);
-
-      if (channelRef.current) {
-        addLog("Cleaning up channel", "system", "info");
-        channelRef.current.unsubscribe();
-        channelRef.current = null;
-      }
-    };
+      return () => {
+        // Cleanup animation frame on unmount
+        if (frameRef.current) {
+          cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
+        channel.unsubscribe();
+      };
+    } catch (error) {
+      console.error("Failed to initialize gamepad monitoring:", error);
+      addLog(`Failed to initialize: ${error}`, "system", "error");
+    }
   }, [username, settings.deadzone, updateConnectionState, addLog]);
 
   // Check for inactivity
@@ -524,126 +492,6 @@ export function PublicGamepadView() {
     );
   });
 
-  // Add worker log listener with better logging
-  useEffect(() => {
-    const handleWorkerLog = (event: CustomEvent) => {
-      const { message, timestamp } = event.detail;
-      console.log("[Worker Event]", message, timestamp);
-      addLog(message, "worker", "info");
-    };
-
-    window.addEventListener(
-      "GAMEPAD_WORKER_LOG",
-      handleWorkerLog as EventListener
-    );
-    console.log("[PublicGamepadView] Added worker log listener");
-
-    return () => {
-      window.removeEventListener(
-        "GAMEPAD_WORKER_LOG",
-        handleWorkerLog as EventListener
-      );
-      console.log("[PublicGamepadView] Removed worker log listener");
-    };
-  }, [addLog]);
-
-  // Remove or disable any direct gamepad API usage
-  useEffect(() => {
-    // Prevent direct gamepad API usage in public view
-    const preventGamepadAPI = (e: Event) => {
-      e.stopPropagation();
-    };
-
-    window.addEventListener("gamepadconnected", preventGamepadAPI, true);
-    window.addEventListener("gamepaddisconnected", preventGamepadAPI, true);
-
-    return () => {
-      window.removeEventListener("gamepadconnected", preventGamepadAPI, true);
-      window.removeEventListener(
-        "gamepaddisconnected",
-        preventGamepadAPI,
-        true
-      );
-    };
-  }, []);
-
-  // Add this near the top of the component with other hooks
-  const { setEnabled } = useGamepadProvider();
-
-  // Add this effect to disable GamepadProvider in public view
-  useEffect(() => {
-    // Disable GamepadProvider state updates in public view
-    setEnabled(false);
-
-    return () => {
-      // Re-enable when component unmounts
-      setEnabled(true);
-    };
-  }, [setEnabled]);
-
-  // Update worker initialization
-  useEffect(() => {
-    if (!username) return;
-
-    try {
-      const worker = new SharedWorker(
-        new URL("../workers/gamepad.shared.worker.ts", import.meta.url),
-        { type: "module" }
-      );
-
-      worker.port.start();
-
-      // Initialize worker with isPublic flag
-      worker.port.postMessage({
-        type: "INIT",
-        username,
-        isPublic: true,
-      });
-
-      worker.port.onmessage = (event) => {
-        const { type, state, buttonChanges } = event.data;
-
-        switch (type) {
-          case "BROADCAST_STATE":
-            if (state) {
-              console.log(
-                "[PublicGamepadView] Received state from worker:",
-                state
-              );
-              requestAnimationFrame(() => {
-                setRemoteGamepadState(state);
-                lastStateRef.current = state;
-
-                const hasActivity =
-                  state.buttons.some((b: GamepadButtonState) => b.pressed) ||
-                  state.axes.some(
-                    (axis: number) => Math.abs(axis) > settings.deadzone
-                  );
-
-                if (hasActivity) {
-                  setLastActivityTime(Date.now());
-                  setIsInactive(false);
-                  updateConnectionState(true);
-                }
-              });
-            }
-            break;
-
-          case "DEBUG_LOG":
-            addLog(event.data.message, "worker", "info");
-            break;
-        }
-      };
-
-      return () => {
-        worker.port.postMessage({ type: "CLEANUP" });
-      };
-    } catch (error) {
-      console.error("Failed to initialize SharedWorker:", error);
-      addLog(`Failed to initialize worker: ${error}`, "system", "error");
-    }
-  }, [username, settings.deadzone, updateConnectionState, addLog]);
-
   // Update the render logic
   return (
     <>
@@ -685,7 +533,9 @@ export function PublicGamepadView() {
           </motion.div>
         )}
       </AnimatePresence>
-      <DebugOverlayContent logs={debugLogs} />
+      {/* {process.env.NODE_ENV === "development" && (
+        <DebugOverlayContent logs={debugLogs} />
+      )} */}
     </>
   );
 }

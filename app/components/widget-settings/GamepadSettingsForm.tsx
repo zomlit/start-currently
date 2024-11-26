@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import { GamepadSettings } from "@/types/gamepad";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Gamepad2 } from "lucide-react";
+import { RotateCcw, Gamepad2, Chrome, Download } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -34,6 +34,20 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useGamepadProvider } from "@/providers/GamepadProvider";
+import { Card } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/utils/toast";
+import { defaultGamepadSettings } from "@/lib/gamepad-settings";
 
 const gamepadSettingsSchema = z.object({
   controllerType: z.string(),
@@ -167,36 +181,30 @@ export function GamepadSettingsForm({
     }
   };
 
-  // Add reset handler
+  // Add ref for dialog
+  const dialogRef = useRef<HTMLButtonElement>(null);
+
   const handleResetToDefaults = async () => {
     try {
-      const defaultSettings = {
-        controllerType: "ds4",
-        controllerColor: "white",
-        showButtonPresses: true,
-        showAnalogSticks: true,
-        showTriggers: true,
-        buttonColor: "#1a1a1a",
-        buttonPressedColor: "#000000",
-        stickColor: "#1a1a1a",
-        triggerColor: "#1a1a1a",
-        backgroundColor: "transparent",
-        scale: 1,
-        deadzone: 0,
-        debugMode: false,
-        useCustomShapeColors: false,
-        buttonShapeColor: "#ffffff",
-        buttonShapePressedColor: "#000000",
-        hideWhenInactive: false,
-        inactivityTimeout: 30,
-      };
+      // Close dialog
+      dialogRef.current?.click();
 
-      // Reset form to default values
-      form.reset(defaultSettings);
-      // Update parent component
-      await onSettingsChange(defaultSettings);
+      // Reset form to defaults
+      form.reset(defaultGamepadSettings);
+
+      // Update server state with all default settings
+      await onSettingsChange(defaultGamepadSettings);
+
+      toast.success({
+        title: "Settings Reset",
+        description: "Your gamepad settings have been reset to defaults",
+      });
     } catch (error) {
-      console.error("Error resetting settings:", error);
+      console.error("Failed to reset settings:", error);
+      toast.error({
+        title: "Reset Failed",
+        description: "Failed to reset settings. Please try again.",
+      });
     }
   };
 
@@ -206,37 +214,25 @@ export function GamepadSettingsForm({
   return (
     <Form {...form}>
       <form className="space-y-4">
+        <div className="flex items-center justify-between rounded-lg mt-2 p-4 bg-slate-500/10">
+          <div className="space-y-0.5">
+            <div className="text-sm font-medium">Extension</div>
+            <div className="text-sm text-muted-foreground">
+              Use the Chrome extension to allow the controller to work when the
+              window is minimized.
+            </div>
+          </div>
+          <Switch
+            checked={isExtensionEnabled}
+            onCheckedChange={toggleExtension}
+            className="data-[state=checked]:bg-primary"
+          >
+            <span className="sr-only">
+              {isExtensionEnabled ? "Disable Extension" : "Enable Extension"}
+            </span>
+          </Switch>
+        </div>
         <Accordion type="multiple" className="w-full">
-          {/* Add Extension Settings Section */}
-          <AccordionItem value="extension">
-            <AccordionTrigger>Input Method</AccordionTrigger>
-            <AccordionContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <div className="text-sm font-medium">
-                    {isExtensionEnabled ? "Using Extension" : "Using Web API"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {isExtensionEnabled
-                      ? "Controller inputs will work even when minimized"
-                      : "Controller inputs require window focus"}
-                  </div>
-                </div>
-                <Button
-                  onClick={toggleExtension}
-                  variant={isExtensionEnabled ? "default" : "outline"}
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Gamepad2 className="h-4 w-4" />
-                  {isExtensionEnabled
-                    ? "Disable Extension"
-                    : "Enable Extension"}
-                </Button>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
           {/* General Settings Section */}
           <AccordionItem value="general">
             <AccordionTrigger>General Settings</AccordionTrigger>
@@ -602,17 +598,36 @@ export function GamepadSettingsForm({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-        {/* Reset Button */}
+        {/* Reset Button with Confirmation */}
         <div className="flex items-center space-x-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleResetToDefaults}
-            className="w-full"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset to Defaults
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                ref={dialogRef}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset to Defaults
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will reset all gamepad settings to their default values.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetToDefaults}>
+                  Reset Settings
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </form>
     </Form>

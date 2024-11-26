@@ -89,3 +89,78 @@ This repo also contains a Tauri application for running a Windows app using rust
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+# Chrome Extension Setup
+
+The project includes a Chrome extension for gamepad input monitoring when the window is minimized. Here's how to set it up:
+
+## Building the Extension
+
+1. First, build the extension with environment variables:
+
+```bash
+bun run build:extension
+```
+
+This will:
+
+- Create a `dist` directory in `app/extensions/chrome`
+- Generate the config file with Supabase credentials
+- Prepare the extension for loading
+
+## Loading the Extension in Chrome
+
+1. Open Chrome and navigate to `chrome://extensions`
+2. Enable "Developer mode" in the top right
+3. Click "Load unpacked"
+4. Select the `app/extensions/chrome` directory
+
+## Development
+
+The extension consists of several key files:
+
+```
+app/extensions/chrome/
+├── manifest.json        # Extension manifest
+├── background.js       # Background script
+├── content.js         # Content script
+├── offscreen.html    # Offscreen page
+├── offscreen.js     # Offscreen script
+└── dist/           # Built files (gitignored)
+    └── config.js  # Generated config (not in source control)
+```
+
+### Environment Variables
+
+The extension uses these environment variables:
+
+- `VITE_PUBLIC_SUPABASE_URL`
+- `VITE_PUBLIC_SUPABASE_ANON_KEY`
+
+These are injected during the build process.
+
+### Security
+
+- Sensitive values are only included in the built extension
+- The `dist` directory is gitignored
+- The template file uses placeholders
+- Environment variables are injected at build time
+
+### Rebuilding
+
+After making changes to the extension:
+
+1. Run `bun run build:extension`
+2. Go to `chrome://extensions`
+3. Click the refresh icon on the extension
+4. Reload the webpage
+
+## Features
+
+- Monitors gamepad input even when the window is minimized
+- Sends input data through Supabase Realtime
+- Supports background processing
+- Handles connection state management
+- Debounces input to prevent spam
+- Filters out stick drift
+- Provides debug logging

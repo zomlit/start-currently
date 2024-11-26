@@ -35,8 +35,8 @@ function SectionsLayout() {
             description={content.description}
           />
           <PageBreadcrumb />
-          <MainNav items={navItems} />
-          <div className="mt-4">
+          <MainNav items={[...navItems]} />
+          <div className="">
             <Outlet />
           </div>
         </Container>

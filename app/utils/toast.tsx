@@ -5,6 +5,10 @@ interface ToastOptions {
   title: string;
   description?: string;
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 const debouncedToast = debounce(
@@ -12,6 +16,12 @@ const debouncedToast = debounce(
     sonnerToast[type](options.title, {
       description: options.description,
       duration: options.duration || 3000,
+      action: options.action && {
+        label: options.action.label,
+        onClick: options.action.onClick,
+      },
+      className: "font-sofia text-[16px]",
+      descriptionClassName: "font-sofia text-muted-foreground",
     });
   },
   1000,

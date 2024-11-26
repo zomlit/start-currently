@@ -9,7 +9,7 @@ const publicConnections = new Set<MessagePort>();
 let lastState: GamepadState | null = null;
 let isProcessing = false;
 const PROCESS_INTERVAL = 1000 / 60; // 60fps
-const DEADZONE = 0.05;
+const DEADZONE = 0.15;
 const DEBOUNCE_TIME = 50; // 50ms debounce for button events
 const lastButtonEvents = new Map<number, number>(); // Track last event time for each button
 
