@@ -14,4 +14,7 @@ services:
             target: /app/.vinxi
           - type: cache
             target: /app/.output
+      command: NODE_ENV=production bun x vinxi build
+      environment:
+        - NODE_ENV=production
     # ... rest of config

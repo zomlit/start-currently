@@ -1,9 +1,7 @@
-.git
-.github
 node_modules
-.next
-.nuxt
+.git
+.env
+*.log
 dist
 build
-.output
-*.log 
+.cache 
