@@ -31,7 +31,7 @@ export function WidgetCTA({
         label: "Disable Extension",
         variant: "default" as const,
         className:
-          "gap-2 whitespace-nowrap bg-pink-500/20 hover:bg-pink-500/20 text-white",
+          "gap-2 whitespace-nowrap bg-pink-500/20 hover:bg-pink-500/20 text-white w-full mt-4 md:mt-0",
         onClick: toggleExtension,
       }
     : {
@@ -53,7 +53,7 @@ export function WidgetCTA({
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/15 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient" />
 
       <div className="relative container max-w-7xl mx-auto py-3 px-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="md:flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
               <Icon className="h-8 w-8 text-blue-500" />

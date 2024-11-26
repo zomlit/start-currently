@@ -18,7 +18,7 @@
     },
     "default_title": "Gamepad Monitor (Running in background)"
   },
-  "permissions": ["offscreen", "storage", "tabs"],
+  "permissions": ["offscreen", "storage", "tabs", "scripting"],
   "host_permissions": [
     "https://*.supabase.co/*",
     "https://livestreaming.tools/*",
@@ -45,9 +45,14 @@
         "dist/config.js",
         "offscreen.js",
         "offscreen-init.js",
+        "offscreen-ready.js",
+        "reload-script.js",
         "offscreen.html"
       ],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }
