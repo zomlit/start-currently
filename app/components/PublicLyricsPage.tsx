@@ -10,19 +10,25 @@ const injectFont = (fontFamily: string) => {
   if (!fontFamily) return;
 
   // Skip system fonts
-  if (['Arial', 'Helvetica', 'Times New Roman', 'serif', 'sans-serif'].includes(fontFamily)) {
+  if (
+    ["Arial", "Helvetica", "Times New Roman", "serif", "sans-serif"].includes(
+      fontFamily
+    )
+  ) {
     return;
   }
 
   // Check if font link already exists
-  const existingLink = document.querySelector(`link[data-font="${fontFamily}"]`);
+  const existingLink = document.querySelector(
+    `link[data-font="${fontFamily}"]`
+  );
   if (existingLink) return;
 
   // Create and append new font link
-  const link = document.createElement('link');
-  link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
-  link.rel = 'stylesheet';
-  link.setAttribute('data-font', fontFamily);
+  const link = document.createElement("link");
+  link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, "+")}:wght@400;700&display=swap`;
+  link.rel = "stylesheet";
+  link.setAttribute("data-font", fontFamily);
   document.head.appendChild(link);
 };
 
@@ -36,19 +42,21 @@ export function PublicLyricsPage() {
 
   // Debug log
   useEffect(() => {
-    console.log('Current state:', {
-      username,
-      settings,
-      currentLyrics,
-      currentLine,
-      isLoadingSettings
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.log("Current state:", {
+        username,
+        settings,
+        currentLyrics,
+        currentLine,
+        isLoadingSettingss,
+      });
+    }
   }, [username, settings, currentLyrics, currentLine, isLoadingSettings]);
 
   // Handle font injection when settings change
   useEffect(() => {
     if (settings?.fontFamily) {
-      console.log('Loading font:', settings.fontFamily);
+      console.log("Loading font:", settings.fontFamily);
       injectFont(settings.fontFamily);
     }
   }, [settings?.fontFamily]);
@@ -60,34 +68,34 @@ export function PublicLyricsPage() {
     async function loadUserAndSettings() {
       if (!username) return;
       try {
-        console.log('Loading settings for:', username);
+        console.log("Loading settings for:", username);
         // Get user_id first
         const { data: profileData, error: profileError } = await supabase
-          .from('UserProfile')
-          .select('user_id')
-          .eq('username', username)
+          .from("UserProfile")
+          .select("user_id")
+          .eq("username", username)
           .single();
 
         if (profileError) throw profileError;
-        if (!profileData?.user_id) throw new Error('User not found');
+        if (!profileData?.user_id) throw new Error("User not found");
 
         // Load initial settings
         await loadPublicSettings(username);
-        console.log('Settings loaded successfully');
+        console.log("Settings loaded successfully");
 
         // Subscribe to settings changes
         const settingsChannel = supabase
           .channel(`visualizer-settings:${profileData.user_id}`)
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*',
-              schema: 'public',
-              table: 'VisualizerWidget',
+              event: "*",
+              schema: "public",
+              table: "VisualizerWidget",
               filter: `user_id=eq.${profileData.user_id}`,
             },
             async (payload: any) => {
-              console.log('Settings changed:', payload);
+              console.log("Settings changed:", payload);
               if (mounted && payload.new?.lyrics_settings) {
                 await loadPublicSettings(username);
               }
@@ -99,9 +107,9 @@ export function PublicLyricsPage() {
           supabase.removeChannel(settingsChannel);
         };
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error("Error loading settings:", error);
         if (mounted) {
-          setError('Failed to load settings');
+          setError("Failed to load settings");
         }
       } finally {
         if (mounted) {
@@ -120,28 +128,28 @@ export function PublicLyricsPage() {
   useEffect(() => {
     if (!username) return;
 
-    console.log('Setting up lyrics subscription for:', username);
+    console.log("Setting up lyrics subscription for:", username);
     const lyricsChannel = supabase.channel(`lyrics:${username}`);
-    
+
     lyricsChannel
-      .on('broadcast', { event: 'lyrics' }, (payload) => {
-        console.log('Received lyrics payload:', payload);
+      .on("broadcast", { event: "lyrics" }, (payload) => {
+        console.log("Received lyrics payload:", payload);
         if (Array.isArray(payload.payload?.lyrics)) {
           setCurrentLyrics(payload.payload.lyrics);
         }
       })
-      .on('broadcast', { event: 'currentLine' }, (payload) => {
-        console.log('Received currentLine payload:', payload);
-        if (typeof payload.payload?.currentLine === 'number') {
+      .on("broadcast", { event: "currentLine" }, (payload) => {
+        console.log("Received currentLine payload:", payload);
+        if (typeof payload.payload?.currentLine === "number") {
           setCurrentLine(payload.payload.currentLine);
         }
       })
       .subscribe((status) => {
-        console.log('Lyrics subscription status:', status);
+        console.log("Lyrics subscription status:", status);
       });
 
     return () => {
-      console.log('Cleaning up lyrics subscription');
+      console.log("Cleaning up lyrics subscription");
       supabase.removeChannel(lyricsChannel);
     };
   }, [username]);

@@ -12,6 +12,7 @@ import { useThemeStore } from "@/store/themeStore";
 import { ClerkProvider } from "@clerk/tanstack-start";
 import { dark } from "@clerk/themes";
 import { useMemo } from "react";
+import { CircleDot } from "@/components/icons";
 
 export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
@@ -63,8 +64,14 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
         <Card className="w-full max-w-2xl bg-white/5 border-none shadow-2xl backdrop-blur-sm p-6">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4 text-center">
-              <div className="rounded-full bg-destructive/40 p-3">
-                <AlertCircle className="h-8 w-8 text-pink-500" />
+              <div className="relative rounded-full p-3 animate-pulse">
+                <CircleDot className="h-12 w-12 text-pink-500 fill-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.7)] animate-glow" />
+
+                <div className="absolute inset-0 rounded-full">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/30 to-violet-500/30 blur-xl animate-pulse" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/20 to-violet-500/20 blur-2xl animate-pulse delay-75" />
+                  <div className="absolute inset-0 rounded-full border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.7)] animate-pulse delay-150" />
+                </div>
               </div>
 
               <h1 className="text-3xl font-bold tracking-tight">

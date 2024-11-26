@@ -3,9 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useUser } from "@clerk/tanstack-start";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 import { GamepadViewer } from "@/components/GamepadViewer";
-import { useGamepad } from "@/hooks/useGamepad";
 import { Button } from "@/components/ui/button";
-import { Copy, Gauge } from "lucide-react";
+import { Chrome, Copy, Download, Gauge } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -27,6 +26,8 @@ import DS4Buttons from "@/icons/gamepad/ds4-base-buttons.svg?react";
 import DS4Sticks from "@/icons/gamepad/ds4-sticks.svg?react";
 
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
+import { useGamepadContext } from "@/providers/GamepadProvider";
+import { WidgetCTA } from "@/components/WidgetCTA";
 
 interface GamepadState {
   buttons: boolean[];
@@ -61,69 +62,17 @@ const DRIFT_THRESHOLD = 0.15; // Only filter movements below this threshold
 
 function GamepadSection() {
   const { user } = useUser();
-  const workerRef = useRef<Worker | null>(null);
-  const [currentGamepadState, setCurrentGamepadState] =
-    useState<GamepadState | null>(null);
+  const { gamepadState, isConnected } = useGamepadContext();
   const [settings, setSettings] = useState<GamepadSettings>(
     defaultGamepadSettings
   );
 
-  // Use the useGamepad hook with settings.deadzone or fallback
-  const { gamepadState, isConnected: isGamepadConnected } = useGamepad(
-    settings?.deadzone || defaultGamepadSettings.deadzone
-  );
-
-  // Add visibility tracking
-  const isVisible = useVisibilityChange();
-  const lastFrameTimeRef = useRef<number>(0);
-  const MIN_FRAME_TIME = 1000 / 60; // Target 60fps
-
-  // Initialize worker on client-side only
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      workerRef.current = new Worker(
-        new URL("@/workers/gamepad.worker.ts", import.meta.url)
-      );
-
-      // Cleanup worker on unmount
-      return () => {
-        workerRef.current?.terminate();
-        workerRef.current = null;
-      };
-    }
-  }, []);
-
-  // Update the gamepad state processing
-  useEffect(() => {
-    if (!gamepadState || !user?.id) return;
-
-    if (workerRef.current) {
-      workerRef.current.postMessage({
-        type: "INIT",
-        gamepadState,
-        userId: user.id,
-      });
-
-      workerRef.current.onmessage = async (event) => {
-        const { type, state } = event.data;
-        if (type === "STATE_UPDATE") {
-          setCurrentGamepadState(state);
-        }
-      };
-    }
-
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.postMessage({ type: "CLEANUP" });
-      }
-    };
-  }, [gamepadState, user?.id]);
-
   // Get the public URL
   const publicUrl = user?.username
     ? `${window.location.origin}/${user.username}/gamepad`
-    : null;
+    : "";
 
+  // Add copy URL handler
   const handleCopyPublicUrl = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -142,6 +91,11 @@ function GamepadSection() {
     },
     [user?.username]
   );
+
+  // Add visibility tracking
+  const isVisible = useVisibilityChange();
+  const lastFrameTimeRef = useRef<number>(0);
+  const MIN_FRAME_TIME = 1000 / 60; // Target 60fps
 
   const { mutateAsync: updateSettings } = useUpdateGamepadSettings();
   const { data: savedSettings, isLoading } = useGamepadSettings(user?.id);
@@ -206,16 +160,7 @@ function GamepadSection() {
         <GamepadViewer
           settings={settings}
           username={user?.username || undefined}
-          gamepadState={
-            gamepadState
-              ? {
-                  buttons: gamepadState.buttons.map((button) =>
-                    isGamepadButtonState(button) ? button.pressed : button
-                  ),
-                  axes: gamepadState.axes,
-                }
-              : null
-          }
+          gamepadState={gamepadState}
           isPublicView={false}
           onSettingsChange={handleSettingsChange}
         />
@@ -229,8 +174,7 @@ function GamepadSection() {
       <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center space-x-2">
           <Input
-            key={publicUrl}
-            value={publicUrl || ""}
+            value={publicUrl}
             readOnly
             className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
           />
@@ -252,10 +196,10 @@ function GamepadSection() {
             }
             variant={settings.debugMode ? "default" : "outline"}
             className="w-full"
-            disabled={!isGamepadConnected}
+            disabled={!isConnected}
           >
             <Gauge className="mr-2 h-4 w-4" />
-            {!isGamepadConnected
+            {!isConnected
               ? "No Controller Detected"
               : settings.debugMode
                 ? "Close Drift Tool"
@@ -275,14 +219,87 @@ function GamepadSection() {
     </div>
   );
 
+  useEffect(() => {
+    // Request background processing permission
+    if ("permissions" in navigator) {
+      navigator.permissions
+        .query({ name: "background-sync" as PermissionName })
+        .then((result) => {
+          if (result.state === "granted") {
+            document.body.style.visibility = "visible";
+          }
+        });
+    }
+
+    // Prevent throttling by keeping a minimal animation running
+    const keepAlive = () => {
+      requestAnimationFrame(keepAlive);
+    };
+    keepAlive();
+
+    // Request wake lock to prevent device sleep
+    if ("wakeLock" in navigator) {
+      navigator.wakeLock
+        .request("screen")
+        .catch((err) => console.log("Wake Lock error:", err));
+    }
+  }, []);
+
+  const [extensionError, setExtensionError] = useState<string | null>(null);
+
+  // Add extension error handling
+  useEffect(() => {
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+      if (event.data.type === "EXTENSION_ERROR") {
+        setExtensionError(
+          event.data.error?.message || "Extension communication failed"
+        );
+        toast.error("Gamepad extension error: " + event.data.error?.message);
+      } else if (event.data.type === "CONTENT_SCRIPT_READY") {
+        setExtensionError(null);
+        console.log("Extension connected with ID:", event.data.extensionId);
+      }
+    };
+
+    window.addEventListener("message", handleExtensionMessage);
+    return () => window.removeEventListener("message", handleExtensionMessage);
+  }, []);
+
+  // Update the CTA to show extension status
   return (
-    <div className="h-full overflow-hidden">
-      <WidgetLayout
-        preview={GamepadPreview}
-        settings={GamepadSettings}
-        className="min-h-[500px]" // Ensure minimum height
+    <>
+      <WidgetCTA
+        title="Chrome Extension"
+        description={
+          extensionError
+            ? `Extension error: ${extensionError}. Please check if the extension is installed and enabled.`
+            : "Install our Chrome extension to keep gamepad inputs working when minimized (great for dual streaming setups!)"
+        }
+        icon={Chrome}
+        primaryAction={{
+          label: extensionError
+            ? "Troubleshoot Extension"
+            : "Install Extension",
+          icon: Download,
+          onClick: () =>
+            window.open(
+              extensionError && window.chrome?.runtime?.id
+                ? `chrome://extensions/?id=${window.chrome.runtime.id}`
+                : import.meta.env.VITE_CHROME_STORE_URL || "CHROME_STORE_URL",
+              "_blank"
+            ),
+        }}
       />
-    </div>
+      <div className="h-full overflow-hidden">
+        <WidgetLayout
+          preview={GamepadPreview}
+          settings={GamepadSettings}
+          className="min-h-[500px]" // Ensure minimum height
+        />
+      </div>
+    </>
   );
 }
 

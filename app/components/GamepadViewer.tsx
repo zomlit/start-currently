@@ -25,7 +25,7 @@ import {
   TriangleButton,
 } from "./gamepad/FaceButtons";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
-import { Bumper, Trigger } from "./gamepad/BumperTrigger";
+import { Bumper } from "./gamepad/BumperTrigger";
 import { useRawGamepad } from "@/hooks/useRawGamepad";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,7 @@ import {
 import { DPad } from "./gamepad/DPad";
 import { Triggers } from "./gamepad/Triggers";
 import { useGamepadContext } from "@/providers/GamepadProvider";
+import type { ReactElement } from "react";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -70,10 +71,11 @@ const safeFormatColor = (color: any): string => {
 };
 
 interface GamepadViewerProps {
-  settings?: Partial<GamepadSettings>;
+  settings: GamepadSettings;
   username?: string;
   gamepadState?: GamepadState | null;
   isPublicView?: boolean;
+  disableDirectInput?: boolean;
   onSettingsChange?: (settings: Partial<GamepadSettings>) => void;
 }
 
@@ -442,47 +444,17 @@ export function GamepadViewer({
   username,
   gamepadState,
   isPublicView = false,
+  disableDirectInput = false,
   onSettingsChange,
-}: GamepadViewerProps) {
+}: GamepadViewerProps): ReactElement {
+  // 1. All hooks must be at the top level and called unconditionally
   const { gamepadState: contextGamepadState, isConnected } =
     useGamepadContext();
+  const { axes: rawAxes, isUserInteracting } = useRawGamepad();
 
-  // Use either passed gamepadState or context state
-  const finalGamepadState = useMemo(() => {
-    const state = gamepadState || contextGamepadState;
-    if (!state) return null;
-
-    // Transform the state to match expected format - same as PublicGamepadView
-    return {
-      buttons: state.buttons.map((button: any, index: number) => {
-        // For triggers (buttons 6 and 7), preserve the analog value
-        if (index === 6 || index === 7) {
-          const value = typeof button === "object" ? button.value : button;
-          return {
-            pressed: typeof button === "object" ? button.pressed : !!button,
-            value: typeof value === "number" ? value : button ? 1 : 0,
-          };
-        }
-
-        // For all other buttons, just use pressed state
-        return {
-          pressed: typeof button === "object" ? button.pressed : !!button,
-          value: 0, // Digital buttons don't have analog values
-        };
-      }),
-      axes: state.axes,
-    };
-  }, [gamepadState, contextGamepadState]);
-
-  // Debug logging
-  console.log("GamepadViewer transformed state:", {
-    finalGamepadState,
-    trigger6: finalGamepadState?.buttons?.[6],
-    trigger7: finalGamepadState?.buttons?.[7],
-  });
-
-  // Keep these state declarations at the top
+  // State hooks
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [driftHistory, setDriftHistory] = useState<{
     left: DriftHistory;
     right: DriftHistory;
@@ -491,58 +463,83 @@ export function GamepadViewer({
     right: { values: [], timestamp: Date.now() },
   });
 
-  // Keep these refs at the top
+  // Refs
   const buttonStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastUpdateRef = useRef<number>(0);
   const animationFrameRef = useRef<number | null>(null);
 
-  // 3. External hooks and derived state
-  const { axes: rawAxes, isUserInteracting } = useRawGamepad();
+  // Derived values
   const deadzone = settings?.deadzone ?? 0.05;
 
-  // 4. Memoized values
+  // All useMemo hooks
+  const finalGamepadState = useMemo(() => {
+    const state = gamepadState || contextGamepadState;
+    if (!state) return null;
+    return {
+      buttons: state.buttons.map((button: any, index: number) => ({
+        pressed: typeof button === "object" ? button.pressed : !!button,
+        value:
+          index === 6 || index === 7
+            ? typeof button === "object"
+              ? button.value
+              : button
+                ? 1
+                : 0
+            : (typeof button === "object" ? button.pressed : !!button)
+              ? 1
+              : 0,
+      })),
+      axes: state.axes,
+      timestamp: Date.now(),
+    };
+  }, [gamepadState, contextGamepadState]);
+
   const axes = useMemo(() => {
     return isPublicView ? finalGamepadState?.axes || Array(4).fill(0) : rawAxes;
   }, [isPublicView, finalGamepadState?.axes, rawAxes]);
 
   const buttons = useMemo(() => {
-    return finalGamepadState?.buttons || Array(16).fill(false);
+    if (!finalGamepadState?.buttons)
+      return Array(16).fill({ pressed: false, value: 0 });
+    return finalGamepadState.buttons.map((button) => ({
+      pressed: typeof button === "object" ? button.pressed : !!button,
+      value: typeof button === "object" ? button.value : button ? 1 : 0,
+    }));
   }, [finalGamepadState?.buttons]);
 
-  // Use memoized drift detection
+  // Custom hooks
   const { isDrifting, leftStickDrift, rightStickDrift } =
     useStickDriftDetection(axes, deadzone);
 
-  // Debounce button state updates
+  // Callbacks
+  const handleCalibrate = useCallback(() => {
+    if (!onSettingsChange) return;
+    setIsDialogOpen(true);
+  }, [onSettingsChange]);
 
+  // Effects
   useEffect(() => {
+    if (disableDirectInput) return;
     const newState = hasAnyPotentialDrift(axes, deadzone);
-
     if (buttonStateTimeoutRef.current) {
       clearTimeout(buttonStateTimeoutRef.current);
     }
-
     buttonStateTimeoutRef.current = setTimeout(() => {
       setIsButtonEnabled(newState);
-    }, 200); // 200ms debounce
-
+    }, 200);
     return () => {
       if (buttonStateTimeoutRef.current) {
         clearTimeout(buttonStateTimeoutRef.current);
       }
     };
-  }, [axes, deadzone]);
+  }, [axes, deadzone, disableDirectInput]);
 
-  // Update drift history and get averaged values
   useEffect(() => {
     const now = Date.now();
-    const historyWindow = 1000; // Keep 1 second of history
-
+    const historyWindow = 1000;
     setDriftHistory((prev) => {
       const leftDrift = Math.max(Math.abs(axes[0]), Math.abs(axes[1]));
       const rightDrift = Math.max(Math.abs(axes[2]), Math.abs(axes[3]));
-
-      // Clean up old values
       const cleanup = (history: DriftHistory) => ({
         values: [
           ...history.values.filter(
@@ -552,7 +549,6 @@ export function GamepadViewer({
         ],
         timestamp: now,
       });
-
       return {
         left: cleanup(prev.left),
         right: cleanup(prev.right),
@@ -560,7 +556,17 @@ export function GamepadViewer({
     });
   }, [axes]);
 
-  // Get averaged drift values
+  // Debug effect
+  useEffect(() => {
+    if (finalGamepadState) {
+      console.log("GamepadViewer state update:", {
+        buttons: finalGamepadState.buttons.map((b) => b.pressed),
+        axes: finalGamepadState.axes,
+        timestamp: finalGamepadState.timestamp,
+      });
+    }
+  }, [finalGamepadState]);
+
   const getAveragedDrift = (history: DriftHistory) => {
     if (history.values.length === 0) return 0;
     // Bias towards higher values to prevent rapid state changes
@@ -577,15 +583,6 @@ export function GamepadViewer({
     getAveragedDrift(driftHistory.right),
     deadzone
   );
-
-  // Update the dialog state to only track open state
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Memoize the calibration handler
-  const handleCalibrate = useCallback(() => {
-    if (!onSettingsChange) return;
-    setIsDialogOpen(true);
-  }, [onSettingsChange]);
 
   // Calculate current drift values inside the dialog component
   const CalibrationDialog = useMemo(() => {

@@ -101,21 +101,20 @@ function SignInPage() {
         <div className="flex items-center justify-center w-full h-screen">
           <div className="w-auto relative">
             <div className="relative z-20 backdrop-blur-lg rounded-lg shadow-xl">
-              <div className="flex justify-center">
-                <CircleDot className={`mb-10 w-16 fill-primary`} />
-              </div>
               <SignIn
                 routing="path"
                 path="/sign-in"
                 appearance={{
                   elements: {
                     formButtonPrimary:
-                      "bg-purple-600 hover:bg-purple-700 text-white",
+                      "bg-purple-600 hover:bg-purple-700 dark:text-white",
                     formFieldInput:
-                      "bg-white/20 border-purple-300 text-white placeholder-purple-200",
-                    headerTitle: "text-white",
-                    headerSubtitle: "text-purple-200",
-                    card: "!bg-gradient/20 backdrop-blur-lg !border-none",
+                      "bg-white/20 border-purple-300 text-white placeholder-purple-200 dark:text-white",
+                    formFieldLabel: "dark:text-white",
+                    headerTitle: "dark:text-white text-xl uppercase",
+                    headerSubtitle: "text-purple-400",
+                    card: "dark:bg-background backdrop-blur-lg",
+                    footer: "dark:text-white !dark:bg-background bg-none",
                   },
                 }}
               />
