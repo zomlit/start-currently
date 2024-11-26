@@ -4,7 +4,7 @@ import { useUser } from "@clerk/tanstack-start";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 import { GamepadViewer } from "@/components/GamepadViewer";
 import { Button } from "@/components/ui/button";
-import { Copy, Gauge } from "lucide-react";
+import { Chrome, Copy, Download, Gauge } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -27,6 +27,7 @@ import DS4Sticks from "@/icons/gamepad/ds4-sticks.svg?react";
 
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 import { useGamepadContext } from "@/providers/GamepadProvider";
+import { WidgetCTA } from "@/components/WidgetCTA";
 
 interface GamepadState {
   buttons: boolean[];
@@ -245,13 +246,25 @@ function GamepadSection() {
   }, []);
 
   return (
-    <div className="h-full overflow-hidden">
-      <WidgetLayout
-        preview={GamepadPreview}
-        settings={GamepadSettings}
-        className="min-h-[500px]" // Ensure minimum height
+    <>
+      <WidgetCTA
+        title="Chrome Extension"
+        description="Install our Chrome extension to keep gamepad inputs working when minimized (great for dual streaming setups!)"
+        icon={Chrome}
+        primaryAction={{
+          label: "Install Extension",
+          icon: Download,
+          onClick: () => window.open("CHROME_STORE_URL", "_blank"),
+        }}
       />
-    </div>
+      <div className="h-full overflow-hidden">
+        <WidgetLayout
+          preview={GamepadPreview}
+          settings={GamepadSettings}
+          className="min-h-[500px]" // Ensure minimum height
+        />
+      </div>
+    </>
   );
 }
 

@@ -4,7 +4,7 @@ import type { GamepadState } from "@/types/gamepad";
 
 let lastState: GamepadState | null = null;
 let isPolling = false;
-const DEADZONE = 0.05;
+const DEADZONE = 0.15;
 
 // Add helper to detect meaningful changes
 const hasSignificantChange = (

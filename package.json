@@ -11,7 +11,8 @@
     "clean": "rm -rf app.config.timestamp_*",
     "lint": "prettier --check '**/*' --ignore-unknown && eslint --ext .ts,.tsx ./app",
     "format": "prettier --write '**/*' --ignore-unknown",
-    "generate-types": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > app/types/supabase.ts"
+    "generate-types": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > app/types/supabase.ts",
+    "build:extension": "bun run scripts/build-extension.mts"
   },
   "keywords": [],
   "author": "",
@@ -126,7 +127,9 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.7.2",
-    "vite-tsconfig-paths": "^5.1.3"
+    "vite-tsconfig-paths": "^5.1.3",
+    "ts-node": "^10.9.2",
+    "dotenv": "^16.4.5"
   },
   "overrides": {
     "@types/react": "npm:types-react@rc",

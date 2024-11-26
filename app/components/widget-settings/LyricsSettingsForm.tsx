@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,6 +31,17 @@ import {
 } from "@/components/ui/form";
 import { useDebouncedCallback } from "use-debounce";
 import { toast } from "@/utils/toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -126,23 +137,33 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     defaultValues: settings,
   });
 
+  // Add ref for dialog
+  const dialogRef = useRef<HTMLButtonElement>(null);
+
   // Add handleResetToDefaults function
   const handleResetToDefaults = async () => {
     try {
+      // Close dialog
+      dialogRef.current?.click();
+
+      // Get default settings from schema
       const defaultSettings = lyricsSchema.parse({});
+
+      // Reset form to defaults
       form.reset(defaultSettings);
+
+      // Update server state with all default settings
       await onSettingsChange(defaultSettings);
 
       toast.success({
-        title: "Settings reset",
-        description: "All settings have been restored to their default values.",
+        title: "Settings Reset",
+        description: "Your lyrics settings have been reset to defaults",
       });
     } catch (error) {
-      console.error("Error resetting settings:", error);
+      console.error("Failed to reset settings:", error);
       toast.error({
-        title: "Error resetting settings",
-        description: "Your settings couldn't be reset. Please try again.",
-        variant: "destructive",
+        title: "Reset Failed",
+        description: "Failed to reset settings. Please try again.",
       });
     }
   };
@@ -760,17 +781,38 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
           </AccordionItem>
         </Accordion>
 
-        <div className="flex !overflow-hidden">
-          <Button
-            type="button"
-            onClick={handleResetToDefaults}
-            variant="outline"
-            className="w-full"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset to Defaults
-          </Button>
+        <div className="flex items-center space-x-2 pt-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                ref={dialogRef}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset to Defaults
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will reset all lyrics settings to their default values.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetToDefaults}>
+                  Reset Settings
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
 
+        <div className="flex !overflow-hidden">
           <Button
             type="submit"
             className="w-full ml-2"

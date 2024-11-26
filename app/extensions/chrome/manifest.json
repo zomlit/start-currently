@@ -26,12 +26,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "supabase.min.js",
-        "offscreen.js",
-        "offscreen.html",
-        "console.js"
-      ],
+      "resources": ["dist/config.js", "offscreen.js", "offscreen.html"],
       "matches": ["<all_urls>"]
     }
   ]

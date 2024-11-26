@@ -18,6 +18,7 @@ import {
   hasSignificantChange,
   DEFAULT_DEADZONE,
 } from "@/utils/gamepad";
+import { toast } from "@/utils/toast";
 
 // Add extension types
 interface ExtensionMessage {
@@ -36,6 +37,7 @@ interface GamepadContextType {
   gamepadState: GamepadState | null;
   isConnected: boolean;
   isExtensionEnabled: boolean;
+  extensionId: string | null;
   setEnabled: (enabled: boolean) => void;
   toggleExtension: () => void;
 }
@@ -44,6 +46,7 @@ const GamepadContext = createContext<GamepadContextType>({
   gamepadState: null,
   isConnected: false,
   isExtensionEnabled: false,
+  extensionId: null,
   setEnabled: () => {},
   toggleExtension: () => {},
 });
@@ -573,7 +576,19 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
           setIsExtensionEnabled(true);
         } else {
           console.log("Extension not found, cannot enable");
-          toast.error("Chrome extension not found. Please install it first.");
+          toast.error({
+            title: "Chrome extension not found",
+            description:
+              "The extension is required for minimized window support.",
+            action: {
+              label: "Install",
+              onClick: () =>
+                window.open(
+                  "https://chromewebstore.google.com/detail/gamepad-input-for-twitch/jgjgjgjgjgjgjgjgjgjgjgjgjgjgjgjg",
+                  "_blank"
+                ),
+            },
+          });
         }
       });
     } else {
@@ -631,10 +646,11 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
       gamepadState,
       isConnected: !!gamepadState,
       isExtensionEnabled,
+      extensionId,
       setEnabled,
       toggleExtension,
     }),
-    [gamepadState, isExtensionEnabled, toggleExtension]
+    [gamepadState, isExtensionEnabled, toggleExtension, extensionId]
   );
 
   console.log("[GamepadProvider] Current state:", {
@@ -658,6 +674,7 @@ export function useGamepadProvider() {
     gamepadState: context.gamepadState,
     isConnected: context.isConnected,
     isExtensionEnabled: context.isExtensionEnabled,
+    extensionId: context.extensionId,
     setEnabled: context.setEnabled,
     toggleExtension: context.toggleExtension,
   };

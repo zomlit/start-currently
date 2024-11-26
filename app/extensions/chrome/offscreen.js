@@ -1,11 +1,19 @@
 console.log("🎮 Offscreen document loaded");
 
+// Import config
+const { config } = await import("./dist/config.js");
+
 let supabaseClient = null;
 let gamepadChannel = null;
 let isInitialized = false;
 let lastState = null;
 let pollInterval = null;
-const DEADZONE = 0.05;
+const DEADZONE = 0.15;
+const FRAME_TIME = 1000 / 120;
+let lastFrameTime = 0;
+let frameId = null;
+let lastStateUpdate = 0;
+let lastButtonStates = new Map();
 
 // Initialize Supabase
 async function initGamepadMonitoring(channelId) {
@@ -20,8 +28,8 @@ async function initGamepadMonitoring(channelId) {
     // Only create Supabase client once
     if (!supabaseClient) {
       supabaseClient = window.supabase.createClient(
-        "https://aliddllzqrcpzhiouryw.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsaWRkbGx6cXJjcHpoaW91cnl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ1MTE0ODMsImV4cCI6MjA0MDA4NzQ4M30.B20L4mu4OqD9tgdYChGZLpGuPswe7iT3MPCy4-PLGEw"
+        config.SUPABASE_URL,
+        config.SUPABASE_ANON_KEY
       );
     }
 
@@ -66,40 +74,71 @@ async function initGamepadMonitoring(channelId) {
 
 function pollGamepads() {
   try {
+    const now = performance.now();
+    const timeSinceLastFrame = now - lastFrameTime;
+
+    // Maintain consistent frame rate
+    if (timeSinceLastFrame < FRAME_TIME) {
+      frameId = requestAnimationFrame(pollGamepads);
+      return;
+    }
+
     const gamepads = navigator.getGamepads();
     const gamepad = gamepads[0];
 
     if (gamepad) {
       const state = {
-        buttons: gamepad.buttons.map((btn) => ({
-          pressed: btn.pressed,
-          value: btn.value || (btn.pressed ? 1 : 0),
-        })),
-        axes: gamepad.axes.map((axis) =>
-          Math.abs(axis) < DEADZONE ? 0 : axis
-        ),
-        timestamp: Date.now(),
+        buttons: gamepad.buttons.map((btn, index) => {
+          const lastButtonState = lastButtonStates.get(index);
+
+          // Handle button press
+          if (btn.pressed) {
+            lastButtonStates.set(index, {
+              pressed: true,
+              timestamp: now,
+              value: btn.value || 1,
+            });
+            return { pressed: true, value: btn.value || 1 };
+          }
+
+          // Handle button release
+          if (!btn.pressed && lastButtonState?.pressed) {
+            lastButtonStates.delete(index);
+            return { pressed: false, value: 0 };
+          }
+
+          return { pressed: false, value: 0 };
+        }),
+        // Improved analog stick handling
+        axes: gamepad.axes.map((axis) => {
+          // Apply deadzone with smoother transition
+          const absAxis = Math.abs(axis);
+          if (absAxis < DEADZONE) return 0;
+
+          // Normalize the value above deadzone
+          const normalizedAxis =
+            Math.sign(axis) * ((absAxis - DEADZONE) / (1 - DEADZONE));
+
+          return Number(normalizedAxis.toFixed(3)); // Limit decimal places
+        }),
+        timestamp: now,
       };
 
-      // Check for significant changes
-      const hasChanged = !lastState || hasSignificantChange(lastState, state);
+      // Send if there's activity
       const hasActivity =
         state.buttons.some((btn) => btn.pressed) ||
-        state.axes.some((axis) => Math.abs(axis) > DEADZONE);
+        state.axes.some((axis) => Math.abs(axis) > 0);
 
-      if (hasActivity || hasChanged) {
-        console.log("🎮 State update:", {
-          buttons: state.buttons.map((b) => b.pressed),
-          axes: state.axes.map((a) =>
-            Math.abs(a) > DEADZONE ? a.toFixed(2) : "0"
-          ),
-        });
-
+      if (
+        hasActivity ||
+        !lastState ||
+        hasSignificantAxisChange(lastState, state)
+      ) {
         // Send to extension
         chrome.runtime.sendMessage({
           type: "GAMEPAD_STATE",
           state,
-          timestamp: Date.now(),
+          timestamp: now,
         });
 
         // Send to Supabase
@@ -115,28 +154,34 @@ function pollGamepads() {
 
         lastState = state;
       }
+
+      lastFrameTime = now;
     }
+
+    frameId = requestAnimationFrame(pollGamepads);
   } catch (error) {
     console.error("Poll error:", error);
+    frameId = requestAnimationFrame(pollGamepads);
   }
 }
 
-// Helper to check for significant changes
-function hasSignificantChange(oldState, newState) {
-  // Check buttons
-  const hasButtonChanges = newState.buttons.some(
-    (button, index) => button.pressed !== oldState.buttons[index].pressed
-  );
-  if (hasButtonChanges) return true;
+// Helper to detect significant axis changes
+function hasSignificantAxisChange(oldState, newState) {
+  if (!oldState) return true;
 
-  // Check axes
   return newState.axes.some((axis, index) => {
     const oldAxis = oldState.axes[index];
-    const isAboveDeadzone =
-      Math.abs(axis) > DEADZONE || Math.abs(oldAxis) > DEADZONE;
-    const hasDifferentValue = Math.abs(axis - oldAxis) > 0.01;
-    return isAboveDeadzone && hasDifferentValue;
+    const diff = Math.abs(axis - oldAxis);
+    return diff > 0.01; // Small threshold for axis changes
   });
+}
+
+// Start polling with requestAnimationFrame
+function startPolling() {
+  if (!frameId) {
+    lastFrameTime = performance.now();
+    pollGamepads();
+  }
 }
 
 // Listen for messages from the background script
