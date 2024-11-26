@@ -1,13 +1,17 @@
-# Build stage
-FROM ghcr.io/railwayapp/nixpacks:ubuntu-1727136237
+# Use Node.js base image
+FROM node:20-slim
 
+# Install bun
+RUN npm install -g bun
+
+# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package.json bun.lockb ./
 
 # Install dependencies
-RUN bun i --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 # Copy the rest of the application
 COPY . .

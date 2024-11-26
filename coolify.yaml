@@ -2,9 +2,10 @@ version: 3
 services:
   app:
     build:
+      dockerfile: Dockerfile
+      context: .
       cache:
         enabled: true
-        # Specify cache mount points
         mounts:
           - type: cache
             target: /root/.bun
@@ -14,7 +15,6 @@ services:
             target: /app/.vinxi
           - type: cache
             target: /app/.output
-      command: NODE_ENV=production bun x vinxi build
-      environment:
-        - NODE_ENV=production
+    environment:
+      - NODE_ENV=production
     # ... rest of config
