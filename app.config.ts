@@ -7,9 +7,6 @@ export default defineConfig({
   server: {
     preset: "node-server",
   },
-  hmr: {
-    overlay: false,
-  },
   vite: {
     css: {
       modules: {
@@ -34,6 +31,17 @@ export default defineConfig({
         "@": "/app",
         "@icons": "/app/icons",
       },
+    },
+    build: {
+      rollupOptions: {
+        external: [
+          // Exclude extension files from the build
+          /\/app\/extensions\/.*/,
+        ],
+      },
+    },
+    optimizeDeps: {
+      exclude: ["app/extensions"],
     },
   },
   build: {

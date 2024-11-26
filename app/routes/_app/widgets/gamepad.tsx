@@ -247,19 +247,35 @@ function GamepadSection() {
 
   const [extensionError, setExtensionError] = useState<string | null>(null);
 
-  // Add extension error handling
+  // Update extension error handling
   useEffect(() => {
     const handleExtensionMessage = (event: MessageEvent) => {
       if (event.data.source !== "GAMEPAD_EXTENSION") return;
 
-      if (event.data.type === "EXTENSION_ERROR") {
-        setExtensionError(
-          event.data.error?.message || "Extension communication failed"
-        );
-        toast.error("Gamepad extension error: " + event.data.error?.message);
-      } else if (event.data.type === "CONTENT_SCRIPT_READY") {
-        setExtensionError(null);
-        console.log("Extension connected with ID:", event.data.extensionId);
+      switch (event.data.type) {
+        case "EXTENSION_ERROR":
+          if (event.data.error?.message === "Monitoring is disabled") {
+            // Don't show this as an error - it's an expected state
+            setExtensionError(null);
+          } else {
+            setExtensionError(
+              event.data.error?.message || "Extension communication failed"
+            );
+            toast.error(
+              "Gamepad extension error: " + event.data.error?.message
+            );
+          }
+          break;
+        case "MONITORING_STATE_CHANGED":
+          // Clear any existing error if monitoring was just enabled
+          if (event.data.enabled) {
+            setExtensionError(null);
+          }
+          break;
+        case "CONTENT_SCRIPT_READY":
+          setExtensionError(null);
+          console.log("Extension connected with ID:", event.data.extensionId);
+          break;
       }
     };
 
@@ -281,13 +297,14 @@ function GamepadSection() {
         primaryAction={{
           label: extensionError
             ? "Troubleshoot Extension"
-            : "Install Extension",
+            : "Download Extension",
           icon: Download,
           onClick: () =>
             window.open(
               extensionError && window.chrome?.runtime?.id
                 ? `chrome://extensions/?id=${window.chrome.runtime.id}`
-                : import.meta.env.VITE_CHROME_STORE_URL || "CHROME_STORE_URL",
+                : import.meta.env.VITE_CHROME_STORE_URL ||
+                    "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
               "_blank"
             ),
         }}
