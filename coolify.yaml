@@ -2,7 +2,7 @@ version: 3
 services:
   app:
     type: static
-    buildPack: nixpacks
+    buildPack: bun
     build:
       command: |
         bun install && \
@@ -10,8 +10,9 @@ services:
         VITE_DISABLE_SOURCEMAPS=true \
         VINXI_DISABLE_SOURCEMAPS=true \
         DISABLE_EXTRACTION=true \
-        bun run build
-      output: dist
+        bun run build && \
+        cp -r .output/public/* /usr/share/nginx/html/
+      output: .output/public
     staticConfig:
       engine: nginx
       headers:
