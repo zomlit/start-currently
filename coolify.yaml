@@ -2,16 +2,9 @@ version: 3
 services:
   app:
     type: static
-    buildPack: bun
+    buildPack: docker
     build:
-      command: |
-        bun install && \
-        NODE_ENV=production \
-        VITE_DISABLE_SOURCEMAPS=true \
-        VINXI_DISABLE_SOURCEMAPS=true \
-        DISABLE_EXTRACTION=true \
-        bun run build && \
-        cp -r .output/public/* /usr/share/nginx/html/
+      dockerfile: Dockerfile
       output: .output/public
     staticConfig:
       engine: nginx
