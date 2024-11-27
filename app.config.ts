@@ -5,13 +5,7 @@ import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   server: {
-    preset: "node-server",
-    env: {
-      CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-      CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY,
-      DATABASE_URL: process.env.DATABASE_URL,
-      ELYSIA_JWT_SECRET: process.env.ELYSIA_JWT_SECRET,
-    },
+    preset: "bun",
   },
   vite: {
     build: {
