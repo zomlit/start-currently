@@ -4,22 +4,6 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-      cache:
-        enabled: true
-        mounts:
-          - type: cache
-            target: /root/.bun
-          - type: cache
-            target: /app/node_modules/.cache
-          - type: cache
-            target: /app/.vinxi
-          - type: cache
-            target: /app/.output
-          - type: cache
-            target: /root/.cache/typescript
+      buildCache: true
     environment:
       - NODE_ENV=production
-      - VITE_DISABLE_SOURCEMAPS=true
-      - VINXI_DISABLE_SOURCEMAPS=true
-      - DISABLE_EXTRACTION=true
-    # ... rest of config
