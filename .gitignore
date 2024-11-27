@@ -25,3 +25,10 @@ yarn.lock
 
 app/extensions/chrome/dist/
 *.pem
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.server

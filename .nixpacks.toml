@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ['nodejs_20', 'bun']
+nixLibs = ['libuuid', 'libGL']
+
+[phases.install]
+cmds = ['bun install --frozen-lockfile']
+cacheDirectories = ['/root/.bun', 'node_modules/.cache']
+
+[phases.build]
+cmds = ['NODE_ENV=production bun run build']
+
+[start]
+cmd = 'NODE_ENV=production bun x vinxi start' 

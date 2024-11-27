@@ -1,8 +1,10 @@
-import { fontFamily } from "tailwindcss/defaultTheme";
-// @ts-expect-error This is how Tailwind CSS is imported
-import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
-import plugin from "tailwindcss/plugin";
+const { fontFamily } = require("tailwindcss/defaultTheme");
+const {
+  default: flattenColorPalette,
+} = require("tailwindcss/lib/util/flattenColorPalette");
+const plugin = require("tailwindcss/plugin");
 
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
   content: ["./components/**/*.{ts,tsx}", "./app/**/*.{js,ts,jsx,tsx}"],
@@ -10,7 +12,7 @@ module.exports = {
   prefix: "",
   theme: {
     container: {
-      center: "true",
+      center: true,
       padding: "2rem",
       screens: {
         "2xl": "1400px",
@@ -30,8 +32,8 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -58,11 +60,11 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
         chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
         },
       },
       borderRadius: {
@@ -72,52 +74,28 @@ module.exports = {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
         aurora: {
-          from: {
-            backgroundPosition: "50% 50%, 50% 50%",
-          },
-          to: {
-            backgroundPosition: "350% 50%, 350% 50%",
-          },
+          from: { backgroundPosition: "50% 50%, 50% 50%" },
+          to: { backgroundPosition: "350% 50%, 350% 50%" },
         },
         panVideo: {
-          "0%, 100%": {
-            transform: "translateY(0)",
-          },
-          "50%": {
-            transform: "translateY(-10%)",
-          },
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10%)" },
         },
         shine: {
-          "0%": {
-            backgroundPosition: "-250% 0%",
-          },
-          "100%": {
-            backgroundPosition: "250% 0%",
-          },
+          "0%": { backgroundPosition: "-250% 0%" },
+          "100%": { backgroundPosition: "250% 0%" },
         },
         gradient: {
-          "0%, 100%": {
-            "background-position": "0% 50%",
-          },
-          "50%": {
-            "background-position": "100% 50%",
-          },
+          "0%, 100%": { "background-position": "0% 50%" },
+          "50%": { "background-position": "100% 50%" },
         },
       },
       animation: {
@@ -145,16 +123,24 @@ module.exports = {
     require("tailwind-scrollbar-hide"),
     require("tailwindcss-spring"),
     require("@tailwindcss/typography"),
-    addVariablesForColors,
+    plugin(({ addBase }) => {
+      addBase({
+        ":root": {
+          "--gradient-opacity": "1",
+        },
+      });
+    }),
     plugin(function ({ addUtilities, theme }) {
       const opacityValues = theme("opacity");
-      const gradientOpacityUtilities = Object.entries(opacityValues).reduce
-      ((acc, [key, value]) => {
-        acc[`.bg-gradient\\/${key}`] = {
-          "background-image": `linear-gradient(rgba(var(--gradient-from), ${value}), rgba(var(--gradient-to), ${value}))`,
-        };
-        return acc;
-      }, {});
+      const gradientOpacityUtilities = Object.entries(opacityValues).reduce(
+        (acc, [key, value]) => {
+          acc[`.bg-gradient\\/${key}`] = {
+            "background-image": `linear-gradient(rgba(var(--gradient-from), ${value}), rgba(var(--gradient-to), ${value}))`,
+          };
+          return acc;
+        },
+        {}
+      );
       addUtilities(gradientOpacityUtilities);
 
       // Fixed arrow-hide utility
@@ -169,16 +155,4 @@ module.exports = {
       });
     }),
   ],
-}
-
-function addVariablesForColors({ addBase, theme }: any) {
-  let allColors = flattenColorPalette(theme("colors"));
-  let newVars = Object.fromEntries(
-    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
-  );
-
-  addBase({
-    ":root": newVars,
-  });
-}
-
+};
