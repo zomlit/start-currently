@@ -1,23 +1,38 @@
-# Use Node.js base image
-FROM node:20-slim
+# Build stage
+FROM oven/bun:1 as builder
 
-# Install bun
-RUN npm install -g bun
-
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package.json bun.lockb ./
 
-# Install dependencies
-RUN bun install --frozen-lockfile
+# Install dependencies with Node.js compatibility
+RUN bun install --backend=node
 
-# Copy the rest of the application
+# Copy source code and config files
 COPY . .
 
 # Build the application
-RUN NODE_ENV=production bun x vinxi build
+ENV NODE_ENV=production
+ENV VITE_DISABLE_SOURCEMAPS=true
+ENV VINXI_DISABLE_SOURCEMAPS=true
+ENV DISABLE_EXTRACTION=true
 
-# Start the application
-CMD ["bun", "x", "vinxi", "start"] 
+# Use Node.js for the build process
+RUN NODE_OPTIONS='--experimental-modules' bun run build
+
+# Production stage
+FROM nginx:alpine
+
+# Copy the built files from builder stage
+COPY --from=builder /app/.output/public /usr/share/nginx/html/
+
+# Create a default nginx configuration
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

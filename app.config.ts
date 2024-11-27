@@ -8,15 +8,31 @@ export default defineConfig({
     preset: "node-server",
   },
   vite: {
-    css: {
-      modules: {
-        localsConvention: "camelCase",
+    build: {
+      target: "esnext",
+      minify: "terser",
+      cssMinify: true,
+      assetsDir: "assets",
+      rollupOptions: {
+        output: {
+          assetFileNames: "assets/[name]-[hash][extname]",
+          chunkFileNames: "assets/[name]-[hash].js",
+          entryFileNames: "assets/[name]-[hash].js",
+        },
+      },
+    },
+    publicDir: "public",
+    assetsInclude: ["**/*.svg", "**/*.png", "**/*.jpg", "**/*.webp"],
+    resolve: {
+      alias: {
+        "@": "/app",
+        "@icons": "/app/icons",
+        "@assets": "/app/assets",
+        "@gamepad": "/app/assets/gamepad",
       },
     },
     plugins: [
-      tsConfigPaths({
-        projects: ["./tsconfig.json"],
-      }),
+      tsConfigPaths(),
       svgr({
         svgrOptions: {
           icon: true,
@@ -26,28 +42,5 @@ export default defineConfig({
       }),
       TanStackRouterVite(),
     ],
-    resolve: {
-      alias: {
-        "@": "/app",
-        "@icons": "/app/icons",
-      },
-    },
-    build: {
-      rollupOptions: {
-        external: [
-          // Exclude extension files from the build
-          /\/app\/extensions\/.*/,
-        ],
-      },
-    },
-    optimizeDeps: {
-      exclude: ["app/extensions"],
-    },
-  },
-  build: {
-    cache: {
-      enabled: true,
-      paths: ["node_modules", ".vinxi", ".output", "/root/.bun"],
-    },
   },
 });
