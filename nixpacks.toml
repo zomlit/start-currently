@@ -1,16 +1,23 @@
 [phases.setup]
-nixPkgs = ['nodejs_18', 'bun']
+nixPkgs = ['nodejs_20', 'bun']
 nixLibs = ['libuuid', 'libGL']
-nixOverlays = ['https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz']
+aptPkgs = ['curl', 'wget']
 
 [phases.install]
 cmds = [
-  'bun i --frozen-lockfile',
-  'bun x vinxi --version'
+  'bun i --frozen-lockfile --no-save'
+]
+cacheDirectories = [
+  '/root/.bun',
+  'node_modules/.cache',
+  '.vinxi',
+  '.output'
 ]
 
 [phases.build]
-cmds = ['NODE_ENV=production bun x vinxi build']
+cmds = [
+  'NODE_ENV=production VITE_DISABLE_SOURCEMAPS=true VINXI_DISABLE_SOURCEMAPS=true DISABLE_EXTRACTION=true bun x vinxi build'
+]
 
 [start]
 cmd = 'NODE_ENV=production bun x vinxi start' 
