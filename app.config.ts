@@ -12,6 +12,24 @@ export default defineConfig({
       target: "esnext",
       minify: "terser",
       cssMinify: true,
+      assetsDir: "assets",
+      rollupOptions: {
+        output: {
+          assetFileNames: "assets/[name]-[hash][extname]",
+          chunkFileNames: "assets/[name]-[hash].js",
+          entryFileNames: "assets/[name]-[hash].js",
+        },
+      },
+    },
+    publicDir: "public",
+    assetsInclude: ["**/*.svg", "**/*.png", "**/*.jpg", "**/*.webp"],
+    resolve: {
+      alias: {
+        "@": "/app",
+        "@icons": "/app/icons",
+        "@assets": "/app/assets",
+        "@gamepad": "/app/assets/gamepad",
+      },
     },
     plugins: [
       tsConfigPaths(),
@@ -24,11 +42,5 @@ export default defineConfig({
       }),
       TanStackRouterVite(),
     ],
-    resolve: {
-      alias: {
-        "@": "/app",
-        "@icons": "/app/icons",
-      },
-    },
   },
 });
