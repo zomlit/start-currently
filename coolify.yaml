@@ -1,15 +1,16 @@
 version: 3
 services:
   app:
-    type: nodejs
+    type: static
     buildPack: bun
     build:
-      command: bun install && bun run build
-      output: .output
-    start:
-      command: bun x vinxi start
-    environment:
-      - NODE_ENV=production
-      - VITE_DISABLE_SOURCEMAPS=true
-      - VINXI_DISABLE_SOURCEMAPS=true
-      - DISABLE_EXTRACTION=true
+      command: |
+        bun install && \
+        NODE_ENV=production \
+        VITE_DISABLE_SOURCEMAPS=true \
+        VINXI_DISABLE_SOURCEMAPS=true \
+        DISABLE_EXTRACTION=true \
+        bun run build
+      output: .output/public
+    staticConfig:
+      engine: nginx
