@@ -9,7 +9,7 @@ COPY package.json bun.lockb ./
 # Install dependencies
 RUN bun install
 
-# Copy source code
+# Copy source code and config files
 COPY . .
 
 # Build the application
@@ -17,6 +17,8 @@ ENV NODE_ENV=production
 ENV VITE_DISABLE_SOURCEMAPS=true
 ENV VINXI_DISABLE_SOURCEMAPS=true
 ENV DISABLE_EXTRACTION=true
+
+# Build the application (Tailwind CSS is handled by the build process)
 RUN bun run build
 
 # Production stage
