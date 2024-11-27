@@ -17,10 +17,9 @@ ENV NODE_ENV=production
 ENV VITE_DISABLE_SOURCEMAPS=true
 ENV VINXI_DISABLE_SOURCEMAPS=true
 ENV DISABLE_EXTRACTION=true
-ENV BUN_JSC_FLAGS="--jsc-use-builtin-modules=true"
 
-# Build the application (Tailwind CSS is handled by the build process)
-RUN bun run build
+# Use Node.js for the build process
+RUN NODE_OPTIONS='--experimental-modules' bun run build
 
 # Production stage
 FROM nginx:alpine
