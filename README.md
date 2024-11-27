@@ -105,7 +105,7 @@ bun run build:extension
 This will:
 
 - Create a `dist` directory in `app/extensions/chrome`
-- Generate the config file with Supabase credentials
+- Generate the config files with Supabase credentials
 - Prepare the extension for loading
 
 ## Loading the Extension in Chrome
