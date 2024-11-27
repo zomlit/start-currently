@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json bun.lockb ./
 
-# Install dependencies
-RUN bun install
+# Install dependencies with Node.js compatibility
+RUN bun install --backend=node
 
 # Copy source code and config files
 COPY . .
@@ -17,6 +17,7 @@ ENV NODE_ENV=production
 ENV VITE_DISABLE_SOURCEMAPS=true
 ENV VINXI_DISABLE_SOURCEMAPS=true
 ENV DISABLE_EXTRACTION=true
+ENV BUN_JSC_FLAGS="--jsc-use-builtin-modules=true"
 
 # Build the application (Tailwind CSS is handled by the build process)
 RUN bun run build

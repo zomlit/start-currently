@@ -1,5 +1,7 @@
 const { fontFamily } = require("tailwindcss/defaultTheme");
-const flattenColorPalette = require("tailwindcss/lib/util/flattenColorPalette");
+const {
+  default: flattenColorPalette,
+} = require("tailwindcss/lib/util/flattenColorPalette");
 const plugin = require("tailwindcss/plugin");
 
 /** @type {import('tailwindcss').Config} */
@@ -121,13 +123,11 @@ module.exports = {
     require("tailwind-scrollbar-hide"),
     require("tailwindcss-spring"),
     require("@tailwindcss/typography"),
-    plugin(({ addBase, theme }) => {
-      let allColors = flattenColorPalette(theme("colors"));
-      let newVars = Object.fromEntries(
-        Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
-      );
+    plugin(({ addBase }) => {
       addBase({
-        ":root": newVars,
+        ":root": {
+          "--gradient-opacity": "1",
+        },
       });
     }),
     plugin(function ({ addUtilities, theme }) {
