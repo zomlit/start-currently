@@ -6,15 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "bun clean && vinxi dev",
-    "build": "NODE_ENV=production dotenv -e .env.production -- bun x vinxi build",
-    "start": "NODE_ENV=production dotenv -e .env.production -- bun x vinxi start",
+    "build": "NODE_ENV=production bun x vinxi build",
+    "start": "NODE_ENV=production bun x vinxi start",
     "clean": "rm -rf app.config.timestamp_*",
     "lint": "prettier --check '**/*' --ignore-unknown && eslint --ext .ts,.tsx ./app",
     "format": "prettier --write '**/*' --ignore-unknown",
     "generate-types": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > app/types/supabase.ts",
     "build:extension": "bun run app/extensions/chrome/scripts/build-css.js && bun run scripts/build-extension.mts",
-    "build:all": "bun run build && bun run build:extension",
-    "preview": "NODE_ENV=production dotenv -e .env.production -e .env.server -- node .output/server/index.mjs"
+    "build:all": "bun run build && bun run build:extension"
   },
   "keywords": [],
   "author": "",
