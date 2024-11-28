@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl =
   import.meta.env.VITE_PUBLIC_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
@@ -13,22 +14,8 @@ if (!supabaseAnonKey)
     "Missing VITE_PUBLIC_SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY"
   );
 
-console.log("Supabase initialization:", {
-  url: supabaseUrl,
-  hasAnonKey: !!supabaseAnonKey,
-  envKeys: {
-    public: {
-      url: import.meta.env.VITE_PUBLIC_SUPABASE_URL,
-      key: !!import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY,
-    },
-    regular: {
-      url: import.meta.env.VITE_SUPABASE_URL,
-      key: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-    },
-  },
-});
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Create a single instance to export
+const supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
       eventsPerSecond: 10,
@@ -44,8 +31,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Create a function to get an authenticated client
-export const getAuthenticatedClient = (token: string) => {
+// Export the instance
+export const supabase = supabaseInstance;
+
+// Export the authenticated client creator
+export function getAuthenticatedClient(token: string): SupabaseClient {
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
@@ -53,15 +43,38 @@ export const getAuthenticatedClient = (token: string) => {
       },
     },
   });
-};
+}
 
-// Add a helper for realtime channels
-export const createRealtimeChannel = (channelName: string) => {
-  return supabase.channel(channelName, {
+// Export the realtime channel creator
+export function createRealtimeChannel(channelName: string) {
+  return supabaseInstance.channel(channelName, {
     config: {
       broadcast: {
         self: true,
       },
     },
   });
+}
+
+// Debug log
+console.log("Supabase initialization:", {
+  url: supabaseUrl,
+  hasAnonKey: !!supabaseAnonKey,
+  envKeys: {
+    public: {
+      url: import.meta.env.VITE_PUBLIC_SUPABASE_URL,
+      key: !!import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY,
+    },
+    regular: {
+      url: import.meta.env.VITE_SUPABASE_URL,
+      key: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+    },
+  },
+});
+
+// Export everything as a single default export as well
+export default {
+  supabase: supabaseInstance,
+  getAuthenticatedClient,
+  createRealtimeChannel,
 };
