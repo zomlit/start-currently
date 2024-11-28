@@ -1,21 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl =
-  import.meta.env.VITE_PUBLIC_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey =
-  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Ensure we have values and throw early if not
+const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl)
-  throw new Error("Missing VITE_PUBLIC_SUPABASE_URL or VITE_SUPABASE_URL");
-if (!supabaseAnonKey)
-  throw new Error(
-    "Missing VITE_PUBLIC_SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY"
-  );
+if (!supabaseUrl) {
+  throw new Error("Missing VITE_PUBLIC_SUPABASE_URL");
+}
 
-// Create a single instance to export
-const supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+if (!supabaseAnonKey) {
+  throw new Error("Missing VITE_PUBLIC_SUPABASE_ANON_KEY");
+}
+
+// Create the Supabase client instance
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
       eventsPerSecond: 10,
@@ -31,11 +30,12 @@ const supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Export the instance
-export const supabase = supabaseInstance;
-
-// Export the authenticated client creator
+// Export a type-safe authenticated client creator
 export function getAuthenticatedClient(token: string): SupabaseClient {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration is missing");
+  }
+
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
@@ -45,9 +45,9 @@ export function getAuthenticatedClient(token: string): SupabaseClient {
   });
 }
 
-// Export the realtime channel creator
+// Export a type-safe realtime channel creator
 export function createRealtimeChannel(channelName: string) {
-  return supabaseInstance.channel(channelName, {
+  return supabaseClient.channel(channelName, {
     config: {
       broadcast: {
         self: true,
@@ -56,25 +56,20 @@ export function createRealtimeChannel(channelName: string) {
   });
 }
 
-// Debug log
-console.log("Supabase initialization:", {
-  url: supabaseUrl,
-  hasAnonKey: !!supabaseAnonKey,
-  envKeys: {
-    public: {
-      url: import.meta.env.VITE_PUBLIC_SUPABASE_URL,
-      key: !!import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY,
-    },
-    regular: {
-      url: import.meta.env.VITE_SUPABASE_URL,
-      key: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-    },
-  },
-});
+// Export the main client instance
+export const supabase = supabaseClient;
 
-// Export everything as a single default export as well
+// Log initialization for debugging
+if (import.meta.env.DEV) {
+  console.log("Supabase initialization:", {
+    hasUrl: !!supabaseUrl,
+    hasAnonKey: !!supabaseAnonKey,
+  });
+}
+
+// Export everything as a single object
 export default {
-  supabase: supabaseInstance,
+  supabase: supabaseClient,
   getAuthenticatedClient,
   createRealtimeChannel,
-};
+} as const;
