@@ -124,7 +124,7 @@ declare global {
   }
 }
 
-// Update the getExtensionId function to use an environment variable
+// Update the getExtensionId function to handle connection errors better
 const getExtensionId = async (): Promise<string | null> => {
   if (typeof window === "undefined" || !window.chrome?.runtime) {
     console.log("Chrome extension API not available");
@@ -140,13 +140,26 @@ const getExtensionId = async (): Promise<string | null> => {
     }
 
     return new Promise((resolve) => {
+      let hasResponded = false;
+
+      // Add timeout to handle cases where extension doesn't respond
+      const timeout = setTimeout(() => {
+        if (!hasResponded) {
+          console.log("Extension connection timed out");
+          resolve(null);
+        }
+      }, 5000);
+
       window.chrome?.runtime?.sendMessage(
         extensionId,
         { type: "GET_EXTENSION_ID" },
         (response) => {
+          hasResponded = true;
+          clearTimeout(timeout);
+
           if (window.chrome?.runtime?.lastError) {
             console.log(
-              "Extension not found:",
+              "Extension connection error:",
               window.chrome.runtime.lastError
             );
             resolve(null);
@@ -565,7 +578,7 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     }
   }, [gamepadState]);
 
-  // Add toggle callback
+  // Update the toggleExtension callback to handle errors better
   const toggleExtension = useCallback(() => {
     if (!isExtensionEnabled && user?.username) {
       // When enabling, check if extension exists first
@@ -579,15 +592,24 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
           toast.error({
             title: "Chrome extension not found",
             description:
-              "The extension is required for minimized window support.",
+              "Please make sure the extension is installed and enabled.",
             action: {
               label: "Install",
-              onClick: () =>
-                window.open(
-                  import.meta.env.VITE_CHROME_STORE_URL ||
-                    "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
-                  "_blank"
-                ),
+              onClick: () => {
+                // Open Chrome extensions page if we have an extension ID
+                if (window.chrome?.runtime?.id) {
+                  window.open(
+                    `chrome://extensions/?id=${window.chrome.runtime.id}`,
+                    "_blank"
+                  );
+                } else {
+                  window.open(
+                    import.meta.env.VITE_CHROME_STORE_URL ||
+                      "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
+                    "_blank"
+                  );
+                }
+              },
             },
           });
         }
@@ -703,6 +725,13 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     gamepadState,
     isConnected,
   });
+
+  useEffect(() => {
+    console.log(
+      "Current extension ID:",
+      import.meta.env.VITE_CHROME_EXTENSION_ID
+    );
+  }, []);
 
   return (
     <GamepadContext.Provider value={value}>{children}</GamepadContext.Provider>

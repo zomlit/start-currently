@@ -10,7 +10,7 @@ async function buildCSS() {
   console.log("🎨 Building extension CSS...");
 
   try {
-    const extensionDir = path.join(process.cwd(), "app/extensions/chrome");
+    const extensionDir = path.join(process.cwd(), "extensions/chrome");
     const distDir = path.join(extensionDir, "dist");
 
     // Ensure dist directory exists
