@@ -26,6 +26,6 @@
     "build",
     ".vinxi",
     ".output",
-    "app/extensions"
+    "extensions"
   ]
 }

@@ -104,7 +104,7 @@ bun run build:extension
 
 This will:
 
-- Create a `dist` directory in `app/extensions/chrome`
+- Create a `dist` directory in `extensions/chrome`
 - Generate the config file with Supabase credentials
 - Prepare the extension for loading
 
@@ -113,14 +113,14 @@ This will:
 1. Open Chrome and navigate to `chrome://extensions`
 2. Enable "Developer mode" in the top right
 3. Click "Load unpacked"
-4. Select the `app/extensions/chrome` directory
+4. Select the `extensions/chrome` directory
 
 ## Development
 
 The extension consists of several key files:
 
 ```
-app/extensions/chrome/
+extensions/chrome/
 ├── manifest.json        # Extension manifest
 ├── background.js       # Background script
 ├── content.js         # Content script

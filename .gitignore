@@ -23,7 +23,7 @@ yarn.lock
 /blob-report/
 /playwright/.cache/
 
-app/extensions/chrome/dist/
+extensions/chrome/dist/
 *.pem
 
 # Environment files

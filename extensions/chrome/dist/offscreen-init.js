@@ -1,7 +1,1 @@
-// Log that we're loaded
-console.log("Offscreen document loaded");
-
-// Keep the document alive
-setInterval(() => {
-  chrome.runtime.sendMessage({ type: "PING" });
-}, 20000);
+console.log("Offscreen document loaded"),setInterval((()=>{chrome.runtime.sendMessage({type:"PING"})}),2e4);
