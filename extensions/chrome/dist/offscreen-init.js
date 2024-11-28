@@ -1,1 +1,0 @@
-console.log("Offscreen document loaded"),setInterval((()=>{chrome.runtime.sendMessage({type:"PING"})}),2e4);
