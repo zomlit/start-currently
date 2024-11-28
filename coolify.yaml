@@ -73,3 +73,9 @@ services:
         value: "false"
       - name: CI
         value: "true"
+
+    buildArguments:
+      - name: VITE_PUBLIC_SUPABASE_URL
+        value: "{{secrets.VITE_PUBLIC_SUPABASE_URL}}"
+      - name: VITE_PUBLIC_SUPABASE_ANON_KEY
+        value: "{{secrets.VITE_PUBLIC_SUPABASE_ANON_KEY}}"
