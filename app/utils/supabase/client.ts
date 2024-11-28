@@ -3,15 +3,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Create a function to get the Supabase client
 function createSupabaseClient() {
-  const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+  // Default to empty string to prevent undefined errors during SSR
+  const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || "";
+  const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || "";
 
-  if (!supabaseUrl) {
-    throw new Error("Missing VITE_PUBLIC_SUPABASE_URL");
-  }
+  // Only throw in client-side code
+  if (typeof window !== "undefined") {
+    if (!supabaseUrl) {
+      throw new Error("Missing VITE_PUBLIC_SUPABASE_URL");
+    }
 
-  if (!supabaseAnonKey) {
-    throw new Error("Missing VITE_PUBLIC_SUPABASE_ANON_KEY");
+    if (!supabaseAnonKey) {
+      throw new Error("Missing VITE_PUBLIC_SUPABASE_ANON_KEY");
+    }
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
@@ -31,11 +35,17 @@ function createSupabaseClient() {
   });
 }
 
-// Create a singleton instance
+// Create a singleton instance, but only in the browser
 let supabaseInstance: SupabaseClient | null = null;
 
 // Export a function to get the instance
 export function getSupabase(): SupabaseClient {
+  // For SSR, always create a new instance
+  if (typeof window === "undefined") {
+    return createSupabaseClient();
+  }
+
+  // In the browser, use singleton pattern
   if (!supabaseInstance) {
     supabaseInstance = createSupabaseClient();
   }
@@ -47,11 +57,14 @@ export const supabase = getSupabase();
 
 // Export a type-safe authenticated client creator
 export function getAuthenticatedClient(token: string): SupabaseClient {
-  const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || "";
+  const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || "";
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Supabase configuration is missing");
+  // Only throw in client-side code
+  if (typeof window !== "undefined") {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Supabase configuration is missing");
+    }
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
@@ -75,8 +88,8 @@ export function createRealtimeChannel(channelName: string) {
   });
 }
 
-// Log initialization for debugging
-if (import.meta.env.DEV) {
+// Log initialization for debugging (only in browser)
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   console.log("Supabase initialization:", {
     hasUrl: !!import.meta.env.VITE_PUBLIC_SUPABASE_URL,
     hasAnonKey: !!import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY,
