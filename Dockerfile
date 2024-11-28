@@ -9,8 +9,9 @@ COPY package.json bun.lockb ./
 # Install dependencies with Node.js compatibility
 RUN bun install --backend=node
 
-# Copy source code and config files
+# Copy source code and config files, excluding extensions
 COPY . .
+RUN rm -rf extensions/
 
 # Build the application
 ENV NODE_ENV=production

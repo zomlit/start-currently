@@ -613,21 +613,32 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
       const { data, error } = await supabase
         .from("UserProfile")
         .select("session")
-        .eq("user_id", "user_2bwpcJA5JgJJpGVdcCk8pA2PyxS")
+        .eq("user_id", username)
         .single();
 
-      if (error) throw error;
-
-      if (data && data.session) {
-        const sessionData = JSON.parse(data.session);
-        set({ user: sessionData });
-        console.log("User session data fetched from Supabase successfully");
-        return sessionData.id; // Return the userId
+      if (error) {
+        console.error("Supabase error:", error);
+        return null;
       }
+
+      if (data?.session) {
+        try {
+          const sessionData = JSON.parse(data.session);
+          set({ user: sessionData });
+          console.log("User session data fetched from Supabase successfully");
+          return sessionData.id;
+        } catch (parseError) {
+          console.error("Failed to parse session data:", parseError);
+          return null;
+        }
+      }
+
+      console.log("No session data found for user");
+      return null;
     } catch (error) {
       console.error("Failed to fetch user session data from Supabase:", error);
+      return null;
     }
-    return null;
   },
   fetchStreamElementsJWTFromSupabase: async (userId: string) => {
     try {
