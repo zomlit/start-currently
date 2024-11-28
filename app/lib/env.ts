@@ -23,6 +23,8 @@ const publicSchema = createEnvSchema("Public", {
   VITE_STRIPE_SECRET_KEY_TEST: z.string(),
   VITE_PUBLIC_SUPABASE_ANON_KEY: z.string(),
   VITE_PUBLIC_SUPABASE_URL: z.string().url(),
+  VITE_SUPABASE_URL: z.string().url().optional(),
+  VITE_SUPABASE_ANON_KEY: z.string().optional(),
   VITE_TWITCH_CLIENT_ID: z.string(),
   VITE_TWITCH_CLIENT_SECRET: z.string(),
 });
