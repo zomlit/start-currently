@@ -21,6 +21,14 @@ export default defineConfig({
         },
       },
     },
+    define: {
+      "process.env.VITE_PUBLIC_SUPABASE_URL": JSON.stringify(
+        process.env.VITE_PUBLIC_SUPABASE_URL
+      ),
+      "process.env.VITE_PUBLIC_SUPABASE_ANON_KEY": JSON.stringify(
+        process.env.VITE_PUBLIC_SUPABASE_ANON_KEY
+      ),
+    },
     publicDir: "public",
     assetsInclude: ["**/*.svg", "**/*.png", "**/*.jpg", "**/*.webp"],
     resolve: {

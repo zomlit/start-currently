@@ -1,20 +1,33 @@
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+function getEnvVars() {
+  // Try both process.env and import.meta.env
+  const supabaseUrl =
+    process.env.VITE_PUBLIC_SUPABASE_URL ||
+    import.meta.env.VITE_PUBLIC_SUPABASE_URL ||
+    "";
+
+  const supabaseAnonKey =
+    process.env.VITE_PUBLIC_SUPABASE_ANON_KEY ||
+    import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY ||
+    "";
+
+  return { supabaseUrl, supabaseAnonKey };
+}
+
 // Create a function to get the Supabase client
 function createSupabaseClient() {
-  // Default to empty string to prevent undefined errors during SSR
-  const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL || "";
-  const supabaseAnonKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY || "";
+  const { supabaseUrl, supabaseAnonKey } = getEnvVars();
 
   // Only throw in client-side code
   if (typeof window !== "undefined") {
-    if (!supabaseUrl) {
-      throw new Error("Missing VITE_PUBLIC_SUPABASE_URL");
-    }
-
-    if (!supabaseAnonKey) {
-      throw new Error("Missing VITE_PUBLIC_SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Supabase environment variables missing:", {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseAnonKey,
+      });
+      throw new Error("Supabase configuration is missing");
     }
   }
 
