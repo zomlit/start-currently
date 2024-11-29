@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import * as Switch from '@radix-ui/react-switch';
@@ -9,6 +9,8 @@ import { Paintbrush, ImageIcon, X, ChevronDown } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { colorThemes } from '../../utils/colorThemes';
 import type { ThemePreset } from '../../types/team-picker';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface Captain {
   id: string;
@@ -47,6 +49,7 @@ interface SettingsSectionProps {
   getTeamNumber: (teamIndex: number, totalTeams: number) => string;
   showRanks: boolean;
   setShowRanks: (show: boolean) => void;
+  userId: string;
 }
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({
@@ -81,7 +84,10 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   getTeamNumber,
   showRanks,
   setShowRanks,
+  userId,
 }) => {
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+
   return (
     <div className="space-y-4">
       <Card className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm">
@@ -101,9 +107,16 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 type="submit" 
                 onClick={handleAddPlayer}
                 disabled={!newName.trim() || addPlayerMutationPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shrink-0 relative group"
+                title={!userId ? "Please login to add players" : ""}
               >
                 Add {isAddingCaptain ? 'Captain' : 'Player'}
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    Please login to add players
+                  </span>
+                )}
               </CustomButton>
             </div>
 
@@ -180,26 +193,47 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <CustomButton
                 onClick={handlePopulateCaptains}
-                disabled={isCaptainsFull}
-                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                disabled={isCaptainsFull || !userId}
+                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to populate captains" : ""}
               >
                 Populate Captains
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to populate captains
+                  </span>
+                )}
               </CustomButton>
 
               <CustomButton
                 onClick={handlePopulatePlayers}
-                disabled={isPlayersFull}
-                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                disabled={isPlayersFull || !userId}
+                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to populate players" : ""}
               >
                 Populate Players
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to populate players
+                  </span>
+                )}
               </CustomButton>
 
               <CustomButton
                 onClick={handlePopulate}
-                disabled={isAllPlayersFull}
-                className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                disabled={isAllPlayersFull || !userId}
+                className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to populate all" : ""}
               >
                 Populate All
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to populate all
+                  </span>
+                )}
               </CustomButton>
             </div>
 
@@ -207,18 +241,32 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <CustomButton
                 onClick={autoAssignCaptains}
-                disabled={!hasCaptains}
-                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                disabled={!hasCaptains || !userId}
+                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to auto-balance captains" : !hasCaptains ? "No captains to balance" : ""}
               >
                 Auto-Balance Captains
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to auto-balance captains
+                  </span>
+                )}
               </CustomButton>
 
               <CustomButton
                 onClick={autoAssignPlayers}
-                disabled={!hasPlayers}
-                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                disabled={!hasPlayers || !userId}
+                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to auto-balance players" : !hasPlayers ? "No players to balance" : ""}
               >
                 Auto-Balance Players
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to auto-balance players
+                  </span>
+                )}
               </CustomButton>
             </div>
 
@@ -307,12 +355,51 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
               <Separator.Root className="hidden lg:block bg-zinc-700 w-px h-8" orientation="vertical" />
 
-              <CustomButton
-                onClick={handleClearAll}
-                className="bg-red-600 hover:bg-red-700 text-white text-sm"
-              >
-                Clear All Lists
-              </CustomButton>
+              <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <DialogTrigger asChild>
+                  <CustomButton
+                    disabled={!userId}
+                    className="bg-red-600 hover:bg-red-700 text-white text-sm relative group"
+                    title={!userId ? "Please login to clear lists" : ""}
+                  >
+                    Clear All Lists
+                    {!userId && (
+                      <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                        px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                        Please login to clear lists
+                      </span>
+                    )}
+                  </CustomButton>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-900 border border-zinc-700">
+                  <DialogHeader>
+                    <DialogTitle className="text-zinc-100">Clear All Lists</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <p className="text-zinc-300">
+                      Are you sure you want to clear all lists? This will remove all players and teams.
+                    </p>
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsClearDialogOpen(false)}
+                        className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-100"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          handleClearAll();
+                          setIsClearDialogOpen(false);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Clear All
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
