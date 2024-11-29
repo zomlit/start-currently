@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useReducer } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { TeamPickerProps, Player, Captain } from '../types/team-picker';
@@ -431,7 +431,7 @@ type SortOption = 'rank' | 'alphabetical';
 type SortDirection = 'asc' | 'desc';
 
 // Add this type near the top with other types
-type PickerMode = 'tournament' | '6mans' | 'casual' | 'ranked' | 'custom';
+type PickerMode = 'tournament' | '6mans' | 'casual' | 'ranked' | 'custom' | 'standard';
 
 // Add this interface for mode configuration
 interface ModeConfig {
@@ -532,6 +532,22 @@ const PICKER_MODES: ModeConfig[] = [
       teamLogos: true,
       autoAssign: true
     }
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    description: 'Standard team creation with no special rules',
+    icon: <Gamepad2 className="h-4 w-4" />,
+    defaultTeams: 2,
+    defaultTeamSize: 3,
+    allowTeamSizeChange: true,
+    allowTeamCountChange: true,
+    features: {
+      captains: false,
+      ranks: false,
+      teamLogos: false,
+      autoAssign: true
+    }
   }
 ];
 
@@ -559,6 +575,11 @@ interface SavedBracket {
 const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isSharedView = false }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Add these state declarations at the top
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Captain[]>([]);
+
   const [newName, setNewName] = useState('');
   const [numTeams, setNumTeams] = useState(8);
   const [teamSize, setTeamSize] = useState<number>(3);
@@ -580,8 +601,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   const currentModeConfig = PICKER_MODES.find(mode => mode.id === currentMode)!;
   const { userId } = useAuth();
 
-  // Query for teams with initial data
-  const { data: teams = [], isLoading: isLoadingTeams } = useQuery<Captain[]>({
+  // First, let's rename the query variables to avoid conflicts
+  const { data: teamsList = [], isLoading: isLoadingTeams } = useQuery<Captain[]>({
     queryKey: ['teams'],
     initialData: Array.from({ length: numTeams }, (_, i) => {
       const teamNumber = i < Math.ceil(numTeams/2)
@@ -596,12 +617,21 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     enabled: true,
   });
 
-  // Query for players pool
-  const { data: players = [], isLoading: isLoadingPlayers } = useQuery<Player[]>({
+  // And rename this one too
+  const { data: playersList = [], isLoading: isLoadingPlayers } = useQuery<Player[]>({
     queryKey: ['players'],
     initialData: [],
     enabled: true,
   });
+
+  // Update the state setters to use the query data
+  useEffect(() => {
+    setPlayers(playersList);
+  }, [playersList]);
+
+  useEffect(() => {
+    setTeams(teamsList);
+  }, [teamsList]);
 
   // Add this mutation for updating teams
   const updateTeamsMutation = useMutation({
@@ -1629,15 +1659,28 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     }
   };
 
+  // Replace or update the handleClearAll function
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all lists? This cannot be undone.')) {
-      queryClient.setQueryData(['players'], []);
-      queryClient.setQueryData(['teams'], Array.from({ length: numTeams }, (_, i) => ({
+    // Clear players
+    queryClient.setQueryData(['players'], []);
+    setPlayers([]);
+
+    // Reset teams but keep structure
+    const emptyTeams = Array.from({ length: numTeams }, (_, i) => {
+      const teamNumber = i < Math.ceil(numTeams/2)
+        ? i * 2 + 1  // Odd numbers (1,3,5,7)
+        : (i - Math.ceil(numTeams/2)) * 2 + 2;  // Even numbers (2,4,6,8)
+    
+      return {
         id: `team-${Date.now()}-${i}`,
-        name: `Team ${i + 1}`,
+        name: `Team ${String(teamNumber).padStart(2, '0')}`,
         players: [],
-      })));
-    }
+      };
+    });
+
+    queryClient.setQueryData(['teams'], emptyTeams);
+    setTeams(emptyTeams);
+    toast.success('All lists cleared');
   };
 
   // Add mode change handler
@@ -1864,9 +1907,36 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     saveBracketMutation.mutate(newBracketName.trim());
   };
 
-  const handleLoadBracket = (bracketId: string) => {
-    loadBracketMutation.mutate(bracketId);
-  };
+  const handleLoadBracket = useCallback((bracketData: any) => {
+    console.log('Loading data:', bracketData);
+    
+    if (bracketData && typeof bracketData === 'object') {
+      // Reset current state first
+      queryClient.setQueryData(['players'], []);
+      queryClient.setQueryData(['teams'], []);
+      
+      // Small delay to ensure state is cleared
+      setTimeout(() => {
+        if (Array.isArray(bracketData.players)) {
+          queryClient.setQueryData(['players'], bracketData.players);
+        }
+        
+        if (Array.isArray(bracketData.teams)) {
+          queryClient.setQueryData(['teams'], bracketData.teams);
+        }
+        
+        // Handle settings if they exist
+        if (bracketData.settings) {
+          if (typeof bracketData.settings.numTeams === 'number') setNumTeams(bracketData.settings.numTeams);
+          if (typeof bracketData.settings.teamSize === 'number') setTeamSize(bracketData.settings.teamSize);
+          if (typeof bracketData.settings.showRanks === 'boolean') setShowRanks(bracketData.settings.showRanks);
+          if (typeof bracketData.settings.showTeamLogos === 'boolean') setShowTeamLogos(bracketData.settings.showTeamLogos);
+          if (bracketData.settings.currentTheme) setCurrentTheme(bracketData.settings.currentTheme);
+          if (bracketData.settings.mode) setCurrentMode(bracketData.settings.mode);
+        }
+      }, 100);
+    }
+  }, [queryClient]);
 
   // Add this JSX near the top of your return statement, perhaps in the header section
   const SaveLoadButtons = () => (
@@ -1974,86 +2044,31 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     </div>
   );
 
-  // Update the header section layout to include SaveLoadSection below the title
-  <div className="w-full">
-    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500 mb-6">
-      Team Picker
-    </h1>
+  // Add this before the main return statement
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black text-zinc-300 p-4">
+        <div className="max-w-[1920px] mx-auto">
+          <Card className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm">
+            <div className="p-8 text-center space-y-4">
+              <h2 className="text-2xl font-bold text-zinc-100">Welcome to Team Picker</h2>
+              <p className="text-zinc-300">Please login to create and manage teams</p>
+              <CustomButton
+                onClick={() => {
+                  // You can add your login handler here or use Clerk's built-in UI
+                  window.location.href = '/sign-in';
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+              >
+                Login to Continue
+              </CustomButton>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-    {/* Add SaveLoadSection below the title */}
-    <div className="mb-6 flex justify-end">
-      <SaveLoadSection
-        players={players}
-        teams={teams}
-        numTeams={numTeams}
-        teamSize={teamSize}
-        showRanks={showRanks}
-        showTeamLogos={showTeamLogos}
-        currentTheme={currentTheme}
-        currentMode={currentMode}
-        onLoadBracket={handleLoadBracket}
-      />
-    </div>
-
-    {/* Mode selector */}
-    {modeSelector}
-
-    {/* Add the brackets section here */}
-    <BracketsSection
-      mode={currentMode}
-      teams={teams}
-      numTeams={numTeams}
-      teamSize={teamSize}
-      showTeamLogos={showTeamLogos}
-      onTeamsReorder={handleTeamsReorder}
-    />
-
-    <StatsSection
-      totalPlayers={totalPlayers}
-      requiredPlayers={requiredPlayers}
-      totalPlayersInTeams={totalPlayersInTeams}
-      numTeams={numTeams}
-      teamSize={teamSize}
-      teams={teams}
-      players={players}
-    />
-
-    <SettingsSection
-      newName={newName}
-      setNewName={setNewName}
-      isAddingCaptain={isAddingCaptain}
-      setIsAddingCaptain={setIsAddingCaptain}
-      teamSize={teamSize}
-      handleTeamSizeChange={handleTeamSizeChange}
-      numTeams={numTeams}
-      handleUpdateNumTeams={handleUpdateNumTeams}
-      handleAddPlayer={handleAddPlayer}
-      addPlayerMutationPending={addPlayerMutation.isPending}
-      handlePopulateCaptains={handlePopulateCaptains}
-      handlePopulatePlayers={handlePopulatePlayers}
-      handlePopulate={handlePopulate}
-      autoAssignCaptains={autoAssignCaptains}
-      autoAssignPlayers={autoAssignPlayers}
-      isCaptainsFull={isCaptainsFull()}
-      isPlayersFull={isPlayersFull()}
-      isAllPlayersFull={isAllPlayersFull()}
-      hasCaptains={players.some(p => p.isCaptain)}
-      hasPlayers={players.some(p => !p.isCaptain)}
-      currentTheme={currentTheme}
-      setCurrentTheme={setCurrentTheme}
-      teams={teams}
-      getTeamNumber={getTeamNumber}
-      showTeamLogos={showTeamLogos}
-      setShowTeamLogos={setShowTeamLogos}
-      isLogoSectionCollapsed={isLogoSectionCollapsed}
-      setIsLogoSectionCollapsed={setIsLogoSectionCollapsed}
-      handleClearAll={handleClearAll}
-      showRanks={showRanks}
-      setShowRanks={setShowRanks}
-    />
-  </div>
-
-  // Update the main container and header layout
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <StyleTag />
@@ -2077,6 +2092,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                 currentTheme={currentTheme}
                 currentMode={currentMode}
                 onLoadBracket={handleLoadBracket}
+                activeBracketId={selectedBracketId}
+                onBracketSelect={setSelectedBracketId}
               />
             </div>
 
@@ -2135,6 +2152,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
               handleClearAll={handleClearAll}
               showRanks={showRanks}
               setShowRanks={setShowRanks}
+              userId={userId}
             />
           </div>
 
@@ -2233,8 +2251,17 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-                                    style={getDraggableStyle(snapshot.isDragging, provided.draggableProps.style)}
-                                    className="transform-gpu"
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      position: snapshot.isDragging ? 'fixed' : 'relative',
+                                      zIndex: snapshot.isDragging ? 100000 : 1,
+                                      transform: snapshot.isDragging 
+                                        ? `${provided.draggableProps.style?.transform}`
+                                        : 'translate(0, 0)',
+                                      transformStyle: 'preserve-3d',  // Add this
+                                      backfaceVisibility: 'hidden',   // Add this
+                                    }}
+                                    className={`transform-gpu ${snapshot.isDragging ? 'dragging' : ''}`}
                                   >
                                     <PlayerCard
                                       player={player}
@@ -2393,9 +2420,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                     <span className={`text-sm px-2 py-0.5 rounded-full transition-colors duration-200 cursor-help ${
                                       calculateTeamStatus(team).isComplete
                                         ? 'bg-green-500/20 text-green-300'
-                                        : calculateTeamStatus(team).isFull
-                                          ? 'bg-yellow-500/20 text-yellow-300'
-                                          : 'bg-zinc-700/50 text-zinc-400'
+                                        : calculateTeamStatus(team).current === 0
+                                          ? 'bg-red-500/20 text-red-300'
+                                          : calculateTeamStatus(team).current < calculateTeamStatus(team).required
+                                            ? 'bg-yellow-500/20 text-yellow-300'
+                                            : 'bg-zinc-700/50 text-zinc-400'
                                     }`}>
                                       {calculateTeamStatus(team).current}/{calculateTeamStatus(team).required}
                                     </span>
@@ -2407,8 +2436,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                     >
                                       {calculateTeamStatus(team).isComplete 
                                         ? 'Team is complete'
-                                        : calculateTeamStatus(team).isFull
-                                          ? 'Team is full'
+                                        : calculateTeamStatus(team).current === 0
+                                          ? 'Team is empty'
                                           : `${calculateTeamStatus(team).required - calculateTeamStatus(team).current} spots remaining`}
                                       <Tooltip.Arrow className="fill-zinc-800" />
                                     </Tooltip.Content>
@@ -2628,9 +2657,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                       <span className={`text-sm px-2 py-0.5 rounded-full transition-colors duration-200 cursor-help ${
                                         calculateTeamStatus(team).isComplete
                                           ? 'bg-green-500/20 text-green-300'
-                                          : calculateTeamStatus(team).isFull
-                                            ? 'bg-yellow-500/20 text-yellow-300'
-                                            : 'bg-zinc-700/50 text-zinc-400'
+                                          : calculateTeamStatus(team).current === 0
+                                            ? 'bg-red-500/20 text-red-300'
+                                            : calculateTeamStatus(team).current < calculateTeamStatus(team).required
+                                              ? 'bg-yellow-500/20 text-yellow-300'
+                                              : 'bg-zinc-700/50 text-zinc-400'
                                       }`}>
                                         {calculateTeamStatus(team).current}/{calculateTeamStatus(team).required}
                                       </span>
@@ -2642,8 +2673,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                       >
                                         {calculateTeamStatus(team).isComplete 
                                           ? 'Team is complete'
-                                          : calculateTeamStatus(team).isFull
-                                            ? 'Team is full'
+                                          : calculateTeamStatus(team).current === 0
+                                            ? 'Team is empty'
                                             : `${calculateTeamStatus(team).required - calculateTeamStatus(team).current} spots remaining`}
                                         <Tooltip.Arrow className="fill-zinc-800" />
                                       </Tooltip.Content>
@@ -2816,8 +2847,17 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-                                    style={getDraggableStyle(snapshot.isDragging, provided.draggableProps.style)}
-                                    className="transform-gpu"
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      position: snapshot.isDragging ? 'fixed' : 'relative',
+                                      zIndex: snapshot.isDragging ? 100000 : 1,
+                                      transform: snapshot.isDragging 
+                                        ? `${provided.draggableProps.style?.transform}`
+                                        : 'translate(0, 0)',
+                                      transformStyle: 'preserve-3d',  // Add this
+                                      backfaceVisibility: 'hidden',   // Add this
+                                    }}
+                                    className={`transform-gpu ${snapshot.isDragging ? 'dragging' : ''}`}
                                   >
                                     <PlayerCard
                                       player={player}

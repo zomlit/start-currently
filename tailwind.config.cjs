@@ -2,6 +2,7 @@ import { fontFamily } from "tailwindcss/defaultTheme";
 // @ts-expect-error This is how Tailwind CSS is imported
 import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 import plugin from "tailwindcss/plugin";
+import scrollbarPlugin from "tailwind-scrollbar";
 
 module.exports = {
   darkMode: ["class"],
@@ -145,6 +146,7 @@ module.exports = {
     require("tailwind-scrollbar-hide"),
     require("tailwindcss-spring"),
     require("@tailwindcss/typography"),
+    scrollbarPlugin({ nocompatible: true }),
     addVariablesForColors,
     plugin(function ({ addUtilities, theme }) {
       const opacityValues = theme("opacity");
