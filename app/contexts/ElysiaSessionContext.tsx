@@ -15,11 +15,13 @@ import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { useChatStore } from "@/store/useChatStore";
 import { io, Socket } from "socket.io-client";
 import { toast } from "@/utils/toast";
+import { useSpotifyStore } from "@/store/spotifyStore";
+import { useVisualizerWidgetSubscription } from "@/store/supabaseCacheStore";
 
 interface ApiStats {
   apiHits: number;
   timestamp: string;
-  userId: string;
+  userId?: string;
 }
 
 interface ElysiaSessionContextType {
@@ -29,8 +31,8 @@ interface ElysiaSessionContextType {
   stopSession: () => Promise<void>;
   lastPing: number | null;
   apiStats: ApiStats | null;
-  nowPlaying: any;
-  twitchToken: string | undefined;
+  nowPlaying: any | null;
+  twitchToken: string | null;
   spotifyRefreshToken: string | null;
   updateSpotifyToken: (token: string) => void;
   handleToggleSession: () => Promise<void>;
@@ -44,7 +46,7 @@ const ElysiaSessionContext = createContext<
 
 export const useElysiaSessionContext = () => {
   const context = useContext(ElysiaSessionContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error(
       "useElysiaSessionContext must be used within an ElysiaSessionProvider"
     );
@@ -52,24 +54,35 @@ export const useElysiaSessionContext = () => {
   return context;
 };
 
-export const ElysiaSessionProvider: React.FC<{
+interface ElysiaSessionProviderProps {
   children: React.ReactNode;
-  broadcastChannel: string;
-}> = ({ children, broadcastChannel }) => {
+  broadcastChannel?: string;
+}
+
+export const ElysiaSessionProvider: React.FC<ElysiaSessionProviderProps> = ({
+  children,
+  broadcastChannel = "",
+}) => {
   const { isSessionActive, isServerAvailable, startSession, stopSession } =
     useElysiaSession(broadcastChannel);
   const { oauthTokens } = useCombinedStore();
-  const { userId, sessionId } = useAuth();
+  const { userId } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
-  const twitchToken = oauthTokens.twitch?.[0]?.token;
-  const [spotifyRefreshToken, setSpotifyRefreshToken] = useState<string | null>(
-    null
-  );
-  const nowPlaying = useDatabaseStore((state) => state.VisualizerWidget?.[0]);
+  const twitchToken = oauthTokens.twitch?.[0]?.token ?? null;
+  const { spotifyRefreshToken } = useSpotifyStore();
+  const nowPlaying = useDatabaseStore((state) => {
+    const widget = state.VisualizerWidget?.[0];
+    if (!widget?.track) return null;
+    return typeof widget.track === "string"
+      ? JSON.parse(widget.track)
+      : widget.track;
+  });
   const { apiStats, setApiStats } = useChatStore();
   const [lastPing, setLastPing] = useState<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const elysiaWsUrl = process.env.VITE_ELYSIA_WS_URL;
+  const elysiaWsUrl = import.meta.env.VITE_ELYSIA_WS_URL;
+
+  useVisualizerWidgetSubscription(userId);
 
   useEffect(() => {
     if (!socketRef.current && isServerAvailable) {
@@ -139,7 +152,6 @@ export const ElysiaSessionProvider: React.FC<{
             setApiStats({
               apiHits: 0,
               timestamp: data.timestamp,
-              userId: data.userId,
             });
           }
         }
@@ -198,14 +210,25 @@ export const ElysiaSessionProvider: React.FC<{
   };
 
   const updateSpotifyToken = (token: string) => {
-    setSpotifyRefreshToken(token);
+    // No need to update the store here, as it's handled by the store
   };
 
-  const value = {
+  const wrappedStartSession = async () => {
+    return new Promise<void>((resolve) => {
+      startSession();
+      resolve();
+    });
+  };
+
+  const wrappedStopSession = async () => {
+    return stopSession();
+  };
+
+  const value: ElysiaSessionContextType = {
     isSessionActive,
     isServerAvailable,
-    startSession,
-    stopSession,
+    startSession: wrappedStartSession,
+    stopSession: wrappedStopSession,
     lastPing,
     apiStats,
     nowPlaying,

@@ -28,6 +28,7 @@ import DS4Sticks from "@/icons/gamepad/ds4-sticks.svg?react";
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 import { useGamepadContext } from "@/providers/GamepadProvider";
 import { WidgetCTA } from "@/components/WidgetCTA";
+import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 
 interface GamepadState {
   buttons: boolean[];
@@ -321,11 +322,9 @@ function GamepadSection() {
 }
 
 export const Route = createFileRoute("/_app/widgets/gamepad")({
-  component: GamepadSection,
-  loader: async () => {
-    return {
-      keepAlive: true,
-      backgroundPolling: true,
-    };
-  },
+  component: () => (
+    <WidgetAuthGuard>
+      <GamepadSection />
+    </WidgetAuthGuard>
+  ),
 });

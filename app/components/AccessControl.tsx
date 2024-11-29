@@ -3,11 +3,6 @@ import { useLocation } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { useTheme } from "@/hooks/useTheme";
 
-const ALLOWED_USER_IDS = [
-  "user_2bwpcJA5JgJJpGVdcCk8pA2PyxS",
-  "user_2c6N06VTAXeFDPwYGJgxaFMiYex",
-];
-
 const PUBLIC_ROUTES = [
   "/",
   "/lyrics",

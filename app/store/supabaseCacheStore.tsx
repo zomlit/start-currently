@@ -199,9 +199,9 @@ export const useDatabaseStore = create<DatabaseState & DatabaseActions>()(
         }));
       },
       subscribeToVisualizerWidget: (userId: string) => {
-        const subscription = supabase
+        const channel = supabase
           .channel(`public:VisualizerWidget:${userId}`)
-          .on<RealtimePostgresChangesPayload<any>>(
+          .on(
             "postgres_changes",
             {
               event: "*",
@@ -211,18 +211,16 @@ export const useDatabaseStore = create<DatabaseState & DatabaseActions>()(
             },
             (payload) => {
               const { new: newData } = payload;
-              if (newData && newData.track) {
-                const trackData =
-                  typeof newData.track === "string"
-                    ? JSON.parse(newData.track)
-                    : newData.track;
-                set({ currentTrack: trackData });
+              if (newData) {
+                set((state) => ({
+                  VisualizerWidget: [newData],
+                }));
               }
             }
           )
           .subscribe();
 
-        set({ visualizerWidgetSubscription: subscription });
+        set({ visualizerWidgetSubscription: channel });
       },
       unsubscribeFromVisualizerWidget: () => {
         const { visualizerWidgetSubscription } = get();
@@ -301,4 +299,23 @@ export const useUserDataQuery = (table: ModelName, userId: string) => {
       });
     },
   });
+};
+
+// Add a hook to automatically subscribe to VisualizerWidget updates
+export const useVisualizerWidgetSubscription = (userId: string | null) => {
+  const subscribeToVisualizerWidget = useDatabaseStore(
+    (state) => state.subscribeToVisualizerWidget
+  );
+  const unsubscribeFromVisualizerWidget = useDatabaseStore(
+    (state) => state.unsubscribeFromVisualizerWidget
+  );
+
+  useEffect(() => {
+    if (userId) {
+      subscribeToVisualizerWidget(userId);
+      return () => {
+        unsubscribeFromVisualizerWidget();
+      };
+    }
+  }, [userId, subscribeToVisualizerWidget, unsubscribeFromVisualizerWidget]);
 };

@@ -48,7 +48,7 @@ export function PublicLyricsPage() {
         settings,
         currentLyrics,
         currentLine,
-        isLoadingSettingss,
+        isLoadingSettings,
       });
     }
   }, [username, settings, currentLyrics, currentLine, isLoadingSettings]);

@@ -10,9 +10,14 @@ import {
   BubbleChatSkin,
 } from "@/components/skins/chat";
 import { toast } from "@/utils/toast";
+import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 
 export const Route = createFileRoute("/_app/widgets/chat")({
-  component: ChatSection,
+  component: () => (
+    <WidgetAuthGuard>
+      <ChatSection />
+    </WidgetAuthGuard>
+  ),
 });
 
 function ChatSection() {

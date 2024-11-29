@@ -1,64 +1,103 @@
 import { z } from "zod";
+import { UseFormReturn } from "react-hook-form";
+import { WidgetProfile } from "@/types/widget";
+
+// Common settings that apply to all skins
+export const commonSettingsSchema = z.object({
+  backgroundColor: z.string().default("#000000"),
+  padding: z.number().min(0).max(100).default(20),
+  showBorders: z.boolean().default(false),
+  fontFamily: z.string().default("Sofia Sans Condensed"),
+  fontSize: z.number().min(8).max(72).default(16),
+  textColor: z.string().default("#ffffff"),
+  borderColor: z.string().default("#ffffff"),
+  borderWidth: z.number().min(0).max(10).default(0),
+  borderRadius: z.number().min(0).max(50).default(8),
+  lineHeight: z.number().min(0.5).max(2).default(1.5),
+  letterSpacing: z.number().min(-2).max(10).default(0),
+  textAlign: z.enum(["left", "center", "right"]).default("left"),
+  gap: z.number().min(0).max(20).default(2),
+});
+
+// Specific settings for the visualizer
+export const visualSettingsSchema = z.object({
+  chartType: z.enum(["bar", "wave", "circle"]).default("bar"),
+  barWidth: z.number().min(1).max(50).default(2),
+  barSpacing: z.number().min(0).max(50).default(1),
+  barColor: z.string().default("#ffffff"),
+  smoothing: z.number().min(0).max(0.99).default(0.5),
+  sensitivity: z.number().min(0).max(2).default(1),
+  colorSync: z.boolean().default(true),
+  canvasEnabled: z.boolean().default(true),
+  micEnabled: z.boolean().default(true),
+  mode: z.number().min(0).max(10).default(0),
+  backgroundOpacity: z.number().min(0).max(1).default(0.6),
+  albumCanvas: z.boolean().default(true),
+  backgroundCanvas: z.boolean().default(true),
+  backgroundCanvasOpacity: z.number().min(0).max(1).default(0.5),
+  pauseEnabled: z.boolean().default(true),
+  hideOnDisabled: z.boolean().default(false),
+});
 
 export const visualizerSettingsSchema = z.object({
-  commonSettings: z.object({
-    fontFamily: z.string().default("Inter"),
-    fontSize: z.number().min(8).max(120).default(16),
-    lineHeight: z.number().min(0.5).max(3).default(1.5),
-    textTransform: z
-      .enum(["none", "capitalize", "uppercase", "lowercase"])
-      .default("none"),
-    backgroundColor: z.string().default("rgba(0, 0, 0, 1)"),
-    fontColor: z.string().default("rgba(255, 255, 255, 1)"),
-    borderRadius: z.number().min(0).max(100).default(0),
-    borderTopWidth: z.number().min(0).max(20).default(0),
-    borderRightWidth: z.number().min(0).max(20).default(0),
-    borderBottomWidth: z.number().min(0).max(20).default(0),
-    borderLeftWidth: z.number().min(0).max(20).default(0),
-    paddingTop: z.number().min(0).max(100).default(0),
-    paddingRight: z.number().min(0).max(100).default(0),
-    paddingBottom: z.number().min(0).max(100).default(0),
-    paddingLeft: z.number().min(0).max(100).default(0),
-    gap: z.number().min(0).max(8).default(0),
-  }),
-  specificSettings: z.object({
-    selectedSkin: z.enum(["default", "minimal", "rounded"]).default("rounded"),
-    hideOnDisabled: z.boolean().default(false),
-    pauseEnabled: z.boolean().default(false),
-    canvasEnabled: z.boolean().default(false),
-    backgroundCanvas: z.boolean().default(false),
-    backgroundCanvasOpacity: z.number().min(0).max(1).default(0.5),
-    micEnabled: z.boolean().default(false),
-    progressBarForegroundColor: z.string().default("#ffffff"),
-    progressBarBackgroundColor: z.string().default("#000000"),
-    mode: z.number().min(0).max(10).default(0),
-    gradient: z.string().default("rainbow"),
-    fillAlpha: z.number().min(0).max(1).default(0.5),
-    lineWidth: z.number().min(0).max(5).default(1),
-    channelLayout: z.string().default("dual-combined"),
-    frequencyScale: z.string().default("bark"),
-    linearAmplitude: z.boolean().default(true),
-    linearBoost: z.number().default(1.8),
-    showPeaks: z.boolean().default(false),
-    outlineBars: z.boolean().default(true),
-    weightingFilter: z.string().default("D"),
-    barSpace: z.number().min(0).max(1).default(0.1),
-    ledBars: z.boolean().default(false),
-    lumiBars: z.boolean().default(false),
-    reflexRatio: z.number().min(0).max(1).default(0),
-    reflexAlpha: z.number().min(0).max(1).default(0.15),
-    reflexBright: z.number().min(0).max(2).default(1),
-    mirror: z.number().min(0).max(3).default(0),
-    splitGradient: z.boolean().default(false),
+  commonSettings: commonSettingsSchema,
+  visualSettings: visualSettingsSchema,
+  audioSettings: z.object({
+    fftSize: z.number().default(2048),
+    minDecibels: z.number().min(-100).max(0).default(-90),
+    maxDecibels: z.number().min(-100).max(0).default(-10),
   }),
 });
 
 export type VisualizerSettings = z.infer<typeof visualizerSettingsSchema>;
+export type CommonSettings = z.infer<typeof commonSettingsSchema>;
+export type VisualSettings = z.infer<typeof visualSettingsSchema>;
 
-export interface VisualizerProfile {
-  id: string;
-  name: string;
-  settings: VisualizerSettings & {
-    isDefault?: boolean;
-  };
+export const defaultSettings: VisualizerSettings = {
+  commonSettings: {
+    backgroundColor: "#000000",
+    padding: 20,
+    showBorders: false,
+    fontFamily: "Inter",
+    fontSize: 16,
+    textColor: "#ffffff",
+    borderColor: "#ffffff",
+    borderWidth: 0,
+    borderRadius: 8,
+    lineHeight: 1.5,
+    letterSpacing: 0,
+    textAlign: "left",
+    gap: 2,
+  },
+  visualSettings: {
+    chartType: "bar",
+    barWidth: 2,
+    barSpacing: 1,
+    barColor: "#ffffff",
+    smoothing: 0.5,
+    sensitivity: 1,
+    colorSync: true,
+    canvasEnabled: true,
+    micEnabled: true,
+    mode: 0,
+    backgroundOpacity: 0.6,
+    albumCanvas: true,
+    backgroundCanvas: true,
+    backgroundCanvasOpacity: 0.5,
+    pauseEnabled: true,
+    hideOnDisabled: false,
+  },
+  audioSettings: {
+    fftSize: 2048,
+    minDecibels: -90,
+    maxDecibels: -10,
+  },
+};
+
+export interface VisualizerComponentProps {
+  form: UseFormReturn<any>;
+  handleSettingChange: (key: string, value: any) => void;
+  handleSettingCommit: (key: string, value: any) => void;
+  colorSyncEnabled: boolean;
+  currentProfile: WidgetProfile;
 }

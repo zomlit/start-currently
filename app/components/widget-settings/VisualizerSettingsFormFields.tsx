@@ -1,8 +1,8 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { VisualizerStyleOptions } from "./VisualizerStyleOptions";
-import { VisualizerDisplayOptions } from "./VisualizerDisplayOptions";
+// import { VisualizerStyleOptions } from "./VisualizerStyleOptions";
+// import { VisualizerDisplayOptions } from "./VisualizerDisplayOptions";
 import { UseFormReturn } from "react-hook-form";
 import { VisualizerSettingsFormProps } from "@/types/visualizer";
 
@@ -41,26 +41,11 @@ const VisualizerSettingsFormFields: React.FC<Props> = ({
       </TabsList>
 
       <TabsContent value="style">
-        <Card className="border-none shadow-none">
-          <VisualizerStyleOptions
-            form={form}
-            handleSettingChange={handleSettingChange}
-            handleSettingCommit={handleSettingCommit}
-            colorSyncEnabled={localColorSyncEnabled}
-            currentProfile={currentProfile}
-          />
-        </Card>
+        <Card className="border-none shadow-none"></Card>
       </TabsContent>
 
       <TabsContent value="display">
-        <Card className="border-none shadow-none">
-          <VisualizerDisplayOptions
-            form={form}
-            handleSettingChange={handleSettingChange}
-            handleSettingCommit={handleSettingCommit}
-            setCanvasAvailable={setCanvasAvailable}
-          />
-        </Card>
+        <Card className="border-none shadow-none"></Card>
       </TabsContent>
     </Tabs>
   );

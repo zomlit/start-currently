@@ -1,9 +1,14 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
+import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 
 export const Route = createFileRoute("/_app/widgets/alerts")({
-  component: AlertsSection,
+  component: () => (
+    <WidgetAuthGuard>
+      <AlertsSection />
+    </WidgetAuthGuard>
+  ),
 });
 
 function AlertsSection() {

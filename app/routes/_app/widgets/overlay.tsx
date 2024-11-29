@@ -16,13 +16,18 @@ import { OverlaySettings } from "@/components/overlay/OverlaySettings";
 import { Button } from "@/components/ui/button";
 import "reactflow/dist/style.css";
 import { useAuth, useUser } from "@clerk/tanstack-start";
+import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 
 const nodeTypes: NodeTypes = {
   widget: WidgetNode,
 };
 
 export const Route = createFileRoute("/_app/widgets/overlay")({
-  component: OverlayEditor,
+  component: () => (
+    <WidgetAuthGuard>
+      <OverlayEditor />
+    </WidgetAuthGuard>
+  ),
 });
 
 const hideAttribution = `

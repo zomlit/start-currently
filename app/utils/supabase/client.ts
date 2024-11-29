@@ -23,11 +23,33 @@ function createSupabaseClient() {
   // Only throw in client-side code
   if (typeof window !== "undefined") {
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("Supabase environment variables missing:", {
+      console.warn("Supabase environment variables missing:", {
         hasUrl: !!supabaseUrl,
         hasKey: !!supabaseAnonKey,
       });
-      throw new Error("Supabase configuration is missing");
+      // Instead of throwing, return a client with default config
+      return createClient(
+        supabaseUrl || "http://localhost",
+        supabaseAnonKey || "anonymous",
+        {
+          realtime: { params: { eventsPerSecond: 10 } },
+          auth: { persistSession: false },
+          global: {
+            headers: { "Access-Control-Allow-Origin": "*" },
+            // Add error handling
+            onError: (error) => {
+              if (error.code === "409") {
+                console.warn(
+                  "Conflict error - record already exists:",
+                  error.message
+                );
+                return;
+              }
+              console.error("Supabase error:", error);
+            },
+          },
+        }
+      );
     }
   }
 
@@ -43,6 +65,17 @@ function createSupabaseClient() {
     global: {
       headers: {
         "Access-Control-Allow-Origin": "*",
+      },
+      // Add error handling
+      onError: (error) => {
+        if (error.code === "409") {
+          console.warn(
+            "Conflict error - record already exists:",
+            error.message
+          );
+          return;
+        }
+        console.error("Supabase error:", error);
       },
     },
   });

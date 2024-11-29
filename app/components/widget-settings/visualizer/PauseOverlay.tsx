@@ -21,7 +21,7 @@ const PauseOverlay: React.FC<PauseOverlayProps> = ({ settings, track }) => {
     <AnimatePresence>
       {!track?.isPlaying && (
         <motion.div
-          className="flex h-full w-full items-center justify-center bg-black bg-opacity-50 backdrop-blur-md backdrop-brightness-200"
+          className="flex h-full w-full items-center justify-center bg-black bg-opacity-50 backdrop-blur-xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

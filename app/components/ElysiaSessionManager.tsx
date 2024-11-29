@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";
 import { useAuth } from "@clerk/tanstack-start";
+import { useSpotifyStore } from "@/store/spotifyStore";
 
 interface Track {
   title: string;
@@ -27,11 +28,11 @@ export const ElysiaSessionManager: React.FC = () => {
     apiStats,
     nowPlaying,
     twitchToken,
-    spotifyRefreshToken,
     handleToggleSession,
   } = useElysiaSessionContext();
   const [isExpanded, setIsExpanded] = useState(false);
   const { userId, sessionId } = useAuth();
+  const { spotifyRefreshToken } = useSpotifyStore();
 
   const getApiHitColor = (hits: number) => {
     const percentage = (hits / 60) * 100; // Changed from 180 to 60
@@ -45,11 +46,17 @@ export const ElysiaSessionManager: React.FC = () => {
     return `${id.slice(0, 6)}...${id.slice(-4)}`;
   };
 
-  const StatusIndicator = ({ isPresent }: { isPresent: boolean }) => (
+  const StatusIndicator = ({
+    isPresent,
+    label,
+  }: {
+    isPresent: boolean;
+    label: string;
+  }) => (
     <span
       className={cn("ml-2", isPresent ? "text-emerald-400" : "text-pink-500")}
     >
-      {isPresent ? "Available" : "Missing"}
+      {label}
     </span>
   );
 
@@ -94,12 +101,15 @@ export const ElysiaSessionManager: React.FC = () => {
               <p className="flex items-center">
                 {/* <IconBrandTwitch className="mr-1 h-3 w-3 text-purple-400" /> */}
                 Twitch:
-                <StatusIndicator isPresent={!!twitchToken} />
+                <StatusIndicator isPresent={!!twitchToken} label="Connected" />
               </p>
               <p className="flex items-center">
                 {/* <IconBrandSpotify className="mr-1 h-3 w-3 text-green-400" /> */}
                 Spotify:
-                <StatusIndicator isPresent={!!spotifyRefreshToken} />
+                <StatusIndicator
+                  isPresent={!!spotifyRefreshToken}
+                  label={spotifyRefreshToken ? "Connected" : "Not Connected"}
+                />
               </p>
               <p>
                 User ID:{" "}

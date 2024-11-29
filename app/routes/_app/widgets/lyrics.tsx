@@ -24,9 +24,14 @@ import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { LyricsSettings } from "@/types/lyrics";
 import { supabase } from "@/utils/supabase/client";
+import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
-  component: LyricsSection,
+  component: () => (
+    <WidgetAuthGuard>
+      <LyricsSection />
+    </WidgetAuthGuard>
+  ),
 });
 
 // Update the PLACEHOLDER_LYRICS array near the top of the file
@@ -374,22 +379,28 @@ function LyricsSection() {
     [loadedFonts]
   );
 
-  // Split the preview content into smaller components
-  const VideoBackground = useMemo(
-    () =>
-      settings.showVideoCanvas && videoLink ? (
-        <video
-          src={videoLink}
-          className="absolute top-0 left-0 w-full h-full object-cover"
-          style={{ opacity: settings.videoCanvasOpacity }}
-          autoPlay
-          loop
-          muted
-          playsInline
-        />
-      ) : null,
-    [settings.showVideoCanvas, videoLink, settings.videoCanvasOpacity]
-  );
+  const VideoBackground = useMemo(() => {
+    if (!settings.showVideoCanvas || !videoLink) {
+      return null;
+    }
+
+    return (
+      <video
+        src={videoLink}
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        style={{ opacity: settings.videoCanvasOpacity }}
+        autoPlay
+        loop
+        muted
+        playsInline
+        onError={(e) => {
+          console.error("Video playback error:", e);
+          setIsVideoAvailable(false);
+        }}
+        onLoadedData={() => setIsVideoAvailable(true)}
+      />
+    );
+  }, [settings.showVideoCanvas, videoLink, settings.videoCanvasOpacity]);
 
   const FadeOverlay = useMemo(
     () =>
@@ -485,49 +496,41 @@ function LyricsSection() {
   // Pass the wrapped version to LyricsSettingsForm
   const LyricsSettings = (
     <div className="flex flex-col">
-      {isLyricsLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <Spinner className="w-[30px] h-[30px] dark:fill-white" />
-            <p className="text-muted-foreground">Loading settings...</p>
+      <>
+        {/* Header with URL input */}
+        <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center space-x-2">
+            <Input
+              key={publicUrl}
+              value={publicUrl}
+              readOnly
+              className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+            />
+            <Button
+              onClick={handleCopyPublicUrl}
+              size="icon"
+              variant="outline"
+              className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      ) : (
-        <>
-          {/* Header with URL input */}
-          <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex items-center space-x-2">
-              <Input
-                key={publicUrl}
-                value={publicUrl}
-                readOnly
-                className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-              />
-              <Button
-                onClick={handleCopyPublicUrl}
-                size="icon"
-                variant="outline"
-                className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto">
-            <LyricsSettingsForm
-              settings={settings}
-              onSettingsChange={handleSettingsUpdate}
-              publicUrl={publicUrl}
-              onCopyPublicUrl={handleCopyPublicUrl}
-              fontFamilies={fontFamilies}
-              isFontLoading={isFontLoading}
-              injectFont={injectFont}
-              isVideoAvailable={isVideoAvailable}
-            />
-          </div>
-        </>
-      )}
+        <div className="flex-1 overflow-y-auto">
+          <LyricsSettingsForm
+            settings={settings}
+            onSettingsChange={handleSettingsUpdate}
+            publicUrl={publicUrl}
+            onCopyPublicUrl={handleCopyPublicUrl}
+            fontFamilies={fontFamilies}
+            isFontLoading={isFontLoading}
+            injectFont={injectFont}
+            isVideoAvailable={isVideoAvailable}
+            isLyricsLoading={isLyricsLoading}
+          />
+        </div>
+      </>
     </div>
   );
 

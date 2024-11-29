@@ -36,7 +36,7 @@ export const apiMethods = {
   profiles: {
     getAll: async (sectionId: string, token: string) => {
       try {
-        const response = await api.get(`/profiles/${sectionId}`, {
+        const response = await api.get(`/api/profiles/${sectionId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
@@ -46,35 +46,38 @@ export const apiMethods = {
       }
     },
     get: async (sectionId: string, profileId: string | null, token: string) => {
-      const response = await api.get(`/profiles/${sectionId}/${profileId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(
+        `/api/profiles/${sectionId}/${profileId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       return response.data;
     },
     update: async (profileId: string, settings: any, token: string) => {
       const response = await api.put(
-        `/profiles/${profileId}`,
+        `/api/profiles/${profileId}`,
         { settings },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return response.data;
     },
     copy: async (profile: any, token: string) => {
-      const response = await api.post(`/profiles/copy`, profile, {
+      const response = await api.post(`/api/profiles/copy`, profile, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
     },
     setDefault: async (profileId: string, token: string) => {
       const response = await api.put(
-        `/profiles/${profileId}/set-default`,
+        `/api/profiles/${profileId}/set-default`,
         null,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return response.data;
     },
     delete: async (profileId: string, token: string) => {
-      const response = await api.delete(`/profiles/${profileId}`, {
+      const response = await api.delete(`/api/profiles/${profileId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -103,7 +106,7 @@ export const apiMethods = {
         );
 
         const response = await api.post(
-          `/profiles/${sectionId}/create-default`,
+          `/api/profiles/${sectionId}/create-default`,
           requestData,
           {
             headers: {

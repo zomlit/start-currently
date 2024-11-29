@@ -80,7 +80,7 @@
     "collapsible": "^1.0.1",
     "date-fns": "^4.1.0",
     "eslint-plugin-unicorn": "^56.0.1",
-    "framer-motion": "^11.11.17",
+    "framer-motion": "^v12.0.0-alpha.2",
     "lucide-react": "^0.460.0",
     "node-vibrant": "^3.1.6",
     "react": "^19.0.0-rc-fb9a90fa48-20240614",

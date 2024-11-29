@@ -4,11 +4,20 @@ import { useCombinedStore } from "@/store";
 import { toast } from "@/utils/toast";
 import debounce from "lodash/debounce";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
+import { useSessionStore } from "@/store/sessionStore";
+import { useOAuthStore } from "@/store/oauthStore";
+import { useSpotifyStore } from "@/store/spotifyStore";
 
 export const useElysiaSession = (broadcastChannel: string) => {
   const { getToken, userId, sessionId } = useAuth();
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [isServerAvailable, setIsServerAvailable] = useState(false);
+  const {
+    isSessionActive,
+    setIsSessionActive,
+    isServerAvailable,
+    setIsServerAvailable,
+  } = useSessionStore();
+  const { spotifyRefreshToken } = useSpotifyStore();
+  const { twitchToken } = useOAuthStore();
   const { oauthTokens, fetchSpotifyAccessTokenFromSupabase } =
     useCombinedStore();
   const lastSessionStartAttempt = useRef(0);
@@ -104,7 +113,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
         throw new Error("VITE_ELYSIA_API_URL environment variable is not set");
       }
 
-      const fullUrl = new URL("/start-session", apiUrl);
+      const fullUrl = new URL("api/session/start-session", apiUrl);
       fullUrl.searchParams.append("broadcastChannel", broadcastChannel);
       fullUrl.searchParams.append("spotifyRefreshToken", spotifyRefreshToken);
       fullUrl.searchParams.append("twitchAccessToken", twitchToken);
@@ -166,7 +175,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
       if (!apiUrl) {
         throw new Error("VITE_ELYSIA_API_URL environment variable is not set");
       }
-      const fullUrl = new URL("/stop-session", apiUrl).toString();
+      const fullUrl = new URL("api/session/stop-session", apiUrl).toString();
 
       const response = await fetch(fullUrl, {
         method: "POST",

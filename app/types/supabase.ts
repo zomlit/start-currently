@@ -303,6 +303,7 @@ export type Database = {
           settings: Json | null
           showPressedButtons: boolean
           style: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -312,6 +313,7 @@ export type Database = {
           settings?: Json | null
           showPressedButtons: boolean
           style: string
+          updated_at?: string | null
           user_id?: string
         }
         Update: {
@@ -321,6 +323,7 @@ export type Database = {
           settings?: Json | null
           showPressedButtons?: boolean
           style?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -843,6 +846,7 @@ export type Database = {
           type: string
           user_id: string
           visualization: Json
+          visualizer_settings: Json | null
         }
         Insert: {
           colorScheme: string
@@ -853,6 +857,7 @@ export type Database = {
           type: string
           user_id?: string
           visualization: Json
+          visualizer_settings?: Json | null
         }
         Update: {
           colorScheme?: string
@@ -863,6 +868,7 @@ export type Database = {
           type?: string
           user_id?: string
           visualization?: Json
+          visualizer_settings?: Json | null
         }
         Relationships: [
           {

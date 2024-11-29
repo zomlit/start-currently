@@ -7,9 +7,14 @@ import {
 } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
 import { widgetConfigs } from "@/config/widgets";
+import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 
 export const Route = createFileRoute("/_app/widgets/")({
-  component: WidgetsIndex,
+  component: () => (
+    <WidgetAuthGuard>
+      <WidgetsIndex />
+    </WidgetAuthGuard>
+  ),
 });
 
 function WidgetsIndex() {

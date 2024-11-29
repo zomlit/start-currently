@@ -1,12 +1,17 @@
 import { create } from "zustand";
-import { SpotifyTrack } from "@/types/spotify";
 
-type SpotifyStore = {
-  currentTrack: SpotifyTrack | null;
-  setCurrentTrack: (track: SpotifyTrack | null) => void;
-};
+interface SpotifyStore {
+  spotifyRefreshToken: string | null;
+  setSpotifyRefreshToken: (token: string | null) => void;
+  spotifyAccessToken: string | null;
+  setSpotifyAccessToken: (token: string | null) => void;
+}
 
 export const useSpotifyStore = create<SpotifyStore>((set) => ({
-  currentTrack: null,
-  setCurrentTrack: (track) => set({ currentTrack: track }),
+  spotifyRefreshToken: null,
+  setSpotifyRefreshToken: (token: string | null) =>
+    set({ spotifyRefreshToken: token }),
+  spotifyAccessToken: null,
+  setSpotifyAccessToken: (token: string | null) =>
+    set({ spotifyAccessToken: token }),
 }));

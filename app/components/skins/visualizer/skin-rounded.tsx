@@ -21,7 +21,7 @@ interface SkinRoundedProps {
   track?: {
     title: string;
     artist: string;
-    artwork: string;
+    artwork?: string;
     progress: number;
     isPlaying: boolean;
     elapsed: number;
@@ -59,6 +59,11 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
     specificSettings
   );
   const videoLink = useBackgroundVideo(track?.id);
+
+  const pauseOverlayVariants = {
+    visible: { opacity: 1, transition: { duration: 0.3 } },
+    hidden: { opacity: 0, transition: { duration: 0.3 } },
+  };
 
   const [isVideoAvailable, setIsVideoAvailable] = useState(false);
   const [isVideoTaller, setIsVideoTaller] = useState(false);

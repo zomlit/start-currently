@@ -1,133 +1,3 @@
-import React, { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Slider } from "@/components/ui/slider";
-import { GradientColorPicker } from "@/components/GradientColorPicker";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { RotateCcw, Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import { useDebouncedCallback } from "use-debounce";
-import { toast } from "@/utils/toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Copy } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
-import AutosaveStatus from "@/components/AutoSaveStatus";
-
-const safeFormatColor = (color: any): string => {
-  if (!color) return "rgba(0, 0, 0, 1)";
-
-  // If it's a palette color object
-  if (typeof color === "object" && color !== null) {
-    if (typeof color.hex === "string") return color.hex;
-    if (
-      typeof color.r === "number" &&
-      typeof color.g === "number" &&
-      typeof color.b === "number"
-    ) {
-      return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a || 1})`;
-    }
-    return "rgba(0, 0, 0, 1)";
-  }
-
-  if (typeof color !== "string") {
-    return "rgba(0, 0, 0, 1)";
-  }
-
-  return color;
-};
-
-export const lyricsSchema = z.object({
-  backgroundColor: z.string().default("rgba(0, 0, 0, 1)"),
-  textColor: z.string().default("rgba(255, 255, 255, 1)"),
-  currentTextColor: z.string().default("rgba(220, 40, 220, 1)"),
-  fontSize: z.number().min(10).max(72).default(24),
-  padding: z.number().min(0).max(100).default(20),
-  currentLineScale: z.number().min(1).max(2).default(1.2),
-  showFade: z.boolean().default(false),
-  fadeDistance: z.number().min(0).max(200).default(64),
-  lineHeight: z.number().min(1).max(3).default(1.5),
-  fontFamily: z.string().default("Sofia Sans Condensed"),
-  greenScreenMode: z.boolean().default(false),
-  colorSync: z.boolean().default(false),
-  showVideoCanvas: z.boolean().default(false),
-  videoCanvasOpacity: z.number().min(0).max(1).default(0.2),
-  textAlign: z.enum(["left", "center", "right"]).default("left"),
-  textShadowColor: z.string().default("rgba(0, 0, 0, 0.5)"),
-  textShadowBlur: z.number().min(0).max(20).default(2),
-  textShadowOffsetX: z.number().min(-20).max(20).default(1),
-  textShadowOffsetY: z.number().min(-20).max(20).default(1),
-  animationEasing: z
-    .enum([
-      "linear",
-      "easeIn",
-      "easeOut",
-      "easeInOut",
-      "circIn",
-      "circOut",
-      "circInOut",
-      "backIn",
-      "backOut",
-      "backInOut",
-    ])
-    .default("easeOut"),
-  animationSpeed: z.number().min(100).max(1000).default(300),
-  glowEffect: z.boolean().default(false),
-  glowColor: z.string().default("rgba(255, 255, 255, 0.5)"),
-  glowIntensity: z.number().min(0).max(20).default(5),
-  hideExplicitContent: z.boolean().default(false),
-  animationStyle: z
-    .enum(["scale", "glow", "slide", "fade", "bounce"])
-    .default("scale"),
-});
-
-export type LyricsSettings = z.infer<typeof lyricsSchema>;
-interface LyricsSettingsFormProps {
-  settings: LyricsSettings;
-  onSettingsChange: (settings: LyricsSettings) => Promise<void>;
-  publicUrl: string;
-  onCopyPublicUrl: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  fontFamilies: string[];
-  isFontLoading: boolean;
-  injectFont: (fontFamily: string) => void;
-  isVideoAvailable: boolean;
-  isLyricsLoading: boolean;
-}
-
 // First, create a reusable SliderWithInput component
 const SliderWithInput = React.forwardRef<
   HTMLDivElement,
@@ -281,13 +151,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   };
 
   return (
-    <Form {...form} className="relative">
+    <Form {...form}>
       <div className="fixed top-4 right-4 z-50">
-        {/* <AutosaveStatus
+        <AutosaveStatus
           lastSaved={lastSaved}
           isSaving={isSaving}
           changingField={changingField}
-        /> */}
+        />
       </div>
       <div
         className={cn(
@@ -354,7 +224,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     name="fontFamily"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Font Familyz</FormLabel>
+                        <FormLabel>Font Family</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={(value) => {
@@ -386,6 +256,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Text Color */}
                   <FormField
                     control={form.control}
                     name="textColor"
@@ -407,6 +279,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     )}
                   />
 
+                  {/* Current Line Text Color */}
                   <FormField
                     control={form.control}
                     name="currentTextColor"
@@ -429,6 +302,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Font Size */}
                   <FormField
                     control={form.control}
                     name="fontSize"
@@ -449,6 +324,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Line Height */}
                   <FormField
                     control={form.control}
                     name="lineHeight"
@@ -470,6 +347,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     )}
                   />
 
+                  {/* Text Alignment */}
                   <FormField
                     control={form.control}
                     name="textAlign"
@@ -498,6 +376,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     )}
                   />
 
+                  {/* Text Shadow Settings */}
                   <FormField
                     control={form.control}
                     name="textShadowColor"
@@ -518,6 +397,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Text Shadow Blur */}
                   <FormField
                     control={form.control}
                     name="textShadowBlur"
@@ -538,6 +419,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Text Shadow Offset X */}
                   <FormField
                     control={form.control}
                     name="textShadowOffsetX"
@@ -558,6 +441,8 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Text Shadow Offset Y */}
                   <FormField
                     control={form.control}
                     name="textShadowOffsetY"
@@ -607,6 +492,31 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="showVideoCanvas"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>Show Video Canvas</FormLabel>
+                          <FormDescription>
+                            Display video if available
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={(value) =>
+                              handleSettingChange("showVideoCanvas", value)
+                            }
+                            disabled={!isVideoAvailable}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
                   {form.watch("showVideoCanvas") && (
                     <FormField
                       control={form.control}
@@ -650,6 +560,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
                   {form.watch("glowEffect") && (
                     <>
                       <FormField
@@ -715,6 +626,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       </FormItem>
                     )}
                   />
+
                   {form.watch("showFade") && (
                     <FormField
                       control={form.control}
@@ -737,155 +649,101 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       )}
                     />
                   )}
-
-                  <FormField
-                    control={form.control}
-                    name="showVideoCanvas"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Show Video Canvas</FormLabel>
-                          <FormDescription>
-                            Display video if available
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("showVideoCanvas", value)
-                            }
-                            disabled={!isVideoAvailable}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="animation">
                 <AccordionTrigger>Animation</AccordionTrigger>
                 <AccordionContent className="space-y-4">
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="animationStyle"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Animation Style</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value) => {
-                              field.onChange(value);
-                              handleSettingChange("animationStyle", value);
-                            }}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select animation style" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="scale">Scale</SelectItem>
-                              <SelectItem value="glow">Glow</SelectItem>
-                              <SelectItem value="slide">Slide</SelectItem>
-                              <SelectItem value="fade">Fade</SelectItem>
-                              <SelectItem value="bounce">Bounce</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="animationSpeed"
-                      render={({ field }) => (
-                        <FormItem>
-                          <SliderWithInput
-                            label="Animation Speed (ms)"
-                            value={field.value}
-                            onChange={(value) => {
-                              field.onChange(value);
-                              handleSettingChange("animationSpeed", value);
-                            }}
-                            onBlur={field.onBlur}
-                            min={100}
-                            max={1000}
-                            step={50}
-                          />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="animationEasing"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Animation Easing</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value) =>
-                              handleSettingChange("animationEasing", value)
-                            }
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select easing" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="linear">Linear</SelectItem>
-                              <SelectItem value="easeIn">Ease In</SelectItem>
-                              <SelectItem value="easeOut">Ease Out</SelectItem>
-                              <SelectItem value="easeInOut">
-                                Ease In Out
-                              </SelectItem>
-                              <SelectItem value="circIn">
-                                Circular In
-                              </SelectItem>
-                              <SelectItem value="circOut">
-                                Circular Out
-                              </SelectItem>
-                              <SelectItem value="circInOut">
-                                Circular In Out
-                              </SelectItem>
-                              <SelectItem value="backIn">Back In</SelectItem>
-                              <SelectItem value="backOut">Back Out</SelectItem>
-                              <SelectItem value="backInOut">
-                                Back In Out
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="content">
-                <AccordionTrigger>Content Settings</AccordionTrigger>
-                <AccordionContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="hideExplicitContent"
+                    name="animationStyle"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Hide Explicit Content</FormLabel>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            className="!mt-0"
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("hideExplicitContent", value)
-                            }
-                          />
-                        </FormControl>
+                      <FormItem>
+                        <FormLabel>Animation Style</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleSettingChange("animationStyle", value);
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select animation style" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="scale">Scale</SelectItem>
+                            <SelectItem value="glow">Glow</SelectItem>
+                            <SelectItem value="slide">Slide</SelectItem>
+                            <SelectItem value="fade">Fade</SelectItem>
+                            <SelectItem value="bounce">Bounce</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="animationSpeed"
+                    render={({ field }) => (
+                      <FormItem>
+                        <SliderWithInput
+                          label="Animation Speed (ms)"
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            handleSettingChange("animationSpeed", value);
+                          }}
+                          onBlur={field.onBlur}
+                          min={100}
+                          max={1000}
+                          step={50}
+                        />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="animationEasing"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Animation Easing</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) =>
+                            handleSettingChange("animationEasing", value)
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select easing" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="linear">Linear</SelectItem>
+                            <SelectItem value="easeIn">Ease In</SelectItem>
+                            <SelectItem value="easeOut">Ease Out</SelectItem>
+                            <SelectItem value="easeInOut">
+                              Ease In Out
+                            </SelectItem>
+                            <SelectItem value="circIn">Circular In</SelectItem>
+                            <SelectItem value="circOut">
+                              Circular Out
+                            </SelectItem>
+                            <SelectItem value="circInOut">
+                              Circular In Out
+                            </SelectItem>
+                            <SelectItem value="backIn">Back In</SelectItem>
+                            <SelectItem value="backOut">Back Out</SelectItem>
+                            <SelectItem value="backInOut">
+                              Back In Out
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormItem>
                     )}
                   />
@@ -945,3 +803,5 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     </Form>
   );
 };
+
+export default LyricsSettingsForm;

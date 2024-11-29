@@ -7,6 +7,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { useAuth } from "@clerk/tanstack-start";
 import { useElysiaSession } from "@/hooks/useElysiaSession";
 import type { Track } from "@/types/visualizer";
+import { ensureUserProfile } from "@/utils/authHelpers";
 
 // Types
 type OAuthTokens = {
@@ -312,54 +313,55 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
           lastFetched: number;
         }
       | undefined;
-
-    if (spotify) {
-      try {
-        const response = await fetch("https://api.spotify.com/v1/me", {
-          headers: {
-            Authorization: `Bearer ${spotify.token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          console.log("Spotify token expired, refreshing...");
-          await refreshSpotifyAccessToken(userId, false);
-        } else {
-          console.log("Spotify token is valid.");
-        }
-      } catch (error) {
-        console.error("Error checking Spotify token validity:", error);
-      }
-    }
   },
 
   fetchAndStoreTwitchTokens: async () => {
     const { user } = get();
     if (!user || !user.id) {
-      console.error("User ID is missing");
+      console.warn("User ID is missing, skipping Twitch token fetch");
       return;
     }
 
     try {
       const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
+
       if (!apiUrl) {
-        throw new Error("VITE_ELYSIA_API_URL environment variable is not set");
+        console.warn("VITE_ELYSIA_API_URL environment variable is not set");
+        set((state) => ({
+          oauthTokens: {
+            ...state.oauthTokens,
+            twitch: [],
+          },
+        }));
+        return;
       }
 
-      // Fix: Ensure there's no trailing slash in the base URL
       const baseUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
-      const fullUrl = `${baseUrl}/user-tokens/${user.id}`;
+      const fullUrl = `${baseUrl}/api/user-tokens/${user.id}`;
 
       const response = await fetch(fullUrl);
 
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        console.warn("Invalid response format from server:", contentType);
+        set((state) => ({
+          oauthTokens: {
+            ...state.oauthTokens,
+            twitch: [],
+          },
+        }));
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(
-          response.statusText || "Failed to fetch Twitch accounts"
+          `Failed to fetch Twitch accounts: ${response.status} ${response.statusText}`
         );
       }
+
       const data = await response.json();
 
-      if (data.matchedTokens && data.matchedTokens.length > 0) {
+      if (data.matchedTokens && Array.isArray(data.matchedTokens)) {
         set((state) => ({
           oauthTokens: {
             ...state.oauthTokens,
@@ -375,12 +377,24 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
             })),
           },
         }));
-        console.log("Twitch tokens stored in state:", get().oauthTokens);
+        console.debug("Twitch tokens stored in state:", get().oauthTokens);
       } else {
-        console.error("No Twitch tokens found in the response");
+        console.warn("No valid Twitch tokens found in response");
+        set((state) => ({
+          oauthTokens: {
+            ...state.oauthTokens,
+            twitch: [],
+          },
+        }));
       }
     } catch (error) {
-      console.error("Error fetching and storing Twitch accounts:", error);
+      console.warn("Error fetching Twitch accounts:", error);
+      set((state) => ({
+        oauthTokens: {
+          ...state.oauthTokens,
+          twitch: [],
+        },
+      }));
     }
   },
 
@@ -467,142 +481,25 @@ export const createGlobalSlice: StateCreator<GlobalState> = (set, get) => ({
     supabase: SupabaseClient
   ) => {
     try {
-      console.log(
-        "Pushing user data to Supabase:",
-        JSON.stringify(userData, null, 2)
-      );
-
-      const {
-        id: userId,
-        username,
-        email,
-        firstName,
-        lastName,
-        imageUrl,
-      } = userData;
-
-      if (!userId) {
-        console.error(
-          "User ID is missing or invalid. userData:",
-          JSON.stringify(userData, null, 2)
-        );
+      const { id: userId, username } = userData;
+      if (!userId || !username) {
+        console.warn("User ID or username is missing");
         return;
       }
 
-      const displayName =
-        `${firstName || ""} ${lastName || ""}`.trim() ||
-        username ||
-        email ||
-        userId;
+      const updatedProfile = await ensureUserProfile(username);
 
-      const userUpsertData = {
-        id: userId,
-        email: email,
-        username: username,
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log(
-        "Upserting User data:",
-        JSON.stringify(userUpsertData, null, 2)
-      );
-
-      const { data: updatedUserData, error: userError } = await supabase
-        .from("User")
-        .upsert(userUpsertData, {
-          onConflict: "id",
-          ignoreDuplicates: false,
-        })
-        .select()
-        .single();
-
-      if (userError) {
-        console.error("Supabase error details for User:", userError);
-        return;
+      if (updatedProfile) {
+        set((state) => ({
+          ...state,
+          user: {
+            ...state.user,
+            profile: updatedProfile,
+          },
+        }));
       }
-
-      console.log(
-        "Updated User data:",
-        JSON.stringify(updatedUserData, null, 2)
-      );
-
-      const profileUpsertData = {
-        user_id: userId,
-        username: username,
-        displayName: displayName,
-        avatarUrl: imageUrl,
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        updated_at: new Date().toISOString(), // Ensure this is always set
-      };
-
-      console.log(
-        "Upserting UserProfile data:",
-        JSON.stringify(profileUpsertData, null, 2)
-      );
-
-      // Check if a UserProfile already exists
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from("UserProfile")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-
-      if (fetchError && fetchError.code !== "PGRST116") {
-        console.error("Error fetching existing profile:", fetchError);
-        throw fetchError;
-      }
-
-      let profileData;
-      if (existingProfile) {
-        // Update existing profile
-        const { data, error: updateError } = await supabase
-          .from("UserProfile")
-          .update(profileUpsertData)
-          .eq("user_id", userId)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-        profileData = data;
-      } else {
-        // Insert new profile
-        const { data, error: insertError } = await supabase
-          .from("UserProfile")
-          .insert(profileUpsertData)
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        profileData = data;
-      }
-
-      console.log(
-        "Updated UserProfile data:",
-        JSON.stringify(profileData, null, 2)
-      );
-
-      console.log("User and UserProfile data pushed to Supabase successfully", {
-        updatedUserData,
-        profileData,
-      });
-
-      // Update the local state with the new user data
-      set((state) => ({
-        ...state,
-        user: {
-          ...state.user,
-          ...updatedUserData,
-          profile: profileData,
-        },
-      }));
     } catch (error) {
-      console.error("Failed to push user session data to Supabase:", error);
-      if (error instanceof Error) {
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
-      }
+      console.warn("Error in pushUserSessionToSupabase:", error);
     }
   },
 

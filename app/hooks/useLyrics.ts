@@ -170,13 +170,15 @@ export const useLyrics = ({
         if (!token) throw new Error("No authorization token available");
 
         const response = await fetch(
-          `${import.meta.env.VITE_ELYSIA_API_URL}/lyrics/${trackId}`,
+          `${import.meta.env.VITE_ELYSIA_API_URL}/api/spotify/lyrics/${trackId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
+
+        console.log("Lyrics response:", response);
 
         if (response.status === 401) {
           setIsUnauthorized(true);
@@ -217,7 +219,12 @@ export const useLyrics = ({
   );
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      console.log("No userId available for Supabase subscription");
+      return;
+    }
+
+    console.log("Setting up Supabase subscription for user:", userId);
 
     const channel = supabase
       .channel(`public:VisualizerWidget:${userId}`)
@@ -230,41 +237,86 @@ export const useLyrics = ({
           filter: `user_id=eq.${userId}`,
         },
         (payload: any) => {
+          console.log("Received Supabase payload:", payload);
           const { new: newData } = payload;
+
           if (newData?.track) {
             try {
-              const trackData =
+              let trackString =
                 typeof newData.track === "string"
-                  ? JSON.parse(newData.track.replace(/\bNaN\b/g, "null"))
-                  : newData.track;
+                  ? newData.track
+                  : JSON.stringify(newData.track);
 
-              console.log("Track data received:", trackData);
+              trackString = trackString
+                .replace(/\bNaN\b/g, "null")
+                .replace(/\bbars\b(?=\s*:)/g, '"bars"')
+                .replace(/\bbeats\b(?=\s*:)/g, '"beats"')
+                .replace(/\bsections\b(?=\s*:)/g, '"sections"')
+                .replace(/\btempo\b(?=\s*:)/g, '"tempo"')
+                .replace(/\btime_signature\b(?=\s*:)/g, '"time_signature"');
+
+              console.log("Preprocessed track string:", trackString);
+
+              const trackData = JSON.parse(trackString);
+
+              if (!trackData || typeof trackData !== "object") {
+                console.warn("Invalid track data received:", trackData);
+                setTrack(null);
+                return;
+              }
+
+              if (!trackData.id) {
+                console.warn("Track data missing ID:", trackData);
+                setTrack(null);
+                return;
+              }
+
               setTrack(trackData);
             } catch (error) {
               console.error("Error parsing track data:", error);
-              console.log("Raw track data:", newData.track);
+              console.error("Failed to parse string:", newData.track);
+              setTrack(null);
             }
+          } else {
+            console.log("No track data in payload, clearing track");
+            setTrack(null);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Supabase subscription status:", status);
+      });
 
     return () => {
+      console.log("Cleaning up Supabase subscription");
       supabase.removeChannel(channel);
     };
   }, [userId]);
 
   useEffect(() => {
-    console.log("Track data in useLyrics:", {
-      id: track?.id,
-      elapsed: track?.elapsed,
-      track,
+    console.log("Track effect triggered:", {
+      hasTrackId: !!track?.id,
+      trackState: track,
+      isDevelopment: process.env.NODE_ENV === "development",
     });
+
+    if (track?.id || process.env.NODE_ENV === "development") {
+      console.log("Track data in useLyrics:", {
+        id: track?.id,
+        elapsed: track?.elapsed,
+        track,
+      });
+    }
+
     if (track?.id) {
+      console.log("Fetching lyrics for track:", track.id);
       fetchLyrics(track.id);
     } else {
+      console.log("No track ID available, clearing lyrics state");
       setNoLyricsAvailable(true);
       setLyrics(null);
+      setLyricsError(null);
+      setIsUnauthorized(false);
     }
   }, [track?.id, fetchLyrics]);
 
