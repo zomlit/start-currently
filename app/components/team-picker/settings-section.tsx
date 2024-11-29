@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import * as Switch from '@radix-ui/react-switch';
@@ -9,6 +9,13 @@ import { Paintbrush, ImageIcon, X, ChevronDown } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { colorThemes } from '../../utils/colorThemes';
 import type { ThemePreset } from '../../types/team-picker';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+
+interface Captain {
+  id: string;
+  name: string;
+}
 
 interface SettingsSectionProps {
   newName: string;
@@ -42,6 +49,7 @@ interface SettingsSectionProps {
   getTeamNumber: (teamIndex: number, totalTeams: number) => string;
   showRanks: boolean;
   setShowRanks: (show: boolean) => void;
+  userId: string;
 }
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({
@@ -76,13 +84,16 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   getTeamNumber,
   showRanks,
   setShowRanks,
+  userId,
 }) => {
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+
   return (
     <div className="space-y-4">
       <Card className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm">
-        <div className="p-4">
+        <div className="p-4 space-y-4">
           {/* Top Row - Player Input and Core Settings */}
-          <div className="flex items-center gap-6 mb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
             {/* Left side - Player Input */}
             <div className="flex-grow flex items-center gap-4">
               <Input
@@ -96,17 +107,24 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 type="submit" 
                 onClick={handleAddPlayer}
                 disabled={!newName.trim() || addPlayerMutationPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shrink-0 relative group"
+                title={!userId ? "Please login to add players" : ""}
               >
                 Add {isAddingCaptain ? 'Captain' : 'Player'}
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    Please login to add players
+                  </span>
+                )}
               </CustomButton>
             </div>
 
-            <Separator.Root className="bg-zinc-700 w-px h-8" orientation="vertical" />
+            <Separator.Root className="hidden lg:block bg-zinc-700 w-px h-8" orientation="vertical" />
 
             {/* Right side - Core Settings */}
-            <div className="flex items-center gap-6 shrink-0">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4 lg:gap-6 shrink-0">
+              <div className="flex flex-wrap items-center gap-4">
                 {/* Team Size Control */}
                 <div className="flex items-center gap-2">
                   <Label.Root 
@@ -132,7 +150,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     htmlFor="num-teams" 
                     className="text-sm text-zinc-400 whitespace-nowrap"
                   >
-                    Number of Teams:
+                    Teams:
                   </Label.Root>
                   <Input
                     id="num-teams"
@@ -145,7 +163,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 </div>
               </div>
 
-              <Separator.Root className="bg-zinc-700 w-px h-8" orientation="vertical" />
+              <Separator.Root className="hidden lg:block bg-zinc-700 w-px h-8" orientation="vertical" />
 
               {/* Captain Toggle */}
               <div className="flex items-center gap-3">
@@ -167,158 +185,221 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             </div>
           </div>
 
-          <Separator.Root className="bg-zinc-700/50 h-px w-full mb-4" />
+          <Separator.Root className="bg-zinc-700/50 h-px w-full" />
 
           {/* Bottom Row - Actions and Visual Settings */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
             {/* Left side - Population Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <CustomButton
                 onClick={handlePopulateCaptains}
-                disabled={isCaptainsFull}
-                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isCaptainsFull || !userId}
+                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to populate captains" : ""}
               >
                 Populate Captains
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to populate captains
+                  </span>
+                )}
               </CustomButton>
 
               <CustomButton
                 onClick={handlePopulatePlayers}
-                disabled={isPlayersFull}
-                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isPlayersFull || !userId}
+                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to populate players" : ""}
               >
                 Populate Players
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to populate players
+                  </span>
+                )}
               </CustomButton>
 
               <CustomButton
                 onClick={handlePopulate}
-                disabled={isAllPlayersFull}
-                className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isAllPlayersFull || !userId}
+                className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to populate all" : ""}
               >
                 Populate All
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to populate all
+                  </span>
+                )}
               </CustomButton>
             </div>
 
             {/* Center - Auto-Balance Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <CustomButton
                 onClick={autoAssignCaptains}
-                disabled={!hasCaptains}
-                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!hasCaptains || !userId}
+                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to auto-balance captains" : !hasCaptains ? "No captains to balance" : ""}
               >
                 Auto-Balance Captains
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to auto-balance captains
+                  </span>
+                )}
               </CustomButton>
 
               <CustomButton
                 onClick={autoAssignPlayers}
-                disabled={!hasPlayers}
-                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!hasPlayers || !userId}
+                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to auto-balance players" : !hasPlayers ? "No players to balance" : ""}
               >
                 Auto-Balance Players
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to auto-balance players
+                  </span>
+                )}
               </CustomButton>
             </div>
 
             {/* Right side - Visual Settings */}
-            <div className="flex items-center gap-4">
-              {/* Color Theme Selector */}
-              <div className="flex items-center gap-2">
-                <Label.Root 
-                  htmlFor="theme-selector" 
-                  className="text-sm text-zinc-400 whitespace-nowrap"
-                >
-                  Themes:
-                </Label.Root>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <CustomButton
-                      id="theme-selector"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-zinc-400 hover:text-blue-400"
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Settings Controls Group */}
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Theme Selector */}
+                <div className="flex items-center gap-2">
+                  <Label.Root className="text-sm text-zinc-400">Themes:</Label.Root>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <CustomButton
+                        id="theme-selector"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-400 hover:text-blue-400"
+                      >
+                        <Paintbrush className="h-4 w-4" />
+                      </CustomButton>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="p-2 bg-zinc-800 border border-zinc-700 shadow-lg shadow-black/50" 
+                      align="end"
+                      sideOffset={5}
                     >
-                      <Paintbrush className="h-4 w-4" />
-                    </CustomButton>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    className="p-2 bg-zinc-800 border border-zinc-700 shadow-lg shadow-black/50" 
-                    align="end"
-                    sideOffset={5}
+                      <div className="grid gap-1.5">
+                        {(Object.keys(colorThemes) as ThemePreset[]).map((themeName) => {
+                          const theme = colorThemes[themeName];
+                          const colors = theme.generateColors();
+                          return (
+                            <button
+                              key={themeName}
+                              onClick={() => setCurrentTheme(themeName)}
+                              className={`flex items-center gap-2 p-2 rounded-md text-left
+                                ${currentTheme === themeName ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-300 hover:bg-zinc-700/50'}
+                                transition-colors`}
+                            >
+                              <div 
+                                className="w-4 h-4 rounded-full"
+                                style={{ 
+                                  background: colors.background,
+                                  borderColor: colors.border,
+                                  borderWidth: 1
+                                }} 
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">{theme.name}</span>
+                                <span className="text-xs text-zinc-400">{theme.description}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Toggles Group */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label.Root htmlFor="show-ranks" className="text-sm text-zinc-400">Ranks:</Label.Root>
+                    <Switch.Root
+                      id="show-ranks"
+                      checked={showRanks}
+                      onCheckedChange={setShowRanks}
+                      className="w-[42px] h-[25px] bg-zinc-700 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer shrink-0"
+                    >
+                      <Switch.Thumb className="block w-[21px] h-[21px] bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px]" />
+                    </Switch.Root>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Label.Root htmlFor="team-logos" className="text-sm text-zinc-400">Logos:</Label.Root>
+                    <Switch.Root
+                      id="team-logos"
+                      checked={showTeamLogos}
+                      onCheckedChange={setShowTeamLogos}
+                      className="w-[42px] h-[25px] bg-zinc-700 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer shrink-0"
+                    >
+                      <Switch.Thumb className="block w-[21px] h-[21px] bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px]" />
+                    </Switch.Root>
+                  </div>
+                </div>
+              </div>
+
+              <Separator.Root className="hidden lg:block bg-zinc-700 w-px h-8" orientation="vertical" />
+
+              <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <DialogTrigger asChild>
+                  <CustomButton
+                    disabled={!userId}
+                    className="bg-red-600 hover:bg-red-700 text-white text-sm relative group"
+                    title={!userId ? "Please login to clear lists" : ""}
                   >
-                    <div className="grid gap-1.5">
-                      {(Object.keys(colorThemes) as ThemePreset[]).map((themeName) => {
-                        const theme = colorThemes[themeName];
-                        const colors = theme.generateColors();
-                        return (
-                          <button
-                            key={themeName}
-                            onClick={() => setCurrentTheme(themeName)}
-                            className={`flex items-center gap-2 p-2 rounded-md text-left
-                              ${currentTheme === themeName ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-300 hover:bg-zinc-700/50'}
-                              transition-colors`}
-                          >
-                            <div 
-                              className="w-4 h-4 rounded-full"
-                              style={{ 
-                                background: colors.background,
-                                borderColor: colors.border,
-                                borderWidth: 1
-                              }} 
-                            />
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium">{theme.name}</span>
-                              <span className="text-xs text-zinc-400">{theme.description}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
+                    Clear All Lists
+                    {!userId && (
+                      <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                        px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                        Please login to clear lists
+                      </span>
+                    )}
+                  </CustomButton>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-900 border border-zinc-700">
+                  <DialogHeader>
+                    <DialogTitle className="text-zinc-100">Clear All Lists</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <p className="text-zinc-300">
+                      Are you sure you want to clear all lists? This will remove all players and teams.
+                    </p>
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsClearDialogOpen(false)}
+                        className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-100"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          handleClearAll();
+                          setIsClearDialogOpen(false);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Clear All
+                      </Button>
                     </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Add Rank Toggle before Team Logos */}
-              <div className="flex items-center gap-2">
-                <Label.Root 
-                  htmlFor="show-ranks" 
-                  className="text-sm text-zinc-400 whitespace-nowrap"
-                >
-                  Show Ranks:
-                </Label.Root>
-                <Switch.Root
-                  id="show-ranks"
-                  checked={showRanks}
-                  onCheckedChange={setShowRanks}
-                  className="w-[42px] h-[25px] bg-zinc-700 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer shrink-0"
-                >
-                  <Switch.Thumb className="block w-[21px] h-[21px] bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px]" />
-                </Switch.Root>
-              </div>
-
-              {/* Existing Team Logos toggle */}
-              <div className="flex items-center gap-2">
-                <Label.Root 
-                  htmlFor="team-logos" 
-                  className="text-sm text-zinc-400 whitespace-nowrap"
-                >
-                  Team Logos:
-                </Label.Root>
-                <Switch.Root
-                  id="team-logos"
-                  checked={showTeamLogos}
-                  onCheckedChange={setShowTeamLogos}
-                  className="w-[42px] h-[25px] bg-zinc-700 rounded-full relative data-[state=checked]:bg-blue-600 outline-none cursor-pointer shrink-0"
-                >
-                  <Switch.Thumb className="block w-[21px] h-[21px] bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px]" />
-                </Switch.Root>
-              </div>
-
-              <Separator.Root className="bg-zinc-700 w-px h-8" orientation="vertical" />
-
-              <CustomButton
-                onClick={handleClearAll}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Clear All Lists
-              </CustomButton>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

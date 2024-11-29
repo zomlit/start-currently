@@ -1295,10 +1295,10 @@ const BracketsSection: React.FC<BracketsSectionProps> = ({
     );
   };
 
-  // Update the return JSX
+  // Update the return JSX for the non-generated states
   return (
-    <Card className="bg-zinc-800/50 border-zinc-700 p-6 mb-6">
-      <div className="flex items-center justify-between mb-6">
+    <Card className={`bg-zinc-800/50 border-zinc-700 ${!isGenerated ? 'p-4' : 'p-6'} mb-6`}>
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-md bg-yellow-500/10">
             <Trophy className="h-5 w-5 text-yellow-500" />
@@ -1314,37 +1314,37 @@ const BracketsSection: React.FC<BracketsSectionProps> = ({
         </div>
       </div>
 
-      {!isReadyForBrackets ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4">
-          <Users className="h-12 w-12 text-zinc-700 mb-4" />
-          <h3 className="text-lg font-medium text-zinc-300 mb-2">
-            Waiting for Teams
-          </h3>
-          <p className="text-sm text-zinc-500 text-center max-w-md">
-            Complete all team rosters to generate the tournament brackets
-          </p>
-        </div>
-      ) : !isGenerated ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4">
-          <div className="p-3 rounded-lg bg-yellow-500/10 mb-4">
-            <Trophy className="h-8 w-8 text-yellow-500" />
+      {!isGenerated && (
+        <div className="grid grid-cols-2 gap-4">
+          {/* Left column - Team Status */}
+          <div className="flex items-center gap-3 py-3 px-4 bg-zinc-900/50 rounded-md">
+            <Users className="h-5 w-5 text-zinc-500" />
+            <p className="text-sm text-zinc-400">
+              {!isReadyForBrackets 
+                ? 'Complete all team rosters to generate the tournament brackets'
+                : `${numTeams} teams are ready to compete`
+              }
+            </p>
           </div>
-          <h3 className="text-lg font-medium text-zinc-300 mb-2">
-            Ready to Start Tournament
-          </h3>
-          <p className="text-sm text-zinc-500 text-center max-w-md mb-6">
-            {numTeams} teams are ready to compete. Generate the brackets to begin the tournament.
-          </p>
-          <button
-            onClick={generateBrackets}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-yellow-500 hover:bg-yellow-400 
-              text-yellow-950 font-medium transition-colors"
-          >
-            <Trophy className="h-4 w-4" />
-            Generate Brackets
-          </button>
+
+          {/* Right column - Generate Button */}
+          <div className="flex items-center justify-between py-3 px-4 bg-zinc-900/50 rounded-md">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            <button
+              onClick={generateBrackets}
+              disabled={!isReadyForBrackets}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors text-sm font-medium
+                ${isReadyForBrackets 
+                  ? 'bg-yellow-500 hover:bg-yellow-400 text-yellow-950' 
+                  : 'bg-zinc-700 text-zinc-400 cursor-not-allowed'}`}
+            >
+              Generate Brackets
+            </button>
+          </div>
         </div>
-      ) : (
+      )}
+
+      {isGenerated && (
         <div className="flex flex-col gap-4">
           {matches.map(renderMatch)}
         </div>

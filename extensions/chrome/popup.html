@@ -1,0 +1,211 @@
+<!doctype html>
+<html class="bg-transparent">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="dist/popup.css" />
+  </head>
+  <body class="bg-transparent">
+    <div id="root" class="loading">
+      <div
+        class="w-[280px] p-4 font-sofia bg-[url('images/bg.webp')] bg-center bg-no-repeat min-h-[140px] text-white"
+      >
+        <div
+          class="relative h-auto z-10 flex flex-col gap-4 backdrop-blur-md p-4 rounded-lg shadow-lg bg-white/5"
+        >
+          <div
+            class="flex flex-col items-center gap-2 pb-2 border-b border-white/10 relative after:absolute after:bg-black/10 after:content-[''] after:h-[1px] after:w-full after:bottom-[1px]"
+          >
+            <div class="relative">
+              <img
+                src="icons/icon48.png"
+                alt="Currently Logo"
+                id="logoImage"
+                class="w-8 h-8 transition-all duration-300"
+              />
+              <span
+                id="loadingText"
+                class="absolute left-1/2 -translate-x-1/2 -bottom-5 text-[10px] text-white/60 whitespace-nowrap opacity-0 transition-opacity duration-300"
+              ></span>
+            </div>
+            <span class="text-sm font-extralight tracking-widest uppercase"
+              >Currently</span
+            >
+          </div>
+
+          <div class="flex items-center justify-between font-medium">
+            <span>Gamepad Monitor</span>
+            <label class="switch">
+              <input type="checkbox" id="toggleExtension" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-white/60">Status</span>
+              <span
+                id="connectionStatus"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-xs font-semibold bg-red-500/20 text-red-500"
+              >
+                Disconnected
+              </span>
+            </div>
+
+            <div
+              id="currentInput"
+              class="text-sm text-white/80 font-medium text-center py-1 rounded bg-white/5 min-h-[28px]"
+            >
+              Waiting for input...
+            </div>
+          </div>
+
+          <div class="mt-2 pt-4 border-t border-white/10">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-medium text-white/60"
+                >Developer Tools</span
+              >
+              <button
+                id="toggleDevTools"
+                class="text-xs text-white/40 hover:text-white/60"
+              >
+                Show
+              </button>
+            </div>
+
+            <div id="devTools" class="hidden space-y-3">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium">Livestreaming.tools</span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      id="lsLoginStatus"
+                      class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400"
+                    >
+                      Not Logged In
+                    </span>
+                    <button
+                      id="openLivestreaming"
+                      class="px-2 py-1 text-xs rounded bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                    >
+                      Open Site
+                    </button>
+                  </div>
+                </div>
+
+                <div id="lsUserContainer" class="hidden space-y-2">
+                  <div class="space-y-1">
+                    <div class="text-[10px] text-white/40">User ID</div>
+                    <div class="relative">
+                      <input
+                        type="password"
+                        id="lsUserId"
+                        readonly
+                        class="w-full px-2 py-1 text-xs bg-black/20 rounded border border-white/10 pr-8"
+                      />
+                      <button
+                        id="copyLsUserId"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-t border-white/10 pt-3"></div>
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium">Spotify Cookie</span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      id="spotifyLoginStatus"
+                      class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400"
+                    >
+                      Not Logged In
+                    </span>
+                    <button
+                      id="getSpotifyCookie"
+                      class="px-2 py-1 text-xs rounded bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                    >
+                      Open Spotify
+                    </button>
+                  </div>
+                </div>
+
+                <div id="spotifyCookieContainer" class="hidden space-y-2">
+                  <div class="relative">
+                    <input
+                      type="password"
+                      id="spotifyCookie"
+                      readonly
+                      class="w-full px-2 py-1 text-xs bg-black/20 rounded border border-white/10 pr-8"
+                    />
+                    <button
+                      id="copySpotifyCookie"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path
+                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-white/40">
+                    Cookie will be hidden after popup closes
+                  </p>
+                  <div id="cookieExpirationStatus"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="init.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
