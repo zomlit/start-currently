@@ -34,7 +34,6 @@ function LayoutComponent() {
               <ClientWrapper>
                 <Navigation />
                 <Outlet />
-                <Toaster theme={theme === "system" ? undefined : theme} />
                 <Footer />
               </ClientWrapper>
             </OptimisticProfileSettingsProvider>

@@ -101,23 +101,25 @@ const setupZeroTimeout = () => {
 
 // Add Chrome extension types
 declare global {
+  // Extend Window interface without conflicting with existing chrome definition
   interface Window {
-    chrome?: {
+    // Only declare the specific parts of chrome API we use
+    __CHROME_EXTENSION__?: {
       runtime?: {
         sendMessage: (
           extensionId: string,
-          message: any,
-          callback?: (response: any) => void
+          message: unknown,
+          callback?: (response: unknown) => void
         ) => void;
         onMessage: {
           addListener: (
             callback: (
-              message: any,
-              sender: chrome.runtime.MessageSender,
-              sendResponse: (response?: any) => void
+              message: unknown,
+              sender: { id?: string },
+              sendResponse: (response?: unknown) => void
             ) => void
           ) => void;
-          removeListener: (callback: any) => void;
+          removeListener: (callback: unknown) => void;
         };
       };
     };
@@ -125,17 +127,21 @@ declare global {
 }
 
 // Update the getExtensionId function to handle connection errors better
-const getExtensionId = async (): Promise<string | null> => {
-  if (typeof window === "undefined" || !window.chrome?.runtime) {
+const getExtensionId = async (isBackup = false): Promise<string | null> => {
+  if (typeof window === "undefined" || !window?.chrome?.runtime) {
     console.log("Chrome extension API not available");
     return null;
   }
 
   try {
-    const extensionId = import.meta.env.VITE_CHROME_EXTENSION_ID;
+    const extensionId = isBackup
+      ? import.meta.env.VITE_CHROME_EXTENSION_BACKUP_ID
+      : import.meta.env.VITE_CHROME_EXTENSION_ID;
 
     if (!extensionId) {
-      console.log("Extension ID not configured in environment variables");
+      console.log(
+        `${isBackup ? "Backup extension" : "Extension"} ID not configured in environment variables`
+      );
       return null;
     }
 
@@ -145,7 +151,9 @@ const getExtensionId = async (): Promise<string | null> => {
       // Add timeout to handle cases where extension doesn't respond
       const timeout = setTimeout(() => {
         if (!hasResponded) {
-          console.log("Extension connection timed out");
+          console.log(
+            `${isBackup ? "Backup extension" : "Extension"} connection timed out`
+          );
           resolve(null);
         }
       }, 5000);
@@ -159,25 +167,51 @@ const getExtensionId = async (): Promise<string | null> => {
 
           if (window.chrome?.runtime?.lastError) {
             console.log(
-              "Extension connection error:",
+              `${isBackup ? "Backup extension" : "Extension"} connection error:`,
               window.chrome.runtime.lastError
             );
+            // If primary extension fails, try backup
+            if (!isBackup) {
+              console.log("Attempting to connect to backup extension...");
+              getExtensionId(true).then(resolve);
+              return;
+            }
             resolve(null);
             return;
           }
 
           if (response?.success && response?.id) {
-            console.log("Extension found with ID:", response.id);
+            console.log(
+              `${isBackup ? "Backup extension" : "Extension"} found with ID:`,
+              response.id
+            );
             resolve(response.id);
           } else {
-            console.log("Invalid extension response:", response);
+            console.log(
+              `Invalid ${isBackup ? "backup extension" : "extension"} response:`,
+              response
+            );
+            // If primary extension fails, try backup
+            if (!isBackup) {
+              console.log("Attempting to connect to backup extension...");
+              getExtensionId(true).then(resolve);
+              return;
+            }
             resolve(null);
           }
         }
       );
     });
   } catch (error) {
-    console.log("Error checking extension:", error);
+    console.log(
+      `Error checking ${isBackup ? "backup extension" : "extension"}:`,
+      error
+    );
+    // If primary extension fails, try backup
+    if (!isBackup) {
+      console.log("Attempting to connect to backup extension...");
+      return getExtensionId(true);
+    }
     return null;
   }
 };
@@ -216,6 +250,14 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
   const [isExtensionEnabled, setIsExtensionEnabled] = useState(false);
   const lastStateRef = useRef<GamepadState | null>(null);
   const [isEnabled, setEnabled] = useState(true);
+  const chromeApiRef = useRef<Window["__CHROME_EXTENSION__"]>(undefined);
+
+  // Initialize chromeApi after mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      chromeApiRef.current = window.__CHROME_EXTENSION__;
+    }
+  }, []);
 
   // Move hasStateChanged before other hooks that use it
   const hasStateChanged = useCallback(
@@ -278,82 +320,113 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
     if (!user?.username || !isExtensionEnabled) return;
 
     console.log("Checking extension availability...");
-    getExtensionId().then((id) => {
+
+    // Function to attempt connection with an extension ID
+    const attemptConnection = async (id: string, isBackup = false) => {
       if (id) {
         console.log("Extension found, setting up channel...");
         setExtensionId(id);
 
         // Setup channel with extension
-        window.chrome?.runtime?.sendMessage(
-          id,
-          {
-            type: "SETUP_GAMEPAD_CHANNEL",
-            username: user.username,
-          } as ExtensionMessage,
-          (response: ExtensionResponse) => {
-            if (window.chrome?.runtime?.lastError) {
-              console.error(
-                "Failed to setup extension channel:",
-                window.chrome.runtime.lastError
-              );
-              setIsExtensionEnabled(false);
-              return;
-            }
-
-            if (response?.success) {
-              console.log(
-                "Extension channel setup successful:",
-                response.channelId
-              );
-
-              // Setup message listener
-              const messageListener = (
-                message: any,
-                sender: chrome.runtime.MessageSender,
-                sendResponse: (response?: any) => void
-              ) => {
-                // Only process messages from our extension
-                if (sender.id !== id) return;
-
-                if (message.type === "GAMEPAD_STATE" && message.state) {
-                  const state: GamepadState = {
-                    buttons: message.state.buttons.map((button: any) => ({
-                      pressed: button.pressed,
-                      value: button.value || (button.pressed ? 1 : 0),
-                    })),
-                    axes: message.state.axes,
-                    timestamp: Date.now(),
-                  };
-
-                  console.log(
-                    "[GamepadProvider] Received gamepad state:",
-                    state
-                  );
-                  setGamepadState(state);
-                  setIsConnected(true);
-                  lastStateRef.current = state;
-                  broadcastState(state);
-                }
-
-                // Always send a response
-                sendResponse({ received: true });
-              };
-
-              // Add the listener
-              if (window.chrome?.runtime?.onMessage) {
-                window.chrome.runtime.onMessage.addListener(messageListener);
-                console.log("[GamepadProvider] Added message listener");
+        return new Promise((resolve) => {
+          window.chrome?.runtime?.sendMessage(
+            id,
+            {
+              type: "SETUP_GAMEPAD_CHANNEL",
+              username: user.username,
+            } as ExtensionMessage,
+            (response: ExtensionResponse) => {
+              if (window.chrome?.runtime?.lastError) {
+                console.error(
+                  "Failed to setup extension channel:",
+                  window.chrome.runtime.lastError
+                );
+                resolve(false);
+                return;
               }
-            } else {
-              console.error("Extension setup failed:", response);
-              setIsExtensionEnabled(false);
+
+              if (response?.success) {
+                console.log(
+                  "Extension channel setup successful:",
+                  response.channelId
+                );
+
+                // Setup message listener
+                const messageListener = (
+                  message: any,
+                  sender: chrome.runtime.MessageSender,
+                  sendResponse: (response?: any) => void
+                ) => {
+                  // Only process messages from our extension
+                  if (sender.id !== id) return;
+
+                  if (message.type === "GAMEPAD_STATE" && message.state) {
+                    const state: GamepadState = {
+                      buttons: message.state.buttons.map((button: any) => ({
+                        pressed: button.pressed,
+                        value: button.value || (button.pressed ? 1 : 0),
+                      })),
+                      axes: message.state.axes,
+                      timestamp: Date.now(),
+                    };
+
+                    console.log(
+                      "[GamepadProvider] Received gamepad state:",
+                      state
+                    );
+                    setGamepadState(state);
+                    setIsConnected(true);
+                    lastStateRef.current = state;
+                    broadcastState(state);
+                  }
+
+                  // Always send a response
+                  sendResponse({ received: true });
+                };
+
+                // Add the listener
+                if (window.chrome?.runtime?.onMessage) {
+                  window.chrome.runtime.onMessage.addListener(messageListener);
+                  console.log("[GamepadProvider] Added message listener");
+                }
+                resolve(true);
+              } else {
+                console.error("Extension setup failed:", response);
+                resolve(false);
+              }
             }
-          }
-        );
+          );
+        });
       } else {
-        console.log("Extension not found, disabling...");
-        setIsExtensionEnabled(false);
+        console.log(
+          `Extension ${isBackup ? "backup " : ""}not found, disabling...`
+        );
+        return false;
       }
+    };
+
+    const connectWithFallback = async () => {
+      // getExtensionId will now automatically try backup if primary fails
+      const extensionId = await getExtensionId();
+      if (!extensionId) {
+        console.log("No extension available (tried both primary and backup)");
+        setIsExtensionEnabled(false);
+        return false;
+      }
+
+      const success = await attemptConnection(extensionId);
+      if (!success) {
+        console.log("Failed to connect to extension");
+        setIsExtensionEnabled(false);
+        return false;
+      }
+
+      return true;
+    };
+
+    connectWithFallback().catch((error) => {
+      console.error("Error during extension connection:", error);
+      setIsExtensionEnabled(false);
     });
   }, [user?.username, isExtensionEnabled, broadcastState]);
 
@@ -589,29 +662,15 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
           setIsExtensionEnabled(true);
         } else {
           console.log("Extension not found, cannot enable");
-          toast.error({
-            title: "Chrome extension not found",
-            description:
-              "Please make sure the extension is installed and enabled.",
-            action: {
-              label: "Install",
-              onClick: () => {
-                // Open Chrome extensions page if we have an extension ID
-                if (window.chrome?.runtime?.id) {
-                  window.open(
-                    `chrome://extensions/?id=${window.chrome.runtime.id}`,
-                    "_blank"
-                  );
-                } else {
-                  window.open(
-                    import.meta.env.VITE_CHROME_STORE_URL ||
-                      "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
-                    "_blank"
-                  );
-                }
-              },
-            },
-          });
+          toast.error(
+            "Chrome extension not found. Please make sure the extension is installed and enabled."
+          );
+          // Handle installation separately
+          const installUrl = window.chrome?.runtime?.id
+            ? `chrome://extensions/?id=${window.chrome.runtime.id}`
+            : import.meta.env.VITE_CHROME_STORE_URL ||
+              "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip";
+          window.open(installUrl, "_blank");
         }
       });
     } else {

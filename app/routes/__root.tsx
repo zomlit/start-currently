@@ -19,6 +19,7 @@ import { dark } from "@clerk/themes";
 import { seo } from "@/utils/seo";
 import { ClerkProvider } from "@clerk/tanstack-start";
 import { useThemeStore } from "@/store/themeStore";
+import { Toaster } from "sonner";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -123,6 +124,8 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
+  const { theme } = useThemeStore();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -135,6 +138,12 @@ function RootDocument({ children }: { children: ReactNode }) {
           {/* <TanStackRouterDevtools position="bottom-right" />
           <ReactQueryDevtools buttonPosition="bottom-left" /> */}
           <Scripts />
+          <Toaster
+            theme={theme === "system" ? undefined : theme}
+            position="bottom-center"
+            richColors
+            closeButton
+          />
         </div>
       </body>
     </html>

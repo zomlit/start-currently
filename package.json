@@ -67,6 +67,7 @@
     "@tanstack/start": "^1.82.12",
     "@types/axios": "^0.14.4",
     "@types/canvas-confetti": "^1.6.4",
+    "@types/chrome": "^0.0.287",
     "@types/webfontloader": "^1.6.38",
     "@vitejs/plugin-react": "^4.3.4",
     "@xyflow/react": "^12.3.5",

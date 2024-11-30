@@ -1,0 +1,118 @@
++ url=cursor://vscode-cursor-composer/composer/test-message
++ echo 'Received URL: cursor://vscode-cursor-composer/composer/test-message'
+Received URL: cursor://vscode-cursor-composer/composer/test-message
++ grep -qi microsoft /proc/version
++ echo 'Running in WSL'
+Running in WSL
++ powershell.exe -NoProfile -NonInteractive -Command '
+    # Helper function to register protocol
+    function Register-UrlProtocol {
+      param(
+        [string]$ProtocolName,
+        [string]$Description
+      )
+
+      $exePath = (Get-Command '\''C:\Users\*\AppData\Local\Programs\cursor\Cursor.exe'\'' -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+      if (-not $exePath) {
+        $exePath = (Get-Command '\''C:\Users\*\AppData\Local\Programs\Cursor\Cursor.exe'\'' -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+      }
+      
+      if (-not $exePath) {
+        Write-Host '\''Cursor.exe not found'\''
+        return
+      }
+      
+      Write-Host "Registering $ProtocolName with $exePath"
+
+      $regPath = "HKCU:\Software\Classes\$ProtocolName"
+      $cmdPath = "HKCU:\Software\Classes\$ProtocolName\shell\open\command"
+
+      if (-not (Test-Path $regPath)) {
+        New-Item -Path $regPath -Force | Out-Null
+      }
+      
+      if (-not (Test-Path $cmdPath)) {
+        New-Item -Path $cmdPath -Force | Out-Null
+      }
+
+      # Set registry values
+      Set-ItemProperty -Path $regPath -Name '\''(Default)'\'' -Value $Description
+      Set-ItemProperty -Path $regPath -Name '\''URL Protocol'\'' -Value '\'''\''
+      
+      # Build command value with proper escaping
+      $cmdValue = '\''"$exePath" --open-url -- "%1"'\''
+      Write-Host "Setting command value: $cmdValue"
+      Set-ItemProperty -Path $cmdPath -Name '\''(Default)'\'' -Value $cmdValue
+
+      # Verify registration
+      Write-Host "Verifying registration for $ProtocolName"
+      $value = (Get-ItemProperty -Path $cmdPath).'\''(Default)'\''
+      Write-Host "Command value: $value"
+    }
+
+    # Register both protocols
+    Register-UrlProtocol -ProtocolName '\''cursor'\'' -Description '\''URL:Cursor Protocol'\''
+    Register-UrlProtocol -ProtocolName '\''vscode-cursor-composer'\'' -Description '\''URL:VSCode Cursor Protocol'\''
+
+    # Refresh shell
+    $shell = New-Object -ComObject Shell.Application
+    $shell.RefreshEnvironment()
+    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
+  '
+Registering cursor with C:\Users\tomli\AppData\Local\Programs\cursor\Cursor.exe
+Setting command value: "$exePath" --open-url -- "%1"
+Verifying registration for cursor
+Command value: "$exePath" --open-url -- "%1"
+Registering vscode-cursor-composer with C:\Users\tomli\AppData\Local\Programs\cursor\Cursor.exe
+Setting command value: "$exePath" --open-url -- "%1"
+Verifying registration for vscode-cursor-composer
+Command value: "$exePath" --open-url -- "%1"
+Method invocation failed because [System.__ComObject] does not contain a method named 'RefreshEnvironment'.
+At line:53 char:5
++     $shell.RefreshEnvironment()
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (RefreshEnvironment:String) [], RuntimeException
+    + FullyQualifiedErrorId : MethodNotFound
+ 
++ powershell.exe -NoProfile -NonInteractive -Command '
+    $urlString = '\''cursor://vscode-cursor-composer/composer/test-message'\''
+    Write-Host '\''Opening URL in Windows:'\'' $urlString
+
+    function Invoke-UrlProtocol {
+      param([string]$url)
+      
+      try {
+        # Try using ShellExecute
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.UseShellExecute = $true
+        $psi.FileName = $url
+        [System.Diagnostics.Process]::Start($psi)
+        return $true
+      } catch {
+        Write-Host '\''ShellExecute failed:'\'' $_.Exception.Message
+        # Try rundll32
+        try {
+          Start-Process '\''rundll32.exe'\'' -ArgumentList '\''url.dll,FileProtocolHandler'\'', $url
+          return $true
+        } catch {
+          Write-Host '\''Rundll32 failed:'\'' $_.Exception.Message
+          return $false
+        }
+      }
+    }
+
+    if (Invoke-UrlProtocol -url $urlString) {
+      Write-Host '\''URL opened successfully'\''
+      exit 0
+    } else {
+      Write-Host '\''Failed to open URL'\''
+      exit 1
+    }
+  '
+Opening URL in Windows: cursor://vscode-cursor-composer/composer/test-message
+ShellExecute failed: Exception calling "Start" with "1" argument(s): "Application not found"
+URL opened successfully
++ exit_status=0
++ echo 'Command exited with status: 0'
+Command exited with status: 0
++ exit 0

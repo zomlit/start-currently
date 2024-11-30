@@ -1,7 +1,13 @@
 import { useRouter } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Home, RefreshCw, Copy } from "lucide-react";
+import {
+  AlertCircle,
+  Home,
+  RefreshCw,
+  Copy,
+  MessageSquare,
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ClientWrapper } from "@/components/ClientWrapper";
@@ -11,9 +17,10 @@ import { Toaster } from "sonner";
 import { useThemeStore } from "@/store/themeStore";
 import { ClerkProvider } from "@clerk/tanstack-start";
 import { dark } from "@clerk/themes";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { CircleDot } from "@/components/icons";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
+import { Input } from "@/components/ui/input";
 
 export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
@@ -79,18 +86,64 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
     return line;
   };
 
-  const copyErrorDetails = async () => {
+  const copyErrorDetails = useCallback(async () => {
     try {
       const errorText = `Error: ${errorDetails.message}\n\n${
         errorDetails.stack ? `Stack Trace:\n${errorDetails.stack}` : ""
       }`;
-      
+
       await navigator.clipboard.writeText(errorText);
       toast.success("Error details copied to clipboard");
     } catch (err) {
       toast.error("Failed to copy error details");
     }
-  };
+  }, [errorDetails]);
+
+  const sendToCursor = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const errorMessage = `Error Details:
+Message: ${errorDetails.message}
+
+Stack Trace:
+${errorDetails.stack || "No stack trace available"}
+
+Additional Info:
+- Is Hook Error: ${errorDetails.isHookError}
+- Is HMR Error: ${errorDetails.isHmrError}
+- Environment: ${process.env.NODE_ENV}
+- Route: ${router.state.location.pathname}`;
+
+    try {
+      // Try to use Cursor's extension API first
+      if (window.__cursor?.openChatWithText) {
+        window.__cursor.openChatWithText(errorMessage);
+        toast.success("Error details sent to Cursor chat");
+        return;
+      }
+
+      // Try to use our VS Code extension
+      const encodedError = encodeURIComponent(errorMessage);
+      const cursorUri = `vscode://vscode-cursor-composer/composer/${encodedError}`;
+
+      // Copy to clipboard as backup
+      navigator.clipboard.writeText(errorMessage).then(() => {
+        toast.success({
+          title: "Error details copied to clipboard",
+          description: "Opening Cursor composer...",
+        });
+
+        // Open using our extension
+        window.location.href = cursorUri;
+      });
+    } catch (err) {
+      // Final fallback to clipboard only
+      navigator.clipboard
+        .writeText(errorMessage)
+        .then(() => toast.info("Error details copied to clipboard"))
+        .catch(() => toast.error("Failed to copy error details"));
+    }
+  }, [errorDetails, router.state.location.pathname]);
 
   return (
     <ClientWrapper>
@@ -109,37 +162,46 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
                   </div>
                 </div>
 
-                <h1 className="text-3xl font-bold tracking-tight text-center">
+                <h1 className="text-3xl font-bold tracking-tight text-center mt-8">
                   Oops! Something went wrong
                 </h1>
               </div>
 
               <div className="w-full">
                 <div className="bg-zinc-950/80 rounded-lg border border-zinc-800">
-                  <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-                    <span className="text-xs font-medium text-zinc-400">Error Message</span>
+                  <div className="flex items-center border-b border-zinc-800 px-4 py-2">
+                    <div
+                      className="relative text-lg text-red-400 uppercase font-black mr-2"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      Error:
+                    </div>
+                    <Input
+                      value={errorDetails.message}
+                      readOnly
+                      onClick={(e: any) => {
+                        e.currentTarget.select();
+                        navigator.clipboard.writeText(errorDetails.message);
+                        toast.success("Error message copied to clipboard");
+                      }}
+                      className="flex-1 p-0 font-mono text-sm bg-transparent border-none ring-0 ring-offset-0 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none hover:outline-none hover:ring-0 hover:ring-offset-0 active:outline-none active:ring-0 active:ring-offset-0 cursor-pointer rounded-none [&::selection]:bg-violet-500/50"
+                      style={{ color: "#facc15" }} // yellow-400
+                    />
+
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 shrink-0 hover:bg-zinc-800"
+                      className="h-7 w-7 shrink-0 hover:bg-zinc-800 ml-2"
                       onClick={copyErrorDetails}
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                  <div className="p-4 space-y-4">
-                    <pre className="text-sm font-mono text-left">
-                      <code>
-                        <span className="text-red-400">Error</span>
-                        <span className="text-white">:</span>
-                        <span className="text-yellow-300"> {errorDetails.message}</span>
-                      </code>
-                    </pre>
-
+                  <div className="pl-4 space-y-4">
                     {process.env.NODE_ENV === "development" &&
                       errorDetails.stack &&
                       !errorDetails.isHookError && (
-                        <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-words border-t border-zinc-800 pt-4 max-h-[240px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-zinc-700/30 hover:scrollbar-thumb-zinc-700/50">
+                        <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-words border-zinc-800 pt-4 max-h-[240px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-zinc-700/30 hover:scrollbar-thumb-zinc-700/50">
                           {errorDetails.stack.split("\n").map((line, i) => (
                             <div
                               key={i}
@@ -161,7 +223,10 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
             {errorDetails.isHookError ? (
               <Button
                 variant="secondary"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  toast.info("Refreshing page...");
+                  setTimeout(() => window.location.reload(), 1000);
+                }}
                 className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
               >
                 <RefreshCw className="h-4 w-4" />
@@ -170,7 +235,18 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
             ) : (
               <Button
                 variant="secondary"
-                onClick={() => reset?.()}
+                onClick={() => {
+                  const promise = new Promise((resolve) => {
+                    reset?.();
+                    setTimeout(resolve, 1000);
+                  });
+
+                  toast.promise(promise, {
+                    loading: "Retrying...",
+                    success: "Operation retried",
+                    error: "Failed to retry",
+                  });
+                }}
                 className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
               >
                 <RefreshCw className="h-4 w-4" />
@@ -180,15 +256,40 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
 
             <Button
               variant="secondary"
-              onClick={() => router.navigate({ to: "/" })}
+              onClick={() => {
+                const promise = router.navigate({ to: "/" });
+                toast.promise(promise, {
+                  loading: "Navigating home...",
+                  success: "Navigated to home",
+                  error: "Failed to navigate",
+                });
+              }}
               className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
             >
               <Home className="h-4 w-4" />
               Go Home
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={sendToCursor}
+              className="gap-2 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/50"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Send to Cursor
             </Button>
           </CardFooter>
         </Card>
       </div>
     </ClientWrapper>
   );
+}
+
+// Add type declaration for Cursor's window API
+declare global {
+  interface Window {
+    __cursor?: {
+      openChatWithText: (text: string) => void;
+    };
+  }
 }

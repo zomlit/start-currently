@@ -19,10 +19,47 @@ import type { VisualizerSettings } from "@/types/visualizer";
 export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: () => (
     <WidgetAuthGuard>
-      <VisualizerSection />
+      <VisualizerSectionz />
     </WidgetAuthGuard>
   ),
 });
+
+// Update the WidgetProfile type to match the form requirements
+type WidgetProfile = {
+  id: string;
+  name: string;
+  color: string;
+  is_active: boolean;
+  is_current: boolean;
+  settings: {
+    commonSettings: {
+      backgroundColor?: string;
+      textColor?: string;
+      fontSize?: number;
+      padding?: number;
+      fontFamily?: string;
+    };
+    specificSettings: {
+      mode: number;
+      colorSync: boolean;
+      canvasEnabled: boolean;
+      micEnabled: boolean;
+      backgroundOpacity: number;
+      albumCanvas: boolean;
+      backgroundCanvas: boolean;
+      backgroundCanvasOpacity: number;
+      pauseEnabled: boolean;
+      hideOnDisabled: boolean;
+      selectedSkin: string;
+      progressBarForegroundColor: string;
+      progressBarBackgroundColor?: string;
+      gradient?: boolean;
+      fillAlpha?: number;
+      lineWidth?: number;
+    };
+  };
+  widgetType: "visualizer" | "timer" | "lyrics";
+};
 
 function VisualizerSection() {
   const { user } = useUser();
@@ -158,7 +195,7 @@ function VisualizerSection() {
             handleSettingCommit={(key, value) => {
               handleSettingsUpdate({ [key]: value });
             }}
-            currentProfile={currentProfile}
+            currentProfile={currentProfile as WidgetProfile}
             colorSyncEnabled={settings.visualSettings.colorSync}
           />
         </div>

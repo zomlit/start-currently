@@ -41,3 +41,8 @@ export function parseRgba(color: string): RGBAColor {
 export function rgbaToString({ r, g, b, a }: RGBAColor): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
+
+export const safeFormatColor = (color: string) => {
+  if (!color) return "#000000";
+  return color.startsWith("#") ? color : `#${color}`;
+};
