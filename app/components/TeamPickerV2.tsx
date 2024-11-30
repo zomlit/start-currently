@@ -639,31 +639,49 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     setTeams(teamsList);
   }, [teamsList]);
 
-  // Add this mutation for updating teams
+  // Update the updateTeamsMutation definition
   const updateTeamsMutation = useMutation({
     mutationFn: async (newTeams: Captain[]) => {
+      // Update local state first
       const result = await Promise.resolve(newTeams);
       
-      // Save to Supabase
-      const { error } = await supabase
-        .from('Bracket')
-        .update({
-          data: {
-            players: players,
-            teams: newTeams,
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
+      // Only update database if we have a selected bracket
+      if (selectedBracketId) {
+        const { error } = await supabase
+          .from('Bracket')
+          .update({
+            data: {
+              players,
+              teams: newTeams,
+              settings: {
+                numTeams,
+                teamSize,
+                showRanks,
+                showTeamLogos,
+                currentTheme,
+                mode: currentMode,
+              }
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedBracketId);
 
-      if (error) {
-        console.error('Error updating teams in Supabase:', error);
+        if (error) {
+          console.error('Error updating teams in Supabase:', error);
+          throw error;
+        }
       }
       
       return result;
     },
     onSuccess: (newTeams) => {
+      // Only update the local query data
       queryClient.setQueryData(['teams'], newTeams);
+      
+      // If we have a selected bracket, invalidate the brackets query
+      if (selectedBracketId) {
+        queryClient.invalidateQueries({ queryKey: ['brackets'] });
+      }
     },
   });
 
@@ -1405,7 +1423,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     return theme.generateColors();
   };
 
-  // Add these helper functions for auto-assignment
+  // Update the autoAssignCaptains function
   const autoAssignCaptains = () => {
     // Get available captains from pool
     const availableCaptains = [...players].filter(p => p.isCaptain);
@@ -1449,8 +1467,40 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       }
     });
 
-    // Update teams
+    // Update teams locally
     updateTeamsMutation.mutate(updatedTeams);
+
+    // If we have a selected bracket, update it in the database
+    if (selectedBracketId) {
+      supabase
+        .from('Bracket')
+        .update({
+          data: {
+            players: players.filter(p => 
+              !sortedCaptains.slice(0, assignedCount).find(c => c.id === p.id)
+            ),
+            teams: updatedTeams,
+            settings: {
+              numTeams,
+              teamSize,
+              showRanks,
+              showTeamLogos,
+              currentTheme,
+              mode: currentMode,
+            }
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedBracketId)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error updating bracket:', error);
+            toast.error({ title: 'Error updating bracket' });
+          } else {
+            queryClient.invalidateQueries({ queryKey: ['brackets'] });
+          }
+        });
+    }
 
     // Remove assigned captains from pool
     const remainingCaptains = players.filter(p => 
@@ -1460,6 +1510,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     queryClient.setQueryData(['players'], [...remainingCaptains, ...nonCaptains]);
   };
 
+  // Update the autoAssignPlayers function
   const autoAssignPlayers = () => {
     // Get available regular players from pool
     const availablePlayers = [...players].filter(p => !p.isCaptain);
@@ -1495,7 +1546,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
     // Create new teams array
     const updatedTeams = [...teams];
-    let assignedCount = 0;
+    const assignedPlayers: Player[] = [];
 
     // Distribute players to balance team ranks
     while (sortedPlayers.length > 0 && incompleteTeams.some(team => team.players.length < teamSize)) {
@@ -1514,14 +1565,46 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
             // Get the next player
             const player = sortedPlayers.shift()!;
             updatedTeams[teamIndex].players.push(player);
-            assignedCount++;
+            assignedPlayers.push(player);
           }
         }
       }
     }
 
-    // Update teams
+    // Update teams locally
     updateTeamsMutation.mutate(updatedTeams);
+
+    // If we have a selected bracket, update it in the database
+    if (selectedBracketId) {
+      supabase
+        .from('Bracket')
+        .update({
+          data: {
+            players: players.filter(p => 
+              !assignedPlayers.find(ap => ap.id === p.id)
+            ),
+            teams: updatedTeams,
+            settings: {
+              numTeams,
+              teamSize,
+              showRanks,
+              showTeamLogos,
+              currentTheme,
+              mode: currentMode,
+            }
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedBracketId)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error updating bracket:', error);
+            toast.error({ title: 'Error updating bracket' });
+          } else {
+            queryClient.invalidateQueries({ queryKey: ['brackets'] });
+          }
+        });
+    }
 
     // Update players pool with remaining players
     const captains = players.filter(p => p.isCaptain);
@@ -1656,7 +1739,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
   // Replace or update the handleClearAll function
   const handleClearAll = () => {
-    setSelectedBracketId(null); // Reset selected bracket
+    // Reset players
     queryClient.setQueryData(['players'], []);
     setPlayers([]);
 
@@ -1673,9 +1756,46 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       };
     });
 
+    // Update teams state
     queryClient.setQueryData(['teams'], emptyTeams);
     setTeams(emptyTeams);
-    toast.success({ title: 'All lists cleared' });
+
+    // If we have a selected bracket, update it in the database
+    if (selectedBracketId) {
+      const currentBracket = brackets?.find(b => b.id === selectedBracketId);
+      if (currentBracket) {
+        // Use supabase directly to update the bracket
+        supabase
+          .from('Bracket')
+          .update({
+            data: {
+              players: [],
+              teams: emptyTeams,
+              settings: {
+                numTeams,
+                teamSize,
+                showRanks,
+                showTeamLogos,
+                currentTheme,
+                mode: currentMode,
+              }
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedBracketId)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error updating bracket:', error);
+              toast.error({ title: 'Error updating bracket' });
+            } else {
+              queryClient.invalidateQueries({ queryKey: ['brackets'] });
+              toast.success({ title: 'All lists cleared' });
+            }
+          });
+      }
+    } else {
+      toast.success({ title: 'All lists cleared' });
+    }
   };
 
   // Add mode change handler

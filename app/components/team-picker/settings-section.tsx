@@ -5,17 +5,14 @@ import * as Switch from '@radix-ui/react-switch';
 import * as Label from '@radix-ui/react-label';
 import * as Separator from '@radix-ui/react-separator';
 import { CustomButton } from '@/components/ui/custom-button';
-import { Paintbrush, ImageIcon, X, ChevronDown } from 'lucide-react';
+import { Paintbrush, ImageIcon, X, ChevronDown, Trash2 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { colorThemes } from '../../utils/colorThemes';
-import type { ThemePreset } from '../../types/team-picker';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { ThemePreset } from '@/types/team-picker';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-
-interface Captain {
-  id: string;
-  name: string;
-}
+import type { Captain } from '@/types/team-picker';
+import { toast } from 'sonner';
 
 interface SettingsSectionProps {
   newName: string;
@@ -139,7 +136,12 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     min={1}
                     max={4}
                     value={teamSize}
-                    onChange={(e) => handleTeamSizeChange(parseInt(e.target.value, 10))}
+                    onChange={(e) => {
+                      const newSize = parseInt(e.target.value, 10);
+                      if (!isNaN(newSize) && newSize >= 1 && newSize <= 4) {
+                        handleTeamSizeChange(newSize);
+                      }
+                    }}
                     className="w-16 bg-zinc-700 border-zinc-600 text-zinc-100"
                   />
                 </div>
@@ -362,6 +364,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     className="bg-red-600 hover:bg-red-700 text-white text-sm relative group"
                     title={!userId ? "Please login to clear lists" : ""}
                   >
+                    <Trash2 className="h-4 w-4" />
                     Clear All Lists
                     {!userId && (
                       <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
@@ -371,33 +374,47 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     )}
                   </CustomButton>
                 </DialogTrigger>
-                <DialogContent className="bg-zinc-900 border border-zinc-700">
+                <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle className="text-zinc-100">Clear All Lists</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2 text-red-500">
+                      <Trash2 className="h-5 w-5" />
+                      Clear All Data
+                    </DialogTitle>
+                    <DialogDescription className="space-y-3 pt-3">
+                      <p>
+                        You're about to clear all data from the team picker. This will:
+                      </p>
+                      <ul className="list-disc pl-4 space-y-1 text-sm">
+                        <li>Remove all players from the available pool</li>
+                        <li>Remove all players from existing teams</li>
+                        <li>Reset all team names to defaults</li>
+                        <li>Clear all match scores and status</li>
+                      </ul>
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 text-amber-500 text-sm mt-4">
+                        ⚠️ This action cannot be undone. Please make sure you want to proceed.
+                      </div>
+                    </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <p className="text-zinc-300">
-                      Are you sure you want to clear all lists? This will remove all players and teams.
-                    </p>
-                    <div className="flex justify-end gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsClearDialogOpen(false)}
-                        className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-100"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          handleClearAll();
-                          setIsClearDialogOpen(false);
-                        }}
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        Clear All
-                      </Button>
-                    </div>
-                  </div>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsClearDialogOpen(false)}
+                      className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-100"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        handleClearAll();
+                        setIsClearDialogOpen(false);
+                      }}
+                      className="gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Clear All Data
+                    </Button>
+                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>

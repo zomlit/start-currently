@@ -14,6 +14,56 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
+interface Player {
+  id: string;
+  name: string;
+  rank?: number;
+}
+
+interface Captain {
+  id: string;
+  name: string;
+  players: Player[];
+}
+
+interface ThemePreset {
+  name: string;
+  description: string;
+  generateColors: () => any;
+}
+
+type PickerMode = 'draft' | 'auto' | 'manual';
+
+interface SavedBracketData {
+  players: Player[];
+  teams: Captain[];
+  settings: {
+    numTeams: number;
+    teamSize: number;
+    showRanks: boolean;
+    showTeamLogos: boolean;
+    currentTheme: ThemePreset;
+    mode: PickerMode;
+  };
+}
+
+interface SavedBracket {
+  id: string;
+  user_id: string;
+  owner_id: string;
+  name: string;
+  data: SavedBracketData;
+  is_complete: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ToastOptions {
+  title: string;
+  description: string;
+  variant?: 'default' | 'destructive' | 'success';
+}
+
 interface SaveLoadSectionProps {
   players: Player[];
   teams: Captain[];
@@ -28,6 +78,10 @@ interface SaveLoadSectionProps {
   onBracketSelect?: (id: string | null) => void;
 }
 
+interface SaveLoadSectionHandle {
+  handleClearCurrentTournament: () => Promise<void>;
+}
+
 export function SaveLoadSection({
   players,
   teams,
@@ -40,7 +94,7 @@ export function SaveLoadSection({
   onLoadBracket,
   activeBracketId,
   onBracketSelect,
-}: SaveLoadSectionProps) {
+}: SaveLoadSectionProps): JSX.Element & SaveLoadSectionHandle {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -113,10 +167,25 @@ export function SaveLoadSection({
 
   // Modified save mutation
   const saveBracketMutation = useMutation({
-    mutationFn: async ({ name, id }: { name: string; id?: string }) => {
+    mutationFn: async ({ name, id, data }: { 
+      name: string; 
+      id?: string;
+      data?: {
+        players: any[];
+        teams: any[];
+        settings: {
+          numTeams: number;
+          teamSize: number;
+          showRanks: boolean;
+          showTeamLogos: boolean;
+          currentTheme: any;
+          mode: any;
+        };
+      };
+    }) => {
       if (!userId) throw new Error('Not authenticated');
 
-      const bracketData = {
+      const bracketData = data || {
         players,
         teams,
         settings: {
@@ -131,7 +200,7 @@ export function SaveLoadSection({
 
       if (id) {
         // Update existing bracket
-        const { data, error } = await supabase
+        const { data: result, error } = await supabase
           .from('Bracket')
           .update({
             name,
@@ -143,10 +212,10 @@ export function SaveLoadSection({
           .single();
 
         if (error) throw error;
-        return data;
+        return result;
       } else {
         // Create new bracket
-        const { data, error } = await supabase
+        const { data: result, error } = await supabase
           .from('Bracket')
           .insert([{
             user_id: userId,
@@ -160,23 +229,11 @@ export function SaveLoadSection({
           .single();
 
         if (error) throw error;
-        return data;
+        return result;
       }
     },
     onSuccess: () => {
-      toast.success({
-        title: 'Success',
-        description: 'Tournament saved successfully'
-      });
-      setIsSaveDialogOpen(false);
-      setTournamentName('');
       queryClient.invalidateQueries({ queryKey: ['brackets'] });
-    },
-    onError: () => {
-      toast.error({
-        title: 'Error',
-        description: 'Failed to save tournament'
-      });
     },
   });
 
@@ -351,7 +408,7 @@ export function SaveLoadSection({
     }
 
     try {
-      // Create new game and reset all states
+      // Create new game with empty players but keep the team structure
       const initialTeams = Array.from({ length: numTeams }, (_, i) => {
         const teamNumber = i < Math.ceil(numTeams/2)
           ? i * 2 + 1  // Odd numbers (1,3,5,7)
@@ -359,34 +416,35 @@ export function SaveLoadSection({
         return {
           id: `team-${Date.now()}-${i}`,
           name: `Team ${String(teamNumber).padStart(2, '0')}`,
-          players: [],
+          players: [], // Empty players array
         };
       });
 
-      queryClient.setQueryData(['players'], []);
-      queryClient.setQueryData(['teams'], initialTeams);
+      // Create new bracket data
+      const newBracketData = {
+        players: [], // Empty players array
+        teams: initialTeams,
+        settings: {
+          numTeams,
+          teamSize,
+          showRanks,
+          showTeamLogos,
+          currentTheme,
+          mode: currentMode,
+        }
+      };
       
       // Save as new bracket and get the result
       const result = await saveBracketMutation.mutateAsync({
-        name: newGameName.trim()
+        name: trimmedName,
+        data: newBracketData // Include the full bracket data
       });
 
       // Set the new bracket as active
       if (result?.id) {
         onBracketSelect?.(result.id);
         // Load the new bracket data
-        onLoadBracket({
-          players: [],
-          teams: initialTeams,
-          settings: {
-            numTeams,
-            teamSize,
-            showRanks,
-            showTeamLogos,
-            currentTheme,
-            mode: currentMode,
-          }
-        });
+        onLoadBracket(newBracketData);
       }
       
       setNewGameName('');
@@ -401,6 +459,66 @@ export function SaveLoadSection({
       toast.error({
         title: 'Error',
         description: 'Failed to create new tournament'
+      });
+    }
+  };
+
+  // Update the handleClearCurrentTournament function
+  const handleClearCurrentTournament = async () => {
+    if (!activeBracketId) return;
+
+    try {
+      // Get the current bracket
+      const currentBracket = brackets?.find(b => b.id === activeBracketId);
+      if (!currentBracket) return;
+
+      // Create cleared data - keeping settings but clearing all player data
+      const clearedData = {
+        ...currentBracket.data,
+        players: [], // Clear all players from the pool
+        teams: Array.from({ length: numTeams }, (_, i) => {
+          const teamNumber = i < Math.ceil(numTeams/2)
+            ? i * 2 + 1  // Odd numbers (1,3,5,7)
+            : (i - Math.ceil(numTeams/2)) * 2 + 2;  // Even numbers (2,4,6,8)
+          return {
+            id: `team-${Date.now()}-${i}`,
+            name: `Team ${String(teamNumber).padStart(2, '0')}`,
+            players: [], // Empty players array
+          };
+        }),
+        settings: {
+          ...currentBracket.data.settings,
+          numTeams,
+          teamSize,
+          showRanks,
+          showTeamLogos,
+          currentTheme,
+          mode: currentMode,
+        }
+      };
+
+      // Update the bracket with cleared data
+      await saveBracketMutation.mutateAsync({
+        id: activeBracketId,
+        name: currentBracket.name,
+        data: clearedData
+      });
+
+      // Update the UI with cleared data while maintaining the current tournament
+      onLoadBracket(clearedData);
+      
+      // Ensure the tournament stays selected
+      onBracketSelect?.(activeBracketId);
+
+      toast.success({
+        title: 'Success',
+        description: 'All players and teams have been cleared from the current tournament'
+      });
+    } catch (error) {
+      console.error('Error clearing tournament data:', error);
+      toast.error({
+        title: 'Error',
+        description: 'Failed to clear tournament data'
       });
     }
   };
