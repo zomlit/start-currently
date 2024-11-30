@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@clerk/tanstack-start";
+import { useUser, useSession } from "@clerk/tanstack-start";
 import { supabase } from "@/utils/supabase/client";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -65,37 +65,27 @@ export default function ChatSettingsForm({
     form.reset(settings);
   }, [settings, form]);
 
-  const { data: twitchAccounts, isLoading: isTwitchAccountsLoading } = useQuery(
-    {
-      queryKey: ["twitchAccounts", user?.id],
-      queryFn: async () => {
-        if (!user?.id) {
-          console.warn("User ID is null, skipping Twitch accounts fetch");
-          return [];
-        }
-        try {
-          const response = await fetch("/api/clerk/getTwitchAccounts");
-          if (!response.ok) {
-            throw new Error("Failed to fetch Twitch accounts");
-          }
-          const data = await response.json();
-          return data.matchedTokens || [];
-        } catch (error) {
-          console.error("Error fetching Twitch accounts:", error);
-          toast.error({
-            title: "Failed to fetch Twitch accounts",
-          });
-          return [];
-        }
-      },
-      enabled: !!user?.id,
-      staleTime: Infinity, // Set to Infinity to prevent automatic refetches
-      cacheTime: 1000 * 60 * 60, // 1 hour
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    }
-  );
+  const { session } = useSession();
+  const { data: twitchAccounts } = useQuery({
+    queryKey: ["twitchAccounts", user?.id],
+    queryFn: async () => {
+      if (!session?.user) return [];
+
+      return (session.user.externalAccounts || [])
+        .filter((account) => account.provider === "twitch")
+        .map((account) => ({
+          providerUserId: account.id,
+          label: account.username,
+          avatar: account.imageUrl,
+        }));
+    },
+    enabled: !!session?.user,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60, // 1 hour (renamed from cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
 
   const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -111,7 +101,7 @@ export default function ChatSettingsForm({
     },
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60, // 1 hour (renamed from cacheTime)
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -148,13 +138,11 @@ export default function ChatSettingsForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {isTwitchAccountsLoading ? (
-                    <SelectItem value="loading">Loading...</SelectItem>
-                  ) : twitchAccounts && twitchAccounts.length > 0 ? (
+                  {twitchAccounts && twitchAccounts.length > 0 ? (
                     twitchAccounts.map((account) => (
                       <SelectItem
                         key={account.providerUserId}
-                        value={account.label}
+                        value={account.label || ""}
                       >
                         <div className="flex items-center">
                           <Avatar className="mr-2 h-6 w-6">
@@ -163,7 +151,7 @@ export default function ChatSettingsForm({
                               alt={account.label}
                             />
                             <AvatarFallback>
-                              {account.label[0].toUpperCase()}
+                              {account.label?.[0]?.toUpperCase() || ""}
                             </AvatarFallback>
                           </Avatar>
                           {account.label}
@@ -201,7 +189,7 @@ export default function ChatSettingsForm({
                   {twitchAccounts?.map((account) => (
                     <SelectItem
                       key={account.providerUserId}
-                      value={account.label}
+                      value={account.label || ""}
                     >
                       <div className="flex items-center">
                         <Avatar className="mr-2 h-6 w-6">
@@ -210,7 +198,7 @@ export default function ChatSettingsForm({
                             alt={account.label}
                           />
                           <AvatarFallback>
-                            {account.label[0].toUpperCase()}
+                            {account.label?.[0]?.toUpperCase() || ""}
                           </AvatarFallback>
                         </Avatar>
                         {account.label}

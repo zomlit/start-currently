@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/tanstack-start";
 import { SpotifyTrack } from "@/types/spotify";
 import { profanity } from "@2toad/profanity";
 import { supabase } from "@/utils/supabase/client";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
 interface UseLyricsProps {
   track?: SpotifyTrack | null;
@@ -14,6 +16,8 @@ interface LyricsLine {
   startTimeMs: number;
   words: string;
 }
+
+type VisualizerWidget = Database["public"]["Tables"]["VisualizerWidget"]["Row"];
 
 export const useLyrics = ({
   track: initialTrack,
@@ -27,6 +31,7 @@ export const useLyrics = ({
   const [noLyricsAvailable, setNoLyricsAvailable] = useState(false);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [isTokenSet, setIsTokenSet] = useState(false);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const formatColor = useCallback((color: any): string => {
     if (!color) return "rgba(0, 0, 0, 1)";
@@ -218,6 +223,42 @@ export const useLyrics = ({
     [getToken]
   );
 
+  const fetchInitialTrackData = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("VisualizerWidget")
+        .select("track")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) throw error;
+
+      if (data?.track) {
+        let trackString =
+          typeof data.track === "string"
+            ? data.track
+            : JSON.stringify(data.track);
+
+        trackString = trackString
+          .replace(/\bNaN\b/g, "null")
+          .replace(/\bbars\b(?=\s*:)/g, '"bars"')
+          .replace(/\bbeats\b(?=\s*:)/g, '"beats"')
+          .replace(/\bsections\b(?=\s*:)/g, '"sections"')
+          .replace(/\btempo\b(?=\s*:)/g, '"tempo"')
+          .replace(/\btime_signature\b(?=\s*:)/g, '"time_signature"');
+
+        const trackData = JSON.parse(trackString);
+        if (trackData && trackData.id) {
+          setTrack(trackData);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching initial track data:", error);
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (!userId) {
       console.log("No userId available for Supabase subscription");
@@ -225,6 +266,8 @@ export const useLyrics = ({
     }
 
     console.log("Setting up Supabase subscription for user:", userId);
+
+    fetchInitialTrackData();
 
     const channel = supabase
       .channel(`public:VisualizerWidget:${userId}`)
@@ -261,13 +304,11 @@ export const useLyrics = ({
 
               if (!trackData || typeof trackData !== "object") {
                 console.warn("Invalid track data received:", trackData);
-                setTrack(null);
                 return;
               }
 
               if (!trackData.id) {
                 console.warn("Track data missing ID:", trackData);
-                setTrack(null);
                 return;
               }
 
@@ -275,23 +316,23 @@ export const useLyrics = ({
             } catch (error) {
               console.error("Error parsing track data:", error);
               console.error("Failed to parse string:", newData.track);
-              setTrack(null);
             }
-          } else {
-            console.log("No track data in payload, clearing track");
-            setTrack(null);
           }
         }
       )
       .subscribe((status) => {
         console.log("Supabase subscription status:", status);
+        channelRef.current = channel;
       });
 
     return () => {
       console.log("Cleaning up Supabase subscription");
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [userId]);
+  }, [userId, fetchInitialTrackData]);
 
   useEffect(() => {
     console.log("Track effect triggered:", {

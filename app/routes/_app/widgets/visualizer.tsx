@@ -19,7 +19,7 @@ import type { VisualizerSettings } from "@/types/visualizer";
 export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: () => (
     <WidgetAuthGuard>
-      <VisualizerSectionz />
+      <VisualizerSection />
     </WidgetAuthGuard>
   ),
 });
