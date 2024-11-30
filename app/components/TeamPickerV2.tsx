@@ -601,23 +601,29 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   const currentModeConfig = PICKER_MODES.find(mode => mode.id === currentMode)!;
   const { userId } = useAuth();
 
-  // First, let's rename the query variables to avoid conflicts
+  // First, declare selectedBracketId state before using it
+  const [selectedBracketId, setSelectedBracketId] = useState<string | null>(null);
+
+  // Then update the teams query
   const { data: teamsList = [], isLoading: isLoadingTeams } = useQuery<Captain[]>({
     queryKey: ['teams'],
-    initialData: Array.from({ length: numTeams }, (_, i) => {
-      const teamNumber = i < Math.ceil(numTeams/2)
-        ? i * 2 + 1  // Odd numbers (1,3,5,7)
-        : (i - Math.ceil(numTeams/2)) * 2 + 2;  // Even numbers (2,4,6,8)
-      return {
-        id: `team-${Date.now()}-${i}`,
-        name: `Team ${String(teamNumber).padStart(2, '0')}`,
-        players: [],
-      };
-    }),
+    initialData: () => {
+      // Always generate empty teams on first load
+      return Array.from({ length: numTeams }, (_, i) => {
+        const teamNumber = i < Math.ceil(numTeams/2)
+          ? i * 2 + 1  // Odd numbers (1,3,5,7)
+          : (i - Math.ceil(numTeams/2)) * 2 + 2;  // Even numbers (2,4,6,8)
+        return {
+          id: `team-${Date.now()}-${i}`,
+          name: `Team ${String(teamNumber).padStart(2, '0')}`,
+          players: [],
+        };
+      });
+    },
     enabled: true,
   });
 
-  // And rename this one too
+  // Update the players query
   const { data: playersList = [], isLoading: isLoadingPlayers } = useQuery<Player[]>({
     queryKey: ['players'],
     initialData: [],
@@ -662,41 +668,30 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   });
 
   // Add this query to load initial data
-  const { data: bracketData } = useQuery({
-    queryKey: ['bracket', userId],
+  const { data: brackets } = useQuery({
+    queryKey: ['brackets', userId],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!userId) return [];
       
       const { data, error } = await supabase
         .from('Bracket')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading bracket data:', error);
-        return null;
+        toast.error({ title: 'Error loading brackets' });
+        return [];
       }
 
-      return data;
+      return data as SavedBracket[];
     },
     enabled: !!userId,
+    initialData: [],
+    // Add this to prevent automatic refetching
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
-
-  // Add this effect to handle initial data loading
-  useEffect(() => {
-    if (bracketData?.data) {
-      const { players: savedPlayers, teams: savedTeams } = bracketData.data;
-      
-      if (savedPlayers) {
-        queryClient.setQueryData(['players'], savedPlayers);
-      }
-      
-      if (savedTeams) {
-        queryClient.setQueryData(['teams'], savedTeams);
-      }
-    }
-  }, [bracketData]);
 
   useEffect(() => {
     console.log('Current players:', players);
@@ -1661,7 +1656,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
   // Replace or update the handleClearAll function
   const handleClearAll = () => {
-    // Clear players
+    setSelectedBracketId(null); // Reset selected bracket
     queryClient.setQueryData(['players'], []);
     setPlayers([]);
 
@@ -1680,7 +1675,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
     queryClient.setQueryData(['teams'], emptyTeams);
     setTeams(emptyTeams);
-    toast.success('All lists cleared');
+    toast.success({ title: 'All lists cleared' });
   };
 
   // Add mode change handler
@@ -1797,29 +1792,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [newBracketName, setNewBracketName] = useState('');
-  const [selectedBracketId, setSelectedBracketId] = useState<string | null>(null);
-
-  // Add these queries and mutations
-  const { data: brackets } = useQuery({
-    queryKey: ['brackets', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      const { data, error } = await supabase
-        .from('Bracket')
-        .select('*')
-        .eq('user_id', userId)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        toast.error('Error loading brackets');
-        return [];
-      }
-
-      return data as SavedBracket[];
-    },
-    enabled: !!userId,
-  });
 
   const saveBracketMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -1866,6 +1838,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
   const loadBracketMutation = useMutation({
     mutationFn: async (bracketId: string) => {
+      setSelectedBracketId(bracketId); // Set the selected bracket ID
+      
       const { data, error } = await supabase
         .from('Bracket')
         .select('*')
@@ -1876,7 +1850,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       return data as SavedBracket;
     },
     onSuccess: (data) => {
-      // Update all states with loaded data
       const { players: loadedPlayers, teams: loadedTeams, settings } = data.data;
       
       queryClient.setQueryData(['players'], loadedPlayers);
@@ -1890,10 +1863,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       setCurrentMode(settings.mode as PickerMode);
       
       setIsLoadDialogOpen(false);
-      toast.success('Bracket loaded successfully');
+      toast.success({ title: 'Bracket loaded successfully' });
     },
     onError: () => {
-      toast.error('Error loading bracket');
+      setSelectedBracketId(null); // Reset on error
+      toast.error({ title: 'Error loading bracket' });
     },
   });
 
