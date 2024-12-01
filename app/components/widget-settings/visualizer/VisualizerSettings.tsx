@@ -72,7 +72,7 @@ export function VisualizerSettings({
       specificSettings: profile?.settings.specificSettings || {
         selectedSkin: "default",
         hideOnDisabled: false,
-        pauseEnabled: true,
+        pauseEnabled: false,
         canvasEnabled: true,
         backgroundCanvas: false,
         backgroundCanvasOpacity: 0.5,

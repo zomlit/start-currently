@@ -391,7 +391,7 @@ const WheelSpin: React.FC = () => {
 
   return (
     <>
-      <Container maxWidth="7xl" isDashboard>
+      <Container maxWidth="full" isDashboard>
         <GenericHeader
           category="Widgets"
           title="Wheel of Fortune"

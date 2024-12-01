@@ -1,8 +1,9 @@
-import { exec } from "child_process";
-import fs from "fs/promises";
+import fs from "fs";
+import * as fsPromises from "fs/promises";
 import path from "path";
 import { minify as terserMinify } from "terser";
 import { minify as htmlMinify } from "html-minifier";
+import AdmZip from "adm-zip";
 
 async function minifyJS(
   code: string,
@@ -25,6 +26,12 @@ async function minifyJS(
 }
 
 async function minifyHTML(html: string): Promise<string> {
+  // For production build, add data-env attribute and remove loading class
+  html = html.replace(
+    '<div id="root" class="loading',
+    '<div id="root" data-env="production" class="'
+  );
+
   return htmlMinify(html, {
     collapseWhitespace: true,
     removeComments: true,
@@ -33,24 +40,50 @@ async function minifyHTML(html: string): Promise<string> {
   });
 }
 
-async function fileExists(path: string): Promise<boolean> {
+async function fileExists(filePath: string): Promise<boolean> {
   try {
-    await fs.access(path);
+    await fsPromises.access(filePath);
     return true;
   } catch {
     return false;
   }
 }
 
-async function buildExtension() {
+async function zipDistFolder(
+  distDir: string,
+  outputZipPath: string
+): Promise<void> {
+  const zip = new AdmZip();
+
+  // Add the entire directory to the zip
+  zip.addLocalFolder(distDir);
+
+  // Write the zip file
+  zip.writeZip(outputZipPath);
+  console.log(`✅ Created zip file: ${outputZipPath}`);
+}
+
+async function buildExtension(): Promise<void> {
   console.log("🔨 Building extension...");
 
   try {
     const extensionDir = path.join(process.cwd(), "extensions/chrome");
     const distDir = path.join(extensionDir, "dist");
+    const zipOutputPath = path.join(
+      process.cwd(),
+      "public/downloads/currently-creator-tools.zip"
+    );
 
-    // Ensure dist directory exists
-    await fs.mkdir(distDir, { recursive: true });
+    // Ensure dist directory exists first
+    await fsPromises.mkdir(distDir, { recursive: true });
+
+    // Generate extension key first (this will create both manifests)
+    console.log("Generating extension key...");
+    await import("./generate-extension-key.mjs");
+
+    // Build CSS next
+    console.log("Building CSS...");
+    await import("../extensions/chrome/scripts/build-css.js");
 
     // Define file groups for processing
     const jsFiles = [
@@ -74,9 +107,9 @@ async function buildExtension() {
         const targetPath = path.join(distDir, file.name);
 
         if (await fileExists(sourcePath)) {
-          const code = await fs.readFile(sourcePath, "utf-8");
+          const code = await fsPromises.readFile(sourcePath, "utf-8");
           const minified = await minifyJS(code, file.isModule);
-          await fs.writeFile(targetPath, minified);
+          await fsPromises.writeFile(targetPath, minified);
           console.log(`✅ Minified ${file.name}`);
         } else {
           console.warn(`⚠️ Warning: Source file not found: ${file.name}`);
@@ -84,44 +117,36 @@ async function buildExtension() {
       } catch (err) {
         console.warn(
           `⚠️ Warning: Could not process ${file.name}:`,
-          err.message
+          (err as Error).message
         );
       }
     }
 
-    // Process HTML files
+    // Process HTML files with path corrections for dist
     for (const file of htmlFiles) {
       try {
         const sourcePath = path.join(extensionDir, file);
         const targetPath = path.join(distDir, file);
 
         if (await fileExists(sourcePath)) {
-          const html = await fs.readFile(sourcePath, "utf-8");
+          let html = await fsPromises.readFile(sourcePath, "utf-8");
+
+          // For dist build, remove 'dist/' from resource paths
+          if (file === "popup.html") {
+            html = html.replace('href="dist/popup.css"', 'href="popup.css"');
+          }
+
           const minified = await minifyHTML(html);
-          await fs.writeFile(targetPath, minified);
+          await fsPromises.writeFile(targetPath, minified);
           console.log(`✅ Minified ${file}`);
         } else {
           console.warn(`⚠️ Warning: Source file not found: ${file}`);
         }
       } catch (err) {
-        console.warn(`⚠️ Warning: Could not process ${file}:`, err.message);
-      }
-    }
-
-    // Copy static files without modification
-    for (const file of staticFiles) {
-      try {
-        const sourcePath = path.join(extensionDir, file);
-        const targetPath = path.join(distDir, file);
-
-        if (await fileExists(sourcePath)) {
-          await fs.copyFile(sourcePath, targetPath);
-          console.log(`✅ Copied ${file}`);
-        } else {
-          console.warn(`⚠️ Warning: Source file not found: ${file}`);
-        }
-      } catch (err) {
-        console.warn(`⚠️ Warning: Could not copy ${file}:`, err.message);
+        console.warn(
+          `⚠️ Warning: Could not process ${file}:`,
+          (err as Error).message
+        );
       }
     }
 
@@ -133,7 +158,7 @@ async function buildExtension() {
         const targetPath = path.join(distDir, dir);
 
         if (await fileExists(sourcePath)) {
-          await fs.cp(sourcePath, targetPath, {
+          await fsPromises.cp(sourcePath, targetPath, {
             recursive: true,
           });
           console.log(`✅ Copied directory ${dir}`);
@@ -141,13 +166,54 @@ async function buildExtension() {
           console.log(`ℹ️ Directory not found (skipping): ${dir}`);
         }
       } catch (err) {
-        console.warn(`⚠️ Warning: Could not copy ${dir}:`, err.message);
+        console.warn(
+          `⚠️ Warning: Could not copy ${dir}:`,
+          (err as Error).message
+        );
       }
     }
 
+    // Build config.js first
+    const configTemplatePath = path.join(
+      extensionDir,
+      "src/config.template.ts"
+    );
+    const configDistPath = path.join(distDir, "config.js");
+
+    let configContent = await fsPromises.readFile(configTemplatePath, "utf-8");
+
+    // Create a non-module version of config.js
+    const configObject = {
+      SUPABASE_URL: process.env.SUPABASE_URL || "",
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "",
+    };
+
+    configContent = `
+window.config = ${JSON.stringify(configObject, null, 2)};
+
+// For module support
+if (typeof exports !== 'undefined') {
+  exports.config = window.config;
+} else if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { config: window.config };
+}
+`;
+
+    await fsPromises.writeFile(configDistPath, configContent);
+    console.log("✅ Built config.js");
+
+    // Copy to extension root
+    await fsPromises.copyFile(
+      configDistPath,
+      path.join(extensionDir, "config.js")
+    );
+
+    // Create a zip file from the dist directory
+    await zipDistFolder(distDir, zipOutputPath);
+
     console.log("✅ Extension built successfully!");
   } catch (error) {
-    console.error("❌ Failed to build extension:", error);
+    console.error("❌ Failed to build extension:", (error as Error).message);
     process.exit(1);
   }
 }

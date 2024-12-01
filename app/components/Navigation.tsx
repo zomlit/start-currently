@@ -35,7 +35,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
           : "bg-transparent"
       )}
     >
-      <div className="container max-w-7xl px-4 md:pl-28">
+      <div className="container max-w-full px-4 md:pl-28">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
             <Link
@@ -109,7 +109,7 @@ function NavLink({
     <Link
       to={to}
       activeProps={{
-        className: "text-violet-600 dark:text-violet-400",
+        className: "text-red-500 dark:text-violet-400",
       }}
       inactiveProps={{
         className:

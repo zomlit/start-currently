@@ -23,7 +23,7 @@ export function SectionLayout({
 }: SectionLayoutProps) {
   return (
     <>
-      <Container isDashboard maxWidth="7xl">
+      <Container isDashboard maxWidth="full">
         <DashboardHeader
           category={category}
           title={title}

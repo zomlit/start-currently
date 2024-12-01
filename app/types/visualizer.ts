@@ -84,7 +84,7 @@ export const defaultSettings: VisualizerSettings = {
     albumCanvas: true,
     backgroundCanvas: true,
     backgroundCanvasOpacity: 0.5,
-    pauseEnabled: true,
+    pauseEnabled: false,
     hideOnDisabled: false,
   },
   audioSettings: {

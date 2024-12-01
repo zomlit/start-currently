@@ -1,4 +1,3 @@
-import { exec } from "child_process";
 import fs from "fs/promises";
 import path from "path";
 import postcss from "postcss";
@@ -7,22 +6,41 @@ import autoprefixer from "autoprefixer";
 import cssnano from "cssnano";
 
 async function buildCSS() {
-  console.log("🎨 Building extension CSS...");
-
   try {
     const extensionDir = path.join(process.cwd(), "extensions/chrome");
     const distDir = path.join(extensionDir, "dist");
+    const srcCssPath = path.join(extensionDir, "popup.css");
+    const distCssPath = path.join(distDir, "popup.css");
 
     // Ensure dist directory exists
     await fs.mkdir(distDir, { recursive: true });
 
-    // Read input CSS
-    const css = await fs.readFile(path.join(extensionDir, "popup.css"), "utf8");
+    // Read source CSS
+    const css = await fs.readFile(srcCssPath, "utf8");
 
-    // Process with PostCSS
+    // Process with PostCSS and Tailwind
     const result = await postcss([
       tailwindcss({
-        config: path.join(extensionDir, "tailwind.config.js"),
+        config: {
+          content: [
+            path.join(extensionDir, "popup.html"),
+            path.join(extensionDir, "popup.js"),
+            // Include any other files that use Tailwind classes
+          ],
+          darkMode: "media",
+          theme: {
+            extend: {
+              fontFamily: {
+                sofia: [
+                  "Sofia Sans Condensed",
+                  "system-ui",
+                  "-apple-system",
+                  "sans-serif",
+                ],
+              },
+            },
+          },
+        },
       }),
       autoprefixer(),
       cssnano({
@@ -36,20 +54,12 @@ async function buildCSS() {
         ],
       }),
     ]).process(css, {
-      from: path.join(extensionDir, "popup.css"),
-      to: path.join(distDir, "popup.css"),
+      from: srcCssPath,
+      to: distCssPath,
     });
 
-    // Write output
-    await fs.writeFile(path.join(distDir, "popup.css"), result.css);
-
-    if (result.map) {
-      await fs.writeFile(
-        path.join(distDir, "popup.css.map"),
-        result.map.toString()
-      );
-    }
-
+    // Write processed CSS to dist
+    await fs.writeFile(distCssPath, result.css);
     console.log("✅ CSS built successfully");
 
     // Copy font files if they exist
@@ -67,7 +77,7 @@ async function buildCSS() {
       }
       console.log("✅ Fonts copied successfully");
     } catch (error) {
-      // console.warn("⚠️ No fonts to copy:", error.message);
+      // Ignore font copy errors
     }
 
     // Copy images if they exist

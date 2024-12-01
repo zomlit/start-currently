@@ -29,9 +29,13 @@
   font-display: swap;
 }
 
-/* Add loading state styles */
-#root.loading {
+/* Loading state styles */
+#root[data-env="development"].loading {
   opacity: 0;
+}
+
+#root[data-env="production"] {
+  opacity: 1;
 }
 
 #root {

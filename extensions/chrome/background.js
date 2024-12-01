@@ -21,7 +21,7 @@ const registeredTabs = new Map(); // Track registration time per tab
 // Load initial state and initialize
 async function loadStateAndInitialize() {
   const result = await chrome.storage.sync.get(["enabled"]);
-  isEnabled = result.enabled !== false; // Default to true if not set
+  isEnabled = result.enabled === undefined ? true : result.enabled;
 
   if (isEnabled) {
     await initialize();

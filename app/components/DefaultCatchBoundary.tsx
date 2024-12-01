@@ -33,6 +33,7 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
         stack: "",
         isHookError: false,
         isHmrError: false,
+        isHydrationError: false,
       };
     }
 
@@ -40,10 +41,13 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
       "Rendered more hooks than during the previous render"
     );
     const isHmrError = error.message.includes("server.hmr.overlay");
+    const isHydrationError = error.message.includes("Hydration failed");
 
     let friendlyMessage = error.message;
 
-    if (isHookError) {
+    if (isHydrationError) {
+      friendlyMessage = "A page loading error occurred. Please try refreshing.";
+    } else if (isHookError) {
       friendlyMessage =
         "A React rendering error occurred. Please try refreshing the page.";
     } else if (isHmrError) {
@@ -55,6 +59,7 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
       stack: error.stack || "",
       isHookError,
       isHmrError,
+      isHydrationError,
     };
   }, [error]);
 
@@ -98,52 +103,6 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
       toast.error("Failed to copy error details");
     }
   }, [errorDetails]);
-
-  const sendToCursor = useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    const errorMessage = `Error Details:
-Message: ${errorDetails.message}
-
-Stack Trace:
-${errorDetails.stack || "No stack trace available"}
-
-Additional Info:
-- Is Hook Error: ${errorDetails.isHookError}
-- Is HMR Error: ${errorDetails.isHmrError}
-- Environment: ${process.env.NODE_ENV}
-- Route: ${router.state.location.pathname}`;
-
-    try {
-      // Try to use Cursor's extension API first
-      if (window.__cursor?.openChatWithText) {
-        window.__cursor.openChatWithText(errorMessage);
-        toast.success("Error details sent to Cursor chat");
-        return;
-      }
-
-      // Try to use our VS Code extension
-      const encodedError = encodeURIComponent(errorMessage);
-      const cursorUri = `vscode://vscode-cursor-composer/composer/${encodedError}`;
-
-      // Copy to clipboard as backup
-      navigator.clipboard.writeText(errorMessage).then(() => {
-        toast.success({
-          title: "Error details copied to clipboard",
-          description: "Opening Cursor composer...",
-        });
-
-        // Open using our extension
-        window.location.href = cursorUri;
-      });
-    } catch (err) {
-      // Final fallback to clipboard only
-      navigator.clipboard
-        .writeText(errorMessage)
-        .then(() => toast.info("Error details copied to clipboard"))
-        .catch(() => toast.error("Failed to copy error details"));
-    }
-  }, [errorDetails, router.state.location.pathname]);
 
   return (
     <ClientWrapper>
@@ -201,7 +160,7 @@ Additional Info:
                     {process.env.NODE_ENV === "development" &&
                       errorDetails.stack &&
                       !errorDetails.isHookError && (
-                        <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-words border-zinc-800 pt-4 max-h-[240px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-zinc-700/30 hover:scrollbar-thumb-zinc-700/50">
+                        <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-words border-zinc-800 pt-4 max-h-[400px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-zinc-700/30 hover:scrollbar-thumb-zinc-700/50">
                           {errorDetails.stack.split("\n").map((line, i) => (
                             <div
                               key={i}
@@ -268,15 +227,6 @@ Additional Info:
             >
               <Home className="h-4 w-4" />
               Go Home
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={sendToCursor}
-              className="gap-2 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/50"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Send to Cursor
             </Button>
           </CardFooter>
         </Card>

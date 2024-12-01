@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = () => {
             : "h-[116px] py-10"
         }`}
       >
-        <div className="container flex max-w-7xl items-center">
+        <div className="container flex max-w-full items-center">
           <a href="/" className="flex items-center">
             <div
               className={`ml-1 mr-2 flex items-center justify-between py-2 transition-all [&>*]:fill-white ${

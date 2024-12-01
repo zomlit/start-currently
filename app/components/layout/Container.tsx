@@ -8,7 +8,6 @@ interface ContainerProps {
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "5xl" | "7xl" | "full";
   padded?: boolean;
   paddingTop?: "sm" | "md" | "lg" | "xl";
-  sidebarOffset?: boolean;
   isDashboard?: boolean;
   className?: string;
 }
@@ -18,7 +17,6 @@ export const Container: React.FC<ContainerProps> = ({
   maxWidth = "",
   padded = true,
   paddingTop = "md",
-  sidebarOffset = false,
   isDashboard = false,
   className,
 }) => {
@@ -34,7 +32,6 @@ export const Container: React.FC<ContainerProps> = ({
       "max-w-7xl": maxWidth === "7xl",
       "max-w-full": maxWidth === "full",
       "px-4": padded, // Add horizontal padding when padded is true
-      "md:pl-28": sidebarOffset || isDashboard,
     },
     className
   );

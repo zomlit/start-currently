@@ -8,7 +8,7 @@ export const Footer = () => {
   const { isLoaded } = useUser();
 
   return (
-    <Container maxWidth="7xl" isDashboard>
+    <Container maxWidth="full" isDashboard>
       <footer className="backdrop-blur-sm text-white w-full h-footer mt-20">
         <div className="">
           <div className="md:flex md:justify-between">

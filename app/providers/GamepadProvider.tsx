@@ -126,34 +126,28 @@ declare global {
   }
 }
 
-// Update the getExtensionId function to handle connection errors better
-const getExtensionId = async (isBackup = false): Promise<string | null> => {
+// Update the getExtensionId function to use the environment variable directly
+const getExtensionId = async (): Promise<string | null> => {
   if (typeof window === "undefined" || !window?.chrome?.runtime) {
     console.log("Chrome extension API not available");
     return null;
   }
 
   try {
-    const extensionId = isBackup
-      ? import.meta.env.VITE_CHROME_EXTENSION_BACKUP_ID
-      : import.meta.env.VITE_CHROME_EXTENSION_ID;
+    const extensionId = import.meta.env.VITE_CHROME_EXTENSION_ID;
 
     if (!extensionId) {
-      console.log(
-        `${isBackup ? "Backup extension" : "Extension"} ID not configured in environment variables`
-      );
+      console.error("Extension ID not configured in environment variables");
       return null;
     }
 
+    // Verify connection with extension
     return new Promise((resolve) => {
       let hasResponded = false;
 
-      // Add timeout to handle cases where extension doesn't respond
       const timeout = setTimeout(() => {
         if (!hasResponded) {
-          console.log(
-            `${isBackup ? "Backup extension" : "Extension"} connection timed out`
-          );
+          console.error("Extension connection timed out");
           resolve(null);
         }
       }, 5000);
@@ -166,52 +160,26 @@ const getExtensionId = async (isBackup = false): Promise<string | null> => {
           clearTimeout(timeout);
 
           if (window.chrome?.runtime?.lastError) {
-            console.log(
-              `${isBackup ? "Backup extension" : "Extension"} connection error:`,
+            console.error(
+              "Extension connection error:",
               window.chrome.runtime.lastError
             );
-            // If primary extension fails, try backup
-            if (!isBackup) {
-              console.log("Attempting to connect to backup extension...");
-              getExtensionId(true).then(resolve);
-              return;
-            }
             resolve(null);
             return;
           }
 
-          if (response?.success && response?.id) {
-            console.log(
-              `${isBackup ? "Backup extension" : "Extension"} found with ID:`,
-              response.id
-            );
+          if (response?.success && response?.id === extensionId) {
+            console.log("Extension connected with ID:", response.id);
             resolve(response.id);
           } else {
-            console.log(
-              `Invalid ${isBackup ? "backup extension" : "extension"} response:`,
-              response
-            );
-            // If primary extension fails, try backup
-            if (!isBackup) {
-              console.log("Attempting to connect to backup extension...");
-              getExtensionId(true).then(resolve);
-              return;
-            }
+            console.error("Invalid extension response:", response);
             resolve(null);
           }
         }
       );
     });
   } catch (error) {
-    console.log(
-      `Error checking ${isBackup ? "backup extension" : "extension"}:`,
-      error
-    );
-    // If primary extension fails, try backup
-    if (!isBackup) {
-      console.log("Attempting to connect to backup extension...");
-      return getExtensionId(true);
-    }
+    console.error("Error checking extension:", error);
     return null;
   }
 };
@@ -665,12 +633,6 @@ export function GamepadProvider({ children }: { children: React.ReactNode }) {
           toast.error(
             "Chrome extension not found. Please make sure the extension is installed and enabled."
           );
-          // Handle installation separately
-          const installUrl = window.chrome?.runtime?.id
-            ? `chrome://extensions/?id=${window.chrome.runtime.id}`
-            : import.meta.env.VITE_CHROME_STORE_URL ||
-              "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip";
-          window.open(installUrl, "_blank");
         }
       });
     } else {

@@ -22,3 +22,19 @@ openLivestreaming.addEventListener("click", async () => {
     });
   }
 });
+
+// Add developer tools toggle functionality
+document
+  .getElementById("toggleDevTools")
+  .addEventListener("click", function () {
+    const devTools = document.getElementById("devTools");
+    const isHidden = devTools.classList.contains("hidden");
+
+    if (isHidden) {
+      devTools.classList.remove("hidden");
+      this.textContent = "Hide";
+    } else {
+      devTools.classList.add("hidden");
+      this.textContent = "Show";
+    }
+  });

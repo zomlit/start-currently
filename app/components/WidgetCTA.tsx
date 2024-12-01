@@ -52,7 +52,7 @@ export function WidgetCTA({
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/15 via-purple-500/10 to-blue-500/5 opacity-100 group-hover:opacity-0 transition-opacity" />
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/15 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient" />
 
-      <div className="relative container max-w-7xl mx-auto py-3 px-4">
+      <div className="relative container max-w-full mx-auto py-3 px-4">
         <div className="md:flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">

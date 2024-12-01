@@ -20,7 +20,7 @@ export function PageBreadcrumb({ className }: PageBreadcrumbProps) {
   const breadcrumbs = matches.filter((match) => match.pathname !== "/");
 
   return (
-    <Breadcrumb className={cn("mb-2", className)}>
+    <Breadcrumb className={cn("mb-4 px-2 font-light", className)}>
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>

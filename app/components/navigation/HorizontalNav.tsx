@@ -1,25 +1,21 @@
+import React, { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { NavItem } from "@/types/nav";
+import { navItems } from "@/config/navigation";
 
-interface MainNavProps {
-  items: NavItem[];
-}
-
-export function MainNav({ items }: MainNavProps) {
+export function HorizontalNav() {
   const { pathname } = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   return (
     <div className="mb-2">
       <nav className="hidden md:block">
-        <div className="rounded-lg bg-white/5 p-2 shadow-inner	">
+        <div className="rounded-lg bg-white/10 p-2">
           <div className="flex flex-col">
             <div className="flex items-center space-x-4">
-              {items.map((item) => {
+              {navItems.map((item) => {
                 const isActive = item.submenu
                   ? item.submenu.some(
                       (subItem) =>
@@ -37,9 +33,9 @@ export function MainNav({ items }: MainNavProps) {
                         setOpenSubmenu(openSubmenu === item.id ? null : item.id)
                       }
                       className={cn(
-                        "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors shadow-sm",
+                        "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-violet-500/10 text-violet-400"
+                          ? "bg-violet-500/10 text-violet-500"
                           : "hover:bg-violet-500/10 hover:text-accent-foreground"
                       )}
                     >
@@ -61,7 +57,7 @@ export function MainNav({ items }: MainNavProps) {
                       "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-violet-500/10 text-violet-500 border-l-4 border-violet-500"
-                        : "hover:bg-violet-500/10 hover:text-accent-foreground "
+                        : "hover:bg-violet-500/10 hover:text-accent-foreground"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -77,11 +73,11 @@ export function MainNav({ items }: MainNavProps) {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mt-2 overflow-hidden"
+                  className="overflow-hidden mt-2"
                 >
                   <div className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent overflow-x-auto">
                     <div className="flex space-x-2 px-1">
-                      {items
+                      {navItems
                         .find((item) => item.id === "widgets")
                         ?.submenu?.map((subItem) => {
                           const isSubActive =
@@ -93,10 +89,10 @@ export function MainNav({ items }: MainNavProps) {
                               key={subItem.id}
                               to={subItem.link}
                               className={cn(
-                                "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap shadow-sm",
+                                "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                                 "hover:bg-violet-500/10 hover:text-accent-foreground",
                                 isSubActive &&
-                                  "bg-violet-500/10 text-violet-400"
+                                  "bg-violet-500/10 text-violet-500"
                               )}
                             >
                               <subItem.icon className="h-4 w-4" />

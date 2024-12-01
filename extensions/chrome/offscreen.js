@@ -1,7 +1,7 @@
 console.log("🎮 Offscreen script starting");
 
-// Import config
-const { config } = await import("./dist/config.js");
+// Use the global config object
+const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.config;
 
 let supabaseClient = null;
 let gamepadChannel = null;
@@ -28,8 +28,8 @@ async function initGamepadMonitoring(channelId) {
     // Only create Supabase client once
     if (!supabaseClient) {
       supabaseClient = window.supabase.createClient(
-        config.SUPABASE_URL,
-        config.SUPABASE_ANON_KEY
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
       );
     }
 

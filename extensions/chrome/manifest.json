@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Currently Gamepad Monitor Extension",
-  "version": "1.0",
-  "description": "Monitors gamepad inputs even when the window is minimized",
+  "name": "Currently Creator Tools",
+  "version": "0.1.0",
+  "description": "Tools for Currently creators",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -16,7 +16,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "Currently Gamepad Monitor",
+    "default_title": "Currently Creator Tools",
     "default_popup": "popup.html"
   },
   "permissions": [
@@ -48,7 +48,9 @@
         "http://localhost:3000/*",
         "http://localhost/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_start",
       "all_frames": false
     }
@@ -60,6 +62,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "config.js",
         "dist/config.js",
         "dist/popup.css",
         "offscreen.js",
@@ -71,10 +74,13 @@
         "images/bg.webp",
         "init.js"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  },
+  "key": "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRQ2MxZkMzSWloSjZvc08KcFY0bnZTT2Zpb2NrcFQ5RGVZeWUxbDBMQUpGZDVwSGtNMFlIMXBUVkZTcS9XUmMwRXNNbDlkdTRTSExhSmVYSAphU2dUSnZmTjhJZzFzeEgrUlRmM3pOOVZaeWJlZldjajd6RU9DNUdCdUlWZU5qSlpQVGdLZ1Nsb3dvNEt3K2JjClI2UmhMdFNtTUpnVlRhNm9kZzdGdjV5RDdORVcwUzVSTFpjV3UrdW42LzRGRGU5YVRlZEpINXV2L3crclJ4T0sKTldNdmV3SDZlZHR4SXQ3bDhNcDFZN0ZnZkVlTVFRMUd5NDVvSkZ0TnZoaTlLU3g0dHpHdWZ0enRWOWhWc0oxcAp3R29XcEpCRUdQaDRkMHBPbExlQTZOdmN1aloyU010OUNIYzBJTFd6cFRyTUxuNjB3ekNSbzFCb2E0Ym9mUU5yClgxNVpsNkpGQWdNQkFBRUNnZ0VBUy9sNWpBV0FkZG9vTmRhWEIzSWc1U0xpdDdaVE1Ma2JqVUJ6dnlZdHhVcXkKQnRWdHlkTkJzdjEzZ1UxRHA4YWxBV2taNEtvNzlRQmgwTmxZZi9xakZZQzlReUkxaDdMNVcxSEVLS2Q1RlZPegpXSjJBNm5oaEt2RjdyZmxjSjQyMzdhTEhNQWY3Yml5YlU3OWkybThvdFQ4YUZVdlYzYWFmSGwxbGtTVHgzdmFBCm1ldnJNU2w2SjRhSW5WMGRVSzR1S01YaTY5Yys2bFYxWkRWQlNqTWdBSnFaWEhISzJ0a3BhUXJJa0FyRDNycjMKcFhJWFAxQzB0SU5CWExkaHYxY0pQNFdtUTJUSzBZajFqdlBBbWE5ZG1IeWR2bi9qUUttUW1Sd0cvdzMyYks4awpWUFFWSlA4R0Q2ZmI0T1VPL1ZCTU52UzhOb3UxSmQ3Rmh0N3NTM1hEdXdLQmdRRFl0VkpGU2x1REtxS1BSQXkrCjFreDlVaW11dDVmWERjYmdjeXJjQlQwcEptNDhXSGdlN1hUb1JjVnhxaTdETGx1UjIycjUyUzYvN3hzQ2RKY2EKRzk3ak54QzE5bnVWSmlyY1I0Z1pCSHBVL29nUlNhaVM2SW1SWE90RVNlaFJwUjUvWlZ5VDdTU01pVXFBaXVtUApFREtnZDhud050WHNHT0hVYTZBZ3hXRnEwd0tCZ1FDNVJaWjh6QWRMWWp0YlA3UFpqaHY2RCtTY2lyaHNnUWg5Ck9zeFFKcm4rTW9TZDBXTW5rU1B0Yk5ERVEzQVZIdnMwM2hCM2RCcVhMOW9xcWg1TWFqdDQ1NmtoblIybUVDOWIKSHhhN00yMTk5SUUwa1l1b1FUVFM0TkhQVFBMckoyU2hIMlduSHpyZkJObmkrM2VOYTdyZFROTGhEMjU1YzN2aQpyUFpUYkp4Zmh3S0JnUUMzQUErMGdjRmJ0N0pGQjNNMzZLSDVKbHdhdGVFY2N2N2g1WDlwQTJlTmkyMkZ1alBkCjhpcEtSemtmN2xYRTd5M1dzeExZWUVYeFFRcHUvV1BvWVdiTU8yRDZPR1pPSWtnSmNzS0VWZHEwVWFrMzZCcloKekZMM2xSNzdzT25sb0dscnJYNExVVFFQRlpUN2pkTUR3K3JzeFp1YkpjTnF0K3hreEdvWm9uVE1qd0tCZ0JlbApGZXVmYmw3a2pvYTZ2bzFKWWJDc1RwVGI3MldKb2plNVJWSUZYejlkMnliNURocUNuMzh4b0FNc1NDV3A2bzE0CnVjbEUvQS9IZjZScVNhdWU4ekFmQUtyVmptOGZLYXdMYjY4OGhRREtMNk14NEF6OUpXeTBYSktFVTR4SFhzUmgKYVd2R3hKQ3A0ZFRpR3dQbGQ5ZStjanRlNk01L09wUlhWcWlXOSs0SkFvR0FEMmRJNGd3aGdGYi9DdFVWYVNFVgpNdEI5V1Z4M2JDWnQzVHFnSGVibElRNEw2Z1VlekxtcEE2MmRwcldiMW83TEtjOXorb0tMcTQ2czNLK1Evby9zCm9zcTM0U2F5Q0FIOERyUmptTVlRYmJKT1RsZklLWDBtSzIzYnQvOTllaSt3VDFXQ2hzSkdpOVN0Rlljem53K1cKemtkN00yTFh1dUdGSHkzMjJyR3BsTW89Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
 }

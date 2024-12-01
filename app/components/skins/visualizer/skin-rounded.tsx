@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import { cn } from "@/lib/utils";
 import { CommonSettings, VisualizerSettings } from "@/types/widget";
 import { AnimatePresence, motion } from "framer-motion";
@@ -46,6 +53,128 @@ const containerVariants = {
   hidden: { opacity: 0, scale: 0.95, transition: { duration: 0.3 } },
 };
 
+const TrackProgress = memo(
+  ({ elapsed, duration }: { elapsed: number; duration: number }) => (
+    <div className="relative flex h-full w-full items-center justify-between gap-1">
+      <p className="z-10 flex w-12 justify-start truncate text-sm font-bold">
+        {formatTime(elapsed)}
+      </p>
+      <p className="z-10 flex w-12 justify-end truncate text-sm font-bold">
+        {formatTime(duration)}
+      </p>
+    </div>
+  )
+);
+
+const ProgressBar = memo(
+  ({
+    progress,
+    colors,
+  }: {
+    progress: number;
+    colors: { background: string; foreground: string };
+  }) => (
+    <div
+      className="relative bottom-0 h-2 w-full rounded-lg"
+      style={{ backgroundColor: colors.background }}
+    >
+      <div
+        className="absolute left-0 top-0 h-full rounded-lg"
+        style={{
+          width: `${progress}%`,
+          backgroundColor: colors.foreground,
+        }}
+      />
+    </div>
+  )
+);
+
+const TrackArtwork = memo(
+  ({ artwork, borderRadius }: { artwork?: string; borderRadius: number }) => (
+    <motion.img
+      key={artwork}
+      src={artwork}
+      variants={variants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{
+        opacity: { duration: 0.5 },
+        scale: { duration: 0.5 },
+      }}
+      className="absolute left-0 top-0 z-10 h-full w-full object-cover object-center"
+      style={{ borderRadius: `${borderRadius}px` }}
+    />
+  )
+);
+
+const computeContainerStyle = (
+  commonSettings: CommonSettings,
+  specificSettings: VisualizerSettings,
+  palette: any
+): React.CSSProperties => ({
+  color:
+    specificSettings?.colorSync && palette?.Muted
+      ? `color-mix(in srgb, ${palette.Muted.hex} 20%, white)`
+      : commonSettings?.textColor || "inherit",
+  backgroundColor:
+    specificSettings?.colorSync && palette?.DarkVibrant
+      ? `${palette.DarkVibrant.hex}${Math.round(
+          (specificSettings?.backgroundOpacity || 0.6) * 255
+        )
+          .toString(16)
+          .padStart(2, "0")}`
+      : commonSettings?.backgroundColor || "transparent",
+  fontFamily: `'${commonSettings?.fontFamily || "sans-serif"}', sans-serif`,
+  fontWeight: commonSettings?.fontWeight || "normal",
+  fontSize: `${commonSettings?.fontSize || 16}px`,
+  borderColor:
+    specificSettings?.colorSync && palette?.DarkVibrant
+      ? palette.DarkVibrant.hex
+      : commonSettings?.borderColor || "transparent",
+  borderWidth: commonSettings?.borderWidth || 0,
+  borderStyle:
+    (commonSettings?.borderStyle as React.CSSProperties["borderStyle"]) ||
+    "none",
+  borderRadius: `${commonSettings?.borderRadius || 0}px`,
+  padding: `${commonSettings?.padding || 0}px`,
+  lineHeight: commonSettings?.lineHeight || "normal",
+  letterSpacing: `${commonSettings?.letterSpacing || 0}px`,
+  textAlign:
+    (commonSettings?.textAlign as React.CSSProperties["textAlign"]) || "left",
+  transformOrigin: "top left",
+});
+
+const computeTextStyle = (
+  specificSettings: VisualizerSettings,
+  palette: any
+): React.CSSProperties => {
+  const getTextShadowColor = () => {
+    if (specificSettings?.enableTextShadow) {
+      if (
+        specificSettings?.syncTextShadow &&
+        specificSettings?.colorSync &&
+        palette?.DarkVibrant
+      ) {
+        const { r, g, b } = palette.DarkVibrant.rgb;
+        if (r !== undefined && g !== undefined && b !== undefined) {
+          return `rgba(${r}, ${g}, ${b}, 0.6)`;
+        }
+      }
+      return specificSettings?.textShadowColor || "rgba(0, 0, 0, 0.6)";
+    }
+    return "none";
+  };
+
+  return {
+    textShadow: specificSettings?.enableTextShadow
+      ? `${specificSettings?.textShadowHorizontal || 0}px ${
+          specificSettings?.textShadowVertical || 0
+        }px ${specificSettings?.textShadowBlur || 0}px ${getTextShadowColor()}`
+      : "none",
+  };
+};
+
 const SkinRounded: React.FC<SkinRoundedProps> = ({
   track,
   commonSettings,
@@ -76,69 +205,56 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
     lightVibrant: palette?.LightVibrant?.hex,
   });
 
-  const containerStyle: React.CSSProperties = {
-    color:
-      specificSettings?.colorSync && palette?.Muted
-        ? `color-mix(in srgb, ${palette.Muted.hex} 20%, white)`
-        : commonSettings?.textColor || "inherit",
-    backgroundColor:
-      specificSettings?.colorSync && palette?.DarkVibrant
-        ? `${palette.DarkVibrant.hex}${Math.round(
-            (specificSettings?.backgroundOpacity || 0.6) * 255
-          )
-            .toString(16)
-            .padStart(2, "0")}`
-        : commonSettings?.backgroundColor || "transparent",
-    fontFamily: `'${commonSettings?.fontFamily || "sans-serif"}', sans-serif`,
-    fontWeight: commonSettings?.fontWeight || "normal",
-    fontSize: `${commonSettings?.fontSize || 16}px`,
-    borderColor:
-      specificSettings?.colorSync && palette?.DarkVibrant
-        ? palette.DarkVibrant.hex
-        : commonSettings?.borderColor || "transparent",
-    borderWidth: commonSettings?.borderWidth || 0,
-    borderStyle:
-      (commonSettings?.borderStyle as React.CSSProperties["borderStyle"]) ||
-      "none",
-    borderRadius: `${commonSettings?.borderRadius || 0}px`,
-    padding: `${commonSettings?.padding || 0}px`,
-    lineHeight: commonSettings?.lineHeight || "normal",
-    letterSpacing: `${commonSettings?.letterSpacing || 0}px`,
-    textAlign:
-      (commonSettings?.textAlign as React.CSSProperties["textAlign"]) || "left",
-    transformOrigin: "top left",
-  };
+  const containerStyle = useMemo(
+    () => computeContainerStyle(commonSettings, specificSettings, palette),
+    [commonSettings, specificSettings, palette]
+  );
 
-  const getTextShadowColor = useCallback(() => {
-    if (specificSettings?.enableTextShadow) {
-      if (
-        specificSettings?.syncTextShadow &&
-        specificSettings?.colorSync &&
-        palette?.DarkVibrant
-      ) {
-        const { r, g, b } = palette.DarkVibrant.rgb;
-        if (r !== undefined && g !== undefined && b !== undefined) {
-          return `rgba(${r}, ${g}, ${b}, 0.6)`;
-        }
-      }
-      return specificSettings?.textShadowColor || "rgba(0, 0, 0, 0.6)";
-    }
-    return "none";
-  }, [
-    specificSettings?.enableTextShadow,
-    specificSettings?.syncTextShadow,
-    specificSettings?.colorSync,
-    palette,
-    specificSettings?.textShadowColor,
-  ]);
+  const textStyle = useMemo(
+    () => computeTextStyle(specificSettings, palette),
+    [specificSettings, palette]
+  );
 
-  const textStyle: React.CSSProperties = {
-    textShadow: specificSettings?.enableTextShadow
-      ? `${specificSettings?.textShadowHorizontal || 0}px ${
-          specificSettings?.textShadowVertical || 0
-        }px ${specificSettings?.textShadowBlur || 0}px ${getTextShadowColor()}`
-      : "none",
-  };
+  const handleVideoLoad = useCallback(
+    (event: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+      const video = event.currentTarget;
+      setIsVideoTaller(video.videoHeight > video.videoWidth);
+      setVideoError(null);
+      setIsVideoAvailable(true);
+    },
+    []
+  );
+
+  const TrackInfo = useMemo(
+    () => (
+      <div className="whitespace relative overflow-x-clip rounded-lg px-3 py-1">
+        <p
+          className="track-name relative z-10 truncate"
+          style={{ ...textStyle, fontWeight: "600" }}
+        >
+          {track?.title || "No track playing"}
+        </p>
+        <p className="artist-name relative z-10 truncate" style={textStyle}>
+          {track?.artist || "Artist N/A"}
+        </p>
+      </div>
+    ),
+    [track?.title, track?.artist, textStyle]
+  );
+
+  const progressColors = useMemo(
+    () => ({
+      background:
+        specificSettings?.colorSync && palette?.LightMuted
+          ? palette.LightMuted.hex
+          : specificSettings?.progressBarBackgroundColor || "transparent",
+      foreground:
+        specificSettings?.colorSync && palette?.Vibrant
+          ? palette.Vibrant.hex
+          : specificSettings?.progressBarForegroundColor || "transparent",
+    }),
+    [specificSettings, palette]
+  );
 
   useEffect(() => {
     if (videoLink) {
@@ -147,15 +263,6 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
       setIsVideoAvailable(false);
     }
   }, [videoLink]);
-
-  const handleVideoLoad = (
-    event: React.SyntheticEvent<HTMLVideoElement, Event>
-  ) => {
-    const video = event.currentTarget;
-    setIsVideoTaller(video.videoHeight > video.videoWidth);
-    setVideoError(null);
-    setIsVideoAvailable(true);
-  };
 
   const handleVideoError = () => {
     console.error("Error loading video");
@@ -277,21 +384,11 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                 </div>
                               )}
                               <AnimatePresence initial={false}>
-                                <motion.img
-                                  key={track?.title || "placeholder"}
-                                  src={track?.artwork}
-                                  variants={variants}
-                                  initial="enter"
-                                  animate="center"
-                                  exit="exit"
-                                  transition={{
-                                    opacity: { duration: 0.5 },
-                                    scale: { duration: 0.5 },
-                                  }}
-                                  className="absolute left-0 top-0 z-10 h-full w-full object-cover object-center"
-                                  style={{
-                                    borderRadius: `${commonSettings?.borderRadius || 0}px`,
-                                  }}
+                                <TrackArtwork
+                                  artwork={track?.artwork}
+                                  borderRadius={
+                                    commonSettings?.borderRadius || 0
+                                  }
                                 />
                               </AnimatePresence>
                             </div>
@@ -322,21 +419,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                           borderRadius: `${commonSettings?.borderRadius || 0}px`,
                         }}
                       >
-                        <p
-                          className="track-name relative z-10 truncate"
-                          style={{
-                            ...textStyle,
-                            fontWeight: "600",
-                          }}
-                        >
-                          {track?.title || "No track playing"}
-                        </p>
-                        <p
-                          className="artist-name relative z-10 truncate"
-                          style={textStyle}
-                        >
-                          {track?.artist || "Artist N/A"}
-                        </p>
+                        {TrackInfo}
                         {specificSettings?.micEnabled && (
                           <div
                             ref={audioMotionRef}
@@ -345,51 +428,15 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                           />
                         )}
                       </div>
-                      <div
-                        className="relative flex h-full w-full items-center justify-between gap-1 rounded-lg px-3 transition-all duration-300"
-                        style={{
-                          backgroundColor: specificSettings?.colorSync
-                            ? palette?.DarkVibrant?.hex
-                            : commonSettings?.backgroundColor || "transparent",
-                          borderRadius: `${commonSettings?.borderRadius || 0}px`,
-                        }}
-                      >
-                        <p
-                          className="z-10 flex w-12 justify-start truncate text-sm font-bold"
-                          style={textStyle}
-                        >
-                          {formatTime(track?.elapsed || 0)}
-                        </p>
-                        <p
-                          className="z-10 flex w-12 justify-end truncate text-sm font-bold"
-                          style={textStyle}
-                        >
-                          {formatTime(track?.duration || 0)}
-                        </p>
-                      </div>
+                      <TrackProgress
+                        elapsed={track?.elapsed || 0}
+                        duration={track?.duration || 0}
+                      />
+                      <ProgressBar
+                        progress={track?.progress || 0}
+                        colors={progressColors}
+                      />
                     </div>
-                  </div>
-                  <div
-                    className="relative bottom-0 h-2 w-full rounded-lg"
-                    style={{
-                      backgroundColor:
-                        specificSettings?.colorSync && palette?.LightMuted
-                          ? palette.LightMuted.hex
-                          : specificSettings?.progressBarBackgroundColor ||
-                            "transparent",
-                    }}
-                  >
-                    <div
-                      className="absolute left-0 top-0 h-full rounded-lg"
-                      style={{
-                        width: `${track?.progress}%`,
-                        backgroundColor:
-                          specificSettings?.colorSync && palette?.Vibrant
-                            ? palette.Vibrant.hex
-                            : specificSettings?.progressBarForegroundColor ||
-                              "transparent",
-                      }}
-                    />
                   </div>
                 </div>
               </motion.div>
@@ -414,4 +461,4 @@ function getFontWeight(
   return newWeight - (newWeight % 100);
 }
 
-export default SkinRounded;
+export default memo(SkinRounded);
