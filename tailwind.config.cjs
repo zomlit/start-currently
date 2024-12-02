@@ -65,6 +65,9 @@ module.exports = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        boxShadow: {
+          text: '5px 5px 10px rgba(139, 92, 246, 0.5)', // Custom shadow
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -2,6 +2,7 @@ import { defineConfig } from "@tanstack/start/config";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import svgr from "vite-plugin-svgr";
 import tsConfigPaths from "vite-tsconfig-paths";
+import babel from "vite-plugin-babel";
 
 export default defineConfig({
   server: {
@@ -28,19 +29,28 @@ export default defineConfig({
       "process.env.VITE_PUBLIC_SUPABASE_ANON_KEY": JSON.stringify(
         process.env.VITE_PUBLIC_SUPABASE_ANON_KEY
       ),
-    },
-    publicDir: "public",
-    assetsInclude: ["**/*.svg", "**/*.png", "**/*.jpg", "**/*.webp"],
-    resolve: {
-      alias: {
-        "@": "/app",
-        "@icons": "/app/icons",
-        "@assets": "/app/assets",
-        "@gamepad": "/app/assets/gamepad",
-      },
+      "process.env.REACT_COMPILER": JSON.stringify(true),
     },
     plugins: [
       tsConfigPaths(),
+      babel({
+        filter: /\.[jt]sx?$/,
+        babelConfig: {
+          presets: [
+            ["@babel/preset-typescript", { isTSX: true, allExtensions: true }],
+          ],
+          plugins: [
+            [
+              "babel-plugin-react-compiler",
+              {
+                debug: true,
+                verbose: true,
+                runtime: true,
+              },
+            ],
+          ],
+        },
+      }),
       svgr({
         svgrOptions: {
           icon: true,

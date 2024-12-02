@@ -39,7 +39,7 @@ export function CircleButton({
         d="M83.8,111.3A26.25,26.25,0,1,1,110,85.1,26.33,26.33,0,0,1,83.8,111.3Z"
         transform="translate(-57.55 -57.8)"
         fill={pressed ? "var(--button-pressed-color)" : "var(--button-color)"}
-        opacity={0.8}
+        opacity={0.9}
       />
       {/* PlayStation circle shape */}
       <path
@@ -48,7 +48,7 @@ export function CircleButton({
         fill={
           pressed ? pressedColor || PS_COLORS.circle : color || PS_COLORS.circle
         }
-        opacity={pressed ? 1 : 0.8}
+        opacity={pressed ? 1 : 0.9}
       />
     </svg>
   );
@@ -74,7 +74,7 @@ export function CrossButton({
         d="M27.2,111.3A26.2,26.2,0,1,1,53.6,85.1,26.23,26.23,0,0,1,27.2,111.3Z"
         transform="translate(-1 -57.8)"
         fill={pressed ? "var(--button-pressed-color)" : "var(--button-color)"}
-        opacity={0.8}
+        opacity={0.9}
       />
       {/* PlayStation cross shape */}
       <polygon
@@ -83,7 +83,7 @@ export function CrossButton({
         fill={
           pressed ? pressedColor || PS_COLORS.cross : color || PS_COLORS.cross
         }
-        opacity={pressed ? 1 : 0.8}
+        opacity={pressed ? 1 : 0.9}
       />
     </svg>
   );
@@ -109,7 +109,7 @@ export function SquareButton({
         d="M140.3,111.3A26.25,26.25,0,1,1,166.6,85,26.25,26.25,0,0,1,140.3,111.3Z"
         transform="translate(-113.05 -57.8)"
         fill={pressed ? "var(--button-pressed-color)" : "var(--button-color)"}
-        opacity={0.8}
+        opacity={0.9}
       />
       {/* PlayStation square shape */}
       <path
@@ -118,7 +118,7 @@ export function SquareButton({
         fill={
           pressed ? pressedColor || PS_COLORS.square : color || PS_COLORS.square
         }
-        opacity={pressed ? 1 : 0.8}
+        opacity={pressed ? 1 : 0.9}
       />
     </svg>
   );
@@ -144,7 +144,7 @@ export function TriangleButton({
         d="M196.7,111.3A26.25,26.25,0,1,1,223,85.1,26.33,26.33,0,0,1,196.7,111.3Z"
         transform="translate(-169.45 -57.8)"
         fill={pressed ? "var(--button-pressed-color)" : "var(--button-color)"}
-        opacity={0.8}
+        opacity={0.9}
       />
       {/* PlayStation triangle shape */}
       <path
@@ -155,7 +155,7 @@ export function TriangleButton({
             ? pressedColor || PS_COLORS.triangle
             : color || PS_COLORS.triangle
         }
-        opacity={pressed ? 1 : 0.8}
+        opacity={pressed ? 1 : 0.9}
       />
     </svg>
   );

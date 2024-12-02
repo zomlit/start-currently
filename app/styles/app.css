@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --header-height: 88px; /* Updated from 64px */
+  --nav-height: 4rem; /* 64px */
+  --footer-height: 6rem; /* 96px */
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -96,4 +102,8 @@
 
 .fonts-loading {
   visibility: hidden;
+}
+
+.react-flow__attribution {
+  display: none !important;
 }

@@ -1,9 +1,0 @@
-/* Add this to hide React Flow attribution */
-.react-flow__attribution {
-  display: none !important;
-}
-
-:root {
-  --header-height: 88px; /* Updated from 64px */
-  --nav-height: 64px; /* Updated from 48px */
-}

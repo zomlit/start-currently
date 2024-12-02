@@ -4,6 +4,8 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useCallback,
+  useMemo,
 } from "react";
 import { useElysiaSession } from "@/hooks/useElysiaSession";
 import { useCombinedStore } from "@/store";
@@ -24,21 +26,53 @@ interface ApiStats {
   userId?: string;
 }
 
-interface ElysiaSessionContextType {
+type ErrorLine = {
+  id: string;
+  message: string;
+  timestamp: Date;
+  type: "error" | "warning";
+  line?: string;
+  key?: string;
+};
+
+type ElysiaSessionContextType = {
   isSessionActive: boolean;
   isServerAvailable: boolean;
-  startSession: () => Promise<void>;
-  stopSession: () => Promise<void>;
   lastPing: number | null;
-  apiStats: ApiStats | null;
-  nowPlaying: any | null;
+  apiStats: any;
+  nowPlaying: any;
   twitchToken: string | null;
-  spotifyRefreshToken: string | null;
-  updateSpotifyToken: (token: string) => void;
   handleToggleSession: () => Promise<void>;
-  isExpanded: boolean;
-  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>;
-}
+  sessionStatus: {
+    spotify: {
+      isConnected: boolean;
+      lastChecked: Date | null;
+      latency: number | null;
+    };
+    twitch: {
+      isConnected: boolean;
+      lastChecked: Date | null;
+    };
+  };
+  sessionStartTime: number | null;
+  formatUptime: (startTime: number | null) => string;
+  formatConsoleValue: (value: any) => string;
+  getApiHitColor: (hits: number) => string;
+  addConsoleMessage: (
+    message: string,
+    type?: "info" | "success" | "error",
+    details?: Record<string, any>
+  ) => void;
+  clearConsoleMessages: () => void;
+  apiHits: number;
+  setApiHits: React.Dispatch<React.SetStateAction<number>>;
+  latency: number | null;
+  setLatency: React.Dispatch<React.SetStateAction<number | null>>;
+  sessionErrors: ErrorLine[];
+  setSessionErrors: React.Dispatch<React.SetStateAction<ErrorLine[]>>;
+  isSpotifyVerified: boolean;
+  setIsSpotifyVerified: React.Dispatch<React.SetStateAction<boolean>>;
+};
 
 const ElysiaSessionContext = createContext<
   ElysiaSessionContextType | undefined
@@ -65,10 +99,10 @@ export const ElysiaSessionProvider: React.FC<ElysiaSessionProviderProps> = ({
 }) => {
   const { isSessionActive, isServerAvailable, startSession, stopSession } =
     useElysiaSession(broadcastChannel);
+  const { userId, getToken } = useAuth();
   const { oauthTokens } = useCombinedStore();
-  const { userId } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
-  const twitchToken = oauthTokens.twitch?.[0]?.token ?? null;
+  const twitchToken = oauthTokens?.twitch?.[0]?.token ?? null;
   const { spotifyRefreshToken } = useSpotifyStore();
   const nowPlaying = useDatabaseStore((state) => {
     const widget = state.VisualizerWidget?.[0];
@@ -81,6 +115,19 @@ export const ElysiaSessionProvider: React.FC<ElysiaSessionProviderProps> = ({
   const [lastPing, setLastPing] = useState<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const elysiaWsUrl = import.meta.env.VITE_ELYSIA_WS_URL;
+  const [apiHits, setApiHits] = useState(0);
+  const [latency, setLatency] = useState<number | null>(null);
+  const [sessionErrors, setSessionErrors] = useState<ErrorLine[]>([]);
+  const [consoleMessages, setConsoleMessages] = useState<
+    Array<{
+      id: string;
+      message: string;
+      timestamp: Date;
+      type: "info" | "success" | "error";
+      details?: Record<string, any>;
+    }>
+  >([]);
+  const [isSpotifyVerified, setIsSpotifyVerified] = useState(false);
 
   useVisualizerWidgetSubscription(userId);
 
@@ -224,21 +271,170 @@ export const ElysiaSessionProvider: React.FC<ElysiaSessionProviderProps> = ({
     return stopSession();
   };
 
-  const value: ElysiaSessionContextType = {
-    isSessionActive,
-    isServerAvailable,
-    startSession: wrappedStartSession,
-    stopSession: wrappedStopSession,
-    lastPing,
-    apiStats,
-    nowPlaying,
-    twitchToken,
-    spotifyRefreshToken,
-    updateSpotifyToken,
-    handleToggleSession,
-    isExpanded,
-    setIsExpanded,
-  };
+  const formatUptime = useCallback((startTime: number | null) => {
+    if (!startTime) return "Not started";
+    const diff = Date.now() - startTime;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+    return `${seconds}s`;
+  }, []);
+
+  const formatConsoleValue = useCallback((value: any): string => {
+    if (typeof value === "object" && value !== null) {
+      return Object.entries(value)
+        .map(([k, v]) => `\n    ${k}: ${formatConsoleValue(v)}`)
+        .join("");
+    }
+    return String(value);
+  }, []);
+
+  const getApiHitColor = useCallback((hits: number) => {
+    const percentage = (hits / 60) * 100;
+    if (percentage < 50) return "text-emerald-400";
+    if (percentage < 75) return "text-yellow-300";
+    return "text-pink-500";
+  }, []);
+
+  const addConsoleMessage = useCallback(
+    (
+      message: string,
+      type: "info" | "success" | "error" = "info",
+      details?: Record<string, any>
+    ) => {
+      setConsoleMessages((prev) => [
+        {
+          id: crypto.randomUUID(),
+          message,
+          timestamp: new Date(),
+          type,
+          details,
+        },
+        ...prev.slice(0, 49),
+      ]);
+    },
+    []
+  );
+
+  const clearConsoleMessages = useCallback(() => {
+    setConsoleMessages([]);
+  }, []);
+
+  useEffect(() => {
+    if (!isSessionActive) {
+      setLatency(null);
+      return;
+    }
+
+    const checkLatency = async () => {
+      const start = performance.now();
+      try {
+        const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
+        if (!apiUrl) return;
+
+        const response = await fetch(`${apiUrl}/health-check`);
+        if (response.ok) {
+          const end = performance.now();
+          setLatency(Math.round(end - start));
+        }
+      } catch (error) {
+        setLatency(null);
+      }
+    };
+
+    checkLatency();
+    const interval = setInterval(checkLatency, 5000);
+    return () => clearInterval(interval);
+  }, [isSessionActive]);
+
+  useEffect(() => {
+    const verifySpotify = async () => {
+      if (!spotifyRefreshToken || !isSessionActive || !userId) return;
+
+      try {
+        const clerkToken = await getToken({ template: "lstio" });
+        const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
+        if (!apiUrl) return;
+
+        const response = await fetch(`${apiUrl}/api/spotify/verify`, {
+          headers: {
+            Authorization: `Bearer ${clerkToken}`,
+            "X-User-Id": userId || "",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to verify Spotify: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setIsSpotifyVerified(data.success && data.spotify?.isConnected);
+      } catch (error) {
+        console.error("Failed to verify Spotify connection:", error);
+        setIsSpotifyVerified(false);
+      }
+    };
+
+    verifySpotify();
+  }, [isSessionActive, spotifyRefreshToken, userId, getToken]);
+
+  const value = useMemo<ElysiaSessionContextType>(
+    () => ({
+      isSessionActive,
+      isServerAvailable,
+      lastPing,
+      apiStats,
+      nowPlaying,
+      twitchToken,
+      handleToggleSession,
+      sessionStatus: {
+        spotify: {
+          isConnected: !!spotifyRefreshToken && isSpotifyVerified,
+          lastChecked: null,
+          latency: latency,
+        },
+        twitch: {
+          isConnected: !!twitchToken,
+          lastChecked: null,
+        },
+      },
+      sessionStartTime: null,
+      formatUptime,
+      formatConsoleValue,
+      getApiHitColor,
+      addConsoleMessage,
+      clearConsoleMessages,
+      apiHits,
+      setApiHits,
+      latency,
+      setLatency,
+      sessionErrors,
+      setSessionErrors,
+      isSpotifyVerified,
+      setIsSpotifyVerified,
+    }),
+    [
+      isSessionActive,
+      isServerAvailable,
+      lastPing,
+      apiStats,
+      nowPlaying,
+      twitchToken,
+      handleToggleSession,
+      formatUptime,
+      formatConsoleValue,
+      getApiHitColor,
+      addConsoleMessage,
+      clearConsoleMessages,
+      apiHits,
+      latency,
+      sessionErrors,
+      spotifyRefreshToken,
+      isSpotifyVerified,
+    ]
+  );
 
   return (
     <ElysiaSessionContext.Provider value={value}>

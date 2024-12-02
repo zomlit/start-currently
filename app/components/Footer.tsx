@@ -8,8 +8,8 @@ export const Footer = () => {
   const { isLoaded } = useUser();
 
   return (
-    <Container maxWidth="full" isDashboard>
-      <footer className="backdrop-blur-sm text-white w-full h-footer mt-20">
+    <div>
+      <footer className="backdrop-blur-sm bg-white/40 dark:bg-black/40 text-white w-full p-5">
         <div className="">
           <div className="md:flex md:justify-between">
             <div className="mb-6 md:mb-0">
@@ -25,7 +25,7 @@ export const Footer = () => {
                     }
                   )}
                 />
-                <span className="md:ml-0 tracking-widest  dark:!text-white uppercase sm:inline-block prose dark:font-extralight">
+                <span className="md:ml-0 tracking-widest dark:!text-white uppercase sm:inline-block prose dark:font-extralight">
                   Currently
                 </span>
               </Link>
@@ -132,6 +132,6 @@ export const Footer = () => {
           </div>
         </div>
       </footer>
-    </Container>
+    </div>
   );
 };

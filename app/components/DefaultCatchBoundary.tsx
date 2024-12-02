@@ -14,17 +14,14 @@ import { ClientWrapper } from "@/components/ClientWrapper";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "sonner";
-import { useThemeStore } from "@/store/themeStore";
-import { ClerkProvider } from "@clerk/tanstack-start";
-import { dark } from "@clerk/themes";
 import { useMemo, useCallback } from "react";
 import { CircleDot } from "@/components/icons";
 import { toast } from "@/utils/toast";
 import { Input } from "@/components/ui/input";
+import { MainLayout } from "@/components/layouts/MainLayout";
 
 export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
-  const { theme } = useThemeStore();
 
   const errorDetails = useMemo(() => {
     if (!(error instanceof Error)) {
@@ -105,133 +102,135 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
   }, [errorDetails]);
 
   return (
-    <ClientWrapper>
-      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-3xl bg-white/5 border-none shadow-2xl backdrop-blur-sm p-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-start gap-4">
-              <div className="w-full flex flex-col items-center">
-                <div className="relative rounded-full p-3 animate-pulse">
-                  <CircleDot className="h-12 w-12 text-pink-500 fill-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.7)] animate-glow" />
+    <MainLayout>
+      <ClientWrapper>
+        <div className="flex min-h-[calc(100vh-var(--nav-height)-var(--footer-height))] flex-col items-center justify-center p-4 my-8 ">
+          <Card className="w-full max-w-3xl bg-white/5 border-none shadow-2xl backdrop-blur-sm p-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-start gap-4">
+                <div className="w-full flex flex-col items-center">
+                  <div className="relative rounded-full p-3 animate-pulse">
+                    <CircleDot className="h-12 w-12 text-pink-500 fill-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.7)] animate-glow" />
 
-                  <div className="absolute inset-0 rounded-full">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/30 to-violet-500/30 blur-xl animate-pulse" />
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/20 to-violet-500/20 blur-2xl animate-pulse delay-75" />
-                    <div className="absolute inset-0 rounded-full border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.7)] animate-pulse delay-150" />
-                  </div>
-                </div>
-
-                <h1 className="text-3xl font-bold tracking-tight text-center mt-8">
-                  Oops! Something went wrong
-                </h1>
-              </div>
-
-              <div className="w-full">
-                <div className="bg-zinc-950/80 rounded-lg border border-zinc-800">
-                  <div className="flex items-center border-b border-zinc-800 px-4 py-2">
-                    <div
-                      className="relative text-lg text-red-400 uppercase font-black mr-2"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      Error:
+                    <div className="absolute inset-0 rounded-full">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/30 to-violet-500/30 blur-xl animate-pulse" />
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/20 to-violet-500/20 blur-2xl animate-pulse delay-75" />
+                      <div className="absolute inset-0 rounded-full border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.7)] animate-pulse delay-150" />
                     </div>
-                    <Input
-                      value={errorDetails.message}
-                      readOnly
-                      onClick={(e: any) => {
-                        e.currentTarget.select();
-                        navigator.clipboard.writeText(errorDetails.message);
-                        toast.success("Error message copied to clipboard");
-                      }}
-                      className="flex-1 p-0 font-mono text-sm bg-transparent border-none ring-0 ring-offset-0 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none hover:outline-none hover:ring-0 hover:ring-offset-0 active:outline-none active:ring-0 active:ring-offset-0 cursor-pointer rounded-none [&::selection]:bg-violet-500/50"
-                      style={{ color: "#facc15" }} // yellow-400
-                    />
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0 hover:bg-zinc-800 ml-2"
-                      onClick={copyErrorDetails}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
                   </div>
-                  <div className="pl-4 space-y-4">
-                    {process.env.NODE_ENV === "development" &&
-                      errorDetails.stack &&
-                      !errorDetails.isHookError && (
-                        <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-words border-zinc-800 pt-4 max-h-[400px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-zinc-700/30 hover:scrollbar-thumb-zinc-700/50">
-                          {errorDetails.stack.split("\n").map((line, i) => (
-                            <div
-                              key={i}
-                              className="py-0.5"
-                              dangerouslySetInnerHTML={{
-                                __html: formatStackLine(line),
-                              }}
-                            />
-                          ))}
-                        </pre>
-                      )}
+
+                  <h1 className="text-3xl font-bold tracking-tight text-center mt-8">
+                    Oops! Something went wrong
+                  </h1>
+                </div>
+
+                <div className="w-full">
+                  <div className="bg-zinc-950/80 rounded-lg border border-zinc-800">
+                    <div className="flex items-center border-b border-zinc-800 px-4 py-2">
+                      <div
+                        className="relative text-lg text-red-400 uppercase font-black mr-2"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        Error:
+                      </div>
+                      <Input
+                        value={errorDetails.message}
+                        readOnly
+                        onClick={(e: any) => {
+                          e.currentTarget.select();
+                          navigator.clipboard.writeText(errorDetails.message);
+                          toast.success("Error message copied to clipboard");
+                        }}
+                        className="flex-1 p-0 font-mono text-sm bg-transparent border-none ring-0 ring-offset-0 focus:ring-0 focus:ring-offset-0 focus:outline-none focus:border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none hover:outline-none hover:ring-0 hover:ring-offset-0 active:outline-none active:ring-0 active:ring-offset-0 cursor-pointer rounded-none [&::selection]:bg-violet-500/50"
+                        style={{ color: "#facc15" }} // yellow-400
+                      />
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 hover:bg-zinc-800 ml-2"
+                        onClick={copyErrorDetails}
+                      >
+                        <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                      </Button>
+                    </div>
+                    <div className="pl-4 space-y-4">
+                      {process.env.NODE_ENV === "development" &&
+                        errorDetails.stack &&
+                        !errorDetails.isHookError && (
+                          <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-words border-zinc-800 pt-4 max-h-[300px] overflow-y-auto scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-zinc-700/30 hover:scrollbar-thumb-zinc-700/50">
+                            {errorDetails.stack.split("\n").map((line, i) => (
+                              <div
+                                key={i}
+                                className="py-0.5"
+                                dangerouslySetInnerHTML={{
+                                  __html: formatStackLine(line),
+                                }}
+                              />
+                            ))}
+                          </pre>
+                        )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
+            </CardContent>
 
-          <CardFooter className="flex justify-center gap-4 pb-6">
-            {errorDetails.isHookError ? (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  toast.info("Refreshing page...");
-                  setTimeout(() => window.location.reload(), 1000);
-                }}
-                className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh Page
-              </Button>
-            ) : (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  const promise = new Promise((resolve) => {
-                    reset?.();
-                    setTimeout(resolve, 1000);
-                  });
+            <CardFooter className="flex justify-center gap-4 pb-6">
+              {errorDetails.isHookError ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    toast.info("Refreshing page...");
+                    setTimeout(() => window.location.reload(), 1000);
+                  }}
+                  className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh Page
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    const promise = new Promise((resolve) => {
+                      reset?.();
+                      setTimeout(resolve, 1000);
+                    });
 
+                    toast.promise(promise, {
+                      loading: "Retrying...",
+                      success: "Operation retried",
+                      error: "Failed to retry",
+                    });
+                  }}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  const promise = router.navigate({ to: "/" });
                   toast.promise(promise, {
-                    loading: "Retrying...",
-                    success: "Operation retried",
-                    error: "Failed to retry",
+                    loading: "Navigating home...",
+                    success: "Navigated to home",
+                    error: "Failed to navigate",
                   });
                 }}
-                className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
+                className="gap-2 hover:bg-zinc-800/50"
               >
-                <RefreshCw className="h-4 w-4" />
-                Try Again
+                <Home className="h-4 w-4" />
+                Go Home
               </Button>
-            )}
-
-            <Button
-              variant="secondary"
-              onClick={() => {
-                const promise = router.navigate({ to: "/" });
-                toast.promise(promise, {
-                  loading: "Navigating home...",
-                  success: "Navigated to home",
-                  error: "Failed to navigate",
-                });
-              }}
-              className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
-            >
-              <Home className="h-4 w-4" />
-              Go Home
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    </ClientWrapper>
+            </CardFooter>
+          </Card>
+        </div>
+      </ClientWrapper>
+    </MainLayout>
   );
 }
 

@@ -99,7 +99,7 @@ const LogEntry = React.memo(({ log }: { log: string }) => {
             className="flex items-center gap-2 w-full text-left hover:bg-white/5 rounded px-1"
           >
             <span
-              className="transform transition-transform duration-200"
+              className="transform-gpu transition-transform duration-200"
               style={{
                 transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
               }}
@@ -631,48 +631,43 @@ export function PublicGamepadView() {
 
   // Update the render logic
   return (
-    <>
-      <AnimatePresence mode="wait">
-        {shouldHideController ? (
-          <motion.div
-            key="inactive"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            style={{
-              display: "flex",
-              height: "100%",
-              width: "100%",
-              flexDirection: "column",
-              justifyContent: "center",
-              gap: "1rem",
-            }}
-          >
-            <Gamepad className="h-12 w-12 text-muted-foreground/50" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="active"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <GamepadViewer
-              settings={settings}
-              username={username}
-              gamepadState={remoteGamepadState}
-              isPublicView={true}
-              disableDirectInput={true}
-              onSettingsChange={undefined}
-            />
-          </motion.div>
+    <div className="relative flex min-h-screen w-full items-center justify-center">
+      <div className="relative w-full max-w-7xl rounded-lg min-h-[calc(100vh-2rem)] md:min-h-[calc(100vh-4rem)] flex flex-col">
+        <AnimatePresence mode="wait">
+          {shouldHideController ? (
+            <motion.div
+              key="inactive"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex h-full w-full flex-col items-center justify-center gap-4"
+            >
+              <Gamepad className="h-12 w-12 text-muted-foreground/50" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="active"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <GamepadViewer
+                settings={settings}
+                username={username}
+                gamepadState={remoteGamepadState}
+                isPublicView={true}
+                disableDirectInput={true}
+                onSettingsChange={undefined}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {process.env.NODE_ENV === "development" && (
+          <DebugOverlayContent logs={debugLogs} />
         )}
-      </AnimatePresence>
-      {process.env.NODE_ENV === "development" && (
-        <DebugOverlayContent logs={debugLogs} />
-      )}
-    </>
+      </div>
+    </div>
   );
 }

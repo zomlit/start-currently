@@ -35,7 +35,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
           : "bg-transparent"
       )}
     >
-      <div className="container max-w-full px-4 md:pl-28">
+      <div className="container max-w-full px-6">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
             <Link
@@ -44,13 +44,13 @@ export function Navigation({ isDashboard }: NavigationProps) {
             >
               <CircleDot
                 className={cn(
-                  "w-6 h-6 text-gray-900 dark:text-white dark:fill-white mr-4 hidden md:visible",
+                  "w-6 h-6 text-gray-900 dark:text-white fill-violet-500 mr-4 md:visible",
                   {
                     "animate-spin": !isLoaded,
                   }
                 )}
               />
-              <span className="ml-6 md:ml-0 tracking-widest !text-black dark:!text-white uppercase sm:inline-block prose dark:font-extralight">
+              <span className="md:ml-0 tracking-widest !text-black dark:!text-white uppercase sm:inline-block prose dark:font-extralight">
                 Currently
               </span>
             </Link>
@@ -109,7 +109,7 @@ function NavLink({
     <Link
       to={to}
       activeProps={{
-        className: "text-red-500 dark:text-violet-400",
+        className: "text-violet-600 dark:text-violet-400",
       }}
       inactiveProps={{
         className:

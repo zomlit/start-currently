@@ -1,8 +1,8 @@
 import { createFileRoute, Outlet, useMatches } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import GenericHeader from "@/components/GenericHeader";
-import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { getSectionContent } from "@/config/widgets";
+import { HorizontalNav } from "@/components/navigation/HorizontalNav";
 
 export const Route = createFileRoute("/_app/widgets")({
   component: SectionsLayout,
@@ -20,7 +20,7 @@ function SectionsLayout() {
         title={content.title}
         description={content.description}
       />
-      <PageBreadcrumb />
+      <HorizontalNav />
       <div className="">
         <Outlet />
       </div>

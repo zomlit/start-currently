@@ -55,8 +55,6 @@ import { LiveStatusCard } from "@/components/widget-settings/visualizer/LiveStat
 import type { Event, Alert } from "@/types/events";
 import type { TrackData } from "@/types/visualizer";
 
-import { ChevronRight } from "lucide-react";
-
 const IconButton = forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {

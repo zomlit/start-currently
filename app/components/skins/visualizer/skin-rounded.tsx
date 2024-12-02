@@ -54,12 +54,33 @@ const containerVariants = {
 };
 
 const TrackProgress = memo(
-  ({ elapsed, duration }: { elapsed: number; duration: number }) => (
-    <div className="relative flex h-full w-full items-center justify-between gap-1">
-      <p className="z-10 flex w-12 justify-start truncate text-sm font-bold">
+  ({
+    elapsed,
+    duration,
+    textStyle,
+    specificSettings,
+    palette,
+    commonSettings,
+  }) => (
+    <div
+      className="relative flex h-full w-full items-center justify-between gap-1 rounded-lg px-3 transition-all duration-300"
+      style={{
+        backgroundColor: specificSettings?.colorSync
+          ? palette?.DarkVibrant?.hex
+          : commonSettings?.backgroundColor || "transparent",
+        borderRadius: `${commonSettings?.borderRadius || 0}px`,
+      }}
+    >
+      <p
+        className="z-10 flex w-12 justify-start truncate text-sm font-bold"
+        style={textStyle}
+      >
         {formatTime(elapsed)}
       </p>
-      <p className="z-10 flex w-12 justify-end truncate text-sm font-bold">
+      <p
+        className="z-10 flex w-12 justify-end truncate text-sm font-bold"
+        style={textStyle}
+      >
         {formatTime(duration)}
       </p>
     </div>
@@ -175,6 +196,51 @@ const computeTextStyle = (
   };
 };
 
+const TrackInfo = memo(
+  ({
+    track,
+    textStyle,
+    specificSettings,
+    palette,
+    commonSettings,
+    audioMotionRef,
+  }: {
+    track: any;
+    textStyle: React.CSSProperties;
+    specificSettings: VisualizerSettings;
+    palette: any;
+    commonSettings: CommonSettings;
+    audioMotionRef: React.RefObject<HTMLDivElement>;
+  }) => (
+    <div
+      className="whitespace relative overflow-x-clip rounded-lg px-3 py-1"
+      style={{
+        backgroundColor: specificSettings?.colorSync
+          ? palette?.DarkVibrant?.hex
+          : commonSettings?.backgroundColor || "transparent",
+        borderRadius: `${commonSettings?.borderRadius || 0}px`,
+      }}
+    >
+      <p
+        className="track-name relative z-10 truncate"
+        style={{ ...textStyle, fontWeight: "600" }}
+      >
+        {track?.title || "No track playing"}
+      </p>
+      <p className="artist-name relative z-10 truncate" style={textStyle}>
+        {track?.artist || "Artist N/A"}
+      </p>
+      {specificSettings?.micEnabled && (
+        <div
+          ref={audioMotionRef}
+          className="absolute -bottom-[1px] left-0 z-0 h-full w-full rounded-lg [&_canvas]:rounded-lg"
+          id="container"
+        />
+      )}
+    </div>
+  )
+);
+
 const SkinRounded: React.FC<SkinRoundedProps> = ({
   track,
   commonSettings,
@@ -223,23 +289,6 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
       setIsVideoAvailable(true);
     },
     []
-  );
-
-  const TrackInfo = useMemo(
-    () => (
-      <div className="whitespace relative overflow-x-clip rounded-lg px-3 py-1">
-        <p
-          className="track-name relative z-10 truncate"
-          style={{ ...textStyle, fontWeight: "600" }}
-        >
-          {track?.title || "No track playing"}
-        </p>
-        <p className="artist-name relative z-10 truncate" style={textStyle}>
-          {track?.artist || "Artist N/A"}
-        </p>
-      </div>
-    ),
-    [track?.title, track?.artist, textStyle]
   );
 
   const progressColors = useMemo(
@@ -410,27 +459,21 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                             opacity={specificSettings?.backgroundCanvasOpacity}
                           />
                         )}
-                      <div
-                        className="whitespace relative overflow-x-clip rounded-lg px-3 py-1"
-                        style={{
-                          backgroundColor: specificSettings?.colorSync
-                            ? palette?.DarkVibrant?.hex
-                            : commonSettings?.backgroundColor || "transparent",
-                          borderRadius: `${commonSettings?.borderRadius || 0}px`,
-                        }}
-                      >
-                        {TrackInfo}
-                        {specificSettings?.micEnabled && (
-                          <div
-                            ref={audioMotionRef}
-                            className="absolute -bottom-[1px] left-0 z-0 h-full w-full rounded-lg [&_canvas]:rounded-lg"
-                            id="container"
-                          />
-                        )}
-                      </div>
+                      <TrackInfo
+                        track={track}
+                        textStyle={textStyle}
+                        specificSettings={specificSettings}
+                        palette={palette}
+                        commonSettings={commonSettings}
+                        audioMotionRef={audioMotionRef}
+                      />
                       <TrackProgress
                         elapsed={track?.elapsed || 0}
                         duration={track?.duration || 0}
+                        textStyle={textStyle}
+                        specificSettings={specificSettings}
+                        palette={palette}
+                        commonSettings={commonSettings}
                       />
                       <ProgressBar
                         progress={track?.progress || 0}

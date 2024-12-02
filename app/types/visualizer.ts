@@ -101,3 +101,14 @@ export interface VisualizerComponentProps {
   colorSyncEnabled: boolean;
   currentProfile: WidgetProfile;
 }
+
+export interface TrackData {
+  title: string;
+  artist: string;
+  artwork?: string;
+  progress: number;
+  isPlaying: boolean;
+  elapsed: number;
+  duration: number;
+  id: string;
+}

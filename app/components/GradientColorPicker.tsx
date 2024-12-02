@@ -1,5 +1,5 @@
 // components/GradientColorPicker.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import ColorPicker from "react-best-gradient-color-picker";
 import {
   Popover,
@@ -7,16 +7,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import debounce from "lodash/debounce";
 import { cn } from "@/lib/utils";
 
 interface GradientColorPickerProps {
   color: string;
   onChange: (color: string) => void;
   onChangeComplete: (color: string) => void;
-  currentProfile: any; // Replace 'any' with the correct type for your profile
+  currentProfile: any;
   disabled?: boolean;
-  alpha?: boolean;
 }
 
 export const GradientColorPicker: React.FC<GradientColorPickerProps> = ({
@@ -25,34 +23,15 @@ export const GradientColorPicker: React.FC<GradientColorPickerProps> = ({
   onChangeComplete,
   currentProfile,
   disabled = false,
-  alpha = false,
 }) => {
-  const [localColor, setLocalColor] = useState(color);
-  const [isOpen, setIsOpen] = useState(false);
+  const [previewColor, setPreviewColor] = React.useState(color);
 
-  useEffect(() => {
-    setLocalColor(color);
+  React.useEffect(() => {
+    setPreviewColor(color);
   }, [color]);
 
-  const debouncedOnChange = useCallback(
-    debounce((newColor: string) => {
-      onChange(newColor);
-    }, 50),
-    [onChange]
-  );
-
-  const handleColorChange = (newColor: string) => {
-    setLocalColor(newColor);
-    debouncedOnChange(newColor);
-  };
-
-  const handlePopoverClose = () => {
-    setIsOpen(false);
-    onChangeComplete(localColor);
-  };
-
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -64,22 +43,28 @@ export const GradientColorPicker: React.FC<GradientColorPickerProps> = ({
         >
           <div
             className="m-2 h-4 min-w-4 self-center truncate rounded-full"
-            style={{ backgroundColor: localColor }}
+            style={{ backgroundColor: previewColor }}
           />
           <span className={cn(disabled ? "opacity-20" : "")}>
-            {localColor || "Pick a color"}
+            {previewColor || "Pick a color"}
           </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
         className="z-50 w-auto bg-white/10 p-2 backdrop-blur-md"
-        onInteractOutside={handlePopoverClose}
+        onInteractOutside={() => {
+          onChangeComplete(previewColor);
+          setPreviewColor(color);
+        }}
       >
         <ColorPicker
-          value={localColor}
-          onChange={handleColorChange}
+          value={color}
+          onChange={(newColor) => {
+            setPreviewColor(newColor);
+            onChange(newColor);
+          }}
+          onComplete={onChangeComplete}
           height={150}
-          alpha={alpha}
         />
 
         {currentProfile && (
@@ -92,9 +77,12 @@ export const GradientColorPicker: React.FC<GradientColorPickerProps> = ({
                   : "cursor-pointer hover:border-primary"
               )}
               style={{ backgroundColor: currentProfile.color }}
-              onClick={() =>
-                !disabled && handleColorChange(currentProfile.color)
-              }
+              onClick={() => {
+                if (!disabled) {
+                  setPreviewColor(currentProfile.color);
+                  onChange(currentProfile.color);
+                }
+              }}
             />
           </div>
         )}

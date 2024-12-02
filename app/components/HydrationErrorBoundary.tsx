@@ -20,15 +20,15 @@ export class HydrationErrorBoundary extends React.Component<
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error) {
-    if (error.message.includes("JSON")) {
-      console.warn("JSON parse error during hydration:", error);
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
-    }
-    return { hasError: true, error };
-  }
+  // static getDerivedStateFromError(error: Error) {
+  //   if (error.message.includes("JSON")) {
+  //     console.warn("JSON parse error during hydration:", error);
+  //     if (typeof window !== "undefined") {
+  //       window.location.reload();
+  //     }
+  //   }
+  //   return { hasError: true, error };
+  // }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Hydration error:", error, errorInfo);

@@ -146,7 +146,7 @@ export const apiMethods = {
                 triggerColor: "#0000ff",
                 backgroundColor: "rgba(0, 0, 0, 0)",
                 opacity: 1,
-                scale: 1,
+                scale: 0.9,
                 deadzone: 0.1,
                 touchpadEnabled: true,
                 rumbleEnabled: true,

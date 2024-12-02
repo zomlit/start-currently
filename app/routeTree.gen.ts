@@ -17,6 +17,7 @@ import { Route as AppImport } from './routes/_app'
 import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppWidgetsImport } from './routes/_app/widgets'
+import { Route as AppWheelSpinImport } from './routes/_app/wheel-spin'
 import { Route as AppDashboardImport } from './routes/_app/dashboard'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
 import { Route as UsernameOverlayImport } from './routes/$username/overlay'
@@ -74,6 +75,12 @@ const AppIndexRoute = AppIndexImport.update({
 const AppWidgetsRoute = AppWidgetsImport.update({
   id: '/widgets',
   path: '/widgets',
+  getParentRoute: () => AppRoute,
+} as any)
+
+const AppWheelSpinRoute = AppWheelSpinImport.update({
+  id: '/wheel-spin',
+  path: '/wheel-spin',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -280,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/wheel-spin': {
+      id: '/_app/wheel-spin'
+      path: '/wheel-spin'
+      fullPath: '/wheel-spin'
+      preLoaderRoute: typeof AppWheelSpinImport
       parentRoute: typeof AppImport
     }
     '/_app/widgets': {
@@ -498,6 +512,7 @@ const AppWidgetsRouteWithChildren = AppWidgetsRoute._addFileChildren(
 interface AppRouteChildren {
   AppAuthedRoute: typeof AppAuthedRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
+  AppWheelSpinRoute: typeof AppWheelSpinRoute
   AppWidgetsRoute: typeof AppWidgetsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppCheckoutProductIdRoute: typeof AppCheckoutProductIdRoute
@@ -511,6 +526,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAuthedRoute: AppAuthedRouteWithChildren,
   AppDashboardRoute: AppDashboardRouteWithChildren,
+  AppWheelSpinRoute: AppWheelSpinRoute,
   AppWidgetsRoute: AppWidgetsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppCheckoutProductIdRoute: AppCheckoutProductIdRoute,
@@ -542,6 +558,7 @@ export interface FileRoutesByFullPath {
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
   '/dashboard': typeof AppAuthedDashboardRoute
+  '/wheel-spin': typeof AppWheelSpinRoute
   '/widgets': typeof AppWidgetsRouteWithChildren
   '/': typeof AppIndexRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
@@ -571,6 +588,7 @@ export interface FileRoutesByTo {
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
   '/dashboard': typeof AppAuthedDashboardRoute
+  '/wheel-spin': typeof AppWheelSpinRoute
   '/': typeof AppIndexRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
@@ -602,6 +620,7 @@ export interface FileRoutesById {
   '/$username/overlay': typeof UsernameOverlayRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRouteWithChildren
+  '/_app/wheel-spin': typeof AppWheelSpinRoute
   '/_app/widgets': typeof AppWidgetsRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/_authed/dashboard': typeof AppAuthedDashboardRoute
@@ -634,6 +653,7 @@ export interface FileRouteTypes {
     | '/$username/lyrics'
     | '/$username/overlay'
     | '/dashboard'
+    | '/wheel-spin'
     | '/widgets'
     | '/'
     | '/checkout/$productId'
@@ -662,6 +682,7 @@ export interface FileRouteTypes {
     | '/$username/lyrics'
     | '/$username/overlay'
     | '/dashboard'
+    | '/wheel-spin'
     | '/'
     | '/checkout/$productId'
     | '/checkout/success'
@@ -691,6 +712,7 @@ export interface FileRouteTypes {
     | '/$username/overlay'
     | '/_app/_authed'
     | '/_app/dashboard'
+    | '/_app/wheel-spin'
     | '/_app/widgets'
     | '/_app/'
     | '/_app/_authed/dashboard'
@@ -757,6 +779,7 @@ export const routeTree = rootRoute
       "children": [
         "/_app/_authed",
         "/_app/dashboard",
+        "/_app/wheel-spin",
         "/_app/widgets",
         "/_app/",
         "/_app/checkout/$productId",
@@ -802,6 +825,10 @@ export const routeTree = rootRoute
         "/_app/dashboard/widgets/dev",
         "/_app/dashboard/widgets/visualizer"
       ]
+    },
+    "/_app/wheel-spin": {
+      "filePath": "_app/wheel-spin.tsx",
+      "parent": "/_app"
     },
     "/_app/widgets": {
       "filePath": "_app/widgets.tsx",

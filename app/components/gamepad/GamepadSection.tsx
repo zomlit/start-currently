@@ -149,7 +149,7 @@ export function GamepadSection() {
 
   const GamepadSettings = (
     <div className="flex flex-col">
-      <div className="flex-none border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex-none border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
         <div className="flex items-center space-x-2">
           <Input
             value={publicUrl}

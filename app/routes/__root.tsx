@@ -61,19 +61,19 @@ export const Route = createRootRouteWithContext<{
       { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
       { rel: "icon", href: "/favicon.ico" },
     ],
-    scripts: import.meta.env.PROD
-      ? []
-      : [
-          {
-            type: "module",
-            children: /* js */ `
-      import RefreshRuntime from "/_build/@react-refresh"
-      RefreshRuntime.injectIntoGlobalHook(window)
-      window.$RefreshReg$ = () => {}
-      window.$RefreshSig$ = () => (type) => type
-    `,
-          },
-        ],
+    // scripts: import.meta.env.PROD
+    //   ? []
+    //   : [
+    //       {
+    //         type: "module",
+    //         children: /* js */ `
+    //   import RefreshRuntime from "/_build/@react-refresh"
+    //   RefreshRuntime.injectIntoGlobalHook(window)
+    //   window.$RefreshReg$ = () => {}
+    //   window.$RefreshSig$ = () => (type) => type
+    // `,
+    //       },
+    //     ],
   }),
 
   errorComponent: (props) => {

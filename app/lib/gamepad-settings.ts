@@ -15,7 +15,7 @@ export const defaultGamepadSettings: GamepadSettings = {
   stickColor: "#1a1a1a",
   triggerColor: "#1a1a1a",
   backgroundColor: "transparent",
-  scale: 1,
+  scale: 0.9,
   deadzone: 0.1,
   debugMode: false,
   hideWhenInactive: false,

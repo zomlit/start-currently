@@ -25,6 +25,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
   const setCurrentUserId = useDatabaseStore((state) => state.setCurrentUserId);
   const lastServerCheckAttempt = useRef(0);
   const serverCheckCooldown = 60000; // 1 minute cooldown
+  const [manuallyStoppedSession, setManuallyStoppedSession] = useState(false);
 
   const checkServerAvailability = useCallback(async () => {
     const now = Date.now();
@@ -168,8 +169,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
   );
 
   const stopSession = useCallback(async () => {
-    console.log("Attempting to stop session");
     try {
+      setManuallyStoppedSession(true);
       const clerkToken = await getValidClerkToken();
       const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
       if (!apiUrl) {
@@ -226,7 +227,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
       spotifyRefreshToken &&
       userId &&
       sessionId &&
-      !isSessionActive
+      !isSessionActive &&
+      !manuallyStoppedSession
     ) {
       console.log("All conditions met, attempting to start session");
       debouncedStartSession();
@@ -236,7 +238,6 @@ export const useElysiaSession = (broadcastChannel: string) => {
     ) {
       console.log("Conditions not met, stopping session");
       stopSession();
-    } else {
     }
   }, [
     oauthTokens,
@@ -245,6 +246,7 @@ export const useElysiaSession = (broadcastChannel: string) => {
     isSessionActive,
     debouncedStartSession,
     stopSession,
+    manuallyStoppedSession,
   ]);
 
   useEffect(() => {
@@ -270,6 +272,12 @@ export const useElysiaSession = (broadcastChannel: string) => {
     const interval = setInterval(checkAvailability, 60000); // Check every minute
     return () => clearInterval(interval);
   }, [checkServerAvailability]);
+
+  useEffect(() => {
+    if (!twitchToken || !spotifyRefreshToken || !userId || !sessionId) {
+      setManuallyStoppedSession(false);
+    }
+  }, [twitchToken, spotifyRefreshToken, userId, sessionId]);
 
   return {
     isSessionActive,

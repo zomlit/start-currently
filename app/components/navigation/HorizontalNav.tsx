@@ -14,7 +14,7 @@ export function HorizontalNav() {
       <nav className="hidden md:block">
         <div className="rounded-lg bg-white/10 p-2">
           <div className="flex flex-col">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 shadow-inner pt-2 dark:pt-0">
               {navItems.map((item) => {
                 const isActive = item.submenu
                   ? item.submenu.some(
@@ -35,7 +35,7 @@ export function HorizontalNav() {
                       className={cn(
                         "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-violet-500/10 text-violet-500"
+                          ? "bg-violet-500/10 text-violet-600 dark:text-violet-300"
                           : "hover:bg-violet-500/10 hover:text-accent-foreground"
                       )}
                     >
@@ -56,7 +56,7 @@ export function HorizontalNav() {
                     className={cn(
                       "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-violet-500/10 text-violet-500 border-l-4 border-violet-500"
+                        ? "bg-violet-500/10 text-violet-600 dark:text-violet-200 border-l-4 border-violet-500"
                         : "hover:bg-violet-500/10 hover:text-accent-foreground"
                     )}
                   >
@@ -73,9 +73,9 @@ export function HorizontalNav() {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden mt-2"
+                  className="overflow-hidden mt-2 border-t border-white/10 after:absolute after:bg-black/20 after:content-[''] after:h-[1px] after:w-full after:bottom-[1px]"
                 >
-                  <div className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent overflow-x-auto">
+                  <div className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent overflow-x-auto mt-2">
                     <div className="flex space-x-2 px-1">
                       {navItems
                         .find((item) => item.id === "widgets")
@@ -92,7 +92,7 @@ export function HorizontalNav() {
                                 "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                                 "hover:bg-violet-500/10 hover:text-accent-foreground",
                                 isSubActive &&
-                                  "bg-violet-500/10 text-violet-500"
+                                  "bg-violet-500/10 text-violet-600 dark:text-violet-300"
                               )}
                             >
                               <subItem.icon className="h-4 w-4" />

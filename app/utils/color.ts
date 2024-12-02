@@ -42,7 +42,11 @@ export function rgbaToString({ r, g, b, a }: RGBAColor): string {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-export const safeFormatColor = (color: string) => {
-  if (!color) return "#000000";
-  return color.startsWith("#") ? color : `#${color}`;
+export const safeFormatColor = (color: string): string => {
+  try {
+    // Add validation/formatting logic here
+    return color.trim().toLowerCase();
+  } catch {
+    return "#000000";
+  }
 };

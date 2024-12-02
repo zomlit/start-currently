@@ -30,7 +30,7 @@ export function WidgetLayout({
           <ResizablePanel
             defaultSize={72}
             minSize={28}
-            className="relative bg-gradient/5 min-h-full p-10"
+            className="relative bg-gradient/5 min-h-full"
           >
             {preview}
           </ResizablePanel>
