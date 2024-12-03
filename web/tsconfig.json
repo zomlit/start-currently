@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./app/*"],
+      "@icons/*": ["./app/icons/*"]
+    },
+    "types": ["vite/client"],
+    "noEmit": true
+  },
+  "include": ["app/**/*"],
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
+}

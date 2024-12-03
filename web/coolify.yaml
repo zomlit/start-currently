@@ -1,0 +1,81 @@
+version: 3
+services:
+  app:
+    type: static
+    buildPack: nixpacks
+    build:
+      command: |
+        NODE_ENV=production \
+        VITE_DISABLE_SOURCEMAPS=true \
+        VINXI_DISABLE_SOURCEMAPS=true \
+        DISABLE_EXTRACTION=true \
+        bun run build
+      output: .output/public
+    staticConfig:
+      engine: nginx
+      headers:
+        - name: Cache-Control
+          value: no-cache
+      spa: true
+    environment:
+      # Server-side variables (no VITE_ prefix)
+      - name: CLERK_SECRET_KEY
+        value: "{{secrets.CLERK_SECRET_KEY}}"
+      - name: ELYSIA_JWT_SECRET
+        value: "{{secrets.ELYSIA_JWT_SECRET}}"
+      - name: OPENAI_API_KEY
+        value: "{{secrets.OPENAI_API_KEY}}"
+      - name: STRIPE_SECRET_KEY_LIVE
+        value: "{{secrets.STRIPE_SECRET_KEY_LIVE}}"
+      - name: STRIPE_SECRET_KEY_TEST
+        value: "{{secrets.STRIPE_SECRET_KEY_TEST}}"
+      - name: SUPABASE_JWT_SECRET
+        value: "{{secrets.SUPABASE_JWT_SECRET}}"
+      - name: TWITCH_CLIENT_SECRET
+        value: "{{secrets.TWITCH_CLIENT_SECRET}}"
+      - name: SUPABASE_URL
+        value: "{{secrets.SUPABASE_URL}}"
+      - name: SUPABASE_ANON_KEY
+        value: "{{secrets.SUPABASE_ANON_KEY}}"
+
+      # Client-side variables (keep VITE_ prefix)
+      - name: VITE_CLERK_PUBLISHABLE_KEY
+        value: "{{secrets.VITE_CLERK_PUBLISHABLE_KEY}}"
+      - name: VITE_BASE_URL
+        value: "{{secrets.VITE_BASE_URL}}"
+      - name: VITE_CLERK_PUBLIC_KEY
+        value: "{{secrets.VITE_CLERK_PUBLIC_KEY}}"
+      - name: VITE_ELYSIA_API_URL
+        value: "{{secrets.VITE_ELYSIA_API_URL}}"
+      - name: VITE_ELYSIA_WS_URL
+        value: "{{secrets.VITE_ELYSIA_WS_URL}}"
+      - name: VITE_PUBLIC_APP_URL
+        value: "{{secrets.VITE_PUBLIC_APP_URL}}"
+      - name: VITE_STRIPE_PUBLISHABLE_KEY_LIVE
+        value: "{{secrets.VITE_STRIPE_PUBLISHABLE_KEY_LIVE}}"
+      - name: VITE_STRIPE_PUBLISHABLE_KEY_TEST
+        value: "{{secrets.VITE_STRIPE_PUBLISHABLE_KEY_TEST}}"
+      - name: VITE_PUBLIC_SUPABASE_ANON_KEY
+        value: "{{secrets.VITE_PUBLIC_SUPABASE_ANON_KEY}}"
+      - name: VITE_PUBLIC_SUPABASE_URL
+        value: "{{secrets.VITE_PUBLIC_SUPABASE_URL}}"
+      - name: VITE_SUPABASE_URL
+        value: "{{secrets.VITE_SUPABASE_URL}}"
+      - name: VITE_SUPABASE_ANON_KEY
+        value: "{{secrets.VITE_SUPABASE_ANON_KEY}}"
+      - name: VITE_TWITCH_CLIENT_ID
+        value: "{{secrets.VITE_TWITCH_CLIENT_ID}}"
+
+      # Build optimization flags
+      - name: NIXPACKS_NODE_VERSION
+        value: "20"
+      - name: NPM_CONFIG_PRODUCTION
+        value: "false"
+      - name: CI
+        value: "true"
+
+    buildArguments:
+      - name: VITE_PUBLIC_SUPABASE_URL
+        value: "{{secrets.VITE_PUBLIC_SUPABASE_URL}}"
+      - name: VITE_PUBLIC_SUPABASE_ANON_KEY
+        value: "{{secrets.VITE_PUBLIC_SUPABASE_ANON_KEY}}"

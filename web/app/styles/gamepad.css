@@ -1,0 +1,1022 @@
+/* TOGD: MAKE THIS FILE NOT NECESSARY */
+/*Font Imports*/
+@import url(https://fonts.googleapis.com/css?family=Press+Start+2P);
+
+.controller {
+  transition: filter 0.3s ease;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.controller.half {
+  margin-top: 0px !important;
+}
+
+/*BEGIN Xbox 360 Controller Styling*/
+.controller.xbox-old {
+  background: url(xbox-assets-old/bg.png);
+  height: 544px;
+  width: 668px;
+  aspect-ratio: 668/544;
+  max-width: 668px;
+  max-height: 544px;
+}
+
+.xbox-old.disconnected {
+  background: url(xbox-assets-old/bg-disconnect.png);
+}
+
+.xbox-old.disconnected div {
+  display: none;
+}
+
+.xbox-old .triggers {
+  width: 430px;
+  height: 76px;
+  position: absolute;
+  left: 119px;
+}
+
+.xbox-old .trigger {
+  width: 33px;
+  height: 76px;
+  background: url(xbox-assets-old/trigger.png);
+  opacity: 0;
+}
+
+.xbox-old .trigger.left {
+  float: left;
+  background-position: 0 0;
+}
+
+.xbox-old .trigger.right {
+  float: right;
+  background-position: 0 -77px;
+}
+
+.xbox-old .bumper {
+  width: 119px;
+  height: 44px;
+  background: url(xbox-assets-old/bumper.png);
+  opacity: 0;
+}
+
+.xbox-old .bumpers {
+  position: absolute;
+  width: 516px;
+  height: 44px;
+  left: 76px;
+  top: 84px;
+}
+
+.xbox-old .bumper.pressed {
+  opacity: 1;
+}
+
+.xbox-old .bumper.left {
+  float: left;
+}
+
+.xbox-old .bumper.right {
+  float: right;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.xbox-old .quadrant {
+  position: absolute;
+  background: url(xbox-assets-old/quadrant.png);
+  height: 100px;
+  width: 100px;
+  top: 165px;
+  left: 284px;
+  z-index: -1;
+}
+
+.xbox-old .p0 {
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+
+.xbox-old .p1 {
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.xbox-old .p2 {
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+}
+
+.xbox-old .p3 {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.xbox-old .arrows {
+  position: absolute;
+  width: 180px;
+  height: 29px;
+  top: 200px;
+  left: 244px;
+}
+
+.xbox-old .back,
+.xbox-old .start {
+  background: url(xbox-assets-old/arrow.png);
+  width: 34px;
+  height: 29px;
+}
+
+.xbox-old .back.pressed,
+.xbox-old .start.pressed {
+  background-position: 0 -30px;
+}
+
+.xbox-old .back {
+  float: left;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.xbox-old .start {
+  float: right;
+}
+
+.xbox-old .abxy {
+  position: absolute;
+  width: 161px;
+  height: 160px;
+  top: 125px;
+  left: 451px;
+}
+
+.xbox-old .button {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+}
+
+.xbox-old .button.a {
+  width: 53px;
+  height: 53px;
+}
+
+.xbox-old .button.y {
+  width: 55px;
+  height: 54px;
+}
+
+.xbox-old .button.pressed {
+  background-position: 0 -55px;
+  margin-top: 6px;
+  opacity: 1;
+}
+
+.xbox-old .button.pressed.a {
+  background-position: 0 -54px;
+}
+
+.xbox-old .button.pressed.y {
+  background-position: 0 -56px;
+}
+
+.xbox-old .a {
+  background: url(xbox-assets-old/a.png);
+  top: 108px;
+  left: 55px;
+}
+
+.xbox-old .b {
+  background: url(xbox-assets-old/b.png);
+  top: 54px;
+  right: 0px;
+}
+
+.xbox-old .x {
+  background: url(xbox-assets-old/x.png);
+  top: 54px;
+}
+
+.xbox-old .y {
+  background: url(xbox-assets-old/y.png);
+  left: 54px;
+}
+
+.xbox-old .sticks {
+  position: absolute;
+  width: 383px;
+  height: 208px;
+  top: 167px;
+  left: 89px;
+}
+
+.xbox-old .stick {
+  position: absolute;
+  background: url(xbox-assets-old/stick.png);
+  height: 86px;
+  width: 86px;
+}
+
+.xbox-old .stick.pressed {
+  background-position: 0 -87px;
+}
+
+.xbox-old .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.xbox-old .stick.right {
+  top: calc(100% - 86px);
+  left: calc(100% - 86px);
+}
+
+.xbox-old .dpad {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  top: 273px;
+  left: 174px;
+}
+
+.xbox-old .face {
+  position: absolute;
+  font-size: 30px;
+  line-height: 0;
+  color: white;
+  opacity: 0;
+  font-family: "FontAwesome";
+}
+
+.xbox-old .face.pressed {
+  opacity: 1;
+}
+
+.xbox-old .face.up {
+  left: 42px;
+  top: 20px;
+}
+
+.xbox-old .face.up:after {
+  content: "\f062";
+}
+
+.xbox-old .face.down {
+  left: 42px;
+  bottom: 20px;
+}
+
+.xbox-old .face.down:after {
+  content: "\f063";
+}
+
+.xbox-old .face.left {
+  top: 56px;
+  left: 3px;
+}
+
+.xbox-old .face.left:after {
+  content: "\f060";
+}
+
+.xbox-old .face.right {
+  top: 56px;
+  right: 3px;
+}
+
+.xbox-old .face.right:after {
+  content: "\f061";
+}
+
+.xbox-old.half {
+  margin-top: -272px;
+}
+
+/*END Xbox 360 Controller Styling*/
+
+/*BEGIN Xbox One Controller Styling*/
+.controller.xbox {
+  background: url(xbox-assets/base.svg);
+  height: 630px;
+  width: 750px;
+  /*    margin-left: -375px;
+        margin-top: -285px;*/
+  aspect-ratio: 750/630;
+  max-width: 750px;
+  max-height: 630px;
+}
+
+.xbox.white {
+  background: url(xbox-assets/base-white.svg);
+}
+
+.xbox.disconnected {
+  background: url(xbox-assets/disconnected.svg);
+}
+
+.xbox.disconnected div {
+  display: none;
+}
+
+.xbox .triggers {
+  width: 446px;
+  height: 121px;
+  position: absolute;
+  left: 152px;
+}
+
+.xbox .trigger {
+  width: 88px;
+  height: 121px;
+  background: url(xbox-assets/trigger.svg);
+  opacity: 0;
+}
+
+.xbox .trigger.left {
+  float: left;
+  background-position: 0 0;
+}
+
+.xbox .trigger.right {
+  float: right;
+  transform: rotateY(180deg);
+}
+
+.xbox .bumper {
+  width: 170px;
+  height: 61px;
+  background: url(xbox-assets/bumper.svg);
+  opacity: 0;
+}
+
+.xbox .bumpers {
+  position: absolute;
+  width: 536px;
+  height: 61px;
+  left: 107px;
+  top: 129px;
+}
+
+.xbox .bumper.pressed {
+  opacity: 1;
+}
+
+.xbox .bumper.left {
+  float: left;
+}
+
+.xbox .bumper.right {
+  float: right;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+.xbox .quadrant {
+  position: absolute;
+  background: url(xbox-assets/quadrant.svg);
+  height: 45px;
+  width: 45px;
+  top: 258px;
+  left: 354px;
+  z-index: 0;
+}
+
+.xbox .p0 {
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+
+.xbox .p1 {
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.xbox .p2 {
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+}
+
+.xbox .p3 {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.xbox .arrows {
+  position: absolute;
+  width: 141px;
+  height: 33px;
+  top: 264px;
+  left: 306px;
+}
+
+.xbox .back,
+.xbox .start {
+  background: url(xbox-assets/start-select.svg);
+  width: 33px;
+  height: 33px;
+  opacity: 0;
+}
+
+.xbox .back.pressed,
+.xbox .start.pressed {
+  opacity: 1;
+}
+
+.xbox .back {
+  float: left;
+}
+
+.xbox .start {
+  background-position: 33px 0px;
+  float: right;
+}
+
+.xbox .abxy {
+  position: absolute;
+  width: 153px;
+  height: 156px;
+  top: 192px;
+  left: 488px;
+}
+
+.xbox .button {
+  position: absolute;
+  background: url(xbox-assets/abxy.svg);
+  width: 48px;
+  height: 48px;
+}
+
+.xbox .button.pressed {
+  background-position-y: -48px;
+  margin-top: 5px;
+  opacity: 1;
+}
+
+.xbox .a {
+  background-position: 0 0;
+  top: 108px;
+  left: 55px;
+}
+
+.xbox .b {
+  background-position: -49px 0;
+  top: 58px;
+  right: 0px;
+}
+
+.xbox .x {
+  background-position: -98px 0;
+  top: 58px;
+  left: 4px;
+}
+
+.xbox .y {
+  background-position: 48px 0;
+  left: 55px;
+  top: 7px;
+}
+
+.xbox .sticks {
+  position: absolute;
+  width: 371px;
+  height: 196px;
+  top: 239px;
+  left: 144px;
+}
+
+.xbox .stick {
+  position: absolute;
+  background: url(xbox-assets/stick.svg);
+  background-position: -85px 0;
+  height: 83px;
+  width: 83px;
+}
+
+.xbox .stick.pressed {
+  background-position: 0 0;
+}
+
+.xbox .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.xbox .stick.right {
+  top: 113px;
+  left: 288px;
+}
+
+.xbox .dpad {
+  position: absolute;
+  width: 110px;
+  height: 111px;
+  top: 345px;
+  left: 223px;
+}
+
+.xbox .face {
+  background: url(xbox-assets/dpad.svg);
+  position: absolute;
+  opacity: 0;
+}
+
+.xbox .face.pressed {
+  opacity: 1;
+}
+
+.xbox .face.up {
+  background-position: 34px 0;
+  left: 38px;
+  top: 0px;
+  width: 34px;
+  height: 56px;
+}
+
+.xbox .face.down {
+  left: 38px;
+  bottom: 0;
+  width: 34px;
+  height: 56px;
+}
+
+.xbox .face.left {
+  background-position: 0 -93px;
+  width: 55px;
+  height: 35px;
+  top: 38px;
+  left: 0;
+}
+
+.xbox .face.right {
+  background-position: 0 -57px;
+  width: 55px;
+  height: 35px;
+  top: 38px;
+  right: 0;
+}
+
+.xbox.half {
+  margin-top: -315px;
+}
+
+.xbox {
+  background: no-repeat center;
+}
+
+/*END Xbox One Controller Styling*/
+
+/*BEGIN PS4 Controller Styling*/
+.controller.ds4 {
+  /* background: url(/gamepad/ds4/base.svg) no-repeat center; */
+  background-size: contain;
+  width: 100%;
+  height: 100%;
+  /*    margin-left: -403px;
+        margin-top: -280px;*/
+}
+
+.ds4.disconnected {
+  background: url(/gamepad/ds4/disconnected.svg);
+}
+
+.ds4.disconnected div {
+  display: none;
+}
+
+.ds4 .triggers {
+  width: 72.94%;
+  height: 15.03%;
+  position: absolute;
+  left: 13.52%;
+  top: -2%;
+  z-index: 2;
+}
+
+.ds4 .trigger {
+  width: 16.84%;
+  height: 100%;
+  opacity: 0.5;
+  transition: opacity 0.1s ease;
+  background: var(--trigger-color, #ffffff);
+}
+
+.ds4 .trigger.pressed {
+  opacity: 1;
+  background: var(--button-pressed-color, #00ff00);
+}
+
+.ds4 .trigger.left {
+  float: left;
+}
+
+.ds4 .trigger.right {
+  float: right;
+}
+
+.ds4 .bumper {
+  width: 16.84%;
+  height: 100%;
+  opacity: 1;
+  transition: all 0.1s ease;
+}
+
+.ds4 .bumpers {
+  width: 72.94%;
+  height: 3.84%;
+  position: absolute;
+  left: 13.52%;
+  top: 15.69%;
+}
+
+.ds4 .bumper.pressed {
+  opacity: 1;
+}
+
+.ds4 .bumper.left {
+  float: left;
+}
+
+.ds4 .bumper.right {
+  float: right;
+  transform: rotateY(180deg);
+}
+
+.ds4 .touchpad {
+  width: 32.5%;
+  height: 25.21%;
+  position: absolute;
+  left: 33.74%;
+  top: 20.37%;
+}
+
+.ds4 .touchpad.pressed {
+  background: url(/gamepad/ds4/touchpad.svg) no-repeat center;
+  background-size: contain;
+}
+
+.ds4 .meta {
+  width: 5.21%;
+  height: 7.01%;
+  position: absolute;
+  left: 47.39%;
+  bottom: 36.06%;
+}
+
+.ds4 .meta.pressed {
+  background: url(/gamepad/ds4/meta.svg) no-repeat center;
+  background-size: contain;
+}
+
+.ds4 .arrows {
+  position: absolute;
+  width: 43.67%;
+  height: 7.68%;
+  top: 23.71%;
+  left: 28.16%;
+}
+
+.ds4 .back,
+.ds4 .start {
+  background: url(/gamepad/ds4/start.svg) no-repeat;
+  background-size: 200% 100%;
+  width: 7.95%;
+  height: 100%;
+  opacity: 0;
+}
+
+.ds4 .back.pressed,
+.ds4 .start.pressed {
+  opacity: 1;
+}
+
+.ds4 .back {
+  float: left;
+}
+
+.ds4 .start {
+  float: right;
+  background-position-x: 100%;
+}
+
+.ds4 .abxy {
+  position: absolute;
+  width: 21.09%;
+  height: 28.55%;
+  top: 26.55%;
+  left: 70.34%;
+  display: grid;
+  grid-template-areas:
+    ". triangle ."
+    "square . circle"
+    ". cross .";
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.ds4 .abxy > div {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.ds4 .abxy > div:nth-child(1) {
+  grid-area: cross;
+  justify-self: center;
+}
+
+.ds4 .abxy > div:nth-child(2) {
+  grid-area: circle;
+  justify-self: end;
+}
+
+.ds4 .abxy > div:nth-child(3) {
+  grid-area: square;
+  justify-self: start;
+}
+
+.ds4 .abxy > div:nth-child(4) {
+  grid-area: triangle;
+  justify-self: center;
+}
+
+.ds4 .button {
+  background-color: var(--button-color, #ffffff);
+  transition: opacity 0.15s ease;
+}
+
+.ds4 .button.pressed {
+  opacity: 1;
+  transform: scale(0.95);
+  fill: var(--button-pressed-color);
+  stroke: var(--button-pressed-color);
+}
+
+.ds4 .a {
+  background-position: 0% 0%;
+  bottom: 0;
+  left: 34.12%;
+}
+
+.ds4 .b {
+  background-position: 33.33% 0%;
+  top: 33.92%;
+  right: 0;
+}
+
+.ds4 .x {
+  background-position: 66.66% 0%;
+  top: 33.92%;
+  left: 0;
+}
+
+.ds4 .y {
+  background-position: 100% 0%;
+  top: 0;
+  left: 34.12%;
+}
+
+.ds4 .sticks {
+  position: absolute;
+  width: 44.78%;
+  height: 17.53%;
+  top: 51.42%;
+  left: 28.28%;
+}
+
+.ds4 .stick {
+  position: absolute;
+  width: 26.04%;
+  height: 89.52%;
+  transition: transform 0.1s ease;
+}
+
+.ds4 .stick.pressed.left {
+  background-position-x: 50%;
+}
+
+.ds4 .stick.pressed.right {
+  background-position-x: 100%;
+}
+
+.ds4 .stick.left {
+  top: 0;
+  left: 0;
+}
+
+.ds4 .stick.right {
+  bottom: 0;
+  right: 0;
+}
+
+.ds4 .dpad {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds4 .face {
+  position: absolute;
+  background-size: auto 100%;
+}
+
+.ds4.half {
+  margin-top: -315px;
+}
+
+/*END PS4 Controller Styling*/
+
+/* Add a container class for better scaling */
+.controller-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Add relative positioning for d-pad container */
+.ds4 .dpad {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make d-pad buttons scale with container */
+.ds4 .face {
+  position: absolute;
+  background-size: auto 100%;
+}
+
+/* Button states */
+.button {
+  background-color: var(--button-color, #ffffff);
+  /* opacity: 0; */
+  transition: opacity 0.15s ease;
+}
+
+.button.pressed {
+  opacity: 1;
+}
+
+/* Analog sticks */
+.stick {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+
+.stick.left {
+  left: 25%;
+  top: 50%;
+}
+
+.stick.right {
+  right: 25%;
+  top: 50%;
+}
+
+/* Triggers */
+.trigger {
+  position: absolute;
+  width: 10px;
+  height: 30px;
+  transform-origin: bottom;
+  transition: transform 0.1s ease;
+}
+
+/* Face Buttons */
+.button {
+  transition: opacity 0.05s ease;
+}
+
+.button.pressed {
+  opacity: 1;
+}
+
+/* Remove any transform animations */
+.button.triangle,
+.button.circle,
+.button.cross,
+.button.square {
+  transform: none;
+}
+
+/* Default state buttons are visible, pressed state starts invisible */
+.button.triangle.pressed,
+.button.circle.pressed,
+.button.cross.pressed,
+.button.square.pressed {
+  opacity: 0;
+}
+
+/* When pressed, show the pressed state button */
+.button.pressed {
+  opacity: 1;
+}
+
+/* Button colors when pressed */
+.button.triangle.pressed {
+  fill: var(--button-color, #7cc576);
+  stroke: var(--button-color, #7cc576);
+}
+
+.button.circle.pressed {
+  fill: var(--button-color, #ec1c24);
+  stroke: var(--button-color, #ec1c24);
+}
+
+.button.cross.pressed {
+  fill: var(--button-color, #0072bc);
+  stroke: var(--button-color, #0072bc);
+}
+
+.button.square.pressed {
+  fill: var(--button-color, #f7941d);
+  stroke: var(--button-color, #f7941d);
+}
+
+.abxy {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 106px;
+  height: 106px;
+}
+
+.abxy > div {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+}
+
+/* Cross button */
+.abxy > div:nth-child(1) {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Circle button */
+.abxy > div:nth-child(2) {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Square button */
+.abxy > div:nth-child(3) {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Triangle button */
+.abxy > div:nth-child(4) {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Add this near the top of your gamepad.css file */
+.ds4 {
+  --button-color: #ffffff; /* Default color */
+}
+
+/* Update the button pressed state */
+.ds4 .button.pressed {
+  transform: scale(0.95);
+  opacity: 1;
+  fill: var(--button-color);
+  stroke: var(--button-color);
+}
+
+.controller.macho {
+  --macho-green: #39ff14;
+  --macho-purple: #800080;
+}
+
+.controller.macho .touchpad {
+  background-image: url("/gamepad/macho-logo.svg");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.8;
+}
+
+.controller.macho .touchpad.pressed {
+  opacity: 1;
+  filter: brightness(1.2);
+}

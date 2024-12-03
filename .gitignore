@@ -1,34 +1,50 @@
-node_modules
-package-lock.json
-yarn.lock
+# Dependencies
+**/node_modules
+**/.pnp
+.pnp.js
+.yarn/install-state.gz
+**/bun.lockb
 
-.DS_Store
-.cache
-.env
-.env.local
-.vercel
-.output
-.vinxi
+# Testing
+**/coverage
 
-/build/
-/api/
-/server/build
-/public/build
-.vinxi
-
-# Sentry Config File
-.env.sentry-build-plugin
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-
-extensions/chrome/dist/
-*.pem
+# Build outputs
+**/.next/
+**/out/
+**/build
+**/.vinxi
+**/dist
 
 # Environment files
-.env
-.env.local
-.env.*.local
-.env.production
-.env.server
+**/.env*.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Debug
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# IDEs and editors
+**/.idea
+**/.vscode/*
+!**/.vscode/extensions.json
+**/*.suo
+**/*.ntvs*
+**/*.njsproj
+**/*.sln
+**/*.sw?
+
+# OS files
+.DS_Store
+*.pem
+
+# Rust/Tauri
+**/target/
+native/src-tauri/icons/*
+
+# Temp files
+**/tmp/
+**/temp/
+**/.cache 

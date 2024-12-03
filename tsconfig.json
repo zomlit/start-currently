@@ -1,31 +1,22 @@
 {
-  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "strict": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
+    "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "isolatedModules": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "jsx": "preserve",
     "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "target": "ES2022",
-    "allowJs": true,
-    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./app/*"],
-      "@icons/*": ["./app/icons/*"]
-    },
-    "noEmit": true
-  },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    ".vinxi",
-    ".output",
-    "extensions"
-  ]
+      "@lst/shared/*": ["shared/src/*"],
+      "@lst/web/*": ["web/src/*"],
+      "@lst/backend/*": ["backend/src/*"],
+      "@lst/native/*": ["native/src/*"]
+    }
+  }
 }

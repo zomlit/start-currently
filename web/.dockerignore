@@ -1,0 +1,11 @@
+extensions/
+node_modules/
+.git/
+.env
+*.log
+dist
+build
+.cache
+.output
+.vinxi
+ 

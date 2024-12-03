@@ -1,0 +1,46 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "build": {
+    "beforeBuildCommand": "bun run build",
+    "beforeDevCommand": "bun run dev",
+    "devPath": "http://localhost:3002",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "LST Overlay",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "identifier": "tools.livestreaming.overlay",
+      "windows": {
+        "webviewInstallMode": {
+          "type": "downloadBootstrapper"
+        }
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://livestreamingtools.com/lst-overlay/{{target}}/{{arch}}/{{current_version}}"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU3RTUyRTVGQUU3M0JDQUMKUldTc3ZIT3VYeTdsVjlaRG9Ya24vK2dRYWxyd25TU3B3b29pd0J0dXVwQ2dKZXVQQ1BYSVpwZHcK"
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 600,
+        "resizable": true,
+        "title": "LST Overlay",
+        "width": 800
+      }
+    ]
+  }
+}

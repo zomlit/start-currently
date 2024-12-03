@@ -1,0 +1,312 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model AlertWidget {
+  id           String @id @default(dbgenerated("gen_random_uuid()"))
+  user_id      String @default(dbgenerated("requesting_user_id()"))
+  alertTypes   Json
+  duration     Int
+  volume       Float
+  customSounds Json?
+  User         User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  channel    String
+  username   String
+  message    String
+  color      String
+  badges     Json
+  emotes     Json
+  userStatus Json
+  avatar     String
+  timestamp  DateTime @default(now())
+  user_id    String   @default(dbgenerated("requesting_user_id()"))
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ChatWidget {
+  id         String  @id @default(dbgenerated("gen_random_uuid()"))
+  user_id    String  @default(dbgenerated("requesting_user_id()"))
+  layout     String
+  emoteSize  Int
+  showBadges Boolean
+  customCss  String?
+  User       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ConfigWidget {
+  id         String @id @default(dbgenerated("gen_random_uuid()"))
+  user_id    String @default(dbgenerated("requesting_user_id()"))
+  configType String
+  settings   Json
+  User       User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model GameOverlayWidget {
+  id            String @id @default(dbgenerated("gen_random_uuid()"))
+  user_id       String @default(dbgenerated("requesting_user_id()"))
+  game          String
+  overlayType   String
+  customization Json
+  User          User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model GameStatWidget {
+  id             String @id @default(dbgenerated("gen_random_uuid()"))
+  user_id        String @default(dbgenerated("requesting_user_id()"))
+  game           String
+  stats          Json
+  updateInterval Int
+  User           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model GamepadWidget {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()"))
+  user_id            String    @default(dbgenerated("requesting_user_id()"))
+  style              String
+  showPressedButtons Boolean
+  layout             Json
+  gamepad_settings   Json?
+  settings           Json?
+  updated_at         DateTime? @default(now()) @db.Timestamptz(6)
+  User               User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TimerWidget {
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
+  user_id   String    @default(dbgenerated("requesting_user_id()"))
+  timerType String
+  duration  Int?
+  endTime   DateTime? @db.Timestamptz(6)
+  format    String
+  User      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model TwitchUserCache {
+  id                String            @id @default(uuid())
+  login             String            @unique
+  display_name      String
+  profile_image_url String
+  broadcaster_type  String
+  description       String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  stream_sessions   stream_sessions[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model User {
+  id                String              @id
+  user_id           String              @unique @default(dbgenerated("requesting_user_id()"))
+  email             String?             @unique
+  created_at        DateTime            @default(now())
+  updated_at        DateTime
+  session           Json?
+  AlertWidget       AlertWidget[]
+  Bracket           Bracket[]
+  ChatWidget        ChatWidget[]
+  ConfigWidget      ConfigWidget[]
+  GameOverlayWidget GameOverlayWidget[]
+  GameStatWidget    GameStatWidget[]
+  GamepadWidget     GamepadWidget[]
+  Layout            Layout[]
+  SectionProfiles   SectionProfiles[]
+  TimerWidget       TimerWidget[]
+  UserCommands      UserCommands[]
+  UserProfile       UserProfile?
+  VisualizerWidget  VisualizerWidget?
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model UserProfile {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()"))
+  user_id               String    @unique
+  displayName           String?
+  avatarUrl             String?
+  bio                   String?
+  socialLinks           Json?
+  s_access_token        String?
+  s_refresh_token       String?
+  s_client_id           String?
+  s_client_secret       String?
+  streamelements_jwt    String?
+  twitch_tokens         Json?
+  google_tokens         Json?
+  username              String?   @unique
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @default(now())
+  session               Json?
+  selectedUsername      String?
+  selectedUsernameToken String?
+  broadcastChannel      String?
+  refreshToken          String?
+  is_active             Boolean   @default(false)
+  s_expires_at          DateTime?
+  s_sp_dc               String?
+  last_activity         DateTime?
+  User                  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model VisualizerWidget {
+  id                  String @id @default(dbgenerated("gen_random_uuid()"))
+  user_id             String @unique @default(dbgenerated("requesting_user_id()"))
+  type                String
+  sensitivity         Float
+  colorScheme         String
+  visualization       Json
+  track               Json?
+  lyrics_settings     Json?
+  visualizer_settings Json?
+  User                User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Bracket {
+  id             String   @id @default(dbgenerated("gen_random_uuid()"))
+  user_id        String   @default(dbgenerated("requesting_user_id()"))
+  name           String
+  data           Json
+  created_at     DateTime @default(now())
+  updated_at     DateTime
+  owner_id       String
+  assigned_users String[]
+  is_complete    Boolean  @default(false)
+  User           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Layout {
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  user_id    String   @default(dbgenerated("requesting_user_id()"))
+  layout     Json
+  created_at DateTime @default(now())
+  updated_at DateTime
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Waitlist {
+  id        String   @id
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model GlobalBadgeCache {
+  id        Int      @id @default(1)
+  badges    Json
+  updatedAt DateTime @default(now())
+}
+
+model ChannelBadgeCache {
+  broadcasterId String   @id
+  badges        Json
+  updatedAt     DateTime @default(now())
+}
+
+model BTTVEmoteCache {
+  channelId String   @id
+  emotes    Json
+  updatedAt DateTime @default(now())
+}
+
+model SevenTVEmoteCache {
+  channelId String   @id
+  emotes    Json
+  updatedAt DateTime @default(now())
+}
+
+model UserCommands {
+  id                String   @id @default(dbgenerated("gen_random_uuid()"))
+  user_id           String   @default(dbgenerated("requesting_user_id()"))
+  c_category        String?
+  c_name            String
+  c_command         String
+  c_placement       String
+  c_roles           String
+  c_user_cooldown   Int
+  c_global_cooldown Int
+  c_enabled         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime
+  User              User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model table_metadata {
+  table_name        String  @id
+  real_time_enabled Boolean
+}
+
+model Profiles {
+  id          String    @id(map: "profiles_pkey") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id     String    @default(dbgenerated("requesting_user_id()"))
+  widget_type String
+  name        String
+  settings    Json
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime? @default(now()) @db.Timestamptz(6)
+  color       String?
+  is_active   Boolean?  @default(true)
+  is_current  Boolean?  @default(false)
+
+  @@unique([user_id, widget_type, name], map: "profile_user_widget_name_unique")
+}
+
+model SectionProfiles {
+  id         String   @id(map: "Profile_pkey") @default(dbgenerated("gen_random_uuid()"))
+  user_id    String   @default(dbgenerated("requesting_user_id()"))
+  section_id String
+  settings   Json     @default("{}")
+  created_at DateTime @default(now())
+  name       String   @default("Unnamed Profile")
+  is_default Boolean  @default(false)
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "Profile_user_id_fkey")
+
+  @@unique([user_id, section_id, name], map: "unique_user_section_profile_name")
+  @@index([user_id, section_id], map: "idx_sectionprofiles_user_section")
+}
+
+model overlays {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String?  @unique
+  nodes      Json?
+  edges      Json?
+  settings   Json?
+  created_at DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
+  updated_at DateTime @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
+
+  @@index([created_at])
+  @@index([updated_at])
+  @@index([user_id])
+}
+
+model stream_sessions {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id         String
+  broadcaster_id  String
+  start_time      DateTime        @db.Timestamptz(6)
+  end_time        DateTime?       @db.Timestamptz(6)
+  is_live         Boolean?        @default(true)
+  created_at      DateTime?       @default(now()) @db.Timestamptz(6)
+  TwitchUserCache TwitchUserCache @relation(fields: [broadcaster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([broadcaster_id])
+  @@index([start_time])
+  @@index([user_id])
+}
