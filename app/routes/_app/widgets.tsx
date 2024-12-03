@@ -20,7 +20,6 @@ function SectionsLayout() {
         title={content.title}
         description={content.description}
       />
-      <HorizontalNav />
       <div className="">
         <Outlet />
       </div>

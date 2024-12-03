@@ -9,7 +9,6 @@ import {
 import { Meta, Scripts } from "@tanstack/start";
 import type { QueryClient } from "@tanstack/react-query";
 import { AccessControl } from "@/components/AccessControl";
-
 import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
 import { GamepadProvider } from "@/providers/GamepadProvider";
@@ -61,19 +60,19 @@ export const Route = createRootRouteWithContext<{
       { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
       { rel: "icon", href: "/favicon.ico" },
     ],
-    // scripts: import.meta.env.PROD
-    //   ? []
-    //   : [
-    //       {
-    //         type: "module",
-    //         children: /* js */ `
-    //   import RefreshRuntime from "/_build/@react-refresh"
-    //   RefreshRuntime.injectIntoGlobalHook(window)
-    //   window.$RefreshReg$ = () => {}
-    //   window.$RefreshSig$ = () => (type) => type
-    // `,
-    //       },
-    //     ],
+    scripts: import.meta.env.PROD
+      ? []
+      : [
+          {
+            type: "module",
+            children: /* js */ `
+      import RefreshRuntime from "/_build/@react-refresh"
+      RefreshRuntime.injectIntoGlobalHook(window)
+      window.$RefreshReg$ = () => {}
+      window.$RefreshSig$ = () => (type) => type
+    `,
+          },
+        ],
   }),
 
   errorComponent: (props) => {

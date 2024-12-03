@@ -18,7 +18,6 @@ import { Route as UsernameImport } from './routes/$username'
 import { Route as AppIndexImport } from './routes/_app/index'
 import { Route as AppWidgetsImport } from './routes/_app/widgets'
 import { Route as AppWheelSpinImport } from './routes/_app/wheel-spin'
-import { Route as AppDashboardImport } from './routes/_app/dashboard'
 import { Route as AppAuthedImport } from './routes/_app/_authed'
 import { Route as UsernameOverlayImport } from './routes/$username/overlay'
 import { Route as UsernameLyricsImport } from './routes/$username/lyrics'
@@ -81,12 +80,6 @@ const AppWidgetsRoute = AppWidgetsImport.update({
 const AppWheelSpinRoute = AppWheelSpinImport.update({
   id: '/wheel-spin',
   path: '/wheel-spin',
-  getParentRoute: () => AppRoute,
-} as any)
-
-const AppDashboardRoute = AppDashboardImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -211,15 +204,15 @@ const AppAuthedDashboardRoute = AppAuthedDashboardImport.update({
 
 const AppDashboardWidgetsVisualizerRoute =
   AppDashboardWidgetsVisualizerImport.update({
-    id: '/widgets/visualizer',
-    path: '/widgets/visualizer',
-    getParentRoute: () => AppDashboardRoute,
+    id: '/dashboard/widgets/visualizer',
+    path: '/dashboard/widgets/visualizer',
+    getParentRoute: () => AppRoute,
   } as any)
 
 const AppDashboardWidgetsDevRoute = AppDashboardWidgetsDevImport.update({
-  id: '/widgets/dev',
-  path: '/widgets/dev',
-  getParentRoute: () => AppDashboardRoute,
+  id: '/dashboard/widgets/dev',
+  path: '/dashboard/widgets/dev',
+  getParentRoute: () => AppRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -280,13 +273,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AppAuthedImport
-      parentRoute: typeof AppImport
-    }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardImport
       parentRoute: typeof AppImport
     }
     '/_app/wheel-spin': {
@@ -424,17 +410,17 @@ declare module '@tanstack/react-router' {
     }
     '/_app/dashboard/widgets/dev': {
       id: '/_app/dashboard/widgets/dev'
-      path: '/widgets/dev'
+      path: '/dashboard/widgets/dev'
       fullPath: '/dashboard/widgets/dev'
       preLoaderRoute: typeof AppDashboardWidgetsDevImport
-      parentRoute: typeof AppDashboardImport
+      parentRoute: typeof AppImport
     }
     '/_app/dashboard/widgets/visualizer': {
       id: '/_app/dashboard/widgets/visualizer'
-      path: '/widgets/visualizer'
+      path: '/dashboard/widgets/visualizer'
       fullPath: '/dashboard/widgets/visualizer'
       preLoaderRoute: typeof AppDashboardWidgetsVisualizerImport
-      parentRoute: typeof AppDashboardImport
+      parentRoute: typeof AppImport
     }
   }
 }
@@ -469,20 +455,6 @@ const AppAuthedRouteWithChildren = AppAuthedRoute._addFileChildren(
   AppAuthedRouteChildren,
 )
 
-interface AppDashboardRouteChildren {
-  AppDashboardWidgetsDevRoute: typeof AppDashboardWidgetsDevRoute
-  AppDashboardWidgetsVisualizerRoute: typeof AppDashboardWidgetsVisualizerRoute
-}
-
-const AppDashboardRouteChildren: AppDashboardRouteChildren = {
-  AppDashboardWidgetsDevRoute: AppDashboardWidgetsDevRoute,
-  AppDashboardWidgetsVisualizerRoute: AppDashboardWidgetsVisualizerRoute,
-}
-
-const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
-  AppDashboardRouteChildren,
-)
-
 interface AppWidgetsRouteChildren {
   AppWidgetsAlertsRoute: typeof AppWidgetsAlertsRoute
   AppWidgetsChatRoute: typeof AppWidgetsChatRoute
@@ -511,7 +483,6 @@ const AppWidgetsRouteWithChildren = AppWidgetsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAuthedRoute: typeof AppAuthedRouteWithChildren
-  AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppWheelSpinRoute: typeof AppWheelSpinRoute
   AppWidgetsRoute: typeof AppWidgetsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
@@ -521,11 +492,12 @@ interface AppRouteChildren {
   AppSignUpSplatRoute: typeof AppSignUpSplatRoute
   AppPricingIndexRoute: typeof AppPricingIndexRoute
   AppWheelspinIndexRoute: typeof AppWheelspinIndexRoute
+  AppDashboardWidgetsDevRoute: typeof AppDashboardWidgetsDevRoute
+  AppDashboardWidgetsVisualizerRoute: typeof AppDashboardWidgetsVisualizerRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAuthedRoute: AppAuthedRouteWithChildren,
-  AppDashboardRoute: AppDashboardRouteWithChildren,
   AppWheelSpinRoute: AppWheelSpinRoute,
   AppWidgetsRoute: AppWidgetsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
@@ -535,6 +507,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppSignUpSplatRoute: AppSignUpSplatRoute,
   AppPricingIndexRoute: AppPricingIndexRoute,
   AppWheelspinIndexRoute: AppWheelspinIndexRoute,
+  AppDashboardWidgetsDevRoute: AppDashboardWidgetsDevRoute,
+  AppDashboardWidgetsVisualizerRoute: AppDashboardWidgetsVisualizerRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -557,10 +531,10 @@ export interface FileRoutesByFullPath {
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
-  '/dashboard': typeof AppAuthedDashboardRoute
   '/wheel-spin': typeof AppWheelSpinRoute
   '/widgets': typeof AppWidgetsRouteWithChildren
   '/': typeof AppIndexRoute
+  '/dashboard': typeof AppAuthedDashboardRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/sign-in/$': typeof AppSignInSplatRoute
@@ -587,9 +561,9 @@ export interface FileRoutesByTo {
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
-  '/dashboard': typeof AppAuthedDashboardRoute
   '/wheel-spin': typeof AppWheelSpinRoute
   '/': typeof AppIndexRoute
+  '/dashboard': typeof AppAuthedDashboardRoute
   '/checkout/$productId': typeof AppCheckoutProductIdRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/sign-in/$': typeof AppSignInSplatRoute
@@ -619,7 +593,6 @@ export interface FileRoutesById {
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
   '/_app/_authed': typeof AppAuthedRouteWithChildren
-  '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/wheel-spin': typeof AppWheelSpinRoute
   '/_app/widgets': typeof AppWidgetsRouteWithChildren
   '/_app/': typeof AppIndexRoute
@@ -652,10 +625,10 @@ export interface FileRouteTypes {
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
-    | '/dashboard'
     | '/wheel-spin'
     | '/widgets'
     | '/'
+    | '/dashboard'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/sign-in/$'
@@ -681,9 +654,9 @@ export interface FileRouteTypes {
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
-    | '/dashboard'
     | '/wheel-spin'
     | '/'
+    | '/dashboard'
     | '/checkout/$productId'
     | '/checkout/success'
     | '/sign-in/$'
@@ -711,7 +684,6 @@ export interface FileRouteTypes {
     | '/$username/lyrics'
     | '/$username/overlay'
     | '/_app/_authed'
-    | '/_app/dashboard'
     | '/_app/wheel-spin'
     | '/_app/widgets'
     | '/_app/'
@@ -778,7 +750,6 @@ export const routeTree = rootRoute
       "filePath": "_app.tsx",
       "children": [
         "/_app/_authed",
-        "/_app/dashboard",
         "/_app/wheel-spin",
         "/_app/widgets",
         "/_app/",
@@ -787,7 +758,9 @@ export const routeTree = rootRoute
         "/_app/sign-in/$",
         "/_app/sign-up/$",
         "/_app/pricing/",
-        "/_app/wheelspin/"
+        "/_app/wheelspin/",
+        "/_app/dashboard/widgets/dev",
+        "/_app/dashboard/widgets/visualizer"
       ]
     },
     "/_lyrics": {
@@ -816,14 +789,6 @@ export const routeTree = rootRoute
       "parent": "/_app",
       "children": [
         "/_app/_authed/dashboard"
-      ]
-    },
-    "/_app/dashboard": {
-      "filePath": "_app/dashboard.tsx",
-      "parent": "/_app",
-      "children": [
-        "/_app/dashboard/widgets/dev",
-        "/_app/dashboard/widgets/visualizer"
       ]
     },
     "/_app/wheel-spin": {
@@ -914,11 +879,11 @@ export const routeTree = rootRoute
     },
     "/_app/dashboard/widgets/dev": {
       "filePath": "_app/dashboard/widgets/dev.tsx",
-      "parent": "/_app/dashboard"
+      "parent": "/_app"
     },
     "/_app/dashboard/widgets/visualizer": {
       "filePath": "_app/dashboard/widgets/visualizer.tsx",
-      "parent": "/_app/dashboard"
+      "parent": "/_app"
     }
   }
 }

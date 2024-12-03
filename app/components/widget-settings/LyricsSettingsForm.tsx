@@ -7,7 +7,15 @@ import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Loader2 } from "lucide-react";
+import {
+  RotateCcw,
+  Loader2,
+  Settings2,
+  Type,
+  Wand2,
+  Sparkles,
+  Palette,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -47,6 +55,7 @@ import { Copy } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import AutosaveStatus from "@/components/AutoSaveStatus";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -281,388 +290,251 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   };
 
   return (
-    <Form {...form} className="relative">
-      <div className="fixed top-4 right-4 z-50">
-        {/* <AutosaveStatus
-          lastSaved={lastSaved}
-          isSaving={isSaving}
-          changingField={changingField}
-        /> */}
-      </div>
-      <div
-        className={cn(
-          "flex flex-col relative",
-          isLyricsLoading && "opacity-50 pointer-events-none"
-        )}
-      >
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <Accordion type="multiple" className="w-full">
-              <AccordionItem value="general">
-                <AccordionTrigger>General Settings</AccordionTrigger>
-                <AccordionContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="backgroundColor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Background Color</FormLabel>
-                        <GradientColorPicker
-                          color={safeFormatColor(field.value)}
-                          onChange={(color) => {
-                            const formattedColor = safeFormatColor(color);
-                            field.onChange(formattedColor);
-                            handleSettingChange(
-                              "backgroundColor",
-                              formattedColor
-                            );
-                          }}
-                          onChangeComplete={field.onBlur}
-                          currentProfile={null}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="padding"
-                    render={({ field }) => (
-                      <FormItem>
-                        <SliderWithInput
-                          label="Padding"
-                          value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("padding", value);
-                          }}
-                          onBlur={field.onBlur}
-                          min={0}
-                          max={100}
-                          step={1}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="text">
-                <AccordionTrigger>Text Settings</AccordionTrigger>
-                <AccordionContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="fontFamily"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Font Familyz</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("fontFamily", value);
-                            injectFont(value);
-                          }}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a font" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {isFontLoading ? (
-                              <div className="flex items-center justify-center p-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span className="ml-2">Loading fonts...</span>
-                              </div>
-                            ) : (
-                              fontFamilies.map((font) => (
-                                <SelectItem key={font} value={font}>
-                                  {font}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="textColor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Text Color</FormLabel>
-                        <GradientColorPicker
-                          color={safeFormatColor(field.value)}
-                          onChange={(color) =>
-                            handleSettingChange(
-                              "textColor",
-                              safeFormatColor(color)
-                            )
-                          }
-                          onChangeComplete={field.onBlur}
-                          currentProfile={null}
-                        />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="currentTextColor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Line Text Color</FormLabel>
-                        <GradientColorPicker
-                          color={safeFormatColor(field.value)}
-                          onChange={(color) => {
-                            const formattedColor = safeFormatColor(color);
-                            field.onChange(formattedColor);
-                            handleSettingChange(
-                              "currentTextColor",
-                              formattedColor
-                            );
-                          }}
-                          onChangeComplete={field.onBlur}
-                          currentProfile={null}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="fontSize"
-                    render={({ field }) => (
-                      <FormItem>
-                        <SliderWithInput
-                          label="Font Size"
-                          value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("fontSize", value);
-                          }}
-                          onBlur={field.onBlur}
-                          min={10}
-                          max={72}
-                          step={1}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lineHeight"
-                    render={({ field }) => (
-                      <FormItem>
-                        <SliderWithInput
-                          label="Line Height"
-                          value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("lineHeight", value);
-                          }}
-                          onBlur={field.onBlur}
-                          min={1}
-                          max={3}
-                          step={0.1}
-                        />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="textAlign"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Text Alignment</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("textAlign", value);
-                          }}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select alignment" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="left">Left</SelectItem>
-                            <SelectItem value="center">Center</SelectItem>
-                            <SelectItem value="right">Right</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="textShadowColor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Text Shadow Color</FormLabel>
-                        <GradientColorPicker
-                          color={safeFormatColor(field.value)}
-                          onChange={(color) =>
-                            handleSettingChange(
-                              "textShadowColor",
-                              safeFormatColor(color)
-                            )
-                          }
-                          onChangeComplete={field.onBlur}
-                          currentProfile={null}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="textShadowBlur"
-                    render={({ field }) => (
-                      <FormItem>
-                        <SliderWithInput
-                          label="Text Shadow Blur"
-                          value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("textShadowBlur", value);
-                          }}
-                          onBlur={field.onBlur}
-                          min={0}
-                          max={20}
-                          step={1}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="textShadowOffsetX"
-                    render={({ field }) => (
-                      <FormItem>
-                        <SliderWithInput
-                          label="Text Shadow Offset X"
-                          value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("textShadowOffsetX", value);
-                          }}
-                          onBlur={field.onBlur}
-                          min={-20}
-                          max={20}
-                          step={1}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="textShadowOffsetY"
-                    render={({ field }) => (
-                      <FormItem>
-                        <SliderWithInput
-                          label="Text Shadow Offset Y"
-                          value={field.value}
-                          onChange={(value) => {
-                            field.onChange(value);
-                            handleSettingChange("textShadowOffsetY", value);
-                          }}
-                          onBlur={field.onBlur}
-                          min={-20}
-                          max={20}
-                          step={1}
-                        />
-                      </FormItem>
-                    )}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="effects">
-                <AccordionTrigger>Effects</AccordionTrigger>
-                <AccordionContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="greenScreenMode"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Green Screen Mode</FormLabel>
-                          <FormDescription>
-                            Enable green screen mode for chroma keying
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(checked) => {
-                              field.onChange(checked);
-                              handleSettingChange("greenScreenMode", checked);
-                            }}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  {form.watch("showVideoCanvas") && (
-                    <FormField
-                      control={form.control}
-                      name="videoCanvasOpacity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Video Canvas Opacity</FormLabel>
-                          <Slider
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            value={[field.value]}
-                            onValueChange={(val) =>
-                              handleSettingChange("videoCanvasOpacity", val[0])
-                            }
-                          />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  <FormField
-                    control={form.control}
-                    name="glowEffect"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Glow Effect</FormLabel>
-                          <FormDescription>
-                            Add a glow effect to the text
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("glowEffect", value)
-                            }
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  {form.watch("glowEffect") && (
-                    <>
+    <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="relative">
+        <div className="fixed top-4 right-4 z-50">
+          <AutosaveStatus
+            lastSaved={lastSaved}
+            isSaving={isSaving}
+            changingField={changingField}
+          />
+        </div>
+        <div
+          className={cn(
+            "flex flex-col space-y-6 relative",
+            isLyricsLoading && "opacity-50 pointer-events-none"
+          )}
+        >
+          <div className="space-y-6">
+            <Card className="border-border/0 bg-transparent">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <Settings2 className="h-5 w-5" />
+                  Lyrics Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Accordion type="multiple" className="w-full space-y-4">
+                  {/* Appearance Section */}
+                  <AccordionItem
+                    value="appearance"
+                    className="border rounded-lg"
+                  >
+                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Palette className="h-4 w-4" />
+                        <span className="font-medium">Appearance</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
                       <FormField
                         control={form.control}
-                        name="glowColor"
+                        name="backgroundColor"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Glow Color</FormLabel>
+                            <FormLabel>Background Color</FormLabel>
+                            <GradientColorPicker
+                              color={safeFormatColor(field.value)}
+                              onChange={(color) => {
+                                const formattedColor = safeFormatColor(color);
+                                field.onChange(formattedColor);
+                                handleSettingChange(
+                                  "backgroundColor",
+                                  formattedColor
+                                );
+                              }}
+                              onChangeComplete={field.onBlur}
+                              currentProfile={null}
+                            />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="fontFamily"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Font Family</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                handleSettingChange("fontFamily", value);
+                                injectFont(value);
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select a font" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {isFontLoading ? (
+                                  <div className="flex items-center justify-center p-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span className="ml-2">
+                                      Loading fonts...
+                                    </span>
+                                  </div>
+                                ) : (
+                                  fontFamilies.map((font) => (
+                                    <SelectItem key={font} value={font}>
+                                      {font}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Text Styling Section */}
+                  <AccordionItem
+                    value="text-styling"
+                    className="border rounded-lg"
+                  >
+                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Type className="h-4 w-4" />
+                        <span className="font-medium">Text Styling</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+                      {/* Text color fields */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="textColor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Text Color</FormLabel>
+                              <GradientColorPicker
+                                color={safeFormatColor(field.value)}
+                                onChange={(color) =>
+                                  handleSettingChange(
+                                    "textColor",
+                                    safeFormatColor(color)
+                                  )
+                                }
+                                onChangeComplete={field.onBlur}
+                                currentProfile={null}
+                              />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="currentTextColor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Current Line Color</FormLabel>
+                              <GradientColorPicker
+                                color={safeFormatColor(field.value)}
+                                onChange={(color) =>
+                                  handleSettingChange(
+                                    "currentTextColor",
+                                    safeFormatColor(color)
+                                  )
+                                }
+                                onChangeComplete={field.onBlur}
+                                currentProfile={null}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Size and spacing controls */}
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="fontSize"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                label="Font Size"
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  handleSettingChange("fontSize", value);
+                                }}
+                                onBlur={field.onBlur}
+                                min={10}
+                                max={72}
+                                step={1}
+                              />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="lineHeight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                label="Line Height"
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  handleSettingChange("lineHeight", value);
+                                }}
+                                onBlur={field.onBlur}
+                                min={1}
+                                max={3}
+                                step={0.1}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Add text alignment */}
+                      <FormField
+                        control={form.control}
+                        name="textAlign"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Text Alignment</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                handleSettingChange("textAlign", value);
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select alignment" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="left">Left</SelectItem>
+                                <SelectItem value="center">Center</SelectItem>
+                                <SelectItem value="right">Right</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Add text shadow controls */}
+                      <FormField
+                        control={form.control}
+                        name="textShadowColor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Text Shadow Color</FormLabel>
                             <GradientColorPicker
                               color={safeFormatColor(field.value)}
                               onChange={(color) =>
                                 handleSettingChange(
-                                  "glowColor",
+                                  "textShadowColor",
                                   safeFormatColor(color)
                                 )
                               }
@@ -672,228 +544,395 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                           </FormItem>
                         )}
                       />
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="textShadowBlur"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                label="Shadow Blur"
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  handleSettingChange("textShadowBlur", value);
+                                }}
+                                onBlur={field.onBlur}
+                                min={0}
+                                max={20}
+                                step={1}
+                              />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="textShadowOffsetX"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                label="Shadow Offset X"
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  handleSettingChange(
+                                    "textShadowOffsetX",
+                                    value
+                                  );
+                                }}
+                                onBlur={field.onBlur}
+                                min={-20}
+                                max={20}
+                                step={1}
+                              />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="textShadowOffsetY"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                label="Shadow Offset Y"
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  handleSettingChange(
+                                    "textShadowOffsetY",
+                                    value
+                                  );
+                                }}
+                                onBlur={field.onBlur}
+                                min={-20}
+                                max={20}
+                                step={1}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Animation Section */}
+                  <AccordionItem
+                    value="animation"
+                    className="border rounded-lg"
+                  >
+                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Wand2 className="h-4 w-4" />
+                        <span className="font-medium">Animation</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
                       <FormField
                         control={form.control}
-                        name="glowIntensity"
+                        name="animationStyle"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Glow Intensity</FormLabel>
-                            <Slider
-                              min={0}
-                              max={20}
-                              value={[field.value]}
-                              onValueChange={(val) =>
-                                handleSettingChange("glowIntensity", val[0])
-                              }
+                            <FormLabel>Animation Style</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                handleSettingChange("animationStyle", value);
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select animation style" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="scale">Scale</SelectItem>
+                                <SelectItem value="glow">Glow</SelectItem>
+                                <SelectItem value="slide">Slide</SelectItem>
+                                <SelectItem value="fade">Fade</SelectItem>
+                                <SelectItem value="bounce">Bounce</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="animationSpeed"
+                        render={({ field }) => (
+                          <FormItem>
+                            <SliderWithInput
+                              label="Animation Speed (ms)"
+                              value={field.value}
+                              onChange={(value) => {
+                                field.onChange(value);
+                                handleSettingChange("animationSpeed", value);
+                              }}
+                              onBlur={field.onBlur}
+                              min={100}
+                              max={1000}
+                              step={50}
                             />
                           </FormItem>
                         )}
                       />
-                    </>
-                  )}
 
-                  <FormField
-                    control={form.control}
-                    name="showFade"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Fade top and bottom</FormLabel>
-                          <FormDescription>
-                            Add a fade effect to the top and bottom of the
-                            lyrics
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("showFade", value)
-                            }
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  {form.watch("showFade") && (
-                    <FormField
-                      control={form.control}
-                      name="fadeDistance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <SliderWithInput
-                            label="Fade Distance"
-                            value={field.value}
-                            onChange={(value) => {
-                              field.onChange(value);
-                              handleSettingChange("fadeDistance", value);
-                            }}
-                            onBlur={field.onBlur}
-                            min={0}
-                            max={200}
-                            step={1}
-                          />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                      <FormField
+                        control={form.control}
+                        name="animationEasing"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Animation Easing</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={(value) =>
+                                handleSettingChange("animationEasing", value)
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select easing" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="linear">Linear</SelectItem>
+                                <SelectItem value="easeIn">Ease In</SelectItem>
+                                <SelectItem value="easeOut">
+                                  Ease Out
+                                </SelectItem>
+                                <SelectItem value="easeInOut">
+                                  Ease In Out
+                                </SelectItem>
+                                <SelectItem value="circIn">
+                                  Circular In
+                                </SelectItem>
+                                <SelectItem value="circOut">
+                                  Circular Out
+                                </SelectItem>
+                                <SelectItem value="circInOut">
+                                  Circular In Out
+                                </SelectItem>
+                                <SelectItem value="backIn">Back In</SelectItem>
+                                <SelectItem value="backOut">
+                                  Back Out
+                                </SelectItem>
+                                <SelectItem value="backInOut">
+                                  Back In Out
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
 
-                  <FormField
-                    control={form.control}
-                    name="showVideoCanvas"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Show Video Canvas</FormLabel>
-                          <FormDescription>
-                            Display video if available
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("showVideoCanvas", value)
-                            }
-                            disabled={!isVideoAvailable}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="animation">
-                <AccordionTrigger>Animation</AccordionTrigger>
-                <AccordionContent className="space-y-4">
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="animationStyle"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Animation Style</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value) => {
-                              field.onChange(value);
-                              handleSettingChange("animationStyle", value);
-                            }}
-                          >
+                  {/* Effects Section */}
+                  <AccordionItem value="effects" className="border rounded-lg">
+                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        <span className="font-medium">Effects</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="greenScreenMode"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                              <FormLabel>Green Screen Mode</FormLabel>
+                              <FormDescription>
+                                Enable green screen mode for chroma keying
+                              </FormDescription>
+                            </div>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select animation style" />
-                              </SelectTrigger>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked);
+                                  handleSettingChange(
+                                    "greenScreenMode",
+                                    checked
+                                  );
+                                }}
+                              />
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="scale">Scale</SelectItem>
-                              <SelectItem value="glow">Glow</SelectItem>
-                              <SelectItem value="slide">Slide</SelectItem>
-                              <SelectItem value="fade">Fade</SelectItem>
-                              <SelectItem value="bounce">Bounce</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="animationSpeed"
-                      render={({ field }) => (
-                        <FormItem>
-                          <SliderWithInput
-                            label="Animation Speed (ms)"
-                            value={field.value}
-                            onChange={(value) => {
-                              field.onChange(value);
-                              handleSettingChange("animationSpeed", value);
-                            }}
-                            onBlur={field.onBlur}
-                            min={100}
-                            max={1000}
-                            step={50}
-                          />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="animationEasing"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Animation Easing</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value) =>
-                              handleSettingChange("animationEasing", value)
-                            }
-                          >
+                      <FormField
+                        control={form.control}
+                        name="glowEffect"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                              <FormLabel>Glow Effect</FormLabel>
+                              <FormDescription>
+                                Add a glow effect to the text
+                              </FormDescription>
+                            </div>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select easing" />
-                              </SelectTrigger>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={(value) =>
+                                  handleSettingChange("glowEffect", value)
+                                }
+                              />
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="linear">Linear</SelectItem>
-                              <SelectItem value="easeIn">Ease In</SelectItem>
-                              <SelectItem value="easeOut">Ease Out</SelectItem>
-                              <SelectItem value="easeInOut">
-                                Ease In Out
-                              </SelectItem>
-                              <SelectItem value="circIn">
-                                Circular In
-                              </SelectItem>
-                              <SelectItem value="circOut">
-                                Circular Out
-                              </SelectItem>
-                              <SelectItem value="circInOut">
-                                Circular In Out
-                              </SelectItem>
-                              <SelectItem value="backIn">Back In</SelectItem>
-                              <SelectItem value="backOut">Back Out</SelectItem>
-                              <SelectItem value="backInOut">
-                                Back In Out
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                          </FormItem>
+                        )}
+                      />
 
-              <AccordionItem value="content">
-                <AccordionTrigger>Content Settings</AccordionTrigger>
-                <AccordionContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="hideExplicitContent"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Hide Explicit Content</FormLabel>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            className="!mt-0"
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("hideExplicitContent", value)
-                            }
+                      {form.watch("glowEffect") && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name="glowColor"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Glow Color</FormLabel>
+                                <GradientColorPicker
+                                  color={safeFormatColor(field.value)}
+                                  onChange={(color) =>
+                                    handleSettingChange(
+                                      "glowColor",
+                                      safeFormatColor(color)
+                                    )
+                                  }
+                                  onChangeComplete={field.onBlur}
+                                  currentProfile={null}
+                                />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                          <FormField
+                            control={form.control}
+                            name="glowIntensity"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Glow Intensity</FormLabel>
+                                <Slider
+                                  min={0}
+                                  max={20}
+                                  value={[field.value]}
+                                  onValueChange={(val) =>
+                                    handleSettingChange("glowIntensity", val[0])
+                                  }
+                                />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
 
-            <div className="flex items-center space-x-2 pt-4">
+                      <FormField
+                        control={form.control}
+                        name="showFade"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                              <FormLabel>Fade top and bottom</FormLabel>
+                              <FormDescription>
+                                Add a fade effect to the top and bottom of the
+                                lyrics
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={(value) =>
+                                  handleSettingChange("showFade", value)
+                                }
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch("showFade") && (
+                        <FormField
+                          control={form.control}
+                          name="fadeDistance"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                label="Fade Distance"
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                  handleSettingChange("fadeDistance", value);
+                                }}
+                                onBlur={field.onBlur}
+                                min={0}
+                                max={200}
+                                step={1}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      <FormField
+                        control={form.control}
+                        name="showVideoCanvas"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                              <FormLabel>Show Video Canvas</FormLabel>
+                              <FormDescription>
+                                Display video if available
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={(value) =>
+                                  handleSettingChange("showVideoCanvas", value)
+                                }
+                                disabled={!isVideoAvailable}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch("showVideoCanvas") && (
+                        <FormField
+                          control={form.control}
+                          name="videoCanvasOpacity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Video Canvas Opacity</FormLabel>
+                              <Slider
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                value={[field.value]}
+                                onValueChange={(val) =>
+                                  handleSettingChange(
+                                    "videoCanvasOpacity",
+                                    val[0]
+                                  )
+                                }
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
+
+            <div className="flex items-center space-x-4">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -908,7 +947,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Reset Settings?</AlertDialogTitle>
                     <AlertDialogDescription>
                       This will reset all lyrics settings to their default
                       values. This action cannot be undone.
@@ -922,9 +961,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </div>
 
-            <div className="flex !overflow-hidden">
               <Button
                 type="submit"
                 className="w-full"
@@ -933,7 +970,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                 Save Changes
               </Button>
             </div>
-          </form>
+          </div>
         </div>
 
         {isLyricsLoading && (

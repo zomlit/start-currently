@@ -26,59 +26,31 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
   isLoading: true,
 
   updateSettings: async (newSettings, userId) => {
+    console.log("🏪 Store Update:", { newSettings, userId }); // Log store updates
     try {
-      const currentProfile = get().currentProfile;
-      const updatedSettings = {
-        ...defaultSettings,
-        ...newSettings,
-      };
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          ...newSettings,
+        },
+      }));
 
-      if (!currentProfile) {
-        // Create new profile if none exists
-        const { data: newProfile, error: insertError } = await supabase
-          .from("Profiles")
-          .insert({
-            user_id: userId,
-            widget_type: "visualizer",
-            name: "Default Profile",
-            settings: updatedSettings,
-            is_current: true,
-            is_active: true,
-            color: "#000000",
-          })
-          .select()
-          .single();
+      // Log before database update
+      console.log("💾 Saving to database...", newSettings);
 
-        if (insertError) throw insertError;
-        if (newProfile) {
-          set({
-            settings: updatedSettings,
-            currentProfile: newProfile,
-          });
-        }
-      } else {
-        // Update existing profile
-        const { error: updateError } = await supabase
-          .from("Profiles")
-          .update({
-            settings: updatedSettings,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", currentProfile.id);
+      const { error } = await supabase.from("VisualizerWidget").upsert({
+        user_id: userId,
+        settings: newSettings,
+      });
 
-        if (updateError) throw updateError;
-
-        set({
-          settings: updatedSettings,
-          currentProfile: {
-            ...currentProfile,
-            settings: updatedSettings,
-            updated_at: new Date().toISOString(),
-          },
-        });
+      if (error) {
+        console.error("❌ Database Error:", error); // Log database errors
+        throw error;
       }
+
+      console.log("✅ Database Updated Successfully");
     } catch (error) {
-      console.error("Failed to update visualizer settings:", error);
+      console.error("❌ Store Update Error:", error);
       throw error;
     }
   },

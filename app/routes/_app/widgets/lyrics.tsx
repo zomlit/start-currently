@@ -516,7 +516,7 @@ function LyricsSection() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
           <LyricsSettingsForm
             settings={settings}
             onSettingsChange={handleSettingsUpdate}
@@ -612,7 +612,7 @@ function LyricsSection() {
   ]);
 
   return (
-    <div className="max-h-[calc(100vh-var(--header-height)-var(--nav-height))] overflow-hidden">
+    <div>
       <WidgetLayout preview={LyricsPreview} settings={LyricsSettings} />
       <Dialog
         open={isSpotifyTokenDialogOpen}
