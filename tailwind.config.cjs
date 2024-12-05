@@ -146,10 +146,7 @@ module.exports = {
     require("tailwind-scrollbar-hide"),
     require("tailwindcss-spring"),
     require("@tailwindcss/typography"),
-<<<<<<< HEAD
     scrollbarPlugin({ nocompatible: true }),
-=======
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     addVariablesForColors,
     plugin(function ({ addUtilities, theme }) {
       const opacityValues = theme("opacity");

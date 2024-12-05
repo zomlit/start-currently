@@ -1,11 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import { AlertCircle, Home, RefreshCw, Copy } from "lucide-react";
-=======
-import { AlertCircle, Home, RefreshCw } from "lucide-react";
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ClientWrapper } from "@/components/ClientWrapper";
@@ -17,10 +13,7 @@ import { ClerkProvider } from "@clerk/tanstack-start";
 import { dark } from "@clerk/themes";
 import { useMemo } from "react";
 import { CircleDot } from "@/components/icons";
-<<<<<<< HEAD
 import { toast } from "sonner";
-=======
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 
 export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
@@ -59,7 +52,6 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
   }, [error]);
 
   const formatStackLine = (line: string) => {
-<<<<<<< HEAD
     // Color "at" statements
     line = line.replace(
       /(at )([^(]+)( \()?/g,
@@ -98,19 +90,11 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
     } catch (err) {
       toast.error("Failed to copy error details");
     }
-=======
-    // Match file paths and line numbers in error messages
-    return line.replace(
-      /([a-zA-Z0-9_-]+\.[a-zA-Z]+:\d+:\d+)/g,
-      "<strong>$1</strong>"
-    );
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   };
 
   return (
     <ClientWrapper>
       <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
-<<<<<<< HEAD
         <Card className="w-full max-w-3xl bg-white/5 border-none shadow-2xl backdrop-blur-sm p-6">
           <CardContent className="pt-6">
             <div className="flex flex-col items-start gap-4">
@@ -170,52 +154,6 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
                   </div>
                 </div>
               </div>
-=======
-        <Card className="w-full max-w-2xl bg-white/5 border-none shadow-2xl backdrop-blur-sm p-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="relative rounded-full p-3 animate-pulse">
-                <CircleDot className="h-12 w-12 text-pink-500 fill-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.7)] animate-glow" />
-
-                <div className="absolute inset-0 rounded-full">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/30 to-violet-500/30 blur-xl animate-pulse" />
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500/20 to-violet-500/20 blur-2xl animate-pulse delay-75" />
-                  <div className="absolute inset-0 rounded-full border-2 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.7)] animate-pulse delay-150" />
-                </div>
-              </div>
-
-              <h1 className="text-3xl font-bold tracking-tight">
-                Oops! Something went wrong
-              </h1>
-
-              <Alert
-                variant="destructive"
-                className="mt-2 text-pink-500 border-none bg-white/5 backdrop-blur-sm"
-              >
-                <AlertTitle className="text-2xl uppercase font-black"></AlertTitle>
-                <AlertDescription className="break-words font-normal text-lg">
-                  {errorDetails.message}
-                </AlertDescription>
-              </Alert>
-
-              {process.env.NODE_ENV === "development" &&
-                errorDetails.stack &&
-                !errorDetails.isHookError && (
-                  <div className="w-full bg-white/5 p-0">
-                    <pre className="max-h-[240px] overflow-y-auto p-4 text-left overflow-x-hidden text-xs font-mono text-muted-foreground">
-                      {errorDetails.stack.split("\n").map((line, i) => (
-                        <div
-                          key={i}
-                          className="py-0.5 break-words whitespace-pre-wrap"
-                          dangerouslySetInnerHTML={{
-                            __html: formatStackLine(line),
-                          }}
-                        />
-                      ))}
-                    </pre>
-                  </div>
-                )}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
             </div>
           </CardContent>
 
@@ -224,11 +162,7 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
               <Button
                 variant="secondary"
                 onClick={() => window.location.reload()}
-<<<<<<< HEAD
                 className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
-=======
-                className="gap-2"
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
               >
                 <RefreshCw className="h-4 w-4" />
                 Refresh Page
@@ -237,11 +171,7 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
               <Button
                 variant="secondary"
                 onClick={() => reset?.()}
-<<<<<<< HEAD
                 className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
-=======
-                className="gap-2"
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
               >
                 <RefreshCw className="h-4 w-4" />
                 Try Again
@@ -249,15 +179,9 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
             )}
 
             <Button
-<<<<<<< HEAD
               variant="secondary"
               onClick={() => router.navigate({ to: "/" })}
               className="gap-2 bg-zinc-800/50 hover:bg-zinc-800"
-=======
-              variant="outline"
-              onClick={() => router.navigate({ to: "/" })}
-              className="gap-2"
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
             >
               <Home className="h-4 w-4" />
               Go Home

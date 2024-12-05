@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo } from 'react';
-=======
-import React, { useState, useEffect } from 'react';
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { TeamPickerProps, Player, Captain } from '../types/team-picker';
@@ -13,11 +9,7 @@ import {
   ArrowUp, Check, Paintbrush, ImageIcon, 
   Trophy, Gamepad2, Medal, Settings2, 
   ChevronDown as ChevronDownIcon,
-<<<<<<< HEAD
   Save, FolderOpen, Plus, Crown
-=======
-  Save, FolderOpen, Plus
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 } from 'lucide-react';
 import * as Switch from '@radix-ui/react-switch';
 import * as Label from '@radix-ui/react-label';
@@ -47,10 +39,6 @@ import SettingsSection from './team-picker/settings-section';
 import BracketsSection from './team-picker/brackets-section';
 import { useAuth } from "@clerk/tanstack-start";
 import { supabase } from "@/utils/supabase/client";
-<<<<<<< HEAD
-=======
-import { toast } from "@/utils/toast";
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 import { Button } from "@/components/ui/button";
 import { 
   Select,
@@ -60,7 +48,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SaveLoadSection } from './team-picker/save-load-section';
-<<<<<<< HEAD
 import { type BracketData } from './team-picker/brackets-section';
 import BracketsSectionV2 from './team-picker/brackets-section';
 import { toast } from 'sonner';
@@ -75,8 +62,6 @@ import {
   dragDropOperations // Add this to the existing import
 } from '@/lib/team-picker/operations';
 import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-=======
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 
 const getDroppableStyle = (isDraggingOver: boolean) => ({
   background: isDraggingOver ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
@@ -176,23 +161,15 @@ interface PlayerCardProps {
 }
 
 interface TeamPlayerCardProps {
-<<<<<<< HEAD
   player: Player | Captain;
-=======
-  player: Player;
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   index: number;
   team: Captain;
   isDragging: boolean;
   style: React.CSSProperties;
-<<<<<<< HEAD
   onRemove?: (player: Player | Captain, teamId: string) => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onRankChange?: (id: string, rank: string) => void;
-=======
-  onRankChange?: (playerId: string, newRank: string) => void;
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   showRanks?: boolean;
 }
 
@@ -366,17 +343,10 @@ const PlayerCard: React.FC<PlayerCardProps & {
 
 // Update the TeamPlayerCard component's style
 const TeamPlayerCard: React.FC<TeamPlayerCardProps & { 
-<<<<<<< HEAD
   onRemove?: (player: Player | Captain, teamId: string) => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onRankChange?: (id: string, rank: string) => void;
-=======
-  onRemove?: (player: Player, teamId: string) => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  onRankChange?: (playerId: string, newRank: string) => void;
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   showRanks?: boolean;
 }> = ({ 
   player, 
@@ -461,15 +431,11 @@ const TeamPlayerCard: React.FC<TeamPlayerCardProps & {
           <CustomButton
             variant="ghost"
             size="icon"
-<<<<<<< HEAD
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onRemove(player, team.id);  // Pass both player and teamId
             }}
-=======
-            onClick={() => onRemove(player, team.id)}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
             className="flex-1 h-8 text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded-none"
           >
             <X className="h-4 w-4" />
@@ -485,11 +451,7 @@ type SortOption = 'rank' | 'alphabetical';
 type SortDirection = 'asc' | 'desc';
 
 // Add this type near the top with other types
-<<<<<<< HEAD
 type PickerMode = 'tournament' | '6mans' | 'casual' | 'ranked' | 'custom' | 'standard';
-=======
-type PickerMode = 'tournament' | '6mans' | 'casual' | 'ranked' | 'custom';
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 
 // Add this interface for mode configuration
 interface ModeConfig {
@@ -590,7 +552,6 @@ const PICKER_MODES: ModeConfig[] = [
       teamLogos: true,
       autoAssign: true
     }
-<<<<<<< HEAD
   },
   {
     id: 'standard',
@@ -607,34 +568,21 @@ const PICKER_MODES: ModeConfig[] = [
       teamLogos: false,
       autoAssign: true
     }
-=======
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   }
 ];
 
 // Add these types near the top of the file
 interface SavedBracket {
   id: string;
-<<<<<<< HEAD
   data: {
     teams: Captain[];
     players: Player[];
     settings: {
       mode: PickerMode;
-=======
-  name: string;
-  created_at: string;
-  updated_at: string;
-  data: {
-    players: Player[];
-    teams: Captain[];
-    settings: {
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       numTeams: number;
       teamSize: number;
       showRanks: boolean;
       showTeamLogos: boolean;
-<<<<<<< HEAD
       currentTheme: ThemePreset;
     };
     bracket_data?: BracketData | null;
@@ -728,26 +676,15 @@ const handleCreateBracket = async (name: string) => {
   }
 };
 
-=======
-      currentTheme: string;
-      mode: string;
-    };
-  };
-}
-
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 // Update the TeamPickerV2 component to include mode selection
 const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isSharedView = false }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-<<<<<<< HEAD
   
   // Add these state declarations at the top
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Captain[]>([]);
 
-=======
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   const [newName, setNewName] = useState('');
   const [numTeams, setNumTeams] = useState(8);
   const [teamSize, setTeamSize] = useState<number>(3);
@@ -769,7 +706,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   const currentModeConfig = PICKER_MODES.find(mode => mode.id === currentMode)!;
   const { userId } = useAuth();
 
-<<<<<<< HEAD
   // First, declare selectedBracketId state before using it
   const [selectedBracketId, setSelectedBracketId] = useState<string | null>(null);
 
@@ -796,32 +732,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
   // Update the players query
   const { data: playersList = [], isLoading: isLoadingPlayers } = useQuery<Player[]>({
-=======
-  // Query for teams with initial data
-  const { data: teams = [], isLoading: isLoadingTeams } = useQuery<Captain[]>({
-    queryKey: ['teams'],
-    initialData: Array.from({ length: numTeams }, (_, i) => {
-      const teamNumber = i < Math.ceil(numTeams/2)
-        ? i * 2 + 1  // Odd numbers (1,3,5,7)
-        : (i - Math.ceil(numTeams/2)) * 2 + 2;  // Even numbers (2,4,6,8)
-      return {
-        id: `team-${Date.now()}-${i}`,
-        name: `Team ${String(teamNumber).padStart(2, '0')}`,
-        players: [],
-      };
-    }),
-    enabled: true,
-  });
-
-  // Query for players pool
-  const { data: players = [], isLoading: isLoadingPlayers } = useQuery<Player[]>({
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     queryKey: ['players'],
     initialData: [],
     enabled: true,
   });
 
-<<<<<<< HEAD
   // Update the state setters to use the query data
   useEffect(() => {
     setPlayers(playersList);
@@ -849,78 +764,10 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     refetchOnWindowFocus: false,
   });
 
-=======
-  // Add this mutation for updating teams
-  const updateTeamsMutation = useMutation({
-    mutationFn: async (newTeams: Captain[]) => {
-      const result = await Promise.resolve(newTeams);
-      
-      // Save to Supabase
-      const { error } = await supabase
-        .from('Bracket')
-        .update({
-          data: {
-            players: players,
-            teams: newTeams,
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
-
-      if (error) {
-        console.error('Error updating teams in Supabase:', error);
-      }
-      
-      return result;
-    },
-    onSuccess: (newTeams) => {
-      queryClient.setQueryData(['teams'], newTeams);
-    },
-  });
-
-  // Add this query to load initial data
-  const { data: bracketData } = useQuery({
-    queryKey: ['bracket', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      
-      const { data, error } = await supabase
-        .from('Bracket')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error loading bracket data:', error);
-        return null;
-      }
-
-      return data;
-    },
-    enabled: !!userId,
-  });
-
-  // Add this effect to handle initial data loading
-  useEffect(() => {
-    if (bracketData?.data) {
-      const { players: savedPlayers, teams: savedTeams } = bracketData.data;
-      
-      if (savedPlayers) {
-        queryClient.setQueryData(['players'], savedPlayers);
-      }
-      
-      if (savedTeams) {
-        queryClient.setQueryData(['teams'], savedTeams);
-      }
-    }
-  }, [bracketData]);
-
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   useEffect(() => {
     console.log('Current players:', players);
   }, [players]);
 
-<<<<<<< HEAD
   // First, add a helper function to get the next team number
   const getNextTeamNumber = (existingTeams: Captain[]) => {
     if (existingTeams.length === 0) return 1;
@@ -982,39 +829,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       console.error('Error adding player:', error);
       toast.error(`Failed to add ${isAddingCaptain ? 'captain' : 'player'}`);
     }
-=======
-  const addPlayerMutation = useMutation({
-    mutationFn: async (newPlayer: Player) => {
-      // First add to local state
-      const result = await Promise.resolve(newPlayer);
-      
-      // Then save to Supabase
-      const { error } = await supabase
-        .from('Bracket')
-        .insert([{
-          user_id: userId,
-          owner_id: userId,
-          name: 'Team Picker',
-          data: {
-            players: [...players, newPlayer],
-            teams: teams,
-          },
-          is_complete: false,
-          updated_at: new Date().toISOString(),
-        }]);
-
-      if (error) {
-        console.error('Error saving to Supabase:', error);
-      }
-      
-      return result;
-    },
-    onSuccess: (newPlayer) => {
-      queryClient.setQueryData(['players'], (oldPlayers: Player[] = []) => 
-        [...oldPlayers, newPlayer]
-      );
-    },
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   });
 
   const removePlayerMutation = useMutation({
@@ -1029,20 +843,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   });
 
   // Update the handleAddPlayer function to include rank information
-<<<<<<< HEAD
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newName.trim()) {
       const colors = generatePlayerColors();
       const defaultRank = ROCKET_LEAGUE_RANKS[ROCKET_LEAGUE_RANKS.length - 1];
-=======
-  const handleAddPlayer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newName.trim()) {
-      const colors = generatePlayerColors();
-      // Use the first rank from ROCKET_LEAGUE_RANKS
-      const defaultRank = ROCKET_LEAGUE_RANKS[ROCKET_LEAGUE_RANKS.length - 1]; // Gets B1 since array is reversed
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       
       const newPlayer: Player = {
         id: `player-${Date.now()}`,
@@ -1050,11 +855,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
         backgroundColor: colors.background,
         borderColor: colors.border,
         rank: defaultRank.name,
-<<<<<<< HEAD
         abbreviatedRank: defaultRank.name,
-=======
-        abbreviatedRank: defaultRank.name, // The rank names in rankUtils are already abbreviated
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
         iconUrl: defaultRank.iconUrl,
         isCaptain: isAddingCaptain,
       };
@@ -1064,7 +865,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     }
   };
 
-<<<<<<< HEAD
   // First, update the handleRemovePlayer function to use the dialog
   const handleRemovePlayer = (id: string) => {
     // Find the player and their team
@@ -1086,22 +886,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   };
 
   // Update the handleUpdateNumTeams to use the new function
-=======
-  const handleRemovePlayer = (playerId: string) => {
-    if (window.confirm('Are you sure you want to remove this player?')) {
-      // Find the player in the players list
-      const player = players.find(p => p.id === playerId);
-      if (!player) return;
-
-      // Remove from players list
-      queryClient.setQueryData(['players'], (oldPlayers: Player[] = []) => 
-        oldPlayers.filter(p => p.id !== playerId)
-      );
-    }
-  };
-
-  // Update the handleUpdateNumTeams function
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   const handleUpdateNumTeams = (newNum: number) => {
     if (isNaN(newNum)) return;
     
@@ -1111,18 +895,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     if (newNum > currentTeams.length) {
       // Add new teams with correct numbering
       for (let i = currentTeams.length; i < newNum; i++) {
-<<<<<<< HEAD
         currentTeams.push(createTeamWithNumber(i, newNum));
-=======
-        const teamNumber = i < Math.ceil(newNum/2)
-          ? i * 2 + 1  // Odd numbers (1,3,5,7)
-          : (i - Math.ceil(newNum/2)) * 2 + 2;  // Even numbers (2,4,6,8)
-        currentTeams.push({
-          id: `team-${Date.now()}-${i}`,
-          name: `Team ${String(teamNumber).padStart(2, '0')}`,
-          players: [],
-        });
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       }
     } else if (newNum < currentTeams.length) {
       if (newNum < MIN_TEAMS) {
@@ -1143,7 +916,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       currentTeams.splice(newNum);
     }
     
-<<<<<<< HEAD
     // Update team numbers for all teams
     const updatedTeams = currentTeams.map((team, index) => ({
       ...team,
@@ -1151,9 +923,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     }));
     
     updateTeamsMutation.mutate(updatedTeams);
-=======
-    updateTeamsMutation.mutate(currentTeams);
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   };
 
   const handleRemoveCaptainFromTeam = (captain: Player, teamId: string) => {
@@ -1242,7 +1011,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     queryClient.invalidateQueries({ queryKey: ['teams'] });
   };
 
-<<<<<<< HEAD
   // First, keep the original handleRemovePlayerFromTeam function for the actual removal logic
   const handleRemovePlayerFromTeam = async ({
     playerId,
@@ -1284,18 +1052,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     const updatedTeams = teams.map(t => {
       if (t.id === teamId) {
         const remainingPlayers = t.players.filter(p => p.id !== playerId);
-=======
-  const handleRemovePlayerFromTeam = (player: Player, teamId: string) => {
-    const team = teams.find(t => t.id === teamId);
-    if (!team) return;
-
-    const playerIndex = team.players.findIndex(p => p.id === player.id);
-    const isCurrentCaptain = playerIndex === 0;
-
-    const updatedTeams = teams.map(t => {
-      if (t.id === teamId) {
-        const remainingPlayers = t.players.filter(p => p.id !== player.id);
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
         
         if (remainingPlayers.length > 0 && isCurrentCaptain) {
           // Promote next player to captain
@@ -1304,11 +1060,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
           
           return {
             ...t,
-<<<<<<< HEAD
             name: formatTeamName(newCaptain.name),
-=======
-            name: formatTeamName(newCaptain.name), // Use formatTeamName here
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
             players: [newCaptain, ...otherPlayers]
           };
         }
@@ -1322,7 +1074,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       return t;
     });
 
-<<<<<<< HEAD
     // Add player back to the appropriate list with correct captain status
     const playerToAdd = {
       ...playerToRemove,
@@ -1399,28 +1150,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     Remove
   </Button>
 
-=======
-    // Update teams
-    updateTeamsMutation.mutate(updatedTeams);
-
-    // Add player back to the appropriate list with correct captain status
-    const playerToAdd = {
-      ...player,
-      isCaptain: isCurrentCaptain
-    };
-
-    // Update both states and force refresh
-    queryClient.setQueryData(['teams'], updatedTeams);
-    queryClient.setQueryData(['players'], (oldPlayers: Player[] = []) => [
-      ...oldPlayers,
-      playerToAdd
-    ]);
-    
-    // Force update of team status
-    queryClient.invalidateQueries({ queryKey: ['teams'] });
-  };
-
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   const handleMovePlayerBetweenTeams = (
     player: Player,
     sourceTeamId: string,
@@ -1450,7 +1179,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     queryClient.invalidateQueries({ queryKey: ['teams'] });
   };
 
-<<<<<<< HEAD
   // Update the handleDragEnd function
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
@@ -1546,125 +1274,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       console.error('Failed to handle drag and drop:', error);
       toast.error('Failed to save changes');
     }
-=======
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
-
-    if (!destination) return;
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) return;
-
-    // Create new references for state updates
-    const newPlayers = [...players];
-    const newTeams = teams.map(team => ({ ...team, players: [...team.players] })); // Deep clone teams
-
-    // Get the moved player based on source
-    let movedPlayer: Player | undefined;
-    
-    // Handle source
-    if (source.droppableId.startsWith('team-')) {
-      const sourceTeamId = source.droppableId.replace('team-', '');
-      const sourceTeam = newTeams.find(t => t.id === sourceTeamId);
-      if (!sourceTeam) return;
-      
-      movedPlayer = { ...sourceTeam.players[source.index] };
-      
-      // Remove from source team
-      const sourceTeamIndex = newTeams.findIndex(t => t.id === sourceTeamId);
-      if (sourceTeamIndex !== -1) {
-        // If removing captain, promote next player
-        if (source.index === 0 && sourceTeam.players.length > 1) {
-          const newCaptain = { ...sourceTeam.players[1], isCaptain: true };
-          const otherPlayers = sourceTeam.players.slice(2);
-          newTeams[sourceTeamIndex] = {
-            ...sourceTeam,
-            name: `${newCaptain.name}'s Team`,
-            players: [newCaptain, ...otherPlayers]
-          };
-        } else {
-          newTeams[sourceTeamIndex].players = sourceTeam.players.filter(
-            p => p.id !== movedPlayer!.id
-          );
-        }
-      }
-    } else {
-      // Handle players/captains list source
-      const playersList = source.droppableId === 'captains' 
-        ? getSortedPlayers(players.filter(p => p.isCaptain), captainSort, captainSortDirection)
-        : getSortedPlayers(players.filter(p => !p.isCaptain), playerSort, playerSortDirection);
-      
-      movedPlayer = { ...playersList[source.index] };
-      
-      // Remove from players list
-      const playerIndex = newPlayers.findIndex(p => p.id === movedPlayer?.id);
-      if (playerIndex !== -1) {
-        newPlayers.splice(playerIndex, 1);
-      }
-    }
-
-    if (!movedPlayer) return;
-
-    // Handle destination
-    if (destination.droppableId.startsWith('team-')) {
-      const teamId = destination.droppableId.replace('team-', '');
-      const team = newTeams.find(t => t.id === teamId);
-      if (!team || team.players.length >= teamSize) return;
-
-      // Update player's captain status based on destination position
-      const shouldBeCaptain = team.players.length === 0;
-      const wasRegularPlayer = !movedPlayer.isCaptain;
-      
-      // Update player status
-      movedPlayer = {
-        ...movedPlayer,
-        isCaptain: shouldBeCaptain
-      };
-
-      // Add to destination team
-      const destTeamIndex = newTeams.findIndex(t => t.id === teamId);
-      if (destTeamIndex !== -1) {
-        if (shouldBeCaptain) {
-          // If a regular player becomes a captain, we need to update the counts
-          if (wasRegularPlayer) {
-            // Update the available slots calculations
-            const regularPlayersCount = players.filter(p => !p.isCaptain).length;
-            const captainsCount = players.filter(p => p.isCaptain).length;
-            
-            // Force update of the counts
-            queryClient.setQueryData(['playerCounts'], {
-              regularPlayers: regularPlayersCount - 1, // One less regular player
-              captains: captainsCount + 1 // One more captain
-            });
-          }
-
-          newTeams[destTeamIndex] = {
-            ...team,
-            name: `${movedPlayer.name}'s Team`,
-            players: [movedPlayer]
-          };
-        } else {
-          newTeams[destTeamIndex].players = [...team.players, movedPlayer];
-        }
-      }
-    } else {
-      // Moving back to players/captains list
-      const wasTeamCaptain = source.droppableId.startsWith('team-') && source.index === 0;
-      movedPlayer.isCaptain = wasTeamCaptain || destination.droppableId === 'captains';
-      newPlayers.push(movedPlayer);
-    }
-
-    // Update states with new references to trigger re-render
-    queryClient.setQueryData(['teams'], newTeams);
-    queryClient.setQueryData(['players'], newPlayers);
-
-    // Force immediate update of all counts
-    requestAnimationFrame(() => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['playerCounts'] });
-    });
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   };
 
   const handleTeamSizeChange = (newSize: number) => {
@@ -1672,62 +1281,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     setTeamSize(size);
   };
 
-<<<<<<< HEAD
-=======
-  // Add this function to the component
-  const handlePopulate = () => {
-    // Clear existing players and captains
-    queryClient.setQueryData(['players'], []);
-
-    // Calculate how many players we need total
-    const totalPlayersNeeded = numTeams * teamSize;
-    const captainsNeeded = numTeams;
-    const playersNeeded = totalPlayersNeeded - captainsNeeded;
-
-    const getRandomRank = () => {
-      const randomIndex = Math.floor(Math.random() * ROCKET_LEAGUE_RANKS.length);
-      const rank = ROCKET_LEAGUE_RANKS[randomIndex];
-      return {
-        name: rank.name,
-        iconUrl: rank.iconUrl
-      };
-    };
-
-    const newCaptains = Array.from({ length: captainsNeeded }, () => {
-      const colors = generatePlayerColors();
-      const rank = getRandomRank();
-      return {
-        id: `player-${Date.now()}-${Math.random()}`,
-        name: generateRandomName(),
-        backgroundColor: colors.background,
-        borderColor: colors.border,
-        rank: rank.name,
-        abbreviatedRank: rank.name,
-        iconUrl: rank.iconUrl,
-        isCaptain: true,
-      };
-    });
-
-    const newPlayers = Array.from({ length: playersNeeded }, () => {
-      const colors = generatePlayerColors();
-      const rank = getRandomRank();
-      return {
-        id: `player-${Date.now()}-${Math.random()}`,
-        name: generateRandomName(),
-        backgroundColor: colors.background,
-        borderColor: colors.border,
-        rank: rank.name,
-        abbreviatedRank: rank.name,
-        iconUrl: rank.iconUrl,
-        isCaptain: false,
-      };
-    });
-
-    // Update the players list with both captains and players
-    queryClient.setQueryData(['players'], [...newCaptains, ...newPlayers]);
-  };
-
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   // Add this function to handle player reordering and captain promotion
   const handleReorderPlayer = (teamId: string, currentIndex: number, direction: 'up' | 'down') => {
     const team = teams.find(t => t.id === teamId);
@@ -1766,7 +1319,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
   // Add this mutation inside the TeamPickerV2 component
   const updatePlayerRankMutation = useMutation({
-<<<<<<< HEAD
     mutationFn: (updates: { playerId: string; newRank: string }) => 
       mutationOperations.updatePlayerRank.mutate({ 
         ...updates, 
@@ -1777,43 +1329,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
         { ...updates, RANK_IMAGES }, 
         queryClient
       ),
-=======
-    mutationFn: (updates: { playerId: string; newRank: string }) => {
-      return Promise.resolve(updates);
-    },
-    onSuccess: ({ playerId, newRank }) => {
-      // Update players list
-      queryClient.setQueryData(['players'], (oldPlayers: Player[] = []) =>
-        oldPlayers.map(player =>
-          player.id === playerId
-            ? {
-                ...player,
-                rank: newRank,
-                abbreviatedRank: newRank,
-                iconUrl: RANK_IMAGES[newRank as keyof typeof RANK_IMAGES],
-              }
-            : player
-        )
-      );
-
-      // Update teams list
-      queryClient.setQueryData(['teams'], (oldTeams: Captain[] = []) =>
-        oldTeams.map(team => ({
-          ...team,
-          players: team.players.map(player =>
-            player.id === playerId
-              ? {
-                  ...player,
-                  rank: newRank,
-                  abbreviatedRank: newRank,
-                  iconUrl: RANK_IMAGES[newRank as keyof typeof RANK_IMAGES],
-                }
-              : player
-          ),
-        }))
-      );
-    },
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   });
 
   // Add this handler function
@@ -1842,7 +1357,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     );
   };
 
-<<<<<<< HEAD
   // Update the handleTeamNumberChange to save the new number
   const handleTeamNumberChange = (teamId: string, newNumber: number) => {
     const updatedTeams = teams.map(team => {
@@ -1855,41 +1369,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       return team;
     });
 
-=======
-  // Update the handleTeamNumberChange function
-  const handleTeamNumberChange = (teamId: string, newNumber: number) => {
-    // Get the current team
-    const currentTeam = teams.find(t => t.id === teamId);
-    if (!currentTeam) return;
-
-    // Calculate the current team's number based on its position
-    const currentIndex = teams.indexOf(currentTeam);
-    const currentNumber = parseInt(getTeamNumber(currentIndex, teams.length));
-
-    // Find the target team index based on the new number
-    let targetIndex;
-    if (newNumber % 2 === 1) { // Odd number
-      targetIndex = Math.floor((newNumber - 1) / 2);
-    } else { // Even number
-      targetIndex = Math.floor(teams.length / 2) + Math.floor((newNumber - 2) / 2);
-    }
-
-    // Create a copy of teams array
-    const updatedTeams = [...teams];
-    
-    // Swap the teams
-    const temp = updatedTeams[currentIndex];
-    updatedTeams[currentIndex] = updatedTeams[targetIndex];
-    updatedTeams[targetIndex] = temp;
-
-    // Update teams
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     updateTeamsMutation.mutate(updatedTeams);
     setEditingTeamNumber(null);
   };
 
   // Add these helper functions near the top of the component
-<<<<<<< HEAD
   const calculateTotalPlayersInTeams = useCallback((teams: Captain[]) => {
     return teams.reduce((total, team) => total + team.players.length, 0);
   }, []);
@@ -1897,15 +1381,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   const calculateRequiredPlayers = useCallback((numTeams: number, teamSize: number) => {
     return numTeams * teamSize;
   }, []);
-=======
-  const calculateTotalPlayersInTeams = (teams: Captain[]) => {
-    return teams.reduce((total, team) => total + team.players.length, 0);
-  };
-
-  const calculateRequiredPlayers = (numTeams: number, teamSize: number) => {
-    return numTeams * teamSize;
-  };
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 
   // Add this helper function to calculate available player slots
   const calculateAvailablePlayerSlots = (teams: Captain[], numTeams: number, teamSize: number) => {
@@ -1930,11 +1405,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   };
 
   // Update the player counting functions
-<<<<<<< HEAD
   const calculatePlayerCounts = useCallback(() => {
-=======
-  const calculatePlayerCounts = () => {
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     // Count captains (both in pool and in teams)
     const captainsInPool = players.filter(p => p.isCaptain).length;
     const captainsInTeams = teams.reduce((count, team) => 
@@ -1949,12 +1420,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     );
     const totalRegularPlayers = regularPlayersInPool + regularPlayersInTeams;
 
-<<<<<<< HEAD
-=======
-    // Total players
-    const totalPlayers = totalCaptains + totalRegularPlayers;
-
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     return {
       captains: {
         inPool: captainsInPool,
@@ -1966,7 +1431,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
         inTeams: regularPlayersInTeams,
         total: totalRegularPlayers
       },
-<<<<<<< HEAD
       total: totalCaptains + totalRegularPlayers
     };
   }, [players, teams]);
@@ -1974,15 +1438,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
   // Update the stats calculations
   const playerCounts = calculatePlayerCounts();
   const totalPlayersInTeams = calculateTotalPlayersInTeams(teams);
-=======
-      total: totalPlayers
-    };
-  };
-
-  // Update the stats calculations
-  const playerCounts = calculatePlayerCounts();
-  const totalPlayersInTeams = teams.reduce((sum, team) => sum + team.players.length, 0);
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   const totalPlayers = playerCounts.total;
   const requiredPlayers = calculateRequiredPlayers(numTeams, teamSize);
 
@@ -2025,22 +1480,12 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     return theme.generateColors();
   };
 
-<<<<<<< HEAD
   // Update the autoAssignCaptains function
-=======
-  // Add these helper functions for auto-assignment
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   const autoAssignCaptains = () => {
     // Get available captains from pool
     const availableCaptains = [...players].filter(p => p.isCaptain);
     
-<<<<<<< HEAD
     if (availableCaptains.length === 0) return;
-=======
-    if (availableCaptains.length === 0) {
-      return;
-    }
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 
     // Sort captains by rank (highest to lowest)
     const sortedCaptains = [...availableCaptains].sort((a, b) => {
@@ -2051,7 +1496,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
 
     // Find empty teams
     const emptyTeams = teams.filter(team => team.players.length === 0);
-<<<<<<< HEAD
     if (emptyTeams.length === 0) return;
 
     // Create new teams array
@@ -2070,66 +1514,23 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     });
 
     // Update teams locally
-=======
-    
-    if (emptyTeams.length === 0) {
-      return;
-    }
-
-    // Create new teams array
-    const updatedTeams = [...teams];
-    let assignedCount = 0;
-
-    // Assign captains to empty teams, distributing ranks evenly
-    emptyTeams.forEach((team, index) => {
-      if (index < sortedCaptains.length) {
-        const captain = sortedCaptains[index];
-        const teamIndex = updatedTeams.findIndex(t => t.id === team.id);
-        
-        if (teamIndex !== -1) {
-          updatedTeams[teamIndex] = {
-            ...team,
-            name: formatTeamName(captain.name),
-            players: [{ ...captain, isCaptain: true }]
-          };
-          assignedCount++;
-        }
-      }
-    });
-
-    // Update teams
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     updateTeamsMutation.mutate(updatedTeams);
 
     // Remove assigned captains from pool
     const remainingCaptains = players.filter(p => 
-<<<<<<< HEAD
       p.isCaptain && !updatedTeams.some(team => 
         team.players[0]?.id === p.id
       )
-=======
-      p.isCaptain && !sortedCaptains.slice(0, assignedCount).find(c => c.id === p.id)
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     );
     const nonCaptains = players.filter(p => !p.isCaptain);
     queryClient.setQueryData(['players'], [...remainingCaptains, ...nonCaptains]);
   };
 
-<<<<<<< HEAD
   // Update the autoAssignPlayers function
   const autoAssignPlayers = () => {
     // Get available regular players from pool
     const availablePlayers = [...players].filter(p => !p.isCaptain);
     if (availablePlayers.length === 0) return;
-=======
-  const autoAssignPlayers = () => {
-    // Get available regular players from pool
-    const availablePlayers = [...players].filter(p => !p.isCaptain);
-    
-    if (availablePlayers.length === 0) {
-      return;
-    }
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 
     // Sort players by rank (highest to lowest)
     const sortedPlayers = [...availablePlayers].sort((a, b) => {
@@ -2138,7 +1539,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       return rankB - rankA;
     });
 
-<<<<<<< HEAD
     // Create new teams array preserving team numbers
     const updatedTeams = teams.map(team => ({
       ...team,
@@ -2169,64 +1569,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     }
 
     // Update teams locally
-=======
-    // Find teams that have a captain but aren't full
-    const incompleteTeams = teams
-      .filter(team => team.players.length > 0 && team.players.length < teamSize)
-      .sort((a, b) => {
-        // Sort by team size first (fill smallest teams first)
-        const sizeCompare = a.players.length - b.players.length;
-        if (sizeCompare !== 0) return sizeCompare;
-
-        // If same size, sort by average team rank
-        const avgRankA = getAverageTeamRank(a);
-        const avgRankB = getAverageTeamRank(b);
-        return avgRankA - avgRankB; // Lower average rank gets players first
-      });
-
-    if (incompleteTeams.length === 0) {
-      return;
-    }
-
-    // Create new teams array
-    const updatedTeams = [...teams];
-    let assignedCount = 0;
-
-    // Distribute players to balance team ranks
-    while (sortedPlayers.length > 0 && incompleteTeams.some(team => team.players.length < teamSize)) {
-      // Sort teams by current strength after each assignment
-      incompleteTeams.sort((a, b) => {
-        const avgRankA = getAverageTeamRank(a);
-        const avgRankB = getAverageTeamRank(b);
-        return avgRankA - avgRankB;
-      });
-
-      for (const team of incompleteTeams) {
-        if (sortedPlayers.length === 0) break;
-        if (team.players.length < teamSize) {
-          const teamIndex = updatedTeams.findIndex(t => t.id === team.id);
-          if (teamIndex !== -1) {
-            // Get the next player
-            const player = sortedPlayers.shift()!;
-            updatedTeams[teamIndex].players.push(player);
-            assignedCount++;
-          }
-        }
-      }
-    }
-
-    // Update teams
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     updateTeamsMutation.mutate(updatedTeams);
 
     // Update players pool with remaining players
     const captains = players.filter(p => p.isCaptain);
-<<<<<<< HEAD
     queryClient.setQueryData(['players'], [...captains, ...sortedPlayers]);
-=======
-    const remainingPlayers = sortedPlayers;
-    queryClient.setQueryData(['players'], [...captains, ...remainingPlayers]);
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   };
 
   // Add this helper function for team rank calculation
@@ -2341,7 +1688,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     return numTeams <= 1;
   };
 
-<<<<<<< HEAD
   // Update getTeamNumber to use the saved number if available
   const getTeamNumber = (teamIndex: number, totalTeams: number) => {
     const team = teams[teamIndex];
@@ -2353,22 +1699,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     if (teamIndex < Math.ceil(totalTeams/2)) {
       return String(teamIndex * 2 + 1).padStart(2, '0');
     } else {
-=======
-  // Update the getTeamNumber function to use the actual team index
-  const getTeamNumber = (teamIndex: number, totalTeams: number) => {
-    // For first column teams (0 to half)
-    if (teamIndex < Math.ceil(totalTeams/2)) {
-      return String(teamIndex * 2 + 1).padStart(2, '0');
-    }
-    // For second column teams (half to end)
-    else {
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       const adjustedIndex = teamIndex - Math.ceil(totalTeams/2);
       return String(adjustedIndex * 2 + 2).padStart(2, '0');
     }
   };
 
-<<<<<<< HEAD
   // Move bracket state to the top with other state declarations
   const bracketDataRef = useRef<BracketData | null>(null);
   const [currentBracket, setCurrentBracket] = useState(initialState);
@@ -2532,16 +1867,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     } catch (error) {
       console.error('Failed to clear teams:', error);
       toast.error('Failed to clear teams');
-=======
-  const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all lists? This cannot be undone.')) {
-      queryClient.setQueryData(['players'], []);
-      queryClient.setQueryData(['teams'], Array.from({ length: numTeams }, (_, i) => ({
-        id: `team-${Date.now()}-${i}`,
-        name: `Team ${i + 1}`,
-        players: [],
-      })));
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     }
   };
 
@@ -2569,11 +1894,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
         id: `team-${Date.now()}-${i}`,
         name: `Team ${String(teamNumber).padStart(2, '0')}`,
         players: [],
-<<<<<<< HEAD
         captains: [],
         teamNumber: String(teamNumber).padStart(2, '0')
-=======
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       };
     });
 
@@ -2649,25 +1971,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     updateTeamsMutation.mutate(newTeams);
   };
 
-<<<<<<< HEAD
-=======
-  // Update where BracketsSection is used
-  <BracketsSection
-    mode={currentMode}
-    teams={teams}
-    numTeams={numTeams}
-    teamSize={teamSize}
-    showTeamLogos={showTeamLogos}
-    onTeamsReorder={handleTeamsReorder}
-  />
-
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   // Add these state variables in the component
   const [savedBrackets, setSavedBrackets] = useState<SavedBracket[]>([]);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [newBracketName, setNewBracketName] = useState('');
-<<<<<<< HEAD
 
   // Update the saveBracketMutation definition
   const saveBracketMutation = useMutation({
@@ -2693,95 +2001,14 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       }
     }),
     onSuccess: () => mutationOperations.saveBracket.onSuccess(queryClient),
-=======
-  const [selectedBracketId, setSelectedBracketId] = useState<string | null>(null);
-
-  // Add these queries and mutations
-  const { data: brackets } = useQuery({
-    queryKey: ['brackets', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      const { data, error } = await supabase
-        .from('Bracket')
-        .select('*')
-        .eq('user_id', userId)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        toast.error('Error loading brackets');
-        return [];
-      }
-
-      return data as SavedBracket[];
-    },
-    enabled: !!userId,
-  });
-
-  const saveBracketMutation = useMutation({
-    mutationFn: async (name: string) => {
-      if (!userId) throw new Error('Not authenticated');
-
-      const bracketData = {
-        players,
-        teams,
-        settings: {
-          numTeams,
-          teamSize,
-          showRanks,
-          showTeamLogos,
-          currentTheme,
-          mode: currentMode,
-        },
-      };
-
-      const { data, error } = await supabase
-        .from('Bracket')
-        .insert([{
-          user_id: userId,
-          owner_id: userId,
-          name,
-          data: bracketData,
-          is_complete: false,
-          updated_at: new Date().toISOString(),
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast.success('Bracket saved successfully');
-      setIsSaveDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['brackets'] });
-    },
-    onError: () => {
-      toast.error('Error saving bracket');
-    },
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   });
 
   const loadBracketMutation = useMutation({
     mutationFn: async (bracketId: string) => {
-<<<<<<< HEAD
       setSelectedBracketId(bracketId);
       return bracketOperations.load(bracketId);
     },
     onSuccess: (data) => {
-=======
-      const { data, error } = await supabase
-        .from('Bracket')
-        .select('*')
-        .eq('id', bracketId)
-        .single();
-
-      if (error) throw error;
-      return data as SavedBracket;
-    },
-    onSuccess: (data) => {
-      // Update all states with loaded data
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       const { players: loadedPlayers, teams: loadedTeams, settings } = data.data;
       
       queryClient.setQueryData(['players'], loadedPlayers);
@@ -2795,18 +2022,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       setCurrentMode(settings.mode as PickerMode);
       
       setIsLoadDialogOpen(false);
-<<<<<<< HEAD
       toast.success({ title: 'Bracket loaded successfully' });
     },
     onError: () => {
       setSelectedBracketId(null); // Reset on error
       toast.error({ title: 'Error loading bracket' });
-=======
-      toast.success('Bracket loaded successfully');
-    },
-    onError: () => {
-      toast.error('Error loading bracket');
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     },
   });
 
@@ -2817,7 +2037,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
       toast.error('Please enter a name for the bracket');
       return;
     }
-<<<<<<< HEAD
     saveBracketMutation.mutate({ name: newBracketName.trim() });
   };
 
@@ -3350,381 +2569,12 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                 key={captain.id}
                                 draggableId={captain.id}
                                 index={index}
-=======
-    saveBracketMutation.mutate(newBracketName.trim());
-  };
-
-  const handleLoadBracket = (bracketId: string) => {
-    loadBracketMutation.mutate(bracketId);
-  };
-
-  // Add this JSX near the top of your return statement, perhaps in the header section
-  const SaveLoadButtons = () => (
-    <div className="flex items-center gap-2">
-      {/* Save Dialog */}
-      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            variant="outline" 
-            className="gap-2"
-            disabled={!userId}
-          >
-            <Save className="h-4 w-4" />
-            Save
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save Tournament</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSaveBracket} className="space-y-4">
-            <div>
-              <label htmlFor="bracketName" className="text-sm font-medium">
-                Tournament Name
-              </label>
-              <Input
-                id="bracketName"
-                value={newBracketName}
-                onChange={(e) => setNewBracketName(e.target.value)}
-                placeholder="Enter tournament name..."
-                className="mt-1"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsSaveDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={!newBracketName.trim() || saveBracketMutation.isPending}
-              >
-                {saveBracketMutation.isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Load Dialog */}
-      <Dialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            variant="outline" 
-            className="gap-2"
-            disabled={!userId}
-          >
-            <FolderOpen className="h-4 w-4" />
-            Load
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Load Tournament</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {brackets?.length === 0 ? (
-              <div className="text-center py-4 text-zinc-400">
-                No saved tournaments found
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {brackets?.map((bracket) => (
-                  <button
-                    key={bracket.id}
-                    onClick={() => handleLoadBracket(bracket.id)}
-                    className="w-full p-3 text-left rounded-lg border border-zinc-700/50 
-                      hover:bg-zinc-700/50 transition-colors group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-zinc-100">{bracket.name}</h3>
-                        <p className="text-sm text-zinc-400">
-                          Last updated: {new Date(bracket.updated_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Load
-                      </Button>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-
-  // Update the header section layout to include SaveLoadSection below the title
-  <div className="w-full">
-    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500 mb-6">
-      Team Picker
-    </h1>
-
-    {/* Add SaveLoadSection below the title */}
-    <div className="mb-6 flex justify-end">
-      <SaveLoadSection
-        players={players}
-        teams={teams}
-        numTeams={numTeams}
-        teamSize={teamSize}
-        showRanks={showRanks}
-        showTeamLogos={showTeamLogos}
-        currentTheme={currentTheme}
-        currentMode={currentMode}
-        onLoadBracket={handleLoadBracket}
-      />
-    </div>
-
-    {/* Mode selector */}
-    {modeSelector}
-
-    {/* Add the brackets section here */}
-    <BracketsSection
-      mode={currentMode}
-      teams={teams}
-      numTeams={numTeams}
-      teamSize={teamSize}
-      showTeamLogos={showTeamLogos}
-      onTeamsReorder={handleTeamsReorder}
-    />
-
-    <StatsSection
-      totalPlayers={totalPlayers}
-      requiredPlayers={requiredPlayers}
-      totalPlayersInTeams={totalPlayersInTeams}
-      numTeams={numTeams}
-      teamSize={teamSize}
-      teams={teams}
-      players={players}
-    />
-
-    <SettingsSection
-      newName={newName}
-      setNewName={setNewName}
-      isAddingCaptain={isAddingCaptain}
-      setIsAddingCaptain={setIsAddingCaptain}
-      teamSize={teamSize}
-      handleTeamSizeChange={handleTeamSizeChange}
-      numTeams={numTeams}
-      handleUpdateNumTeams={handleUpdateNumTeams}
-      handleAddPlayer={handleAddPlayer}
-      addPlayerMutationPending={addPlayerMutation.isPending}
-      handlePopulateCaptains={handlePopulateCaptains}
-      handlePopulatePlayers={handlePopulatePlayers}
-      handlePopulate={handlePopulate}
-      autoAssignCaptains={autoAssignCaptains}
-      autoAssignPlayers={autoAssignPlayers}
-      isCaptainsFull={isCaptainsFull()}
-      isPlayersFull={isPlayersFull()}
-      isAllPlayersFull={isAllPlayersFull()}
-      hasCaptains={players.some(p => p.isCaptain)}
-      hasPlayers={players.some(p => !p.isCaptain)}
-      currentTheme={currentTheme}
-      setCurrentTheme={setCurrentTheme}
-      teams={teams}
-      getTeamNumber={getTeamNumber}
-      showTeamLogos={showTeamLogos}
-      setShowTeamLogos={setShowTeamLogos}
-      isLogoSectionCollapsed={isLogoSectionCollapsed}
-      setIsLogoSectionCollapsed={setIsLogoSectionCollapsed}
-      handleClearAll={handleClearAll}
-      showRanks={showRanks}
-      setShowRanks={setShowRanks}
-    />
-  </div>
-
-  // Update the main container and header layout
-  return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <StyleTag />
-      <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black text-zinc-300 p-4">
-        <div className="max-w-[1920px] mx-auto space-y-4">
-          {/* Header Section */}
-          <div className="w-full">
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500 mb-6">
-              Team Picker
-            </h1>
-
-            {/* Add SaveLoadSection below the title */}
-            <div className="mb-6 flex justify-end">
-              <SaveLoadSection
-                players={players}
-                teams={teams}
-                numTeams={numTeams}
-                teamSize={teamSize}
-                showRanks={showRanks}
-                showTeamLogos={showTeamLogos}
-                currentTheme={currentTheme}
-                currentMode={currentMode}
-                onLoadBracket={handleLoadBracket}
-              />
-            </div>
-
-            {/* Mode selector */}
-            {modeSelector}
-
-            {/* Add the brackets section here */}
-            <BracketsSection
-              mode={currentMode}
-              teams={teams}
-              numTeams={numTeams}
-              teamSize={teamSize}
-              showTeamLogos={showTeamLogos}
-              onTeamsReorder={handleTeamsReorder}
-            />
-
-            <StatsSection
-              totalPlayers={totalPlayers}
-              requiredPlayers={requiredPlayers}
-              totalPlayersInTeams={totalPlayersInTeams}
-              numTeams={numTeams}
-              teamSize={teamSize}
-              teams={teams}
-              players={players}
-            />
-
-            <SettingsSection
-              newName={newName}
-              setNewName={setNewName}
-              isAddingCaptain={isAddingCaptain}
-              setIsAddingCaptain={setIsAddingCaptain}
-              teamSize={teamSize}
-              handleTeamSizeChange={handleTeamSizeChange}
-              numTeams={numTeams}
-              handleUpdateNumTeams={handleUpdateNumTeams}
-              handleAddPlayer={handleAddPlayer}
-              addPlayerMutationPending={addPlayerMutation.isPending}
-              handlePopulateCaptains={handlePopulateCaptains}
-              handlePopulatePlayers={handlePopulatePlayers}
-              handlePopulate={handlePopulate}
-              autoAssignCaptains={autoAssignCaptains}
-              autoAssignPlayers={autoAssignPlayers}
-              isCaptainsFull={isCaptainsFull()}
-              isPlayersFull={isPlayersFull()}
-              isAllPlayersFull={isAllPlayersFull()}
-              hasCaptains={players.some(p => p.isCaptain)}
-              hasPlayers={players.some(p => !p.isCaptain)}
-              currentTheme={currentTheme}
-              setCurrentTheme={setCurrentTheme}
-              teams={teams}
-              getTeamNumber={getTeamNumber}
-              showTeamLogos={showTeamLogos}
-              setShowTeamLogos={setShowTeamLogos}
-              isLogoSectionCollapsed={isLogoSectionCollapsed}
-              setIsLogoSectionCollapsed={setIsLogoSectionCollapsed}
-              handleClearAll={handleClearAll}
-              showRanks={showRanks}
-              setShowRanks={setShowRanks}
-            />
-          </div>
-
-          {/* Main 4-Column Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
-            {/* Captains List */}
-            <div className="w-full lg:sticky lg:top-6">
-              <Card className="bg-zinc-800/50 border-zinc-700 overflow-hidden">
-                <div className="p-4 border-b border-zinc-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-xl font-semibold text-white">Available Captains</h2>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 text-sm rounded-md bg-zinc-700/50 text-zinc-300">
-                        {playerCounts.captains.total} / {numTeams}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-zinc-400">Sort by:</span>
-                    <button
-                      onClick={() => {
-                        if (captainSort === 'rank') {
-                          setCaptainSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
-                        } else {
-                          setCaptainSort('rank');
-                          setCaptainSortDirection('desc');
-                        }
-                      }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        captainSort === 'rank'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'hover:bg-zinc-700/50 text-zinc-400'
-                      }`}
-                    >
-                      <span>Rank</span>
-                      {captainSort === 'rank' && (
-                        captainSortDirection === 'desc' 
-                          ? <ArrowDown className="h-3 w-3" /> 
-                          : <ArrowUp className="h-3 w-3" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (captainSort === 'alphabetical') {
-                          setCaptainSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
-                        } else {
-                          setCaptainSort('alphabetical');
-                          setCaptainSortDirection('desc');
-                        }
-                      }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        captainSort === 'alphabetical'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'hover:bg-zinc-700/50 text-zinc-400'
-                      }`}
-                    >
-                      <span>A-Z</span>
-                      {captainSort === 'alphabetical' && (
-                        captainSortDirection === 'desc' 
-                          ? <ArrowDown className="h-3 w-3" /> 
-                          : <ArrowUp className="h-3 w-3" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <Droppable droppableId="captains">
-                  {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
-                    <div 
-                      {...provided.droppableProps} 
-                      ref={provided.innerRef} 
-                      className={`p-4 ${snapshot.isDraggingOver ? 'min-h-[50px]' : ''}`}
-                    >
-                      {isLoadingPlayers ? (
-                        <div className="text-center py-4">Loading...</div>
-                      ) : players.filter(p => p.isCaptain).length === 0 ? (
-                        <div className="text-center py-4 text-zinc-400">
-                          No captains available
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {(() => {
-                            const sortedCaptains = getSortedPlayers(
-                              players.filter(p => p.isCaptain),
-                              captainSort,
-                              captainSortDirection
-                            );
-                            return sortedCaptains.map((player, index) => (
-                              <Draggable
-                                key={player.id}
-                                draggableId={player.id}
-                                index={index}
-                                isDragDisabled={areAllTeamsFull(teams, teamSize)}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                               >
                                 {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-<<<<<<< HEAD
                                     style={{
                                       ...provided.draggableProps.style,
                                       position: snapshot.isDragging ? 'fixed' : 'relative',
@@ -3739,29 +2589,17 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                   >
                                     <PlayerCard
                                       player={captain}
-=======
-                                    style={getDraggableStyle(snapshot.isDragging, provided.draggableProps.style)}
-                                    className="transform-gpu"
-                                  >
-                                    <PlayerCard
-                                      player={player}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                       index={index}
                                       isDragging={snapshot.isDragging}
                                       style={{}}
                                       isCaptain={true}
-<<<<<<< HEAD
                                       onRemove={handleShowRemoveDialog}
-=======
-                                      onRemove={handleRemovePlayer}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                       onRankChange={handleRankChange}
                                       showRanks={showRanks}
                                     />
                                   </div>
                                 )}
                               </Draggable>
-<<<<<<< HEAD
                             ))}
                             {provided.placeholder}
                           </div>
@@ -3778,260 +2616,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                 <div className="w-full">
                   <div className="space-y-4">
                     {teams.slice(0, Math.ceil(numTeams/2)).map((team, index) => (
-=======
-                            ));
-                          })()}
-                        </div>
-                      )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </Card>
-            </div>
-
-            {/* Teams Container */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* First Teams Column */}
-              <div className="w-full">
-                <div className="space-y-4">
-                  {teams.slice(0, Math.ceil(numTeams/2)).map((team, index) => (
-                    <Card key={team.id} className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm">
-                      <div className="p-2 border-b border-zinc-700/50 relative overflow-hidden"> {/* Reduced padding from p-3 to p-2 */}
-                        {/* Logo Background Container */}
-                        {showTeamLogos && (
-                          <div className="absolute inset-0 w-full h-full">
-                            <img 
-                              src={`https://picsum.photos/400/400?random=${team.id}`}
-                              alt="Team Logo"
-                              className="w-full h-full object-cover opacity-10"
-                              style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                minWidth: '100%',
-                                minHeight: '100%'
-                              }}
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Rest of the team header content */}
-                        <div className="flex items-center gap-1 relative z-10"> {/* Reduced gap from gap-2 to gap-1 */}
-                          {editingTeamNumber?.id === team.id ? (
-                            <input
-                              type="number"
-                              value={editingTeamNumber.number}
-                              onChange={(e) => {
-                                const value = parseInt(e.target.value);
-                                // Only allow numbers between 1 and numTeams
-                                if (!isNaN(value) && value >= 1 && value <= numTeams) {
-                                  setEditingTeamNumber({ id: team.id, number: value });
-                                }
-                              }}
-                              onBlur={() => {
-                                if (editingTeamNumber) {
-                                  handleTeamNumberChange(team.id, editingTeamNumber.number);
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleTeamNumberChange(team.id, editingTeamNumber.number);
-                                } else if (e.key === 'Escape') {
-                                  setEditingTeamNumber(null);
-                                }
-                              }}
-                              min={1}
-                              max={numTeams}
-                              className="w-12 bg-zinc-700/50 border border-zinc-600/50 rounded px-1 py-0.5 text-center text-lg font-semibold text-zinc-100"
-                              autoFocus
-                            />
-                          ) : (
-                            <Tooltip.Provider delayDuration={200}>
-                              <Tooltip.Root>
-                                <Tooltip.Trigger asChild>
-                                  <button
-                                    onClick={() => setEditingTeamNumber({ 
-                                      id: team.id, 
-                                      number: parseInt(getTeamNumber(teams.indexOf(team), teams.length)) 
-                                    })}
-                                    className="w-12 text-center text-lg font-semibold text-zinc-400 hover:text-zinc-200 transition-colors cursor-help"
-                                  >
-                                    {getTeamNumber(teams.indexOf(team), teams.length)}
-                                  </button>
-                                </Tooltip.Trigger>
-                                <Tooltip.Portal>
-                                  <Tooltip.Content
-                                    className="px-3 py-1.5 text-sm bg-zinc-800 text-zinc-100 rounded-md shadow-lg border border-zinc-700/50"
-                                    sideOffset={5}
-                                  >
-                                    Click to edit team number
-                                    <Tooltip.Arrow className="fill-zinc-800" />
-                                  </Tooltip.Content>
-                                </Tooltip.Portal>
-                              </Tooltip.Root>
-                            </Tooltip.Provider>
-                          )}
-                          <div className="flex items-center justify-between flex-1 min-w-0"> {/* Added min-w-0 to prevent text overflow */}
-                            {editingTeamId === team.id ? (
-                              <Input
-                                value={editingTeamName}
-                                onChange={handleTeamNameChange}
-                                onBlur={handleTeamNameSave}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    handleTeamNameSave();
-                                  } else if (e.key === 'Escape') {
-                                    setEditingTeamId(null);
-                                    setEditingTeamName('');
-                                  }
-                                }}
-                                className="bg-zinc-700/50 border-zinc-600/50 text-zinc-100"
-                                autoFocus
-                              />
-                            ) : (
-                              <Tooltip.Provider delayDuration={200}>
-                                <Tooltip.Root>
-                                  <Tooltip.Trigger asChild>
-                                    <h3 
-                                      className={`${getTeamHeaderStyle(team.players.length === teamSize)} truncate max-w-[300px] flex-1 cursor-help`} // Increased from 200px to 300px and added flex-1
-                                      onDoubleClick={() => handleTeamNameDoubleClick(team)}
-                                    >
-                                      <span className="truncate inline-block min-w-0 flex-1">{team.name}</span>
-                                      <span className="text-xs text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity ml-2 whitespace-nowrap">
-                                        Double click to edit
-                                      </span>
-                                    </h3>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Portal>
-                                    <Tooltip.Content
-                                      className="px-3 py-1.5 text-sm bg-zinc-800 text-zinc-100 rounded-md shadow-lg border border-zinc-700/50"
-                                      sideOffset={5}
-                                    >
-                                      {team.name}
-                                      <Tooltip.Arrow className="fill-zinc-800" />
-                                    </Tooltip.Content>
-                                  </Tooltip.Portal>
-                                </Tooltip.Root>
-                              </Tooltip.Provider>
-                            )}
-                            <div className="flex items-center gap-2 ml-2 shrink-0"> {/* Added ml-2 and shrink-0 */}
-                              <Tooltip.Provider delayDuration={200}>
-                                <Tooltip.Root>
-                                  <Tooltip.Trigger asChild>
-                                    <span className={`text-sm px-2 py-0.5 rounded-full transition-colors duration-200 cursor-help ${
-                                      calculateTeamStatus(team).isComplete
-                                        ? 'bg-green-500/20 text-green-300'
-                                        : calculateTeamStatus(team).isFull
-                                          ? 'bg-yellow-500/20 text-yellow-300'
-                                          : 'bg-zinc-700/50 text-zinc-400'
-                                    }`}>
-                                      {calculateTeamStatus(team).current}/{calculateTeamStatus(team).required}
-                                    </span>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Portal>
-                                    <Tooltip.Content
-                                      className="px-3 py-1.5 text-sm bg-zinc-800 text-zinc-100 rounded-md shadow-lg border border-zinc-700/50"
-                                      sideOffset={5}
-                                    >
-                                      {calculateTeamStatus(team).isComplete 
-                                        ? 'Team is complete'
-                                        : calculateTeamStatus(team).isFull
-                                          ? 'Team is full'
-                                          : `${calculateTeamStatus(team).required - calculateTeamStatus(team).current} spots remaining`}
-                                      <Tooltip.Arrow className="fill-zinc-800" />
-                                    </Tooltip.Content>
-                                  </Tooltip.Portal>
-                                </Tooltip.Root>
-                              </Tooltip.Provider>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <Droppable droppableId={`team-${team.id}`}>
-                        {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
-                          <div
-                            {...provided.droppableProps}
-                            ref={provided.innerRef}
-                            className={`p-3 ${snapshot.isDraggingOver ? 'bg-blue-500/10' : ''}`}
-                          >
-                            {team.players.length === 0 ? (
-                              <div className="border-2 border-dashed border-zinc-700/50 rounded-md transition-colors group-hover:border-zinc-600/50">
-                                <div className="flex items-center justify-center py-8">
-                                  <div className="flex flex-col items-center gap-2">
-                                    <span className="text-zinc-400 text-sm">Drop players here</span>
-                                    <span className="text-zinc-500 text-xs">Team is empty</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                {team.players.map((player, playerIndex) => (
-                                  <Draggable
-                                    key={player.id}
-                                    draggableId={`team-${team.id}-player-${player.id}`}
-                                    index={playerIndex}
-                                    isDragDisabled={player.isCaptain}
-                                  >
-                                    {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                                      <div
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
-                                        style={{
-                                          ...provided.draggableProps.style,
-                                          position: snapshot.isDragging ? 'fixed' : 'relative',
-                                          zIndex: snapshot.isDragging ? 100000 : 1,
-                                          transform: snapshot.isDragging 
-                                            ? `${provided.draggableProps.style?.transform} translateZ(9999px)` 
-                                            : provided.draggableProps.style?.transform,
-                                        }}
-                                        className={`transform-gpu ${snapshot.isDragging ? 'dragging' : ''}`}
-                                      >
-                                        <TeamPlayerCard
-                                          player={player}
-                                          index={playerIndex}
-                                          team={team}
-                                          isDragging={snapshot.isDragging}
-                                          style={{}}
-                                          onRemove={(player, teamId) => handleRemovePlayerFromTeam(player, teamId)}
-                                          onMoveUp={() => handleReorderPlayer(team.id, playerIndex, 'up')}
-                                          onMoveDown={() => handleReorderPlayer(team.id, playerIndex, 'down')}
-                                          onRankChange={handleRankChange}
-                                          showRanks={showRanks}
-                                        />
-                                      </div>
-                                    )}
-                                  </Draggable>
-                                ))}
-                              </div>
-                            )}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-
-              {/* Second Teams Column */}
-              <div className="w-full">
-                <div className="space-y-4">
-                  {showSingleTeamWarning(numTeams) ? (
-                    <Card className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm p-8">
-                      <div className="flex flex-col items-center justify-center text-center space-y-3">
-                        <Users className="h-12 w-12 text-zinc-400" />
-                        <h3 className="text-lg font-medium text-zinc-300">More Teams Needed</h3>
-                        <p className="text-sm text-zinc-400"> {/* Removed max-w-sm */}
-                          You need at least 2 teams to start the game. Use the "Number of Teams" control above to add more teams.
-                        </p>
-                      </div>
-                    </Card>
-                  ) : (
-                    teams.slice(Math.ceil(numTeams/2), numTeams).map((team, index) => (
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                       <Card key={team.id} className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm">
                         <div className="p-2 border-b border-zinc-700/50 relative overflow-hidden"> {/* Reduced padding from p-3 to p-2 */}
                           {/* Logo Background Container */}
@@ -4159,17 +2743,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                       <span className={`text-sm px-2 py-0.5 rounded-full transition-colors duration-200 cursor-help ${
                                         calculateTeamStatus(team).isComplete
                                           ? 'bg-green-500/20 text-green-300'
-<<<<<<< HEAD
                                           : calculateTeamStatus(team).current === 0
                                             ? 'bg-red-500/20 text-red-300'
                                             : calculateTeamStatus(team).current < calculateTeamStatus(team).required
                                               ? 'bg-yellow-500/20 text-yellow-300'
                                               : 'bg-zinc-700/50 text-zinc-400'
-=======
-                                          : calculateTeamStatus(team).isFull
-                                            ? 'bg-yellow-500/20 text-yellow-300'
-                                            : 'bg-zinc-700/50 text-zinc-400'
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                       }`}>
                                         {calculateTeamStatus(team).current}/{calculateTeamStatus(team).required}
                                       </span>
@@ -4181,13 +2759,8 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                       >
                                         {calculateTeamStatus(team).isComplete 
                                           ? 'Team is complete'
-<<<<<<< HEAD
                                           : calculateTeamStatus(team).current === 0
                                             ? 'Team is empty'
-=======
-                                          : calculateTeamStatus(team).isFull
-                                            ? 'Team is full'
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                             : `${calculateTeamStatus(team).required - calculateTeamStatus(team).current} spots remaining`}
                                         <Tooltip.Arrow className="fill-zinc-800" />
                                       </Tooltip.Content>
@@ -4198,15 +2771,11 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                             </div>
                           </div>
                         </div>
-<<<<<<< HEAD
                         <Droppable 
                           droppableId={`team-${team.id}`}
                           isDropDisabled={team.players.length >= teamSize}
                           isCombineEnabled={false}
                         >
-=======
-                        <Droppable droppableId={`team-${team.id}`}>
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                           {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
                             <div
                               {...provided.droppableProps}
@@ -4229,11 +2798,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                       key={player.id}
                                       draggableId={`team-${team.id}-player-${player.id}`}
                                       index={playerIndex}
-<<<<<<< HEAD
                                       isDragDisabled={player.isCaptain || (playerIndex === 0 && !player.isCaptain)} // Disable dragging for captains and non-captains at index 0
-=======
-                                      isDragDisabled={player.isCaptain}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                     >
                                       {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                                         <div
@@ -4256,11 +2821,7 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                             team={team}
                                             isDragging={snapshot.isDragging}
                                             style={{}}
-<<<<<<< HEAD
                                             onRemove={handleShowRemoveDialog}
-=======
-                                            onRemove={(player, teamId) => handleRemovePlayerFromTeam(player, teamId)}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                             onMoveUp={() => handleReorderPlayer(team.id, playerIndex, 'up')}
                                             onMoveDown={() => handleReorderPlayer(team.id, playerIndex, 'down')}
                                             onRankChange={handleRankChange}
@@ -4277,7 +2838,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                           )}
                         </Droppable>
                       </Card>
-<<<<<<< HEAD
                     ))}
                   </div>
                 </div>
@@ -4605,111 +3165,16 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                         ) : (
                           <div className="space-y-2">
                             {availablePlayers.map((player, index) => (
-=======
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Players List */}
-            <div className="w-full lg:sticky lg:top-6">
-              <Card className="bg-zinc-800/50 border-zinc-700 overflow-hidden">
-                <div className="p-4 border-b border-zinc-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-xl font-semibold text-white">Available Players</h2>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 text-sm rounded-md bg-zinc-700/50 text-zinc-300">
-                        {players.filter(p => !p.isCaptain).length} / {calculateAvailablePlayerSlots(teams, numTeams, teamSize)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-zinc-400">Sort by:</span>
-                    <button
-                      onClick={() => {
-                        if (playerSort === 'rank') {
-                          setPlayerSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
-                        } else {
-                          setPlayerSort('rank');
-                          setPlayerSortDirection('desc');
-                        }
-                      }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        playerSort === 'rank'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'hover:bg-zinc-700/50 text-zinc-400'
-                      }`}
-                    >
-                      <span>Rank</span>
-                      {playerSort === 'rank' && (
-                        playerSortDirection === 'desc' 
-                          ? <ArrowDown className="h-3 w-3" /> 
-                          : <ArrowUp className="h-3 w-3" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (playerSort === 'alphabetical') {
-                          setPlayerSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
-                        } else {
-                          setPlayerSort('alphabetical');
-                          setPlayerSortDirection('desc');
-                        }
-                      }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        playerSort === 'alphabetical'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'hover:bg-zinc-700/50 text-zinc-400'
-                      }`}
-                    >
-                      <span>A-Z</span>
-                      {playerSort === 'alphabetical' && (
-                        playerSortDirection === 'desc' 
-                          ? <ArrowDown className="h-3 w-3" /> 
-                          : <ArrowUp className="h-3 w-3" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <Droppable droppableId="players">
-                  {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
-                    <div 
-                      {...provided.droppableProps} 
-                      ref={provided.innerRef} 
-                      className={`p-4 ${snapshot.isDraggingOver ? 'min-h-[50px]' : ''}`}
-                    >
-                      {isLoadingPlayers ? (
-                        <div className="text-center py-4">Loading...</div>
-                      ) : players.filter(p => !p.isCaptain).length === 0 ? (
-                        <div className="text-center py-4 text-zinc-400">
-                          No players available
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {(() => {
-                            const sortedPlayers = getSortedPlayers(
-                              players.filter(p => !p.isCaptain),
-                              playerSort,
-                              playerSortDirection
-                            );
-                            return sortedPlayers.map((player, index) => (
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                               <Draggable
                                 key={player.id}
                                 draggableId={player.id}
                                 index={index}
-<<<<<<< HEAD
-=======
-                                isDragDisabled={areAllTeamsFull(teams, teamSize)}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                               >
                                 {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-<<<<<<< HEAD
                                     style={{
                                       ...provided.draggableProps.style,
                                       position: snapshot.isDragging ? 'fixed' : 'relative',
@@ -4721,28 +3186,19 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
                                       backfaceVisibility: 'hidden',   // Add this
                                     }}
                                     className={`transform-gpu ${snapshot.isDragging ? 'dragging' : ''}`}
-=======
-                                    style={getDraggableStyle(snapshot.isDragging, provided.draggableProps.style)}
-                                    className="transform-gpu"
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                   >
                                     <PlayerCard
                                       player={player}
                                       index={index}
                                       isDragging={snapshot.isDragging}
                                       style={{}}
-<<<<<<< HEAD
                                       onRemove={handleShowRemoveDialog}
-=======
-                                      onRemove={handleRemovePlayer}
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
                                       onRankChange={handleRankChange}
                                       showRanks={showRanks}
                                     />
                                   </div>
                                 )}
                               </Draggable>
-<<<<<<< HEAD
                             ))}
                             {provided.placeholder}
                           </div>
@@ -4814,22 +3270,6 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
         </Dialog.Portal>
       </Dialog.Root>
     </>
-=======
-                            ));
-                          })()}
-                        </div>
-                      )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-    </DragDropContext>
->>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   );
 };
 
