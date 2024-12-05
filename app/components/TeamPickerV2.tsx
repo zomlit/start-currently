@@ -1179,30 +1179,47 @@ const TeamPickerV2: React.FC<TeamPickerProps> = ({ initialState = null, isShared
     queryClient.invalidateQueries({ queryKey: ['teams'] });
   };
 
-  // Update the handleDragEnd function to handle captain positioning
+  // Update the handleDragEnd function
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
     
     if (!destination) return;
 
-    // Extract team ID and drop type (captain or players) from the droppableId
-    const [destTeamId, destType] = destination.droppableId.split('-').slice(1);
-    
-    // If dropping into captain area, ensure the player is a captain
-    if (destType === 'captain') {
-      const draggedPlayer = [...players, ...teams.flatMap(t => t.players)]
-        .find(p => p.id === result.draggableId.replace(`team-${destTeamId}-player-`, ''));
-      
-      if (!draggedPlayer?.isCaptain) {
-        toast.error('Only captains can be dropped in the captain area');
-        return;
-      }
-    }
-
     // Add a check for selectedBracketId
     if (!selectedBracketId) {
       toast.error('Please select or create a bracket first');
       return;
+    }
+
+    // Check if we're trying to drop a player above a captain
+    if (destination.droppableId.startsWith('team-')) {
+      const teamId = destination.droppableId.replace('team-', '');
+      const team = teams.find(t => t.id === teamId);
+      
+      if (team && team.players.length > 0) {
+        // Check if there's a captain at index 0
+        const hasCaptainAtZero = team.players[0]?.isCaptain;
+        
+        // If trying to drop at index 0 and there's already a captain there
+        if (destination.index === 0 && hasCaptainAtZero) {
+          toast.error("Cannot place a player above the team captain");
+          return;
+        }
+
+        // Get the dragged player
+        const draggedPlayerId = result.draggableId.replace(`team-${teamId}-player-`, '');
+        const draggedPlayer = [...players, ...teams.flatMap(t => t.players)]
+          .find(p => p.id === draggedPlayerId);
+
+        // If trying to place a non-captain between index 0 and a captain
+        if (!draggedPlayer?.isCaptain) {
+          const captainIndex = team.players.findIndex(p => p.isCaptain);
+          if (captainIndex !== -1 && destination.index <= captainIndex) {
+            toast.error("Cannot place a player above the team captain");
+            return;
+          }
+        }
+      }
     }
 
     console.log('Drag operation started:', {
