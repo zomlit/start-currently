@@ -5,14 +5,17 @@ import * as Switch from '@radix-ui/react-switch';
 import * as Label from '@radix-ui/react-label';
 import * as Separator from '@radix-ui/react-separator';
 import { CustomButton } from '@/components/ui/custom-button';
-import { Paintbrush, ImageIcon, X, ChevronDown, Trash2 } from 'lucide-react';
+import { Paintbrush, ImageIcon, X, ChevronDown, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { colorThemes } from '../../utils/colorThemes';
-import type { ThemePreset } from '@/types/team-picker';
+import type { ThemePreset, PickerMode } from '@/types/team-picker';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import type { Captain } from '@/types/team-picker';
+import type { Captain, Player } from '@/types/team-picker';
 import { toast } from 'sonner';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { mutationOperations } from '@/lib/team-picker/operations';
+import { cn } from '@/lib/utils';
 
 interface SettingsSectionProps {
   newName: string;
@@ -23,7 +26,7 @@ interface SettingsSectionProps {
   handleTeamSizeChange: (size: number) => void;
   numTeams: number;
   handleUpdateNumTeams: (num: number) => void;
-  handleAddPlayer: (e: React.FormEvent) => void;
+  handleAddPlayerWithMutation: (e: React.FormEvent) => void;
   addPlayerMutationPending: boolean;
   handlePopulateCaptains: () => void;
   handlePopulatePlayers: () => void;
@@ -41,12 +44,15 @@ interface SettingsSectionProps {
   setShowTeamLogos: (show: boolean) => void;
   isLogoSectionCollapsed?: boolean;
   setIsLogoSectionCollapsed?: (collapsed: boolean) => void;
-  handleClearAll: () => void;
+  onClearAll: () => void;
   teams: Captain[];
   getTeamNumber: (teamIndex: number, totalTeams: number) => string;
   showRanks: boolean;
   setShowRanks: (show: boolean) => void;
   userId: string;
+  players: Player[];
+  activeBracketId: string | null;
+  onAddPlayer: (e: React.FormEvent) => void;
 }
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({
@@ -58,7 +64,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   handleTeamSizeChange,
   numTeams,
   handleUpdateNumTeams,
-  handleAddPlayer,
+  handleAddPlayerWithMutation,
   addPlayerMutationPending,
   handlePopulateCaptains,
   handlePopulatePlayers,
@@ -76,14 +82,184 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   setShowTeamLogos,
   isLogoSectionCollapsed = false,
   setIsLogoSectionCollapsed = () => {},
-  handleClearAll,
+  onClearAll,
   teams,
   getTeamNumber,
   showRanks,
   setShowRanks,
   userId,
+  players,
+  activeBracketId,
+  onAddPlayer,
 }) => {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const autoAssignCaptainsMutation = useMutation({
+    mutationFn: () => mutationOperations.autoAssignCaptains.mutate({
+      bracketId: activeBracketId!,
+      captains: players.filter(p => p.isCaptain),
+      teams
+    }),
+    onSuccess: (result) => {
+      mutationOperations.autoAssignCaptains.onSuccess(result, queryClient);
+      toast.success('Captains auto-balanced successfully');
+    },
+    onError: () => {
+      toast.error('Failed to auto-balance captains');
+    }
+  });
+
+  const autoAssignPlayersMutation = useMutation({
+    mutationFn: () => mutationOperations.autoAssignPlayers.mutate({
+      bracketId: activeBracketId!,
+      players: players.filter(p => !p.isCaptain),
+      teams,
+      teamSize
+    }),
+    onSuccess: (result) => {
+      mutationOperations.autoAssignPlayers.onSuccess(result, queryClient);
+      toast.success('Players auto-balanced successfully');
+    },
+    onError: () => {
+      toast.error('Failed to auto-balance players');
+    }
+  });
+
+  const handleAutoAssignCaptains = () => {
+    if (!activeBracketId) {
+      toast.error('No active bracket selected');
+      return;
+    }
+    autoAssignCaptainsMutation.mutate();
+  };
+
+  const handleAutoAssignPlayers = () => {
+    if (!activeBracketId) {
+      toast.error('No active bracket selected');
+      return;
+    }
+    autoAssignPlayersMutation.mutate();
+  };
+
+  const handleAutoAssignAll = () => {
+    handleAutoAssignCaptains();
+    handleAutoAssignPlayers();
+  };
+
+  // Add this helper function to sort teams
+  const sortTeamsByNumber = (teamsToSort: Captain[]) => {
+    return [...teamsToSort].sort((a, b) => {
+      const aNum = parseInt(a.teamNumber || '0');
+      const bNum = parseInt(b.teamNumber || '0');
+      return aNum - bNum;
+    });
+  };
+
+  // Add clearBracket mutation
+  const clearBracketMutation = useMutation({
+    mutationFn: () => mutationOperations.clearBracket.mutate({
+      bracketId: activeBracketId!,
+      emptyTeams: Array(numTeams).fill(null).map((_, i) => ({
+        id: `team-${i + 1}`,
+        name: `Team ${i + 1}`,
+        players: [],
+        captains: []
+      })),
+      settings: {
+        numTeams,
+        teamSize,
+        showRanks,
+        showTeamLogos,
+        currentTheme,
+        mode: 'tournament' as PickerMode
+      }
+    }),
+    onSuccess: (result) => {
+      mutationOperations.clearBracket.onSuccess(result, queryClient);
+      toast.success('All lists cleared successfully');
+      setIsClearDialogOpen(false);
+      onClearAll();
+    },
+    onError: () => {
+      toast.error('Failed to clear lists');
+      setIsClearDialogOpen(false);
+    }
+  });
+
+  // Local handler for clear operation
+  const handleClear = () => {
+    if (!activeBracketId) {
+      toast.error('No active bracket selected');
+      return;
+    }
+    clearBracketMutation.mutate();
+  };
+
+  // Update style constants with hover-only colors
+  const dialogContentStyles = "bg-zinc-900/95 backdrop-blur-lg border border-zinc-800 shadow-2xl";
+  const dialogTitleStyles = "text-xl font-medium text-zinc-100";
+  const buttonBaseStyles = "transition-colors font-medium border";
+  const baseButtonStyle = "bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border-zinc-700";
+  const myGamesButtonStyles = cn(
+    baseButtonStyle,
+    "hover:bg-zinc-700 hover:border-zinc-600"
+  );
+  const newGameButtonStyles = cn(
+    baseButtonStyle,
+    "hover:bg-emerald-900/90 hover:border-emerald-800/50 hover:text-emerald-100"
+  );
+  const saveButtonStyles = cn(
+    baseButtonStyle,
+    "hover:bg-blue-900/90 hover:border-blue-800/50 hover:text-blue-100"
+  );
+  const saveAsButtonStyles = cn(
+    baseButtonStyle,
+    "hover:bg-indigo-900/90 hover:border-indigo-800/50 hover:text-indigo-100"
+  );
+  const destructiveButtonStyles = cn(
+    baseButtonStyle,
+    "hover:bg-red-900/90 hover:border-red-800 hover:text-red-100"
+  );
+  const buttonGroupStyles = "flex items-center gap-2";
+  const buttonContentStyles = "flex items-center gap-2";
+
+  // Update the input styles
+  const inputStyles = "bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus:ring-blue-500/20";
+
+  // Update the dialog close button styles
+  const dialogCloseStyles = "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-zinc-100";
+
+  // Add this mutation to handle player/captain addition with auto-save
+  const addPlayerMutation = useMutation({
+    mutationFn: async (player: Player) => {
+      if (!activeBracketId) throw new Error('No active bracket selected');
+
+      return mutationOperations.addPlayer.mutate(
+        player, 
+        userId,
+        activeBracketId,
+        {
+          players,
+          teams,
+          numTeams,
+          teamSize,
+          showRanks,
+          showTeamLogos,
+          currentTheme,
+          mode: 'tournament' as PickerMode
+        }
+      );
+    },
+    onSuccess: (newPlayer) => {
+      mutationOperations.addPlayer.onSuccess(newPlayer, queryClient);
+      toast.success(`${newPlayer.isCaptain ? 'Captain' : 'Player'} added successfully`);
+    },
+    onError: (error) => {
+      console.error('Error adding player:', error);
+      toast.error(`Failed to add ${isAddingCaptain ? 'captain' : 'player'}`);
+    }
+  });
 
   return (
     <div className="space-y-4">
@@ -102,7 +278,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               />
               <CustomButton 
                 type="submit" 
-                onClick={handleAddPlayer}
+                onClick={onAddPlayer}
                 disabled={!newName.trim() || addPlayerMutationPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shrink-0 relative group"
                 title={!userId ? "Please login to add players" : ""}
@@ -242,10 +418,10 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             {/* Center - Auto-Balance Controls */}
             <div className="flex flex-wrap items-center gap-2">
               <CustomButton
-                onClick={autoAssignCaptains}
-                disabled={!hasCaptains || !userId}
+                onClick={handleAutoAssignCaptains}
+                disabled={!hasCaptains || !userId || !activeBracketId}
                 className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
-                title={!userId ? "Please login to auto-balance captains" : !hasCaptains ? "No captains to balance" : ""}
+                title={!userId ? "Please login to auto-balance captains" : !activeBracketId ? "No active bracket selected" : !hasCaptains ? "No captains to balance" : ""}
               >
                 Auto-Balance Captains
                 {!userId && (
@@ -257,16 +433,31 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               </CustomButton>
 
               <CustomButton
-                onClick={autoAssignPlayers}
-                disabled={!hasPlayers || !userId}
+                onClick={handleAutoAssignPlayers}
+                disabled={!hasPlayers || !userId || !activeBracketId}
                 className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
-                title={!userId ? "Please login to auto-balance players" : !hasPlayers ? "No players to balance" : ""}
+                title={!userId ? "Please login to auto-balance players" : !activeBracketId ? "No active bracket selected" : !hasPlayers ? "No players to balance" : ""}
               >
                 Auto-Balance Players
                 {!userId && (
                   <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
                     px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
                     Please login to auto-balance players
+                  </span>
+                )}
+              </CustomButton>
+
+              <CustomButton
+                onClick={handleAutoAssignAll}
+                disabled={(!hasCaptains && !hasPlayers) || !userId || !activeBracketId}
+                className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm relative group"
+                title={!userId ? "Please login to auto-balance all" : !activeBracketId ? "No active bracket selected" : (!hasCaptains && !hasPlayers) ? "No players or captains to balance" : ""}
+              >
+                Auto-Balance All
+                {!userId && (
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-zinc-200 
+                    px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Please login to auto-balance all
                   </span>
                 )}
               </CustomButton>
@@ -361,7 +552,12 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 <DialogTrigger asChild>
                   <CustomButton
                     disabled={!userId}
-                    className="bg-red-600 hover:bg-red-700 text-white text-sm relative group"
+                    className={cn(
+                      buttonBaseStyles,
+                      destructiveButtonStyles,
+                      buttonContentStyles,
+                      "text-sm relative group"
+                    )}
                     title={!userId ? "Please login to clear lists" : ""}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -374,47 +570,76 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     )}
                   </CustomButton>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className={dialogContentStyles}>
                   <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-red-500">
-                      <Trash2 className="h-5 w-5" />
+                    <DialogTitle className={cn(dialogTitleStyles, "text-red-400")}>
                       Clear All Data
                     </DialogTitle>
-                    <DialogDescription className="space-y-3 pt-3">
-                      <p>
-                        You're about to clear all data from the team picker. This will:
-                      </p>
-                      <ul className="list-disc pl-4 space-y-1 text-sm">
-                        <li>Remove all players from the available pool</li>
-                        <li>Remove all players from existing teams</li>
-                        <li>Reset all team names to defaults</li>
-                        <li>Clear all match scores and status</li>
-                      </ul>
-                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 text-amber-500 text-sm mt-4">
-                        ⚠️ This action cannot be undone. Please make sure you want to proceed.
-                      </div>
-                    </DialogDescription>
                   </DialogHeader>
-                  <DialogFooter className="gap-2 sm:gap-0">
+                  <div className="py-4 space-y-4">
+                    <div className="flex items-start gap-3 text-zinc-300">
+                      <div className="p-3 rounded-lg bg-blu-500/10 border border-red-500/20">
+                        <Trash2 className="h-5 w-5 text-red-400" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="font-medium text-red-400">
+                          Are you sure you want to clear all data?
+                        </p>
+                        <ul className="space-y-2 text-sm text-zinc-400">
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-red-400" />
+                            Remove all players from the available pool
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-red-400" />
+                            Remove all players from existing teams
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-red-400" />
+                            Reset all team names to defaults
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-red-400" />
+                            Clear all match scores and status
+                          </li>
+                        </ul>
+                        <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                          <div className="flex items-center gap-2 text-amber-400">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span className="text-sm font-medium">This action cannot be undone</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
                     <Button
                       variant="outline"
                       onClick={() => setIsClearDialogOpen(false)}
-                      className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-100"
+                      className={cn(buttonBaseStyles, myGamesButtonStyles)}
                     >
                       Cancel
                     </Button>
                     <Button
                       variant="destructive"
-                      onClick={() => {
-                        handleClearAll();
-                        setIsClearDialogOpen(false);
-                      }}
-                      className="gap-2"
+                      onClick={handleClear}
+                      disabled={!activeBracketId || clearBracketMutation.isPending}
+                      className={cn(
+                        buttonBaseStyles, 
+                        destructiveButtonStyles,
+                        "bg-red-500/10 hover:bg-red-500/20"
+                      )}
                     >
-                      <Trash2 className="h-4 w-4" />
-                      Clear All Data
+                      {clearBracketMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Clear All Data
+                        </>
+                      )}
                     </Button>
-                  </DialogFooter>
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
@@ -423,118 +648,117 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
       </Card>
 
       {/* Logo Management Section */}
-      <div 
-        className={`
+      {showTeamLogos && (
+        <div className={`
           transition-all duration-300 ease-in-out overflow-hidden
           ${showTeamLogos 
             ? 'max-h-[1000px] opacity-100 transform translate-y-0' 
             : 'max-h-0 opacity-0 transform -translate-y-4'
           }
-        `}
-      >
-        <Card className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm overflow-hidden">
-          <div className="border-b border-zinc-700/50">
-            <button
-              onClick={() => setIsLogoSectionCollapsed(!isLogoSectionCollapsed)}
-              className="w-full p-4 flex items-center justify-between hover:bg-zinc-700/20 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-zinc-400" />
-                <h3 className="text-sm font-medium text-zinc-300">Team Logo Management</h3>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-zinc-500">Supported formats: PNG, JPG (max 2MB)</span>
-                <ChevronDown 
-                  className={`w-4 h-4 text-zinc-400 transition-transform duration-200 
-                    ${isLogoSectionCollapsed ? '' : 'rotate-180'}`}
-                />
-              </div>
-            </button>
-          </div>
+        `}>
+          <Card className="bg-zinc-800/50 border-zinc-700/50 backdrop-blur-sm overflow-hidden">
+            <div className="border-b border-zinc-700/50">
+              <button
+                onClick={() => setIsLogoSectionCollapsed(!isLogoSectionCollapsed)}
+                className="w-full p-4 flex items-center justify-between hover:bg-zinc-700/20 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-zinc-400" />
+                  <h3 className="text-sm font-medium text-zinc-300">Team Logo Management</h3>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-zinc-500">Supported formats: PNG, JPG (max 2MB)</span>
+                  <ChevronDown 
+                    className={`w-4 h-4 text-zinc-400 transition-transform duration-200 
+                      ${isLogoSectionCollapsed ? '' : 'rotate-180'}`}
+                  />
+                </div>
+              </button>
+            </div>
 
-          <div
-            className={`transition-all duration-300 ease-in-out
+            <div className={`transition-all duration-300 ease-in-out
               ${isLogoSectionCollapsed 
                 ? 'max-h-0 opacity-0 transform translate-y-2' 
                 : 'max-h-[1000px] opacity-100 transform translate-y-0'
               }`}
-          >
-            <div className="p-4 space-y-4">
-              {/* Team Logo Grid */}
-              <div className="grid grid-cols-4 gap-4">
-                {teams.map((team, index) => (
-                  <div 
-                    key={team.id}
-                    className="relative rounded-md border border-zinc-600/50 overflow-hidden"
-                  >
-                    {/* Background Image Container */}
-                    <div className="absolute inset-0 w-full h-full">
-                      <img 
-                        src={`https://picsum.photos/400/400?random=${team.id}`}
-                        alt="Team Logo Background"
-                        className="w-full h-full object-cover opacity-10"
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          minWidth: '100%',
-                          minHeight: '100%'
-                        }}
-                      />
-                    </div>
-
-                    {/* Content */}
-                    <div className="relative z-10 flex items-center justify-between p-3 bg-zinc-800/50">
-                      {/* Team Info */}
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-sm font-medium text-zinc-300 shrink-0">
-                          Team {getTeamNumber(index, teams.length)}
-                        </span>
-                        <span className="text-sm text-zinc-400 truncate">
-                          {team.name}
-                        </span>
-                      </div>
-
-                      {/* Upload Area */}
-                      <div className="flex items-center gap-2">
-                        {/* Preview */}
-                        <div className="w-10 h-10 rounded bg-zinc-700/50 border border-zinc-600/50 flex items-center justify-center overflow-hidden">
-                          <img 
-                            src={`https://picsum.photos/400/400?random=${team.id}`}
-                            alt="Team Logo"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const parent = e.currentTarget.parentElement;
-                              if (parent) {
-                                const icon = document.createElement('div');
-                                icon.innerHTML = '<svg class="w-5 h-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
-                                parent.appendChild(icon);
-                              }
-                            }}
-                          />
-                        </div>
-                        
-                        {/* Upload Button */}
-                        <CustomButton
-                          onClick={() => {
-                            // TODO: Implement logo upload functionality
-                            console.log('Upload logo for team:', team.id);
+            >
+              <div className="p-4 space-y-4">
+                {/* Team Logo Grid */}
+                <div className="grid grid-cols-4 gap-4">
+                  {sortTeamsByNumber(teams).map((team) => (
+                    <div 
+                      key={team.id}
+                      className="relative rounded-md border border-zinc-600/50 overflow-hidden"
+                    >
+                      {/* Background Image Container */}
+                      <div className="absolute inset-0 w-full h-full">
+                        <img 
+                          src={`https://picsum.photos/400/400?random=${team.id}`}
+                          alt="Team Logo Background"
+                          className="w-full h-full object-cover opacity-10"
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            minWidth: '100%',
+                            minHeight: '100%'
                           }}
-                          className="text-xs bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300"
-                        >
-                          Choose File
-                        </CustomButton>
+                        />
+                      </div>
+
+                      {/* Content */}
+                      <div className="relative z-10 flex items-center justify-between p-3 bg-zinc-800/50">
+                        {/* Team Info */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-sm font-medium text-zinc-300 shrink-0">
+                            Team {team.teamNumber}
+                          </span>
+                          <span className="text-sm text-zinc-400 truncate">
+                            {team.name.replace(/^Team\s+/i, '')}
+                          </span>
+                        </div>
+
+                        {/* Upload Area */}
+                        <div className="flex items-center gap-2">
+                          {/* Preview */}
+                          <div className="w-10 h-10 rounded bg-zinc-700/50 border border-zinc-600/50 flex items-center justify-center overflow-hidden">
+                            <img 
+                              src={`https://picsum.photos/400/400?random=${team.id}`}
+                              alt="Team Logo"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  const icon = document.createElement('div');
+                                  icon.innerHTML = '<svg class="w-5 h-5 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+                                  parent.appendChild(icon);
+                                }
+                              }}
+                            />
+                          </div>
+                          
+                          {/* Upload Button */}
+                          <CustomButton
+                            onClick={() => {
+                              // TODO: Implement logo upload functionality
+                              console.log('Upload logo for team:', team.id);
+                            }}
+                            className="text-xs bg-zinc-700/50 hover:bg-zinc-600/50 text-zinc-300"
+                          >
+                            Choose File
+                          </CustomButton>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

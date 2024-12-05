@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TournamentImport } from './routes/tournament'
 import { Route as TeamPickerImport } from './routes/team-picker'
 import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
@@ -42,6 +43,12 @@ import { Route as AppDashboardWidgetsVisualizerImport } from './routes/_app/dash
 import { Route as AppDashboardWidgetsDevImport } from './routes/_app/dashboard/widgets/dev'
 
 // Create/Update Routes
+
+const TournamentRoute = TournamentImport.update({
+  id: '/tournament',
+  path: '/tournament',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const TeamPickerRoute = TeamPickerImport.update({
   id: '/team-picker',
@@ -245,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/team-picker'
       fullPath: '/team-picker'
       preLoaderRoute: typeof TeamPickerImport
+      parentRoute: typeof rootRoute
+    }
+    '/tournament': {
+      id: '/tournament'
+      path: '/tournament'
+      fullPath: '/tournament'
+      preLoaderRoute: typeof TournamentImport
       parentRoute: typeof rootRoute
     }
     '/$username/gamepad': {
@@ -538,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
   '/team-picker': typeof TeamPickerRoute
+  '/tournament': typeof TournamentRoute
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
@@ -567,6 +582,7 @@ export interface FileRoutesByTo {
   '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
   '/team-picker': typeof TeamPickerRoute
+  '/tournament': typeof TournamentRoute
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
@@ -597,6 +613,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_lyrics': typeof LyricsRouteWithChildren
   '/team-picker': typeof TeamPickerRoute
+  '/tournament': typeof TournamentRoute
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
@@ -630,6 +647,7 @@ export interface FileRouteTypes {
     | '/$username'
     | ''
     | '/team-picker'
+    | '/tournament'
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
@@ -658,6 +676,7 @@ export interface FileRouteTypes {
     | '/$username'
     | ''
     | '/team-picker'
+    | '/tournament'
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
@@ -686,6 +705,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_lyrics'
     | '/team-picker'
+    | '/tournament'
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
@@ -719,6 +739,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LyricsRoute: typeof LyricsRouteWithChildren
   TeamPickerRoute: typeof TeamPickerRoute
+  TournamentRoute: typeof TournamentRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -726,6 +747,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LyricsRoute: LyricsRouteWithChildren,
   TeamPickerRoute: TeamPickerRoute,
+  TournamentRoute: TournamentRoute,
 }
 
 export const routeTree = rootRoute
@@ -741,7 +763,8 @@ export const routeTree = rootRoute
         "/$username",
         "/_app",
         "/_lyrics",
-        "/team-picker"
+        "/team-picker",
+        "/tournament"
       ]
     },
     "/$username": {
@@ -775,6 +798,9 @@ export const routeTree = rootRoute
     },
     "/team-picker": {
       "filePath": "team-picker.tsx"
+    },
+    "/tournament": {
+      "filePath": "tournament.tsx"
     },
     "/$username/gamepad": {
       "filePath": "$username/gamepad.tsx",

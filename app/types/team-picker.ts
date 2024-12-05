@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import type { BracketData } from '../components/team-picker/brackets-section';
 
 export interface Player {
   id: string;
@@ -15,6 +16,7 @@ export interface Captain {
   id: string;
   name: string;
   players: Player[];
+  teamNumber?: string;
 }
 
 export interface Match {
@@ -130,4 +132,25 @@ export interface ColorTheme {
 
 export type ThemePreset = 'default' | 'dark' | 'light';
 
-export type PickerMode = 'draft' | 'standard' | 'custom'; 
+export type PickerMode = 'draft' | 'standard' | 'custom';
+
+export interface SavedBracket {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  data: {
+    teams: Captain[];
+    players: Player[];
+    settings: {
+      mode: PickerMode;
+      numTeams: number;
+      teamSize: number;
+      showRanks: boolean;
+      showTeamLogos: boolean;
+      currentTheme: ThemePreset;
+    };
+    bracket_data?: BracketData | null;
+  };
+  bracket_data: BracketData | null;
+} 
