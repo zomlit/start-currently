@@ -11,7 +11,10 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+<<<<<<< HEAD
 import { Route as TournamentImport } from './routes/tournament'
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 import { Route as TeamPickerImport } from './routes/team-picker'
 import { Route as LyricsImport } from './routes/_lyrics'
 import { Route as AppImport } from './routes/_app'
@@ -44,6 +47,7 @@ import { Route as AppDashboardWidgetsDevImport } from './routes/_app/dashboard/w
 
 // Create/Update Routes
 
+<<<<<<< HEAD
 const TournamentRoute = TournamentImport.update({
   id: '/tournament',
   path: '/tournament',
@@ -56,6 +60,14 @@ const TeamPickerRoute = TeamPickerImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+=======
+const TeamPickerRoute = TeamPickerImport.update({
+  id: '/team-picker',
+  path: '/team-picker',
+  getParentRoute: () => rootRoute,
+} as any)
+
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 const LyricsRoute = LyricsImport.update({
   id: '/_lyrics',
   getParentRoute: () => rootRoute,
@@ -254,6 +266,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamPickerImport
       parentRoute: typeof rootRoute
     }
+<<<<<<< HEAD
     '/tournament': {
       id: '/tournament'
       path: '/tournament'
@@ -261,6 +274,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournamentImport
       parentRoute: typeof rootRoute
     }
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     '/$username/gamepad': {
       id: '/$username/gamepad'
       path: '/gamepad'
@@ -552,7 +567,10 @@ export interface FileRoutesByFullPath {
   '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
   '/team-picker': typeof TeamPickerRoute
+<<<<<<< HEAD
   '/tournament': typeof TournamentRoute
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
@@ -582,7 +600,10 @@ export interface FileRoutesByTo {
   '/$username': typeof UsernameRouteWithChildren
   '': typeof AppAuthedRouteWithChildren
   '/team-picker': typeof TeamPickerRoute
+<<<<<<< HEAD
   '/tournament': typeof TournamentRoute
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
@@ -613,7 +634,10 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_lyrics': typeof LyricsRouteWithChildren
   '/team-picker': typeof TeamPickerRoute
+<<<<<<< HEAD
   '/tournament': typeof TournamentRoute
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
   '/$username/gamepad': typeof UsernameGamepadRoute
   '/$username/lyrics': typeof UsernameLyricsRoute
   '/$username/overlay': typeof UsernameOverlayRoute
@@ -647,7 +671,10 @@ export interface FileRouteTypes {
     | '/$username'
     | ''
     | '/team-picker'
+<<<<<<< HEAD
     | '/tournament'
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
@@ -676,7 +703,10 @@ export interface FileRouteTypes {
     | '/$username'
     | ''
     | '/team-picker'
+<<<<<<< HEAD
     | '/tournament'
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
@@ -705,7 +735,10 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_lyrics'
     | '/team-picker'
+<<<<<<< HEAD
     | '/tournament'
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     | '/$username/gamepad'
     | '/$username/lyrics'
     | '/$username/overlay'
@@ -739,7 +772,10 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LyricsRoute: typeof LyricsRouteWithChildren
   TeamPickerRoute: typeof TeamPickerRoute
+<<<<<<< HEAD
   TournamentRoute: typeof TournamentRoute
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -747,7 +783,10 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LyricsRoute: LyricsRouteWithChildren,
   TeamPickerRoute: TeamPickerRoute,
+<<<<<<< HEAD
   TournamentRoute: TournamentRoute,
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
 }
 
 export const routeTree = rootRoute
@@ -763,8 +802,12 @@ export const routeTree = rootRoute
         "/$username",
         "/_app",
         "/_lyrics",
+<<<<<<< HEAD
         "/team-picker",
         "/tournament"
+=======
+        "/team-picker"
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
       ]
     },
     "/$username": {
@@ -799,9 +842,12 @@ export const routeTree = rootRoute
     "/team-picker": {
       "filePath": "team-picker.tsx"
     },
+<<<<<<< HEAD
     "/tournament": {
       "filePath": "tournament.tsx"
     },
+=======
+>>>>>>> f1e350e7f4d0d7b316de72e89caafb7296b7ea63
     "/$username/gamepad": {
       "filePath": "$username/gamepad.tsx",
       "parent": "/$username"
