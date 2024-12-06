@@ -80,6 +80,7 @@ export type Database = {
       Bracket: {
         Row: {
           assigned_users: string[] | null
+          bracket_data: Json | null
           created_at: string
           data: Json
           id: string
@@ -91,6 +92,7 @@ export type Database = {
         }
         Insert: {
           assigned_users?: string[] | null
+          bracket_data?: Json | null
           created_at?: string
           data: Json
           id?: string
@@ -102,6 +104,7 @@ export type Database = {
         }
         Update: {
           assigned_users?: string[] | null
+          bracket_data?: Json | null
           created_at?: string
           data?: Json
           id?: string

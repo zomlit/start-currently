@@ -1,12 +1,15 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import * as z from "zod";
 import { Slider } from "@/components/ui/slider";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CircleDot } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
 import {
   RotateCcw,
   Loader2,
@@ -50,12 +53,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Copy } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import AutosaveStatus from "@/components/AutoSaveStatus";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useIsClient } from "@/hooks/useIsClient";
+import { lyricsSchema, type LyricsSettings } from "@/schemas/lyrics";
+import { Separator } from "@/components/ui/separator";
+import { FeatureBadge } from "@/components/ui/feature-badge";
+import { lazy } from "react";
+
+// Dynamically import the color picker to avoid SSR issues
+const ColorPicker = lazy(() =>
+  import("@uiw/react-color").then((mod) => ({
+    default: mod.ChromePicker,
+  }))
+);
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -80,51 +93,6 @@ const safeFormatColor = (color: any): string => {
   return color;
 };
 
-export const lyricsSchema = z.object({
-  backgroundColor: z.string().default("rgba(0, 0, 0, 1)"),
-  textColor: z.string().default("rgba(255, 255, 255, 1)"),
-  currentTextColor: z.string().default("rgba(220, 40, 220, 1)"),
-  fontSize: z.number().min(10).max(72).default(24),
-  padding: z.number().min(0).max(100).default(20),
-  currentLineScale: z.number().min(1).max(2).default(1.2),
-  showFade: z.boolean().default(false),
-  fadeDistance: z.number().min(0).max(200).default(64),
-  lineHeight: z.number().min(1).max(3).default(1.5),
-  fontFamily: z.string().default("Sofia Sans Condensed"),
-  greenScreenMode: z.boolean().default(false),
-  colorSync: z.boolean().default(false),
-  showVideoCanvas: z.boolean().default(false),
-  videoCanvasOpacity: z.number().min(0).max(1).default(0.2),
-  textAlign: z.enum(["left", "center", "right"]).default("left"),
-  textShadowColor: z.string().default("rgba(0, 0, 0, 0.5)"),
-  textShadowBlur: z.number().min(0).max(20).default(2),
-  textShadowOffsetX: z.number().min(-20).max(20).default(1),
-  textShadowOffsetY: z.number().min(-20).max(20).default(1),
-  animationEasing: z
-    .enum([
-      "linear",
-      "easeIn",
-      "easeOut",
-      "easeInOut",
-      "circIn",
-      "circOut",
-      "circInOut",
-      "backIn",
-      "backOut",
-      "backInOut",
-    ])
-    .default("easeOut"),
-  animationSpeed: z.number().min(100).max(1000).default(300),
-  glowEffect: z.boolean().default(false),
-  glowColor: z.string().default("rgba(255, 255, 255, 0.5)"),
-  glowIntensity: z.number().min(0).max(20).default(5),
-  hideExplicitContent: z.boolean().default(false),
-  animationStyle: z
-    .enum(["scale", "glow", "slide", "fade", "bounce"])
-    .default("scale"),
-});
-
-export type LyricsSettings = z.infer<typeof lyricsSchema>;
 interface LyricsSettingsFormProps {
   settings: LyricsSettings;
   onSettingsChange: (settings: LyricsSettings) => Promise<void>;
@@ -135,6 +103,7 @@ interface LyricsSettingsFormProps {
   injectFont: (fontFamily: string) => void;
   isVideoAvailable: boolean;
   isLyricsLoading: boolean;
+  onPreviewUpdate: (settings: LyricsSettings) => void;
 }
 
 // First, create a reusable SliderWithInput component
@@ -148,8 +117,17 @@ const SliderWithInput = React.forwardRef<
     max: number;
     step?: number;
     label: string;
+    showTicks?: boolean;
   }
->(({ value, onChange, onBlur, min, max, step = 1, label }, ref) => {
+>(({ value, onChange, onBlur, min, max, step = 1, label, showTicks }, ref) => {
+  const tickCount = Math.floor((max - min) / step) + 1;
+  const ticks = Array.from({ length: tickCount }, (_, i) =>
+    (min + i * step).toFixed(1)
+  );
+
+  // Determine the interval for displaying ticks based on the number of ticks
+  const displayInterval = tickCount > 20 ? Math.ceil(tickCount / 20) : 1;
+
   return (
     <div ref={ref} className="space-y-2">
       <div className="flex items-center justify-between">
@@ -179,11 +157,41 @@ const SliderWithInput = React.forwardRef<
         onValueCommit={onBlur ? () => onBlur() : undefined}
         className="mt-2"
       />
+      {showTicks && (
+        <div>
+          <span
+            className="mt-3 flex w-full items-center justify-between gap-1 px-2.5 text-xs font-medium text-muted-foreground"
+            aria-hidden="true"
+          >
+            {ticks.map(
+              (tick, index) =>
+                index % displayInterval === 0 && (
+                  <span
+                    key={tick}
+                    className="flex w-0 flex-col items-center justify-center gap-2"
+                  >
+                    <span
+                      className={cn(
+                        "h-1 w-px bg-muted-foreground/70",
+                        index % 2 !== 0 && "h-0.5"
+                      )}
+                    />
+                    <span className={cn(index % 2 !== 0 && "opacity-0")}>
+                      {tick}
+                    </span>
+                  </span>
+                )
+            )}
+          </span>
+        </div>
+      )}
     </div>
   );
 });
 
 SliderWithInput.displayName = "SliderWithInput";
+
+type FormField = ControllerRenderProps<z.infer<typeof lyricsSchema>>;
 
 export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   settings,
@@ -193,10 +201,19 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   injectFont,
   isVideoAvailable,
   isLyricsLoading,
+  onPreviewUpdate,
 }) => {
+  const isClient = useIsClient();
+  const isMounted = useRef(false);
+
   const form = useForm<LyricsSettings>({
     resolver: zodResolver(lyricsSchema),
     defaultValues: settings,
+    disabled: !isClient,
+    mode: "onChange",
+    reValidateMode: "onChange",
+    shouldFocusError: false,
+    criteriaMode: "firstError",
   });
 
   // Add ref for dialog
@@ -256,24 +273,37 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     500
   );
 
-  const handleSettingChange = async (
-    field: keyof LyricsSettings,
-    value: any
-  ) => {
-    const updatedSettings: LyricsSettings = {
-      ...settings,
-      [field]: value,
-    };
+  const handleSettingChange = useCallback(
+    async (field: keyof LyricsSettings, value: any) => {
+      try {
+        // Update form state
+        form.setValue(field, value, {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
 
-    // Update form state immediately
-    form.setValue(field, value);
+        // Create updated settings
+        const updatedSettings = {
+          ...settings,
+          [field]: value,
+        };
 
-    // Debounce the save with field name
-    debouncedSettingsChange(updatedSettings, field);
-  };
+        // Immediately update preview
+        onPreviewUpdate(updatedSettings);
+
+        // Debounce the save to Supabase
+        debouncedSettingsChange(updatedSettings, field);
+      } catch (error) {
+        console.error("Error in handleSettingChange:", error);
+      }
+    },
+    [settings, form, debouncedSettingsChange, onPreviewUpdate]
+  );
 
   // Form submission handler
   const onSubmit = async (data: LyricsSettings) => {
+    if (!isClient) return;
+
     try {
       await onSettingsChange(data);
       toast.success({
@@ -289,8 +319,18 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
     }
   };
 
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      form.handleSubmit((data: LyricsSettings) => {
+        onSubmit(data);
+      })(e);
+    },
+    [isClient, form, onSubmit]
+  );
+
   return (
-    <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
+    <Form {...form} onSubmit={handleSubmit}>
       <div className="relative">
         <div className="fixed top-4 right-4 z-50">
           <AutosaveStatus
@@ -314,19 +354,19 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <Accordion type="multiple" className="w-full space-y-4">
+                <Accordion type="multiple" className="w-full space-y-2">
                   {/* Appearance Section */}
                   <AccordionItem
                     value="appearance"
-                    className="border rounded-lg"
+                    className="border rounded-md"
                   >
-                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-md">
                       <div className="flex items-center gap-2">
                         <Palette className="h-4 w-4" />
                         <span className="font-medium">Appearance</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+                    <AccordionContent className="p-4 space-y-4 bg-violet-50 dark:bg-violet-500/10 shadow-inner">
                       <FormField
                         control={form.control}
                         name="backgroundColor"
@@ -337,7 +377,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                               color={safeFormatColor(field.value)}
                               onChange={(color) => {
                                 const formattedColor = safeFormatColor(color);
-                                field.onChange(formattedColor);
                                 handleSettingChange(
                                   "backgroundColor",
                                   formattedColor
@@ -359,7 +398,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                             <Select
                               value={field.value}
                               onValueChange={(value) => {
-                                field.onChange(value);
                                 handleSettingChange("fontFamily", value);
                                 injectFont(value);
                               }}
@@ -397,15 +435,15 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     value="text-styling"
                     className="border rounded-lg"
                   >
-                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
                       <div className="flex items-center gap-2">
                         <Type className="h-4 w-4" />
                         <span className="font-medium">Text Styling</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+                    <AccordionContent className="p-4 space-y-4 bg-violet-50 dark:bg-violet-500/10 shadow-inner">
                       {/* Text color fields */}
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 md:grid-cols-1">
                         <FormField
                           control={form.control}
                           name="textColor"
@@ -414,12 +452,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                               <FormLabel>Text Color</FormLabel>
                               <GradientColorPicker
                                 color={safeFormatColor(field.value)}
-                                onChange={(color) =>
+                                onChange={(color) => {
+                                  const formattedColor = safeFormatColor(color);
                                   handleSettingChange(
                                     "textColor",
-                                    safeFormatColor(color)
-                                  )
-                                }
+                                    formattedColor
+                                  );
+                                }}
                                 onChangeComplete={field.onBlur}
                                 currentProfile={null}
                               />
@@ -435,12 +474,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                               <FormLabel>Current Line Color</FormLabel>
                               <GradientColorPicker
                                 color={safeFormatColor(field.value)}
-                                onChange={(color) =>
+                                onChange={(color) => {
+                                  const formattedColor = safeFormatColor(color);
                                   handleSettingChange(
                                     "currentTextColor",
-                                    safeFormatColor(color)
-                                  )
-                                }
+                                    formattedColor
+                                  );
+                                }}
                                 onChangeComplete={field.onBlur}
                                 currentProfile={null}
                               />
@@ -456,17 +496,16 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                           name="fontSize"
                           render={({ field }) => (
                             <FormItem>
-                              <SliderWithInput
-                                label="Font Size"
-                                value={field.value}
-                                onChange={(value) => {
-                                  field.onChange(value);
-                                  handleSettingChange("fontSize", value);
-                                }}
-                                onBlur={field.onBlur}
-                                min={10}
+                              <FormLabel>Font Size</FormLabel>
+                              <Slider
+                                min={8}
                                 max={72}
                                 step={1}
+                                value={[field.value]}
+                                onValueChange={(val) => {
+                                  // Update immediately
+                                  handleSettingChange("fontSize", val[0]);
+                                }}
                               />
                             </FormItem>
                           )}
@@ -481,13 +520,53 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 label="Line Height"
                                 value={field.value}
                                 onChange={(value) => {
-                                  field.onChange(value);
                                   handleSettingChange("lineHeight", value);
                                 }}
                                 onBlur={field.onBlur}
                                 min={1}
                                 max={3}
                                 step={0.1}
+                                showTicks={false}
+                              />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="padding"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                min={0}
+                                max={100}
+                                value={field.value}
+                                onChange={(value) => {
+                                  handleSettingChange("padding", value);
+                                }}
+                                onBlur={field.onBlur}
+                                label="Padding"
+                                showTicks={false}
+                              />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="margin"
+                          render={({ field }) => (
+                            <FormItem>
+                              <SliderWithInput
+                                min={0}
+                                max={100}
+                                value={field.value}
+                                onChange={(value) => {
+                                  handleSettingChange("margin", value);
+                                }}
+                                onBlur={field.onBlur}
+                                label="Margin"
+                                showTicks={false}
                               />
                             </FormItem>
                           )}
@@ -504,7 +583,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                             <Select
                               value={field.value}
                               onValueChange={(value) => {
-                                field.onChange(value);
                                 handleSettingChange("textAlign", value);
                               }}
                             >
@@ -545,7 +623,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         )}
                       />
 
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 md:grid-cols-1">
                         <FormField
                           control={form.control}
                           name="textShadowBlur"
@@ -555,13 +633,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 label="Shadow Blur"
                                 value={field.value}
                                 onChange={(value) => {
-                                  field.onChange(value);
                                   handleSettingChange("textShadowBlur", value);
                                 }}
                                 onBlur={field.onBlur}
                                 min={0}
                                 max={20}
                                 step={1}
+                                showTicks={false}
                               />
                             </FormItem>
                           )}
@@ -576,7 +654,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 label="Shadow Offset X"
                                 value={field.value}
                                 onChange={(value) => {
-                                  field.onChange(value);
                                   handleSettingChange(
                                     "textShadowOffsetX",
                                     value
@@ -586,6 +663,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 min={-20}
                                 max={20}
                                 step={1}
+                                showTicks={false}
                               />
                             </FormItem>
                           )}
@@ -600,7 +678,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 label="Shadow Offset Y"
                                 value={field.value}
                                 onChange={(value) => {
-                                  field.onChange(value);
                                   handleSettingChange(
                                     "textShadowOffsetY",
                                     value
@@ -610,6 +687,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 min={-20}
                                 max={20}
                                 step={1}
+                                showTicks={false}
                               />
                             </FormItem>
                           )}
@@ -623,13 +701,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     value="animation"
                     className="border rounded-lg"
                   >
-                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
                       <div className="flex items-center gap-2">
                         <Wand2 className="h-4 w-4" />
                         <span className="font-medium">Animation</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+                    <AccordionContent className="p-4 space-y-4 bg-violet-50 dark:bg-violet-500/10 shadow-inner">
                       <FormField
                         control={form.control}
                         name="animationStyle"
@@ -639,7 +717,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                             <Select
                               value={field.value}
                               onValueChange={(value) => {
-                                field.onChange(value);
                                 handleSettingChange("animationStyle", value);
                               }}
                             >
@@ -669,13 +746,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                               label="Animation Speed (ms)"
                               value={field.value}
                               onChange={(value) => {
-                                field.onChange(value);
                                 handleSettingChange("animationSpeed", value);
                               }}
                               onBlur={field.onBlur}
                               min={100}
                               max={1000}
                               step={50}
+                              showTicks={false}
                             />
                           </FormItem>
                         )}
@@ -733,19 +810,19 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
 
                   {/* Effects Section */}
                   <AccordionItem value="effects" className="border rounded-lg">
-                    <AccordionTrigger className="px-4 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-lg">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4" />
                         <span className="font-medium">Effects</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-2 space-y-4">
+                    <AccordionContent className="p-4 space-y-4 bg-violet-50 dark:bg-violet-500/10 shadow-inner">
                       <FormField
                         control={form.control}
                         name="greenScreenMode"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 space-x-0.5">
                               <FormLabel>Green Screen Mode</FormLabel>
                               <FormDescription>
                                 Enable green screen mode for chroma keying
@@ -755,7 +832,6 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                               <Switch
                                 checked={field.value}
                                 onCheckedChange={(checked) => {
-                                  field.onChange(checked);
                                   handleSettingChange(
                                     "greenScreenMode",
                                     checked
@@ -772,7 +848,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         name="glowEffect"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 space-x-0.5">
                               <FormLabel>Glow Effect</FormLabel>
                               <FormDescription>
                                 Add a glow effect to the text
@@ -800,12 +876,14 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 <FormLabel>Glow Color</FormLabel>
                                 <GradientColorPicker
                                   color={safeFormatColor(field.value)}
-                                  onChange={(color) =>
+                                  onChange={(color) => {
+                                    const formattedColor =
+                                      safeFormatColor(color);
                                     handleSettingChange(
                                       "glowColor",
-                                      safeFormatColor(color)
-                                    )
-                                  }
+                                      formattedColor
+                                    );
+                                  }}
                                   onChangeComplete={field.onBlur}
                                   currentProfile={null}
                                 />
@@ -822,9 +900,12 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                   min={0}
                                   max={20}
                                   value={[field.value]}
-                                  onValueChange={(val) =>
-                                    handleSettingChange("glowIntensity", val[0])
-                                  }
+                                  onValueChange={(val) => {
+                                    handleSettingChange(
+                                      "glowIntensity",
+                                      val[0]
+                                    );
+                                  }}
                                 />
                               </FormItem>
                             )}
@@ -837,7 +918,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         name="showFade"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 space-x-0.5">
                               <FormLabel>Fade top and bottom</FormLabel>
                               <FormDescription>
                                 Add a fade effect to the top and bottom of the
@@ -866,13 +947,13 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                                 label="Fade Distance"
                                 value={field.value}
                                 onChange={(value) => {
-                                  field.onChange(value);
                                   handleSettingChange("fadeDistance", value);
                                 }}
                                 onBlur={field.onBlur}
                                 min={0}
                                 max={200}
                                 step={1}
+                                showTicks={false}
                               />
                             </FormItem>
                           )}
@@ -883,22 +964,58 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         control={form.control}
                         name="showVideoCanvas"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                              <FormLabel>Show Video Canvas</FormLabel>
-                              <FormDescription>
-                                Display video if available
-                              </FormDescription>
+                          <FormItem
+                            className={cn(
+                              "relative overflow-hidden",
+                              "rounded-xl border border-green-500/20 dark:border-green-500/10",
+                              "bg-green-50/50 dark:bg-green-950/20",
+                              "p-4 shadow-sm",
+                              "transition-all duration-300",
+                              "hover:border-green-500/30 dark:hover:border-green-500/20",
+                              "group"
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <FeatureBadge variant="green">
+                                    NEW
+                                  </FeatureBadge>
+                                  <FormLabel className="font-semibold">
+                                    Show Video Canvas
+                                  </FormLabel>
+                                </div>
+                                <FormDescription className="text-sm text-muted-foreground">
+                                  Enhance your lyrics with synchronized video
+                                  (if available) background
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={(value) =>
+                                    handleSettingChange(
+                                      "showVideoCanvas",
+                                      value
+                                    )
+                                  }
+                                  disabled={!isVideoAvailable}
+                                  className={cn(
+                                    "data-[state=checked]:bg-green-400",
+                                    "data-[state=checked]:shadow-sm",
+                                    "transition-all duration-300"
+                                  )}
+                                />
+                              </FormControl>
                             </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={(value) =>
-                                  handleSettingChange("showVideoCanvas", value)
-                                }
-                                disabled={!isVideoAvailable}
-                              />
-                            </FormControl>
+
+                            {!isVideoAvailable && (
+                              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                                <p className="text-sm text-muted-foreground">
+                                  Video not available for current track
+                                </p>
+                              </div>
+                            )}
                           </FormItem>
                         )}
                       />
@@ -941,24 +1058,45 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                     className="w-full"
                     ref={dialogRef}
                   >
-                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <RotateCcw className="size-4" />
                     Reset to Defaults
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reset Settings?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will reset all lyrics settings to their default
-                      values. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
+                <AlertDialogContent className="border border-border/50 bg-background/95 backdrop-blur-md">
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted"
+                      aria-hidden="true"
+                    >
+                      <div className="relative rounded-full p-3 animate-pulse sm:static sm:block sm:mx-auto">
+                        <CircleDot className="h-5 w-5 text-pink-500 fill-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.7)] animate-glow" />
+                      </div>
+                    </div>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-lg font-semibold">
+                        Reset Settings?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-sm text-muted-foreground">
+                        This will reset all lyrics settings to their default
+                        values. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                  </div>
+
+                  <Separator className="my-0" />
+
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetToDefaults}>
+                    <AlertDialogCancel className="font-medium">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleResetToDefaults}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
                       Reset Settings
                     </AlertDialogAction>
                   </AlertDialogFooter>
+                  <div className="absolute -z-50 inset-0 bg-gradient-to-tr from-pink-500/10 to-violet-500/10 blur-xl animate-pulse" />
                 </AlertDialogContent>
               </AlertDialog>
 

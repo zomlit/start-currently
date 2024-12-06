@@ -275,6 +275,11 @@ export async function fetchAndStoreCurrentTrack(userId: string) {
     incrementApiHitCount(userId);
 
     const spotifyApi = await getSpotifyApi(userId);
+    if (!spotifyApi) {
+      logger.error("Failed to get Spotify API client", { userId });
+      throw new Error("Failed to get Spotify API client");
+    }
+
     const data = await spotifyApi(currentlyPlayingTrack());
 
     if (!data || !data.item || data.currently_playing_type !== "track") {
@@ -306,56 +311,28 @@ export async function fetchAndStoreCurrentTrack(userId: string) {
       id: data.item.id,
     };
 
-    await createOrUpdateVisualizerWidget(userId, track);
+    await prisma.visualizerWidget.upsert({
+      where: { user_id: userId },
+      create: {
+        user_id: userId,
+        type: "spotify",
+        sensitivity: 1.0,
+        colorScheme: "default",
+        track,
+      },
+      update: {
+        track,
+      },
+    });
 
     return track;
   } catch (error) {
-    if (error instanceof Error && error.message === "User is inactive") {
-      logger.info(`Skipping API call for inactive user: ${userId}`);
-      return null;
-    }
-
-    if (
-      error instanceof Error &&
-      error.message === "Max token refresh attempts reached"
-    ) {
-      logger.error(
-        `Max token refresh attempts reached for user ${userId}. Stopping polling.`
-      );
-      await stopSpotifyPolling(userId);
-      return null;
-    }
-
-    if (isLikelyTokenError(error)) {
-      logger.warn("Possible token error detected, attempting to refresh...", {
-        userId,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-
-      const userProfile = await prisma.userProfile.findUnique({
-        where: { user_id: userId },
-      });
-
-      if (!userProfile) {
-        throw new Error("User profile not found");
-      }
-
-      const newAccessToken = await refreshAccessToken(
-        userId,
-        userProfile.s_refresh_token as string
-      );
-
-      // Remove the second argument from this call
-      return fetchAndStoreCurrentTrack(userId);
-    } else {
-      logger.error("Error fetching or storing current track:", {
-        error: error instanceof Error ? error.message : String(error),
-        name: error instanceof Error ? error.name : "Unknown",
-        stack: error instanceof Error ? error.stack : "No stack trace",
-        errorResponse: (error as any).response?.data,
-      });
-      return null;
-    }
+    logger.error("Error in fetchAndStoreCurrentTrack:", {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
   }
 }
 
@@ -608,7 +585,6 @@ async function createOrUpdateVisualizerWidget(userId: string, track: any) {
           type: "default",
           sensitivity: 0.5,
           colorScheme: "default",
-          visualization: "bars",
         },
       });
     } else {

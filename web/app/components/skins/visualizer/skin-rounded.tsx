@@ -94,20 +94,40 @@ const ProgressBar = memo(
   }: {
     progress: number;
     colors: { background: string; foreground: string };
-  }) => (
-    <div
-      className="relative bottom-0 h-2 w-full rounded-lg"
-      style={{ backgroundColor: colors.background }}
-    >
+  }) => {
+    const lastValidProgress = useRef(progress);
+
+    if (
+      progress >= 0 &&
+      progress <= 100 &&
+      Math.abs(progress - lastValidProgress.current) < 20
+    ) {
+      lastValidProgress.current = progress;
+    }
+
+    return (
       <div
-        className="absolute left-0 top-0 h-full rounded-lg"
-        style={{
-          width: `${progress}%`,
-          backgroundColor: colors.foreground,
-        }}
-      />
-    </div>
-  )
+        className="relative bottom-0 h-2 w-full rounded-lg transition-all duration-300"
+        style={{ backgroundColor: colors.background }}
+      >
+        <div
+          className="absolute left-0 top-0 h-full rounded-lg transition-all duration-300"
+          style={{
+            width: `${lastValidProgress.current}%`,
+            backgroundColor: colors.foreground,
+          }}
+        />
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    const progressDiff = Math.abs(prevProps.progress - nextProps.progress);
+    return (
+      progressDiff < 1 &&
+      prevProps.colors.background === nextProps.colors.background &&
+      prevProps.colors.foreground === nextProps.colors.foreground
+    );
+  }
 );
 
 const TrackArtwork = memo(
@@ -204,41 +224,60 @@ const TrackInfo = memo(
     palette,
     commonSettings,
     audioMotionRef,
-  }: {
-    track: any;
-    textStyle: React.CSSProperties;
-    specificSettings: VisualizerSettings;
-    palette: any;
-    commonSettings: CommonSettings;
-    audioMotionRef: React.RefObject<HTMLDivElement>;
-  }) => (
-    <div
-      className="whitespace relative overflow-x-clip rounded-lg px-3 py-1"
-      style={{
-        backgroundColor: specificSettings?.colorSync
-          ? palette?.DarkVibrant?.hex
-          : commonSettings?.backgroundColor || "transparent",
-        borderRadius: `${commonSettings?.borderRadius || 0}px`,
-      }}
-    >
-      <p
-        className="track-name relative z-10 truncate"
-        style={{ ...textStyle, fontWeight: "600" }}
+  }) => {
+    const artistName = useMemo(() => {
+      if (!track?.artist) return "Artist N/A";
+
+      if (Array.isArray(track.artist)) {
+        return track.artist.join(", ");
+      }
+
+      const artistStr = String(track.artist);
+
+      return artistStr
+        .replace(/ feat\. /gi, ", ")
+        .replace(/ ft\. /gi, ", ")
+        .replace(/ & /g, ", ")
+        .replace(/ \+ /g, ", ")
+        .replace(/ x /gi, ", ")
+        .replace(/\s*,\s*/g, ", ")
+        .replace(/\s*\(\s*/g, ", ")
+        .replace(/\s*\)\s*/g, "")
+        .split(", ")
+        .filter(Boolean)
+        .filter((name, index, array) => array.indexOf(name) === index)
+        .join(", ");
+    }, [track?.artist]);
+
+    return (
+      <div
+        className="whitespace relative overflow-x-clip rounded-lg px-3 py-1"
+        style={{
+          backgroundColor: specificSettings?.colorSync
+            ? palette?.DarkVibrant?.hex
+            : commonSettings?.backgroundColor || "transparent",
+          borderRadius: `${commonSettings?.borderRadius || 0}px`,
+        }}
       >
-        {track?.title || "No track playing"}
-      </p>
-      <p className="artist-name relative z-10 truncate" style={textStyle}>
-        {track?.artist || "Artist N/A"}
-      </p>
-      {specificSettings?.micEnabled && (
-        <div
-          ref={audioMotionRef}
-          className="absolute -bottom-[1px] left-0 z-0 h-full w-full rounded-lg [&_canvas]:rounded-lg"
-          id="container"
-        />
-      )}
-    </div>
-  )
+        <p
+          className="track-name relative z-10 truncate"
+          style={{ ...textStyle, fontWeight: "600" }}
+        >
+          {track?.title || "No track playing"}
+        </p>
+        <p className="artist-name relative z-10 truncate" style={textStyle}>
+          {artistName}
+        </p>
+        {specificSettings?.micEnabled && (
+          <div
+            ref={audioMotionRef}
+            className="absolute -bottom-[1px] left-0 z-0 h-full w-full rounded-lg [&_canvas]:rounded-lg"
+            id="container"
+          />
+        )}
+      </div>
+    );
+  }
 );
 
 const SkinRounded: React.FC<SkinRoundedProps> = ({
@@ -424,7 +463,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                 specificSettings?.canvasEnabled &&
                                 specificSettings?.albumCanvas && (
                                   <div className="absolute z-20 flex h-full w-full items-center justify-center">
-                                    <p>Loading video...</p>
+                                    <Spinner className="h-6 w-6 fill-white drop-shadow-[2px_2px_0_rgb(139,92,246)]" />
                                   </div>
                                 )}
                               {videoError && (

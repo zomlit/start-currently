@@ -8,6 +8,7 @@ import {
   stopSpotifyPolling,
   getSpotifyApi,
   getApiStats,
+  fetchAndStoreCurrentTrack,
 } from "../../services/spotify.service";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { SpotifyLyricsService } from "../../services/spotify-lyrics.service";
@@ -16,10 +17,76 @@ import logger from "../../utils/logger";
 import { prisma } from "../../db";
 import { createAuthService } from "../../types/auth";
 
+interface AuthStore {
+  auth: {
+    success: boolean;
+    userId?: string;
+    sessionId?: string;
+    error?: string;
+  };
+}
+
 export default (app: Elysia) =>
   app
     .use(authMiddleware)
     .use(createAuthService())
+    .get(
+      "/current-playback",
+      async ({ store, set }) => {
+        const auth = (store as AuthStore).auth;
+        if (!auth?.success || !auth?.userId) {
+          logger.warn("Unauthorized current-playback request", {
+            hasAuth: !!auth,
+            hasSuccess: auth?.success,
+            hasUserId: !!auth?.userId,
+          });
+          set.status = 401;
+          return {
+            success: false,
+            message: "Unauthorized",
+          };
+        }
+
+        try {
+          const trackData = await fetchAndStoreCurrentTrack(auth.userId);
+          if (!trackData) {
+            logger.info("No current playback found for user", {
+              userId: auth.userId,
+            });
+            set.status = 404;
+            return {
+              success: false,
+              message: "No current playback found",
+            };
+          }
+
+          return {
+            success: true,
+            data: trackData,
+          };
+        } catch (error) {
+          logger.error("Error fetching current playback:", {
+            error: error instanceof Error ? error.message : String(error),
+            userId: auth.userId,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+
+          set.status = 500;
+          return {
+            success: false,
+            message: "Failed to fetch current playback",
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+        }
+      },
+      {
+        detail: {
+          tags: ["Spotify"],
+          summary: "Get Current Playback",
+          description: "Get current playback state including track position",
+        },
+      }
+    )
     .group("session", (app) =>
       app
         .post(

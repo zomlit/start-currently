@@ -9,8 +9,8 @@ import {
 } from "@clerk/tanstack-start";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavItem, navItems } from "@/config/navigation";
-import { ChevronRight, Menu, MoreVertical } from "lucide-react";
+import { NavItem, navItems, NavSubItem } from "@/config/navigation";
+import { ChevronRight, LucideIcon, Menu, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -142,6 +142,22 @@ const NavContent = ({
     );
   }, []);
 
+  interface NavItemWithSubmenu {
+    id: string;
+    text: string;
+    icon: LucideIcon;
+    submenu: NavSubItem[];
+  }
+
+  interface NavItemWithLink {
+    id: string;
+    text: string;
+    icon: LucideIcon;
+    link: string;
+  }
+
+  type NavItem = NavItemWithSubmenu | NavItemWithLink;
+
   const isNavItemWithSubmenu = (item: NavItem): item is NavItemWithSubmenu => {
     return "submenu" in item;
   };
@@ -167,11 +183,8 @@ const NavContent = ({
       <div className="flex-1 space-y-2">
         {navItems.map((item) => {
           const isActive = isNavItemWithSubmenu(item)
-            ? item.submenu.some(
-                (subItem) =>
-                  pathname === subItem.link || pathname.startsWith(subItem.link)
-              )
-            : pathname === item.link || pathname.startsWith(item.link || "");
+            ? item.submenu.some((subItem) => pathname === subItem.link)
+            : pathname === item.link;
 
           const isExpanded = expandedSections.includes(item.id);
 
@@ -411,11 +424,11 @@ const NavContent = ({
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "w-full p-2 flex items-center",
+                "w-full p-2 flex items-center min-h-[52px]",
                 "transition-colors duration-200",
                 "hover:bg-violet-50 dark:hover:bg-violet-900/20",
                 "rounded-none",
-                isCollapsed ? "justify-center" : "justify-between"
+                isCollapsed ? "" : "justify-between"
               )}
             >
               <div className="flex items-center gap-2">
@@ -434,7 +447,7 @@ const NavContent = ({
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className="flex flex-col items-start"
+                      className="flex flex-col items-start min-w-[180px]"
                     >
                       <span className="text-sm font-medium">Account</span>
                       <span className="text-xs text-muted-foreground">

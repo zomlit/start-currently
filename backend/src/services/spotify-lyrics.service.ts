@@ -2,8 +2,8 @@ import axios from "axios";
 import logger from "../utils/logger";
 
 export class NoLyricsAvailableError extends Error {
-  constructor(trackId: string) {
-    super(`No lyrics available for track: ${trackId}`);
+  constructor(trackId: string, artist: string) {
+    super(`No lyrics available for track: ${artist} - ${trackId}`);
     this.name = "NoLyricsAvailableError";
   }
 }
@@ -73,7 +73,7 @@ export class SpotifyLyricsService {
           );
         }
       } else if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new NoLyricsAvailableError(trackId);
+        throw new NoLyricsAvailableError(trackId, "Unknown Artist");
       } else {
         logger.error(
           `Error fetching lyrics: ${

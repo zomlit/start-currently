@@ -46,7 +46,7 @@ export function PageBreadcrumb({
           </motion.button>
         )}
       </div>
-      <Breadcrumb className={cn("dark:mb-2 font-light", className)}>
+      <Breadcrumb className={cn("mb-2 font-light", className)}>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>

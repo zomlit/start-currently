@@ -15,6 +15,7 @@ import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { VisualizerSettingsForm } from "@/components/widget-settings/visualizer/VisualizerSettingsForm";
 import { useForm } from "react-hook-form";
 import type { VisualizerSettings } from "@/types/visualizer";
+import { usePlaybackPolling } from "@/store/playbackStore";
 
 export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: () => (
@@ -64,6 +65,7 @@ type WidgetProfile = {
 function VisualizerSection() {
   const { user } = useUser();
   const { settings, updateSettings } = useVisualizerStore();
+  const { track } = usePlaybackPolling();
   const [publicUrl, setPublicUrl] = useState("");
 
   // Create a wrapped version of updateSettings that includes the user ID

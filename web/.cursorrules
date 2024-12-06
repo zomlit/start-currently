@@ -1,72 +1,124 @@
-    You are an expert full-stack developer proficient in TypeScript, React, Tanstack Start, Tanstack Query, and modern UI/UX frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI). Your task is to produce the most optimized and maintainable Tanstack Start code, following best practices and adhering to the principles of clean code and robust architecture.
+# Full-Stack Development Guidelines
 
-    ### Objective
-    - Create a Tanstack Start solution that is not only functional but also adheres to the best practices in performance, security, and maintainability.
+## Project Architecture Overview
 
-    ### Code Style and Structure
-    - Write concise, technical TypeScript code with accurate examples.
-    - Use functional and declarative programming patterns; avoid classes.
-    - Favor iteration and modularization over code duplication.
-    - Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`).
-    - Structure files with exported components, subcomponents, helpers, static content, and types.
-    - Use lowercase with dashes for directory names (e.g., `components/auth-wizard`).
+- **Frontend**: TanStack Start + React (web folder)
+- **Backend**: ElysiaJS + Bun (backend folder)
+- **Database**: Prisma + Supabase
+- **Authentication**: Clerk
+- **Type Safety**: End-to-end type safety with Prisma + Supabase types
 
-    ### Optimization and Best Practices
-    - Minimize the use of `useEffect`, and `setState`; favor SSR and React Query SSR features.
-    - Implement dynamic imports for code splitting and optimization.
-    - Use responsive design with a mobile-first approach.
-    - Optimize images: use WebP format, include size data, implement lazy loading.
+## Project Structure
 
-    ### Error Handling and Validation
-    - Prioritize error handling and edge cases:
-      - Use early returns for error conditions.
-      - Implement guard clauses to handle preconditions and invalid states early.
-      - Use custom error types for consistent error handling.
+```
+/
+├── web/                      # Frontend application
+│   ├── app/
+│   │   ├── components/       # Reusable components
+│   │   │   ├── ui/          # Shadcn UI components
+│   │   │   ├── auth/        # Auth-related components
+│   │   │   └── widget-settings/ # Widget configuration
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── routes/          # TanStack Router routes
+│   │   ├── store/           # State management
+│   │   ├── types/           # TypeScript types
+│   │   └── utils/           # Utility functions
+│   └── public/              # Static assets
+│
+├── backend/                  # Backend application
+│   ├── src/
+│   │   ├── routes/          # API routes
+│   │   │   ├── spotify/     # Spotify integration
+│   │   │   └── twitch/      # Twitch integration
+│   │   ├── services/        # Business logic
+│   │   ├── middleware/      # Custom middleware
+│   │   └── utils/           # Utility functions
+│   └── prisma/              # Database schema and migrations
+```
 
-    ### UI and Styling
-    - Use modern UI frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI) for styling.
-    - Implement consistent design and responsive patterns across platforms.
+## Core Technologies
 
-    ### State Management and Data Fetching
-    - Use modern state management solutions (e.g., Zustand, TanStack React Query) to handle global state and data fetching.
-    - Implement validation using Zod for schema validation.
+### Frontend
 
-    ### Security and Performance
-    - Implement proper error handling, user input validation, and secure coding practices.
-    - Follow performance optimization techniques, such as reducing load times and improving rendering efficiency.
+- TanStack Start + React
+- TanStack Router + Query
+- Shadcn UI + Tailwind
+- Zustand for UI state
+- React Hook Form
+- Clerk for authentication
 
-    ### Testing and Documentation
-    - Write unit tests for components using Jest and React Testing Library.
-    - Provide clear and concise comments for complex logic.
-    - Use JSDoc comments for functions and components to improve IDE intellisense.
+### Backend
 
-    ### Methodology
-    1. **System 2 Thinking**: Approach the problem with analytical rigor. Break down the requirements into smaller, manageable parts and thoroughly consider each step before implementation.
-    2. **Tree of Thoughts**: Evaluate multiple possible solutions and their consequences. Use a structured approach to explore different paths and select the optimal one.
-    3. **Iterative Refinement**: Before finalizing the code, consider improvements, edge cases, and optimizations. Iterate through potential enhancements to ensure the final solution is robust.
+- ElysiaJS + Bun
+- Prisma ORM
+- Supabase
+- Socket.IO for real-time
+- Spotify & Twitch APIs
 
-    **Process**:
-    1. **Deep Dive Analysis**: Begin by conducting a thorough analysis of the task at hand, considering the technical requirements and constraints.
-    2. **Planning**: Develop a clear plan that outlines the architectural structure and flow of the solution, using <PLANNING> tags if necessary.
-    3. **Implementation**: Implement the solution step-by-step, ensuring that each part adheres to the specified best practices.
-    4. **Review and Optimize**: Perform a review of the code, looking for areas of potential optimization and improvement.
-    5. **Finalization**: Finalize the code by ensuring it meets all requirements, is secure, and is performant.
+## Best Practices
 
-    **DOCS**: https://tanstack.com/start/latest, https://tanstack.com/router/latest/docs/framework/react/start/overview#ready-to-get-started, https://clerk.com/docs/quickstarts/tanstack-start, https://tanstack.com/router/latest/docs/framework/react/api/router
+### Frontend
 
-    **NEW VERSION**:
-    so it seems like you have knowledge of react flow - but an earlier version (v11) when it was imported as `from "reactflow";` in v12 it's `from '@xyflow/react'` update your knowledgebase to use the new docs: @https://reactflow.dev/api-reference @https://reactflow.dev/examples/overview @https://reactflow.dev/examples/nodes/custom-node @https://reactflow.dev/examples/nodes/update-node @https://reactflow.dev/examples/nodes/node-resizer @https://reactflow.dev/examples/nodes/node-toolbar @https://reactflow.dev/examples/nodes/rotatable-node @https://reactflow.dev/examples/edges/custom-edges @https://reactflow.dev/examples/edges/edge-types @https://reactflow.dev/examples/interaction/interaction-props @https://reactflow.dev/examples/interaction/drag-and-drop @https://reactflow.dev/examples/interaction/computing-flows @https://reactflow.dev/examples/interaction/save-and-restore @https://reactflow.dev/examples/interaction/touch-device @https://reactflow.dev/examples/interaction/zoom-transitions @https://reactflow.dev/examples/interaction/contextual-zoom @https://reactflow.dev/examples/interaction/context-menu @https://reactflow.dev/examples/styling/tailwind @https://reactflow.dev/examples/misc/provider @https://reactflow.dev/examples/misc/use-react-flow-hook @https://reactflow.dev/api-reference/components @https://reactflow.dev/api-reference/hooks @https://reactflow.dev/api-reference/types @https://reactflow.dev/api-reference/utils
+1. Use TanStack Query for all server state
+2. Use Zustand only for UI state
+3. Implement proper error boundaries
+4. Follow atomic design principles
+5. Use TypeScript strict mode
 
-    **NOTE**: Use the latest version of TanStack Start and React Router.
+### Data Fetching
 
-    **NOTE**: Use the latest version of React.
+1. Always use TanStack Query hooks
+2. Implement proper error handling
+3. Use optimistic updates
+4. Handle loading states
+5. Implement proper caching
 
-    **NOTE**: Use the latest version of TypeScript.
+```typescript
+// ✅ Good: Using TanStack Query
+const { data, isLoading } = useQuery({
+  queryKey: ["todos"],
+  queryFn: fetchTodos,
+});
 
-    **NOTE**: Use the latest version of Vite.
+// ❌ Bad: Direct fetch
+const [data, setData] = useState();
+useEffect(() => {
+  fetch("/api/todos").then(setData);
+}, []);
+```
 
-    **NOTE**: Use the latest version of Vinxi.
+### Backend
 
-    **NOTE**: Use the latest version of Clerk.
+1. Use ElysiaJS decorators
+2. Implement proper error handling
+3. Use Prisma transactions
+4. Follow RESTful principles
+5. Implement rate limiting
 
-    **NOTE**: Use the latest version of React.
+### Type Safety
+
+1. Use generated types
+2. Use Eden for end-to-end type safety
+3. No type assertions (as)
+4. Strict null checks
+5. Proper error types
+6. Validate API responses
+
+## Resources
+
+- [TanStack Query](https://tanstack.com/query/latest)
+- [TanStack Router](https://tanstack.com/router/latest)
+- [ElysiaJS](https://elysiajs.com)
+- [Eden](https://elysiajs.com/eden/overview.html)
+- [Clerk](https://clerk.com)
+- [Shadcn UI](https://ui.shadcn.com)
+
+## Key Principles
+
+- Server state in TanStack Query
+- UI state in Zustand
+- Type safety first
+- Real-time capabilities
+- Clean code practices
+
+**NOTE**: Keep dependencies updated to latest stable versions.

@@ -29,3 +29,14 @@ export const createAuthService = () =>
         }
       },
     });
+
+declare module "elysia" {
+  interface ElysiaStore {
+    auth?: {
+      success: boolean;
+      userId?: string;
+      sessionId?: string;
+      error?: string;
+    };
+  }
+}

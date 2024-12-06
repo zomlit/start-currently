@@ -202,12 +202,6 @@ const app = new Elysia()
       logger.error("Route not found:", {
         method,
         path,
-        availableRoutes: app.routes
-          .filter((r) => !r.path.includes("*")) // Filter out catch-all routes
-          .map((r) => ({
-            method: r.method,
-            path: r.path,
-          })),
       });
 
       set.status = 404;

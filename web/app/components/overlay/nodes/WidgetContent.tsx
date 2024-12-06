@@ -109,7 +109,7 @@ export function WidgetContent({ type, selected }: WidgetContentProps) {
             />
           )}
           <div
-            className="h-full w-full overflow-y-auto scrollbar-hide relative z-20 flex flex-col"
+            className="h-full w-full overflow-visible scrollbar-hide relative z-20 flex flex-col"
             style={{
               fontFamily: `'${lyricsSettings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
             }}

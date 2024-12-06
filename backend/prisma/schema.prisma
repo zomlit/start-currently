@@ -169,7 +169,6 @@ model VisualizerWidget {
   type                String
   sensitivity         Float
   colorScheme         String
-  visualization       Json
   track               Json?
   lyrics_settings     Json?
   visualizer_settings Json?
@@ -186,6 +185,7 @@ model Bracket {
   owner_id       String
   assigned_users String[]
   is_complete    Boolean  @default(false)
+  bracket_data   Json?
   User           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])

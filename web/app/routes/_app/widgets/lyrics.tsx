@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { LyricsSettings } from "@/types/lyrics";
 import { supabase } from "@/utils/supabase/client";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: () => (
@@ -65,13 +66,13 @@ type AnimationVariants = {
 // Move animation variants outside component to prevent recreation
 const ANIMATION_VARIANTS: AnimationVariants = {
   scale: {
-    initial: { scale: 1 },
+    initial: { scale: 1, opacity: 1 },
     animate: (isCurrentLine) => ({
       scale: isCurrentLine ? 1.15 : 1,
     }),
   },
   glow: {
-    initial: { textShadow: "0 0 0px rgba(255,255,255,0)" },
+    initial: { textShadow: "0 0 0px rgba(255,255,255,0)", opacity: 1 },
     animate: (isCurrentLine) => ({
       textShadow: isCurrentLine
         ? "0 0 20px rgba(255,255,255,0.8)"
@@ -79,7 +80,7 @@ const ANIMATION_VARIANTS: AnimationVariants = {
     }),
   },
   slide: {
-    initial: { x: 0 },
+    initial: { x: 0, opacity: 1 },
     animate: (isCurrentLine) => ({
       x: isCurrentLine ? 20 : 0,
     }),
@@ -87,11 +88,11 @@ const ANIMATION_VARIANTS: AnimationVariants = {
   fade: {
     initial: { opacity: 0.6 },
     animate: (isCurrentLine) => ({
-      opacity: isCurrentLine ? 1 : 0.6,
+      opacity: isCurrentLine ? 1 : 0.2,
     }),
   },
   bounce: {
-    initial: { y: 0 },
+    initial: { y: 0, opacity: 1 },
     animate: (isCurrentLine) => ({
       y: isCurrentLine ? -10 : 0,
     }),
@@ -109,6 +110,8 @@ function LyricsSection() {
   const [mockTime, setMockTime] = useState(0);
   const [hideExampleLyrics, setHideExampleLyrics] = useState(true);
   const [isVideoAvailable, setIsVideoAvailable] = useState(false);
+  const [previewSettings, setPreviewSettings] =
+    useState<LyricsSettings>(settings);
 
   const {
     track: currentTrack,
@@ -126,6 +129,17 @@ function LyricsSection() {
   });
 
   const videoLink = useBackgroundVideo(currentTrack?.id);
+
+  // Move helper function inside component where formatColor is available
+  const getBackgroundStyle = useCallback(
+    (color: string) => {
+      if (color.includes("gradient")) {
+        return { backgroundImage: color };
+      }
+      return { backgroundColor: formatColor(color) };
+    },
+    [formatColor]
+  );
 
   // Throttle container width updates more aggressively
   useEffect(() => {
@@ -218,61 +232,62 @@ function LyricsSection() {
 
   // Update the renderLyrics function
   const renderLyrics = useCallback(
-    (lyricsToRender: typeof lyrics, isPlaceholder = false) => {
-      if (!lyricsToRender) return null;
-
-      const currentTime = isPlaceholder ? mockTime : currentTrack?.elapsed || 0;
-      const currentLineIndex = lyricsToRender.findIndex((line, index, arr) => {
-        const nextLine = arr[index + 1];
-        return (
-          currentTime >= line.startTimeMs &&
-          currentTime < (nextLine?.startTimeMs ?? Infinity)
-        );
-      });
-
-      return lyricsToRender.map((line, index) => {
-        const isCurrentLine = index === currentLineIndex;
-        const displayedText = settings.hideExplicitContent
-          ? censorExplicitContent(line.words)
-          : line.words;
-
-        const variant = ANIMATION_VARIANTS[settings.animationStyle];
+    (lyrics: any[], isExample = false) => {
+      return lyrics.map((line: any, index: number) => {
+        const isCurrentLine = currentTrack?.elapsed
+          ? currentTrack.elapsed >= line.startTimeMs &&
+            (index === lyrics.length - 1 ||
+              currentTrack.elapsed < lyrics[index + 1].startTimeMs)
+          : false;
 
         return (
-          <motion.p
-            key={index}
-            initial={variant.initial}
-            animate={variant.animate(isCurrentLine)}
-            transition={{
-              duration: settings.animationSpeed / 1000,
-              ease: settings.animationEasing,
-              ...(settings.animationStyle === "bounce" && {
-                type: "spring",
-                stiffness: 500,
-                damping: 20,
-              }),
-            }}
+          <motion.div
+            key={`${line.words}-${index}`}
+            className={cn(
+              "py-1",
+              isExample && "opacity-50",
+              !isExample &&
+                "cursor-pointer hover:opacity-80 transition-opacity",
+              previewSettings.textAlign === "left" && "text-left",
+              previewSettings.textAlign === "center" && "text-center",
+              previewSettings.textAlign === "right" && "text-right"
+            )}
             style={{
-              ...getTextStyle(isCurrentLine),
-              opacity: isPlaceholder ? (isCurrentLine ? 0.8 : 0.5) : 1,
+              fontSize: `${previewSettings.fontSize}px`,
+              lineHeight: `${previewSettings.lineHeight}`,
+              color: isCurrentLine
+                ? formatColor(previewSettings.currentTextColor)
+                : formatColor(previewSettings.textColor),
+              textShadow: previewSettings.glowEffect
+                ? `0 0 ${previewSettings.glowIntensity}px ${formatColor(
+                    previewSettings.glowColor
+                  )}`
+                : "none",
+              transform: isCurrentLine
+                ? `scale(${previewSettings.currentLineScale})`
+                : "scale(1)",
+              transformOrigin:
+                previewSettings.textAlign === "left"
+                  ? "left center"
+                  : previewSettings.textAlign === "right"
+                    ? "right center"
+                    : "center center",
             }}
-            className="text-center"
+            initial="initial"
+            animate="animate"
+            variants={ANIMATION_VARIANTS[previewSettings.animationStyle]}
+            custom={isCurrentLine}
+            transition={{
+              duration: previewSettings.animationSpeed / 1000,
+              ease: previewSettings.animationEasing,
+            }}
           >
-            {displayedText}
-          </motion.p>
+            {line.words}
+          </motion.div>
         );
       });
     },
-    [
-      currentTrack?.elapsed,
-      mockTime,
-      settings.hideExplicitContent,
-      settings.animationStyle,
-      settings.animationSpeed,
-      settings.animationEasing,
-      censorExplicitContent,
-      getTextStyle,
-    ]
+    [previewSettings, currentTrack?.elapsed, formatColor, ANIMATION_VARIANTS]
   );
 
   // Update the scrolling effect
@@ -403,83 +418,107 @@ function LyricsSection() {
 
   const FadeOverlay = useMemo(
     () =>
-      settings.showFade && !settings.greenScreenMode ? (
+      previewSettings.showFade && !previewSettings.greenScreenMode ? (
         <>
           <div
             className="absolute z-40 left-0 right-0 pointer-events-none"
             style={{
-              top: `${settings.padding}px`,
-              height: `${settings.fadeDistance}px`,
-              background: `linear-gradient(to bottom, ${formatColor(
-                settings.backgroundColor
-              )}, rgba(0,0,0,0))`,
+              top: `${previewSettings.padding}px`,
+              height: `${previewSettings.fadeDistance}px`,
+              background: `linear-gradient(to bottom, ${
+                previewSettings.backgroundColor.includes("gradient")
+                  ? "rgba(0,0,0,1)" // Use black for gradient backgrounds
+                  : formatColor(previewSettings.backgroundColor)
+              }, rgba(0,0,0,0))`,
             }}
           />
           <div
             className="absolute z-40 left-0 right-0 pointer-events-none"
             style={{
-              bottom: `${settings.padding}px`,
-              height: `${settings.fadeDistance}px`,
-              background: `linear-gradient(to top, ${formatColor(
-                settings.backgroundColor
-              )}, rgba(0,0,0,0))`,
+              bottom: `${previewSettings.padding}px`,
+              height: `${previewSettings.fadeDistance}px`,
+              background: `linear-gradient(to top, ${
+                previewSettings.backgroundColor.includes("gradient")
+                  ? "rgba(0,0,0,1)" // Use black for gradient backgrounds
+                  : formatColor(previewSettings.backgroundColor)
+              }, rgba(0,0,0,0))`,
             }}
           />
         </>
       ) : null,
-    [settings, formatColor]
+    [previewSettings, formatColor]
   );
 
-  // Memoize the preview content with split components
+  // Update the no lyrics message
+  const NoLyricsMessage = useMemo(() => {
+    if (isLyricsLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Spinner className="w-[30px] h-[30px] dark:fill-white" />
+        </div>
+      );
+    }
+
+    if (noLyricsAvailable && currentTrack?.title) {
+      return (
+        <p className="text-muted-foreground">
+          No lyrics available for "{currentTrack.title}"
+        </p>
+      );
+    }
+
+    if (!lyrics?.length) {
+      return (
+        <p className="text-muted-foreground">
+          Play a song on Spotify to see lyrics
+        </p>
+      );
+    }
+
+    return null;
+  }, [isLyricsLoading, noLyricsAvailable, currentTrack?.title, lyrics]);
+
+  // Update the preview content
   const LyricsPreview = useMemo(
     () => (
       <div
         className="h-full w-full relative"
         style={{
-          backgroundColor: settings.greenScreenMode
-            ? "#00FF00"
-            : formatColor(settings.backgroundColor),
-          padding: `${settings.padding}px`,
+          ...getBackgroundStyle(
+            previewSettings.greenScreenMode
+              ? "#00FF00"
+              : previewSettings.backgroundColor
+          ),
+          padding: `${previewSettings.padding}px`,
         }}
       >
         {VideoBackground}
         {FadeOverlay}
         <div
           ref={lyricsContainerRef}
-          className="w-full overflow-y-auto scrollbar-hide relative z-20"
+          className="w-full overflow-visible scrollbar-hide relative z-20"
           style={{
-            fontFamily: `'${settings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
+            fontFamily: `'${previewSettings.fontFamily}', 'Sofia Sans Condensed', sans-serif`,
+            color: formatColor(previewSettings.textColor),
             scrollBehavior: "smooth",
-            transition: `all ${settings.animationSpeed}ms ${settings.animationEasing}`,
+            transition: `all ${previewSettings.animationSpeed}ms ${previewSettings.animationEasing}`,
           }}
         >
-          <div className="text-center">
-            {isLyricsLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <Spinner className="w-[30px] h-[30px] dark:fill-white" />
-              </div>
-            ) : lyrics?.length ? (
-              renderLyrics(lyrics, false)
-            ) : !hideExampleLyrics ? (
-              renderLyrics(PLACEHOLDER_LYRICS, true)
-            ) : (
-              <p className="text-muted-foreground">
-                Play a song on Spotify to see lyrics
-              </p>
-            )}
-          </div>
+          {NoLyricsMessage ||
+            (lyrics?.length ? renderLyrics(lyrics, false) : null)}
         </div>
       </div>
     ),
     [
-      settings,
+      previewSettings,
+      getBackgroundStyle,
       isLyricsLoading,
       lyrics,
       renderLyrics,
       formatColor,
       VideoBackground,
       FadeOverlay,
-      hideExampleLyrics,
+      NoLyricsMessage,
     ]
   );
 
@@ -492,7 +531,12 @@ function LyricsSection() {
     [user?.id, updateSettings]
   );
 
-  // Pass the wrapped version to LyricsSettingsForm
+  // Add handler for preview updates
+  const handlePreviewUpdate = useCallback((newSettings: LyricsSettings) => {
+    setPreviewSettings(newSettings);
+  }, []);
+
+  // Pass the preview settings to components that need it
   const LyricsSettings = (
     <div className="flex flex-col">
       <>
@@ -520,6 +564,7 @@ function LyricsSection() {
           <LyricsSettingsForm
             settings={settings}
             onSettingsChange={handleSettingsUpdate}
+            onPreviewUpdate={handlePreviewUpdate}
             publicUrl={publicUrl}
             onCopyPublicUrl={handleCopyPublicUrl}
             fontFamilies={fontFamilies}
@@ -538,6 +583,11 @@ function LyricsSection() {
     setIsVideoAvailable(!!videoLink);
   }, [videoLink]);
 
+  // Update previewSettings when settings change
+  useEffect(() => {
+    setPreviewSettings(settings);
+  }, [settings]);
+
   // Load settings on mount
   useEffect(() => {
     async function loadSettings() {
@@ -553,6 +603,8 @@ function LyricsSection() {
 
         if (data?.lyrics_settings) {
           await updateSettings(data.lyrics_settings, user.id);
+          // Also update preview settings with loaded data
+          setPreviewSettings(data.lyrics_settings);
         }
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -613,7 +665,23 @@ function LyricsSection() {
 
   return (
     <div>
-      <WidgetLayout preview={LyricsPreview} settings={LyricsSettings} />
+      <WidgetLayout
+        preview={LyricsPreview}
+        settings={
+          <LyricsSettingsForm
+            settings={settings}
+            onSettingsChange={handleSettingsUpdate}
+            onPreviewUpdate={handlePreviewUpdate}
+            publicUrl={publicUrl}
+            onCopyPublicUrl={handleCopyPublicUrl}
+            fontFamilies={fontFamilies}
+            isFontLoading={isFontLoading}
+            injectFont={injectFont}
+            isVideoAvailable={isVideoAvailable}
+            isLyricsLoading={isLyricsLoading}
+          />
+        }
+      />
       <Dialog
         open={isSpotifyTokenDialogOpen}
         onOpenChange={setIsSpotifyTokenDialogOpen}

@@ -66,7 +66,8 @@ module.exports = {
           "5": "hsl(var(--chart-5))",
         },
         boxShadow: {
-          text: '5px 5px 10px rgba(139, 92, 246, 0.5)', // Custom shadow
+          text: '5px 5px 10px rgba(139, 92, 246, 0.5)',
+          'solid': '20px 20px 0 0 rgb(0 0 0)',
         },
       },
       borderRadius: {
@@ -147,7 +148,7 @@ module.exports = {
   plugins: [
     require("tailwindcss-animate"),
     require("tailwind-scrollbar-hide"),
-    require("tailwindcss-spring"),
+    require('tailwindcss-spring'),
     require("@tailwindcss/typography"),
     scrollbarPlugin({ nocompatible: true }),
     addVariablesForColors,

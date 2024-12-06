@@ -1,6 +1,9 @@
 {
-  "name": "livestreaming-tools",
+  "name": "lst-start",
   "private": true,
+  "prisma": {
+    "schema": "backend/prisma/schema.prisma"
+  },
   "workspaces": [
     "web",
     "backend",
@@ -20,16 +23,35 @@
     "build:backend": "cd backend && bun run build",
     "build:native": "cd native && bun run tauri build",
     "build:extensions": "cd extensions/chrome && bun run build",
+    "generate-types": "npm run generate:prisma && npm run generate:supabase",
+    "generate:prisma": "cd backend && prisma generate",
+    "generate:supabase": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > web/app/types/supabase.ts",
     "test": "bun run test:all",
     "test:all": "bun run --parallel test:web test:backend test:native",
     "test:web": "cd web && bun run test",
     "test:backend": "cd backend && bun run test",
     "test:native": "cd native && bun run test",
-    "prisma:generate": "cd backend && bunx prisma generate",
-    "prisma:migrate": "cd backend && bunx prisma migrate dev",
-    "prisma:studio": "cd backend && bunx prisma studio"
+    "prisma:generate": "cd backend && prisma generate",
+    "prisma:push": "cd backend && prisma db push",
+    "prisma:pull": "cd backend && prisma db pull",
+    "prisma:studio": "cd backend && prisma studio",
+    "prisma:format": "cd backend && prisma format",
+    "prisma:migrate": "cd backend && prisma migrate dev",
+    "setup": "bun install && mkdir -p .husky && bunx husky install && bunx husky add .husky/pre-commit \"bun run pre-commit\"",
+    "pre-commit": "bun run generate-types && git add web/app/types/supabase.ts backend/prisma/generated"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "husky": "^8.0.0",
+    "nodemon": "^3.0.0"
+  },
+  "dependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "husky": "^9.1.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.53.2",
+    "tailwindcss-spring": "^1.0.1"
   }
 }

@@ -48,4 +48,8 @@ native/src-tauri/icons/*
 # Temp files
 **/tmp/
 **/temp/
-**/.cache 
+**/.cache
+
+# Generated files
+web/app/types/supabase.ts
+backend/prisma/generated

@@ -13,10 +13,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@lst/shared/*": ["shared/src/*"],
-      "@lst/web/*": ["web/src/*"],
-      "@lst/backend/*": ["backend/src/*"],
-      "@lst/native/*": ["native/src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

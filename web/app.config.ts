@@ -6,12 +6,12 @@ import babel from "vite-plugin-babel";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   server: {
     preset: "node-server",
+    compatibilityDate: "2024-12-03",
   },
   vite: {
     resolve: {

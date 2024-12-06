@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@clerk/tanstack-start";
+import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";
 import { SpotifyTrack } from "@/types/spotify";
 import { profanity } from "@2toad/profanity";
-import { supabase } from "@/utils/supabase/client";
-import { RealtimeChannel } from "@supabase/supabase-js";
-import type { Database } from "@/types/supabase";
+import { usePlaybackPolling } from "@/store/playbackStore";
 
 interface UseLyricsProps {
-  track?: SpotifyTrack | null;
   settings?: any;
   onError?: (error: Error) => void;
 }
@@ -17,21 +14,13 @@ interface LyricsLine {
   words: string;
 }
 
-type VisualizerWidget = Database["public"]["Tables"]["VisualizerWidget"]["Row"];
-
-export const useLyrics = ({
-  track: initialTrack,
-  settings,
-}: UseLyricsProps = {}) => {
-  const { userId, getToken } = useAuth();
-  const [track, setTrack] = useState<SpotifyTrack | null>(initialTrack || null);
+export const useLyrics = ({ settings }: UseLyricsProps = {}) => {
+  const { isSessionActive, sessionStatus } = useElysiaSessionContext();
+  const { track } = usePlaybackPolling();
   const [lyrics, setLyrics] = useState<LyricsLine[] | null>(null);
   const [isLyricsLoading, setIsLyricsLoading] = useState(false);
   const [lyricsError, setLyricsError] = useState<string | null>(null);
   const [noLyricsAvailable, setNoLyricsAvailable] = useState(false);
-  const [isUnauthorized, setIsUnauthorized] = useState(false);
-  const [isTokenSet, setIsTokenSet] = useState(false);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const formatColor = useCallback((color: any): string => {
     if (!color) return "rgba(0, 0, 0, 1)";
@@ -163,48 +152,24 @@ export const useLyrics = ({
     [settings]
   );
 
-  const fetchLyrics = useCallback(
-    async (trackId: string) => {
-      console.log("Fetching lyrics for track:", trackId);
+  // Fetch lyrics when track changes
+  useEffect(() => {
+    if (!track?.id) return;
+
+    const fetchLyrics = async () => {
       setIsLyricsLoading(true);
-      setLyricsError(null);
-      setNoLyricsAvailable(false);
-      setIsUnauthorized(false);
       try {
-        const token = await getToken({ template: "lstio" });
-        if (!token) throw new Error("No authorization token available");
-
         const response = await fetch(
-          `${import.meta.env.VITE_ELYSIA_API_URL}/api/spotify/lyrics/${trackId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `${import.meta.env.VITE_ELYSIA_API_URL}/api/spotify/lyrics/${track.id}`
         );
-
-        console.log("Lyrics response:", response);
-
-        if (response.status === 401) {
-          setIsUnauthorized(true);
-          setIsTokenSet(false);
-          throw new Error("Unauthorized: Spotify token required");
-        }
 
         if (!response.ok) {
           throw new Error(`Failed to fetch lyrics: ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log("Lyrics data:", data);
-
-        if (
-          data.lyrics &&
-          Array.isArray(data.lyrics.lines) &&
-          data.lyrics.lines.length > 0
-        ) {
+        if (data.lyrics?.lines?.length > 0) {
           setLyrics(data.lyrics.lines);
-          setIsTokenSet(true);
         } else {
           setNoLyricsAvailable(true);
           setLyrics(null);
@@ -214,152 +179,13 @@ export const useLyrics = ({
         setLyricsError(
           error instanceof Error ? error.message : "An error occurred"
         );
-        setNoLyricsAvailable(true);
-        setLyrics(null);
       } finally {
         setIsLyricsLoading(false);
       }
-    },
-    [getToken]
-  );
-
-  const fetchInitialTrackData = useCallback(async () => {
-    if (!userId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("VisualizerWidget")
-        .select("track")
-        .eq("user_id", userId)
-        .single();
-
-      if (error) throw error;
-
-      if (data?.track) {
-        let trackString =
-          typeof data.track === "string"
-            ? data.track
-            : JSON.stringify(data.track);
-
-        trackString = trackString
-          .replace(/\bNaN\b/g, "null")
-          .replace(/\bbars\b(?=\s*:)/g, '"bars"')
-          .replace(/\bbeats\b(?=\s*:)/g, '"beats"')
-          .replace(/\bsections\b(?=\s*:)/g, '"sections"')
-          .replace(/\btempo\b(?=\s*:)/g, '"tempo"')
-          .replace(/\btime_signature\b(?=\s*:)/g, '"time_signature"');
-
-        const trackData = JSON.parse(trackString);
-        if (trackData && trackData.id) {
-          setTrack(trackData);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching initial track data:", error);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (!userId) {
-      console.log("No userId available for Supabase subscription");
-      return;
-    }
-
-    console.log("Setting up Supabase subscription for user:", userId);
-
-    fetchInitialTrackData();
-
-    const channel = supabase
-      .channel(`public:VisualizerWidget:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "VisualizerWidget",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload: any) => {
-          console.log("Received Supabase payload:", payload);
-          const { new: newData } = payload;
-
-          if (newData?.track) {
-            try {
-              let trackString =
-                typeof newData.track === "string"
-                  ? newData.track
-                  : JSON.stringify(newData.track);
-
-              trackString = trackString
-                .replace(/\bNaN\b/g, "null")
-                .replace(/\bbars\b(?=\s*:)/g, '"bars"')
-                .replace(/\bbeats\b(?=\s*:)/g, '"beats"')
-                .replace(/\bsections\b(?=\s*:)/g, '"sections"')
-                .replace(/\btempo\b(?=\s*:)/g, '"tempo"')
-                .replace(/\btime_signature\b(?=\s*:)/g, '"time_signature"');
-
-              console.log("Preprocessed track string:", trackString);
-
-              const trackData = JSON.parse(trackString);
-
-              if (!trackData || typeof trackData !== "object") {
-                console.warn("Invalid track data received:", trackData);
-                return;
-              }
-
-              if (!trackData.id) {
-                console.warn("Track data missing ID:", trackData);
-                return;
-              }
-
-              setTrack(trackData);
-            } catch (error) {
-              console.error("Error parsing track data:", error);
-              console.error("Failed to parse string:", newData.track);
-            }
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log("Supabase subscription status:", status);
-        channelRef.current = channel;
-      });
-
-    return () => {
-      console.log("Cleaning up Supabase subscription");
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
     };
-  }, [userId, fetchInitialTrackData]);
 
-  useEffect(() => {
-    console.log("Track effect triggered:", {
-      hasTrackId: !!track?.id,
-      trackState: track,
-      isDevelopment: process.env.NODE_ENV === "development",
-    });
-
-    if (track?.id || process.env.NODE_ENV === "development") {
-      console.log("Track data in useLyrics:", {
-        id: track?.id,
-        elapsed: track?.elapsed,
-        track,
-      });
-    }
-
-    if (track?.id) {
-      console.log("Fetching lyrics for track:", track.id);
-      fetchLyrics(track.id);
-    } else {
-      console.log("No track ID available, clearing lyrics state");
-      setNoLyricsAvailable(true);
-      setLyrics(null);
-      setLyricsError(null);
-      setIsUnauthorized(false);
-    }
-  }, [track?.id, fetchLyrics]);
+    fetchLyrics();
+  }, [track?.id]);
 
   return {
     track,
@@ -367,8 +193,7 @@ export const useLyrics = ({
     isLyricsLoading,
     lyricsError,
     noLyricsAvailable,
-    isUnauthorized,
-    isTokenSet,
+    isSessionReady: isSessionActive && sessionStatus.spotify.isConnected,
     formatColor,
     censorExplicitContent,
     truncateText,

@@ -12,7 +12,7 @@ export function HorizontalNav() {
   return (
     <div className="mb-2">
       <nav className="hidden md:block">
-        <div className="rounded-lg bg-white/10 p-2">
+        <div className="rounded-lg bg-white/10 dark:p-2">
           <div className="flex flex-col">
             <div className="flex items-center space-x-2 shadow-inner pt-2 dark:pt-0">
               {navItems.map((item) => {
