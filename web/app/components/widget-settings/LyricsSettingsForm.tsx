@@ -1,9 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
-
+import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Slider } from "@/components/ui/slider";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -191,7 +189,7 @@ const SliderWithInput = React.forwardRef<
 
 SliderWithInput.displayName = "SliderWithInput";
 
-type FormField = ControllerRenderProps<z.infer<typeof lyricsSchema>>;
+type FormField = ControllerRenderProps<z.infer<typeof lyricsSchema>, string>;
 
 export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
   settings,
@@ -370,7 +368,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="backgroundColor"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <FormLabel>Background Color</FormLabel>
                             <GradientColorPicker
@@ -392,7 +390,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="fontFamily"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <FormLabel>Font Family</FormLabel>
                             <Select
@@ -447,7 +445,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="textColor"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <FormLabel>Text Color</FormLabel>
                               <GradientColorPicker
@@ -469,7 +467,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="currentTextColor"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <FormLabel>Current Line Color</FormLabel>
                               <GradientColorPicker
@@ -494,7 +492,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="fontSize"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <FormLabel>Font Size</FormLabel>
                               <Slider
@@ -514,7 +512,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="lineHeight"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 label="Line Height"
@@ -535,7 +533,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="padding"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 min={0}
@@ -555,7 +553,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="margin"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 min={0}
@@ -577,7 +575,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="textAlign"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <FormLabel>Text Alignment</FormLabel>
                             <Select
@@ -605,7 +603,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="textShadowColor"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <FormLabel>Text Shadow Color</FormLabel>
                             <GradientColorPicker
@@ -627,7 +625,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="textShadowBlur"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 label="Shadow Blur"
@@ -648,7 +646,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="textShadowOffsetX"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 label="Shadow Offset X"
@@ -672,7 +670,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="textShadowOffsetY"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 label="Shadow Offset Y"
@@ -711,7 +709,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="animationStyle"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <FormLabel>Animation Style</FormLabel>
                             <Select
@@ -740,7 +738,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="animationSpeed"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <SliderWithInput
                               label="Animation Speed (ms)"
@@ -761,7 +759,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="animationEasing"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem>
                             <FormLabel>Animation Easing</FormLabel>
                             <Select
@@ -820,7 +818,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="greenScreenMode"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5 space-x-0.5">
                               <FormLabel>Green Screen Mode</FormLabel>
@@ -846,7 +844,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="glowEffect"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5 space-x-0.5">
                               <FormLabel>Glow Effect</FormLabel>
@@ -871,7 +869,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                           <FormField
                             control={form.control}
                             name="glowColor"
-                            render={({ field }) => (
+                            render={({ field }: { field: FormField }) => (
                               <FormItem>
                                 <FormLabel>Glow Color</FormLabel>
                                 <GradientColorPicker
@@ -893,7 +891,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                           <FormField
                             control={form.control}
                             name="glowIntensity"
-                            render={({ field }) => (
+                            render={({ field }: { field: FormField }) => (
                               <FormItem>
                                 <FormLabel>Glow Intensity</FormLabel>
                                 <Slider
@@ -916,7 +914,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="showFade"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                             <div className="space-y-0.5 space-x-0.5">
                               <FormLabel>Fade top and bottom</FormLabel>
@@ -941,7 +939,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="fadeDistance"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <SliderWithInput
                                 label="Fade Distance"
@@ -963,7 +961,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                       <FormField
                         control={form.control}
                         name="showVideoCanvas"
-                        render={({ field }) => (
+                        render={({ field }: { field: FormField }) => (
                           <FormItem
                             className={cn(
                               "relative overflow-hidden",
@@ -1024,7 +1022,7 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                         <FormField
                           control={form.control}
                           name="videoCanvasOpacity"
-                          render={({ field }) => (
+                          render={({ field }: { field: FormField }) => (
                             <FormItem>
                               <FormLabel>Video Canvas Opacity</FormLabel>
                               <Slider

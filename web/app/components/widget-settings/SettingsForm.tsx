@@ -37,10 +37,8 @@ type SettingName =
   | "textAlign";
 
 interface SettingsFormProps {
-  handleSettingChange: (key: SettingName, value: any) => void;
-  handleSettingCommit: (key: SettingName, value: any) => void;
-  currentProfile: WidgetProfile;
-  colorSyncEnabled?: boolean;
+  settings: VisualizerSettings;
+  onSettingsChange: (newSettings: Partial<VisualizerSettings>) => void;
 }
 
 interface GoogleFont {
@@ -61,16 +59,19 @@ const defaultSettings = {
   textAlign: "left" as const,
 };
 
+interface FieldProps {
+  value: number;
+  onChange: (value: number) => void;
+}
+
 export const SettingsForm: React.FC<SettingsFormProps> = ({
-  handleSettingChange,
-  handleSettingCommit,
-  currentProfile,
-  colorSyncEnabled = false,
+  settings,
+  onSettingsChange,
 }) => {
   const methods = useForm({
     defaultValues: {
       ...defaultSettings,
-      ...currentProfile?.settings?.commonSettings,
+      ...settings?.commonSettings,
     },
     mode: "onChange",
   });
@@ -87,15 +88,15 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
         });
 
         // Notify parent
-        if (handleSettingChange) {
-          console.log("📤 Calling handleSettingChange:", { name, value });
-          handleSettingChange(name, value);
+        if (onSettingsChange) {
+          console.log("📤 Calling onSettingsChange:", { name, value });
+          onSettingsChange({ [name]: value });
         }
       } catch (error) {
         console.error("❌ Error in onFieldChange:", error);
       }
     },
-    [methods, handleSettingChange]
+    [methods, onSettingsChange]
   );
 
   // Font loading
@@ -123,7 +124,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                 <FormField
                   control={methods.control}
                   name="fontSize"
-                  render={({ field }) => (
+                  render={({ field }: { field: FieldProps }) => (
                     <FormItem>
                       <FormLabel>Font Size</FormLabel>
                       <FormControl>
@@ -141,8 +142,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                     </FormItem>
                   )}
                 />
-
-                {/* Other form fields... */}
               </div>
             </AccordionContent>
           </AccordionItem>

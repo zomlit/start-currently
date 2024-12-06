@@ -5,6 +5,7 @@ const commonSettingsSchema = z.object({
   fontFamily: z.string().optional(),
   fontVariant: z.string().optional(),
   fontSize: z.number().optional(),
+  fontWeight: z.union([z.number(), z.string()]).optional(),
   textColor: z.string().optional(),
   backgroundColor: z.string().optional(),
   borderColor: z.string().optional(),
@@ -13,6 +14,9 @@ const commonSettingsSchema = z.object({
   borderWidth: z.number().optional(),
   padding: z.number().optional(),
   gap: z.number().optional(),
+  lineHeight: z.union([z.string(), z.number()]).optional(),
+  letterSpacing: z.number().optional(),
+  textAlign: z.string().optional(),
 });
 
 export const WidgetTypeSchema = z.enum([
@@ -78,6 +82,11 @@ export const visualizerSettingsSchema = z.object({
   reflexBright: z.number().min(0).max(2).default(1),
   mirror: z.number().min(0).max(3).default(0),
   splitGradient: z.boolean().default(false),
+  enableTextShadow: z.boolean().default(false),
+  textShadowColor: z.string().optional(),
+  textShadowHorizontal: z.number().optional(),
+  textShadowVertical: z.number().optional(),
+  textShadowBlur: z.number().optional(),
 });
 
 export type VisualizerSettings = z.infer<typeof visualizerSettingsSchema>;
@@ -110,3 +119,5 @@ export type WidgetType =
   | "gamepad"
   | "chat"
   | "overlay";
+
+export type CommonSettings = z.infer<typeof commonSettingsSchema>;

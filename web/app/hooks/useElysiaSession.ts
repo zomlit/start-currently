@@ -27,6 +27,32 @@ export const useElysiaSession = (broadcastChannel: string) => {
   const serverCheckCooldown = 60000; // 1 minute cooldown
   const [manuallyStoppedSession, setManuallyStoppedSession] = useState(false);
 
+  useEffect(() => {
+    if (!userId) return;
+
+    const isValid = useSessionStore.getState().isSessionValid();
+    if (isValid) {
+      setIsSessionActive(true);
+    } else {
+      useSessionStore.getState().clearSession();
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (isSessionActive && userId) {
+      sessionStorage.setItem(
+        "elysia_session",
+        JSON.stringify({
+          isActive: true,
+          userId,
+          timestamp: Date.now(),
+        })
+      );
+    } else {
+      sessionStorage.removeItem("elysia_session");
+    }
+  }, [isSessionActive, userId]);
+
   const checkServerAvailability = useCallback(async () => {
     const now = Date.now();
     if (now - lastServerCheckAttempt.current < serverCheckCooldown) {
@@ -80,6 +106,13 @@ export const useElysiaSession = (broadcastChannel: string) => {
       console.log("Session start attempt too soon, skipping");
       return;
     }
+
+    if (useSessionStore.getState().isSessionValid()) {
+      console.log("Valid session exists, skipping start");
+      setIsSessionActive(true);
+      return;
+    }
+
     lastSessionStartAttempt.current = now;
 
     const twitchToken = oauthTokens.twitch?.[0]?.token;
@@ -143,6 +176,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
       toast.success({
         title: "Session started successfully",
       });
+
+      useSessionStore.getState().initializeSession(userId);
     } catch (error) {
       console.error("Failed to start session:", error);
       toast.error({
@@ -171,6 +206,8 @@ export const useElysiaSession = (broadcastChannel: string) => {
   const stopSession = useCallback(async () => {
     try {
       setManuallyStoppedSession(true);
+      useSessionStore.getState().clearSession();
+      sessionStorage.removeItem("elysia_session");
       const clerkToken = await getValidClerkToken();
       const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
       if (!apiUrl) {
@@ -278,6 +315,89 @@ export const useElysiaSession = (broadcastChannel: string) => {
       setManuallyStoppedSession(false);
     }
   }, [twitchToken, spotifyRefreshToken, userId, sessionId]);
+
+  useEffect(() => {
+    if (!isSessionActive || !userId) return;
+
+    const pingSession = async () => {
+      try {
+        const clerkToken = await getValidClerkToken();
+        const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
+        if (!apiUrl) return;
+
+        // const response = await fetch(`${apiUrl}/api/session/ping`, {
+        //   method: "POST",
+        //   headers: {
+        //     Authorization: `Bearer ${clerkToken}`,
+        //     "X-User-Id": userId,
+        //   },
+        // });
+
+        // if (!response.ok) {
+        //   console.warn("Session ping failed, attempting to restore session");
+        //   await startSession();
+        // }
+      } catch (error) {
+        console.error("Error pinging session:", error);
+      }
+    };
+
+    // Ping every 30 seconds to keep session alive
+    const interval = setInterval(pingSession, 30000);
+    return () => clearInterval(interval);
+  }, [isSessionActive, userId, getValidClerkToken]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const restoreSession = async () => {
+      const isValid = useSessionStore.getState().isSessionValid();
+      if (isValid) {
+        try {
+          const clerkToken = await getValidClerkToken();
+          const apiUrl = import.meta.env.VITE_ELYSIA_API_URL;
+
+          // First verify the session
+          const verifyResponse = await fetch(`${apiUrl}/api/session/verify`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${clerkToken}`,
+              "X-User-Id": userId,
+            },
+          });
+
+          const verifyData = await verifyResponse.json();
+
+          if (verifyResponse.ok && verifyData.isActive) {
+            setIsSessionActive(true);
+          } else if (verifyResponse.ok && !verifyData.isActive) {
+            // If verification shows inactive, attempt to restore
+            const restoreResponse = await fetch(
+              `${apiUrl}/api/session/restore`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${clerkToken}`,
+                  "X-User-Id": userId,
+                },
+              }
+            );
+
+            if (restoreResponse.ok) {
+              setIsSessionActive(true);
+            } else {
+              useSessionStore.getState().clearSession();
+            }
+          }
+        } catch (error) {
+          console.error("Error restoring session:", error);
+          useSessionStore.getState().clearSession();
+        }
+      }
+    };
+
+    restoreSession();
+  }, [userId]);
 
   return {
     isSessionActive,

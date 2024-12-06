@@ -4,10 +4,12 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  lazy,
+  Suspense,
 } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useLyricsStore } from "@/store/lyricsStore";
-import { useLyrics } from "@/hooks/useLyrics";
+import { useLyrics, type LyricsLine } from "@/hooks/useLyrics";
 import { useBackgroundVideo } from "@/hooks/useBackgroundVideo";
 import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 import { LyricsSettingsForm } from "@/components/widget-settings/LyricsSettingsForm";
@@ -97,6 +99,26 @@ const ANIMATION_VARIANTS: AnimationVariants = {
       y: isCurrentLine ? -10 : 0,
     }),
   },
+};
+
+// Create a client-only wrapper for the color picker
+const ClientOnlyColorPicker = lazy(() =>
+  import("@uiw/react-color").then((mod) => ({
+    default: mod.ChromePicker,
+  }))
+);
+
+// Use Suspense to handle the lazy loading
+const ColorPickerWrapper = (props: any) => {
+  if (typeof window === "undefined") {
+    return null; // Return null during SSR
+  }
+
+  return (
+    <Suspense fallback={<div>Loading color picker...</div>}>
+      <ClientOnlyColorPicker {...props} />
+    </Suspense>
+  );
 };
 
 function LyricsSection() {

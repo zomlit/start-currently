@@ -13,4 +13,6 @@ export const config = {
   ],
   TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID!,
   TWITCH_CLIENT_SECRET: process.env.TWITCH_CLIENT_SECRET!,
+  SPOTIFY_SP_DC: process.env.SPOTIFY_SP_DC!,
+  SPOTIFY_CLIENT_TOKEN: process.env.SPOTIFY_CLIENT_TOKEN!,
 };

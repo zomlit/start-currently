@@ -62,7 +62,24 @@ export async function twitchApiRequest(
   }
 }
 
+interface TwitchUserData {
+  id: string;
+  login: string;
+  display_name: string;
+  type: string;
+  broadcaster_type: string;
+  description: string;
+  profile_image_url: string;
+  offline_image_url: string;
+  view_count: number;
+  created_at: string;
+}
+
 export interface TwitchUserInfo {
+  data?: TwitchUserData[];
+}
+
+export interface CachedTwitchUser {
   id: string;
   login: string;
   display_name: string;
@@ -75,34 +92,46 @@ export async function getUserInfo(
   username: string
 ): Promise<TwitchUserInfo | null> {
   try {
-    // Check if user info is cached in database
     const cachedUser = await prisma.twitchUserCache.findUnique({
       where: { login: username },
     });
 
     if (cachedUser) {
-      return cachedUser;
+      return {
+        data: [
+          {
+            id: cachedUser.id,
+            login: cachedUser.login,
+            display_name: cachedUser.display_name,
+            type: "",
+            broadcaster_type: cachedUser.broadcaster_type,
+            description: cachedUser.description,
+            profile_image_url: cachedUser.profile_image_url,
+            offline_image_url: "",
+            view_count: 0,
+            created_at: new Date().toISOString(),
+          },
+        ],
+      };
     }
 
-    // If not cached, fetch from Twitch API
     const response = await twitchApiRequest(`/users?login=${username}`, "GET");
     if (response.data && response.data.length > 0) {
       const user = response.data[0];
-      const userInfo: TwitchUserInfo = {
-        id: user.id,
-        login: user.login,
-        display_name: user.display_name,
-        profile_image_url: user.profile_image_url,
-        broadcaster_type: user.broadcaster_type,
-        description: user.description,
-      };
 
-      // Cache user info in database
+      // Cache the user data
       await prisma.twitchUserCache.create({
-        data: userInfo,
+        data: {
+          id: user.id,
+          login: user.login,
+          display_name: user.display_name,
+          profile_image_url: user.profile_image_url,
+          broadcaster_type: user.broadcaster_type,
+          description: user.description,
+        },
       });
 
-      return userInfo;
+      return response;
     }
 
     console.warn(`User ${username} not found`);

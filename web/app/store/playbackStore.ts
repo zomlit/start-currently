@@ -1,24 +1,22 @@
 import { create } from "zustand";
 import type { SpotifyTrack } from "@/types/spotify";
-import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";
 
-interface PlaybackState {
+interface PlaybackStore {
   track: SpotifyTrack | null;
   isPlaying: boolean;
   elapsed: number;
-  setTrack: (track: SpotifyTrack | null) => void;
-  setIsPlaying: (isPlaying: boolean) => void;
-  setElapsed: (elapsed: number) => void;
+  pollingInterval: NodeJS.Timeout | null;
   fetchCurrentPlayback: () => Promise<void>;
+  startPolling: () => void;
+  stopPolling: () => void;
 }
 
-export const usePlaybackStore = create<PlaybackState>((set, get) => ({
+export const usePlaybackStore = create<PlaybackStore>((set, get) => ({
   track: null,
   isPlaying: false,
   elapsed: 0,
-  setTrack: (track) => set({ track }),
-  setIsPlaying: (isPlaying) => set({ isPlaying }),
-  setElapsed: (elapsed) => set({ elapsed }),
+  pollingInterval: null,
+
   fetchCurrentPlayback: async () => {
     try {
       const response = await fetch(
@@ -39,27 +37,31 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
       console.error("Error fetching playback:", error);
     }
   },
+
+  startPolling: () => {
+    const { fetchCurrentPlayback, pollingInterval } = get();
+
+    // Clear any existing interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+
+    // Initial fetch
+    void fetchCurrentPlayback();
+
+    // Start new polling
+    const interval = setInterval(() => {
+      void fetchCurrentPlayback();
+    }, 1000);
+
+    set({ pollingInterval: interval });
+  },
+
+  stopPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      set({ pollingInterval: null });
+    }
+  },
 }));
-
-// Hook to manage playback polling
-export const usePlaybackPolling = () => {
-  const { isSessionActive, sessionStatus } = useElysiaSessionContext();
-  const fetchCurrentPlayback = usePlaybackStore(
-    (state) => state.fetchCurrentPlayback
-  );
-
-  useEffect(() => {
-    if (!isSessionActive || !sessionStatus.spotify.isConnected) return;
-
-    fetchCurrentPlayback();
-    const interval = setInterval(fetchCurrentPlayback, 1000);
-
-    return () => clearInterval(interval);
-  }, [isSessionActive, sessionStatus.spotify.isConnected]);
-
-  return usePlaybackStore((state) => ({
-    track: state.track,
-    isPlaying: state.isPlaying,
-    elapsed: state.elapsed,
-  }));
-};

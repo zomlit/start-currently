@@ -13,9 +13,8 @@ import { VisualizerPreview } from "@/components/widget-settings/visualizer/Visua
 import { defaultSettings } from "@/types/visualizer";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { VisualizerSettingsForm } from "@/components/widget-settings/visualizer/VisualizerSettingsForm";
-import { useForm } from "react-hook-form";
 import type { VisualizerSettings } from "@/types/visualizer";
-import { usePlaybackPolling } from "@/store/playbackStore";
+import { usePlaybackPolling } from "@/hooks/usePlaybackPolling";
 
 export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: () => (

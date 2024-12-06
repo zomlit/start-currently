@@ -53,31 +53,27 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
     userId: string
   ) => {
     try {
-      if (!userId) throw new Error("No user ID provided");
-
-      const mergedSettings = {
-        ...defaultLyricsSettings,
-        ...newSettings,
-      };
-
-      // Include all required fields in the upsert
-      const { error } = await supabase.from("VisualizerWidget").upsert(
+      const { data, error } = await supabase.from("VisualizerWidget").upsert(
         {
           user_id: userId,
           type: "lyrics",
+          lyrics_settings: newSettings,
           sensitivity: 1.0,
           colorScheme: "default",
-          lyrics_settings: mergedSettings, // This should be stored as JSONB in Supabase
         },
         {
           onConflict: "user_id",
-          ignoreDuplicates: false,
         }
       );
 
       if (error) throw error;
 
-      set({ settings: mergedSettings });
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          ...newSettings,
+        },
+      }));
     } catch (error) {
       console.error("Error in updateSettings:", error);
       throw error;

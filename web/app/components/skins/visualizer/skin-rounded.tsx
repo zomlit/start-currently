@@ -17,12 +17,6 @@ import DynamicBackground from "@/components/widget-settings/visualizer/DynamicBa
 import { useAudioVisualizer } from "@/hooks/useAudioVisualizer";
 import { Spinner } from "@/components/ui/spinner";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Slider } from "@/components/ui/slider";
-import { GradientColorPicker } from "@/components/GradientColorPicker";
-import { Button } from "@/components/ui/button";
 
 interface SkinRoundedProps {
   track?: {
@@ -53,7 +47,30 @@ const containerVariants = {
   hidden: { opacity: 0, scale: 0.95, transition: { duration: 0.3 } },
 };
 
-const TrackProgress = memo(
+interface TrackProgressProps {
+  elapsed: number;
+  duration: number;
+  textStyle: React.CSSProperties;
+  specificSettings: VisualizerSettings;
+  palette: any;
+  commonSettings: CommonSettings;
+}
+
+interface TrackInfoProps {
+  track?: {
+    title: string;
+    artist: string | string[];
+    artwork?: string;
+    id: string;
+  };
+  textStyle: React.CSSProperties;
+  specificSettings: VisualizerSettings;
+  palette: any;
+  commonSettings: CommonSettings;
+  audioMotionRef: React.RefObject<HTMLDivElement>;
+}
+
+const TrackProgress = memo<TrackProgressProps>(
   ({
     elapsed,
     duration,
@@ -216,7 +233,7 @@ const computeTextStyle = (
   };
 };
 
-const TrackInfo = memo(
+const TrackInfo = memo<TrackInfoProps>(
   ({
     track,
     textStyle,
@@ -429,8 +446,8 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                 specificSettings?.canvasEnabled &&
                                 videoLink && (
                                   <motion.video
+                                    key={videoLink}
                                     ref={videoRef}
-                                    key={`${track?.id || "default"}-video`}
                                     autoPlay
                                     loop
                                     muted
@@ -459,7 +476,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                     Your browser does not support the video tag.
                                   </motion.video>
                                 )}
-                              {!isVideoAvailable &&
+                              {/* {!isVideoAvailable &&
                                 specificSettings?.canvasEnabled &&
                                 specificSettings?.albumCanvas && (
                                   <div className="absolute z-20 flex h-full w-full items-center justify-center">
@@ -470,7 +487,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                 <div className="absolute z-30 flex h-full w-full items-center justify-center bg-black bg-opacity-50 text-white">
                                   <p>{videoError}</p>
                                 </div>
-                              )}
+                              )} */}
                               <AnimatePresence initial={false}>
                                 <TrackArtwork
                                   artwork={track?.artwork}

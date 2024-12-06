@@ -14,6 +14,7 @@
 **/build
 **/.vinxi
 **/dist
+**/.turbo
 
 # Environment files
 .env
@@ -53,3 +54,4 @@ native/src-tauri/icons/*
 # Generated files
 web/app/types/supabase.ts
 backend/prisma/generated
+supabase/.temp

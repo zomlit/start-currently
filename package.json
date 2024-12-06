@@ -12,22 +12,19 @@
     "extensions/*"
   ],
   "scripts": {
-    "dev": "bun run dev:all",
-    "dev:all": "bun run prisma:generate && concurrently \"bun run dev:web\" \"bun run dev:backend\" --names \"web,backend\" --prefix-colors \"cyan,yellow,magenta\" --kill-others",
+    "dev": "turbo run dev",
     "dev:web": "cd web && bun run dev",
     "dev:backend": "cd backend && bun run dev",
     "dev:native": "cd native && bun run tauri dev",
-    "build": "bun run build:all",
-    "build:all": "bun run prisma:generate && bun run build:web && bun run build:backend && bun run build:native && bun run build:extensions",
+    "build": "turbo run build",
     "build:web": "cd web && bun run build",
     "build:backend": "cd backend && bun run build",
     "build:native": "cd native && bun run tauri build",
     "build:extensions": "cd extensions/chrome && bun run build",
-    "generate-types": "npm run generate:prisma && npm run generate:supabase",
+    "generate-types": "turbo run generate-types",
     "generate:prisma": "cd backend && prisma generate",
     "generate:supabase": "supabase gen types typescript --project-id aliddllzqrcpzhiouryw > web/app/types/supabase.ts",
-    "test": "bun run test:all",
-    "test:all": "bun run --parallel test:web test:backend test:native",
+    "test": "turbo run test",
     "test:web": "cd web && bun run test",
     "test:backend": "cd backend && bun run test",
     "test:native": "cd native && bun run test",
@@ -38,12 +35,23 @@
     "prisma:format": "cd backend && prisma format",
     "prisma:migrate": "cd backend && prisma migrate dev",
     "setup": "bun install && mkdir -p .husky && bunx husky install && bunx husky add .husky/pre-commit \"bun run pre-commit\"",
-    "pre-commit": "bun run generate-types && git add web/app/types/supabase.ts backend/prisma/generated"
+    "pre-commit": "bun run generate-types && git add web/app/types/supabase.ts || true",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
+    "@turbo/gen": "^2.3.3",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
     "concurrently": "^9.1.0",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
     "husky": "^8.0.0",
-    "nodemon": "^3.0.0"
+    "nodemon": "^3.0.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "turbo": "^2.3.3"
   },
   "dependencies": {
     "@types/react": "^19.0.0",
@@ -53,5 +61,6 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.2",
     "tailwindcss-spring": "^1.0.1"
-  }
+  },
+  "packageManager": "bun@1.0.26"
 }

@@ -1,4 +1,3 @@
-import { useForm, FormProvider } from "react-hook-form";
 import type { VisualizerSettings } from "@/types/visualizer";
 import { SettingsForm } from "./SettingsForm";
 import { useEffect, useCallback } from "react";

@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { LyricsSettings } from '@/types/lyrics';
-import { cn } from '@/lib/utils';
+import React, { useRef, useEffect } from "react";
+import { LyricsSettings } from "@/types/lyrics";
+import { cn } from "@/lib/utils";
 
 interface LyricsDisplayProps {
   lyrics: string[];
@@ -8,26 +8,35 @@ interface LyricsDisplayProps {
   settings: LyricsSettings;
 }
 
-export function LyricsDisplay({ lyrics, currentLine, settings }: LyricsDisplayProps) {
+export function LyricsDisplay({
+  lyrics,
+  currentLine,
+  settings,
+}: LyricsDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (currentLineRef.current && containerRef.current) {
       currentLineRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
+        behavior: "smooth",
+        block: "center",
       });
     }
   }, [currentLine]);
 
   const getTextShadow = () => {
-    const { textShadowColor, textShadowBlur, textShadowOffsetX, textShadowOffsetY } = settings;
+    const {
+      textShadowColor,
+      textShadowBlur,
+      textShadowOffsetX,
+      textShadowOffsetY,
+    } = settings;
     return `${textShadowOffsetX}px ${textShadowOffsetY}px ${textShadowBlur}px ${textShadowColor}`;
   };
 
   const getGlowEffect = () => {
-    if (!settings.glowEffect) return '';
+    if (!settings.glowEffect) return "";
     return `0 0 ${settings.glowIntensity}px ${settings.glowColor}`;
   };
 
@@ -36,7 +45,9 @@ export function LyricsDisplay({ lyrics, currentLine, settings }: LyricsDisplayPr
       ref={containerRef}
       className="h-full w-full overflow-hidden"
       style={{
-        backgroundColor: settings.greenScreenMode ? '#00FF00' : settings.backgroundColor,
+        backgroundColor: settings.greenScreenMode
+          ? "#00FF00"
+          : settings.backgroundColor,
         padding: settings.padding,
       }}
     >
@@ -57,7 +68,7 @@ export function LyricsDisplay({ lyrics, currentLine, settings }: LyricsDisplayPr
             />
           </>
         )}
-        
+
         <div className="flex h-full flex-col items-start">
           {lyrics.map((line, index) => {
             const isCurrent = index === currentLine;
@@ -71,14 +82,19 @@ export function LyricsDisplay({ lyrics, currentLine, settings }: LyricsDisplayPr
                   settings.textAlign === "right" && "text-right"
                 )}
                 style={{
-                  color: isCurrent ? settings.currentTextColor : settings.textColor,
-                  fontSize: settings.fontSize * (isCurrent ? settings.currentLineScale : 1),
+                  color: isCurrent
+                    ? settings.currentTextColor
+                    : settings.textColor,
+                  fontSize:
+                    settings.fontSize *
+                    (isCurrent ? settings.currentLineScale : 1),
                   lineHeight: settings.lineHeight,
                   fontFamily: settings.fontFamily,
                   textShadow: getTextShadow(),
-                  ...(settings.glowEffect && isCurrent && {
-                    filter: `drop-shadow(${getGlowEffect()})`,
-                  }),
+                  ...(settings.glowEffect &&
+                    isCurrent && {
+                      filter: `drop-shadow(${getGlowEffect()})`,
+                    }),
                 }}
               >
                 {line}
@@ -89,4 +105,4 @@ export function LyricsDisplay({ lyrics, currentLine, settings }: LyricsDisplayPr
       </div>
     </div>
   );
-} 
+}
