@@ -1,50 +1,34 @@
 import { Elysia } from "elysia";
-import jwt from "jsonwebtoken";
-import logger from "../utils/logger";
+import { verifyToken } from "@clerk/backend";
 
-interface AuthStore {
+type AuthStore = {
   auth: {
     success: boolean;
     userId?: string;
-    sessionId?: string;
     error?: string;
   };
-}
+};
 
-export const clerkAuth = new Elysia().derive(async ({ request, store }) => {
-  const token = request.headers.get("Authorization")?.split(" ")[1];
+export const auth = new Elysia().derive(
+  async ({ request, set }): Promise<AuthStore> => {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      set.status = 401;
+      return { auth: { success: false, error: "No token provided" } };
+    }
 
-  logger.debug("Auth token:", {
-    hasToken: !!token,
-    tokenStart: token?.slice(0, 10),
-  });
-
-  if (!token) {
-    logger.warn("No token provided in the request");
-    (store as AuthStore).auth = { success: false, error: "No token provided" };
-    return;
+    const token = authHeader.split(" ")[1];
+    try {
+      const claims = await verifyToken(token);
+      return {
+        auth: {
+          success: true,
+          userId: claims.sub,
+        },
+      };
+    } catch (error) {
+      set.status = 401;
+      return { auth: { success: false, error: "Invalid token" } };
+    }
   }
-
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.CLERK_JWT_VERIFICATION_KEY || ""
-    );
-    logger.debug("Token verified successfully:", {
-      sub: (decoded as any).sub,
-      sid: (decoded as any).sid,
-    });
-
-    (store as AuthStore).auth = {
-      success: true,
-      userId: (decoded as any).sub,
-      sessionId: (decoded as any).sid,
-    };
-  } catch (error) {
-    logger.error("Token verification failed:", {
-      error: error instanceof Error ? error.message : String(error),
-      token: token.slice(0, 10),
-    });
-    (store as AuthStore).auth = { success: false, error: "Invalid token" };
-  }
-});
+);

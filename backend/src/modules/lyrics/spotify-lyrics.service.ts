@@ -1,6 +1,6 @@
 import axios from "axios";
-import logger from "../utils/logger";
-import { LyricsErrors } from "../modules/lyrics";
+import logger from "../../utils/logger";
+import { LyricsErrors } from "./index";
 
 export class NoLyricsAvailableError extends Error {
   constructor(trackId: string, artist: string) {

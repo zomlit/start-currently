@@ -103,12 +103,15 @@ function RootComponent() {
           colorShimmer: "transparent",
         },
         elements: {
-          card: "backdrop-blur-[14px]",
-          rootBox: "backdrop-blur-[14px]",
-          formContainer: "backdrop-blur-[14px]",
-          userButtonPopoverCard: "backdrop-blur-[14px]",
-          organizationSwitcherPopoverCard: "backdrop-blur-[14px]",
+          card: "backdrop-blur-[14px] flex items-center",
+          rootBox: "backdrop-blur-[14px] flex items-center",
+          formContainer: "backdrop-blur-[14px] flex items-center",
+          userButtonPopoverCard: "backdrop-blur-[14px] flex items-center",
+          organizationSwitcherPopoverCard:
+            "backdrop-blur-[14px] flex items-center",
           formResendCodeLink: "text-violet-200",
+          modalBackdrop: "backdrop-blur-[14px] flex items-center",
+          modalContent: "flex items-center",
         },
       }}
     >

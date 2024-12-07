@@ -6,27 +6,39 @@ let io: Server | null = null;
 
 export function createSocketIOServer(app: Elysia) {
   const httpServer = http.createServer((req, res) => {
-    const url = new URL(req.url!, `http://${req.headers.host}`);
-    const request = new Request(url.toString(), {
-      method: req.method,
-      headers: new Headers(req.headers as any),
-    });
+    if (!req.url || !req.headers.host) {
+      res.writeHead(400);
+      res.end("Invalid request");
+      return;
+    }
 
-    app
-      .handle(request)
-      .then((response) => {
-        res.statusCode = response.status;
-        response.headers.forEach((value, key) => res.setHeader(key, value));
-        return response.arrayBuffer();
-      })
-      .then((body) => {
-        res.end(Buffer.from(body));
-      })
-      .catch((error) => {
-        console.error("Error handling request:", error);
-        res.statusCode = 500;
-        res.end("Internal Server Error");
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const request = new Request(url.toString(), {
+        method: req.method,
+        headers: new Headers(req.headers as any),
       });
+
+      app
+        .handle(request)
+        .then((response) => {
+          res.statusCode = response.status;
+          response.headers.forEach((value, key) => res.setHeader(key, value));
+          return response.arrayBuffer();
+        })
+        .then((body) => {
+          res.end(Buffer.from(body));
+        })
+        .catch((error) => {
+          console.error("Error handling request:", error);
+          res.statusCode = 500;
+          res.end("Internal Server Error");
+        });
+    } catch (error) {
+      res.writeHead(400);
+      res.end("Invalid URL");
+      return;
+    }
   });
 
   io = new Server(httpServer, {

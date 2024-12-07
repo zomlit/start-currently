@@ -19,7 +19,7 @@ function AuthedLayout() {
 
   if (!isSignedIn) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="flex items-center justify-center p-12 min-h-[calc(100vh-var(--header-height)-var(--nav-height))] h-full overflow-auto">
         <SignIn routing="hash" />
       </div>
     );

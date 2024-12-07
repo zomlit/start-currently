@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { LyricsSettings } from "@/schemas/lyrics";
-import { supabase } from "@/utils/supabase/client";
+import { api } from "@/lib/eden";
+import { handleAuthError } from "@/lib/auth";
 
 // Define default settings here since we can't import from routes
 export const defaultLyricsSettings: LyricsSettings = {
@@ -53,20 +54,25 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
     userId: string
   ) => {
     try {
-      const { data, error } = await supabase.from("VisualizerWidget").upsert(
+      console.log("[Settings Update]", { userId: userId.slice(0, 8) });
+
+      const { data, error } = await api.put(
+        "/api/lyrics/settings",
         {
-          user_id: userId,
-          type: "lyrics",
-          lyrics_settings: newSettings,
-          sensitivity: 1.0,
-          colorScheme: "default",
+          settings: {
+            ...defaultLyricsSettings,
+            ...newSettings,
+          },
         },
         {
-          onConflict: "user_id",
+          headers: { "Content-Type": "application/json" },
         }
       );
 
-      if (error) throw error;
+      if (error) {
+        console.error("[Settings Update Error]:", error);
+        handleAuthError(error);
+      }
 
       set((state) => ({
         settings: {
@@ -75,7 +81,7 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
         },
       }));
     } catch (error) {
-      console.error("Error in updateSettings:", error);
+      console.error("[Settings Update Error]:", error);
       throw error;
     }
   },
@@ -85,7 +91,6 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
     settings?: Partial<LyricsSettings>
   ) => {
     try {
-      // If settings are provided directly, use them
       if (settings) {
         set({
           settings: {
@@ -96,36 +101,17 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
         return;
       }
 
-      // Get user_id from UserProfile
-      const { data: profileData, error: profileError } = await supabase
-        .from("UserProfile")
-        .select("user_id")
-        .eq("username", username)
-        .single();
+      const { data, error } = await api.get(`/api/lyrics/settings/${username}`);
 
-      if (profileError) throw profileError;
-
-      // Get lyrics_settings from VisualizerWidget
-      const { data, error: visualizerError } = await supabase
-        .from("VisualizerWidget")
-        .select("lyrics_settings")
-        .eq("user_id", profileData.user_id)
-        .single();
-
-      if (visualizerError) {
-        console.error("Error fetching settings:", visualizerError);
-        set({ settings: defaultLyricsSettings });
-        return;
+      if (error) {
+        handleAuthError(error);
       }
 
-      // Handle the settings data
-      const loadedSettings = data?.lyrics_settings;
-
-      if (loadedSettings && typeof loadedSettings === "object") {
+      if (data && typeof data === "object") {
         set({
           settings: {
             ...defaultLyricsSettings,
-            ...loadedSettings,
+            ...data,
           },
         });
       } else {

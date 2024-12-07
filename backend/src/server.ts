@@ -1,3 +1,4 @@
+import { Elysia } from "elysia";
 import { startServer } from "./index";
 
 process.on("uncaughtException", (error) => {

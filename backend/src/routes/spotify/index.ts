@@ -10,8 +10,7 @@ import {
   getApiStats,
   fetchAndStoreCurrentTrack,
 } from "../../services/spotify.service";
-import { authMiddleware } from "../../middleware/authMiddleware";
-import { SpotifyLyricsService } from "../../services/spotify-lyrics.service";
+import { auth } from "../../middleware/auth";
 import { currentlyPlayingTrack } from "@ekwoka/spotify-api";
 import logger from "../../utils/logger";
 import { prisma } from "../../db";
@@ -28,7 +27,27 @@ interface AuthStore {
 
 export default (app: Elysia) =>
   app
-    .use(authMiddleware)
+    .use(auth)
+    .onParse(async ({ request, contentType }) => {
+      // logger.debug("Content-Type received:", contentType);
+
+      if (contentType?.includes("application/json")) {
+        try {
+          const text = await request.text();
+          if (!text) {
+            // logger.debug("Empty request body received");
+            return undefined;
+          }
+
+          const json = JSON.parse(text);
+          // logger.debug("Parsed JSON:", json);
+          return json;
+        } catch (err) {
+          // logger.error("JSON parse error:", err);
+          return undefined;
+        }
+      }
+    })
     .use(createAuthService())
     .get(
       "/current-playback",
@@ -87,12 +106,12 @@ export default (app: Elysia) =>
         },
       }
     )
-    .group("session", (app) =>
+    .group("/api/spotify", (app) =>
       app
         .post(
           "/start",
-          async ({ Auth, query, set }) => {
-            const { user: userId } = Auth;
+          async ({ store: { auth }, query, set }) => {
+            const { userId } = auth;
             const { spotifyRefreshToken } = query;
 
             if (!spotifyRefreshToken) {
@@ -131,9 +150,9 @@ export default (app: Elysia) =>
         )
         .post(
           "/stop",
-          async ({ Auth, set }) => {
-            const { user: userId } = Auth;
-            if (!userId || !Auth.success) {
+          async ({ store: { auth }, set }) => {
+            const { userId } = auth;
+            if (!userId || !auth.success) {
               set.status = 401;
               return { error: "Unauthorized" };
             }
@@ -157,9 +176,9 @@ export default (app: Elysia) =>
         )
         .post(
           "/update-activity",
-          async ({ Auth, body, set }) => {
-            const { user: userId } = Auth;
-            if (!userId || !Auth.success) {
+          async ({ store: { auth }, body, set }) => {
+            const { userId } = auth;
+            if (!userId || !auth.success) {
               set.status = 401;
               return { error: "Unauthorized" };
             }
@@ -240,84 +259,6 @@ export default (app: Elysia) =>
             tags: ["Spotify"],
             summary: "Get Track Canvas",
             description: "Get canvas video for track",
-          },
-        }
-      )
-    )
-    .group("lyrics", (app) =>
-      app.get(
-        "/:trackId",
-        async ({ store: { auth }, params, set }) => {
-          if (!params.trackId) {
-            set.status = 400;
-            return {
-              statusCode: 400,
-              message: "Track ID is required",
-              isError: true,
-            };
-          }
-
-          const lyricsService = new SpotifyLyricsService();
-
-          try {
-            const spotifyResponse = await lyricsService.getLyrics(
-              params.trackId
-            );
-
-            if (!spotifyResponse.lyrics) {
-              set.status = 404;
-              return {
-                statusCode: 404,
-                message: "No lyrics available",
-                isError: false,
-              };
-            }
-
-            return {
-              lyrics: {
-                syncType: spotifyResponse.lyrics.syncType,
-                lines: spotifyResponse.lyrics.lines.map((line: any) => ({
-                  startTimeMs: line.startTimeMs,
-                  words: line.words,
-                  endTimeMs: line.endTimeMs || null,
-                })),
-                language: spotifyResponse.lyrics.language,
-                provider: spotifyResponse.lyrics.provider,
-              },
-              colors: {
-                background: spotifyResponse.colors.background
-                  .toString(16)
-                  .padStart(6, "0"),
-                text: spotifyResponse.colors.text.toString(16).padStart(6, "0"),
-                highlightText: spotifyResponse.colors.highlightText
-                  .toString(16)
-                  .padStart(6, "0"),
-              },
-            };
-          } catch (error: any) {
-            logger.error("Error fetching lyrics:", error);
-            set.status = error.message.includes("authentication failed")
-              ? 401
-              : 500;
-            return {
-              statusCode: set.status,
-              message: "Failed to fetch lyrics",
-              details: error.message,
-              isError: true,
-            };
-          }
-        },
-        {
-          params: t.Object({
-            trackId: t.String({
-              minLength: 1,
-              error: "Track ID is required",
-            }),
-          }),
-          detail: {
-            tags: ["Spotify"],
-            summary: "Get Track Lyrics",
-            description: "Get synchronized lyrics for a Spotify track",
           },
         }
       )

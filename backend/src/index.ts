@@ -11,6 +11,7 @@ import logger from "./utils/logger";
 import { initializeSocketIO, setIO } from "./socket";
 import { resumeActiveSessions } from "./services/spotify.service";
 import jwt from "jsonwebtoken";
+import { lyricsRoutes } from "./modules/lyrics";
 
 // Add these lines after the imports and before the app definition
 let apiHitCount = 0;
@@ -55,7 +56,8 @@ const app = new Elysia()
   )
   .use(
     cors({
-      origin: (origin) => {
+      origin: (request: Request) => {
+        const origin = request.headers.get("origin");
         const allowedOrigins = [
           "http://localhost:3000",
           "https://livestreaming.tools",
@@ -63,8 +65,8 @@ const app = new Elysia()
           "https://lstio.livestreaming.tools",
         ];
         return typeof origin === "string"
-          ? allowedOrigins.includes(origin as string) ||
-              (origin as string).startsWith("http://localhost")
+          ? allowedOrigins.includes(origin) ||
+              origin.startsWith("http://localhost")
           : true;
       },
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -96,6 +98,7 @@ const app = new Elysia()
   .use(routes)
   .use(html())
   .use(serverTiming())
+  .use(lyricsRoutes)
   .derive(async ({ headers, request }) => {
     const token = headers.authorization?.split(" ")[1];
 
@@ -291,7 +294,7 @@ process.on("unhandledRejection", (reason, promise) => {
 export const startServer = async () => {
   try {
     await prisma.$connect();
-    logger.info("🗄️ Database was connected!");
+    logger.info("🗄 Database was connected!");
 
     await resumeActiveSessions();
 

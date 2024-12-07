@@ -494,16 +494,17 @@ export const LyricsSettingsForm: React.FC<LyricsSettingsFormProps> = ({
                           name="fontSize"
                           render={({ field }: { field: FormField }) => (
                             <FormItem>
-                              <FormLabel>Font Size</FormLabel>
-                              <Slider
+                              <SliderWithInput
+                                label="Font Size"
                                 min={8}
                                 max={72}
                                 step={1}
-                                value={[field.value]}
-                                onValueChange={(val) => {
-                                  // Update immediately
-                                  handleSettingChange("fontSize", val[0]);
+                                value={field.value}
+                                onChange={(value) => {
+                                  handleSettingChange("fontSize", value);
                                 }}
+                                onBlur={field.onBlur}
+                                showTicks={false}
                               />
                             </FormItem>
                           )}

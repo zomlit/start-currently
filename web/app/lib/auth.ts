@@ -1,31 +1,23 @@
-import { getAuth } from "@clerk/tanstack-start/server";
+import { useAuth } from "@clerk/clerk-react";
 import { redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/start";
-import { getWebRequest } from "vinxi/http";
 
-export const requireAuth = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { userId } = await getAuth(getWebRequest());
-
-    if (!userId) {
-      throw redirect({
-        to: "/sign-in",
-        search: () =>
-          ({
-            returnTo: "/widgets/gamepad",
-          }) as { returnTo: string },
-      });
-    }
-
-    return { userId };
-  }
-);
-
-export type SearchParams = {
-  returnTo?: string;
-  error?: string;
+export const getAuthToken = async () => {
+  const { getToken } = useAuth();
+  return getToken({ template: "supabase" });
 };
 
-export function getReturnTo(search: SearchParams): string {
-  return search.returnTo || "/";
-}
+export const handleAuthError = (error: any) => {
+  if (error?.status === 401) {
+    redirect({
+      to: "/sign-in",
+      search: {
+        from: window.location.pathname,
+      },
+    });
+  }
+  throw error;
+};
+
+export const getReturnTo = (search: { from?: string }) => {
+  return search.from || "/";
+};

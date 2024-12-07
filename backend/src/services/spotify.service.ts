@@ -16,16 +16,6 @@ import { getUserProfile, updateUserActivity } from "../models/UserProfile";
 import { spotify } from "./canvas/canvas_pb";
 const { CanvasRequest, CanvasResponse } = spotify.canvas;
 
-// Add this helper function at the top of the file
-function ensureSpotifyApiFunction(
-  spotifyApi: string | ReturnType<typeof spotifyApiClient>
-): ReturnType<typeof spotifyApiClient> {
-  if (typeof spotifyApi === "string") {
-    return spotifyApiClient(spotifyApi);
-  }
-  return spotifyApi;
-}
-
 export async function refreshSpotifyTokenAndGetAccess(
   userId: string,
   refreshTokenString: string
@@ -365,7 +355,34 @@ async function poll(userId: string, state: UserState) {
   }
 }
 
-// Update the startSpotifyPolling function
+// Add at the top with other Maps
+const pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
+
+// Single stopSpotifyPolling implementation
+export async function stopSpotifyPolling(userId: string) {
+  try {
+    // Clear any existing state
+    const state = userStates.get(userId);
+    if (state?.timeout) {
+      clearTimeout(state.timeout);
+    }
+    userStates.delete(userId);
+
+    // Clear any polling intervals
+    if (pollingIntervals.has(userId)) {
+      clearInterval(pollingIntervals.get(userId));
+      pollingIntervals.delete(userId);
+    }
+
+    logger.info(`Spotify polling stopped for user: ${userId}`);
+    return true;
+  } catch (error) {
+    logger.error("Error stopping Spotify polling:", error);
+    throw error;
+  }
+}
+
+// Fix startSpotifyPolling to initialize state before using it
 export async function startSpotifyPolling(
   userId: string,
   spotifyApi: ReturnType<typeof spotifyApiClient>
@@ -398,9 +415,19 @@ export async function startSpotifyPolling(
 
   userStates.set(userId, state);
 
-  // Set up an interval to reset the API hit count every minute
-  setInterval(() => resetApiHitCount(userId), 60000);
+  // Clear any existing polling
+  if (pollingIntervals.has(userId)) {
+    clearInterval(pollingIntervals.get(userId));
+  }
 
+  // Set up new polling interval
+  const interval = setInterval(() => {
+    poll(userId, state);
+  }, 1000) as unknown as NodeJS.Timeout;
+
+  pollingIntervals.set(userId, interval);
+
+  // Start polling
   poll(userId, state);
 
   return { sessionId, isPolling: true };
@@ -415,22 +442,11 @@ export async function updateSessionActivity(userId: string, sessionId: string) {
   return false;
 }
 
-export async function stopSpotifyPolling(userId: string): Promise<void> {
-  const state = userStates.get(userId);
-  if (state) {
-    if (state.timeout) {
-      clearTimeout(state.timeout);
-    }
-    userStates.delete(userId);
-    logger.info(`Spotify polling stopped for user: ${userId}`);
-  } else {
-    logger.info(`No active Spotify polling found for user: ${userId}`);
-  }
-}
-
 // Update the startSpotifySession function
 export async function startSpotifySession(userId: string) {
   try {
+    await stopSpotifyPolling(userId); // This calls the above function
+    logger.info(`Stopping sessions for user: ${userId}`); // And this log
     // First, check if user exists and has required credentials
     let userProfile = await prisma.userProfile.findUnique({
       where: { user_id: userId },
@@ -848,7 +864,7 @@ export async function fetchLyrics(
       logger.error("Request URL:", error.config?.url);
       logger.error("Response status:", error.response?.status);
       logger.error("Response headers:", error.response?.headers);
-      logger.error("Response data:", error.response?.data);
+      // logger.error("Response data:", error.response?.data);
     }
     logger.error("Error fetching lyrics:", error);
     throw new Error("Failed to fetch lyrics");
