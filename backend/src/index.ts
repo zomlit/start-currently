@@ -1,23 +1,16 @@
-import { Context, Elysia } from "elysia";
+import { Elysia } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import { html } from "@elysiajs/html";
 import { serverTiming } from "@elysiajs/server-timing";
-import { staticPlugin } from "@elysiajs/static";
 import { cors } from "@elysiajs/cors";
-import routes from "./routes"; // This should now work correctly
+import routes from "./routes";
 import { prisma } from "./db";
 import { createSocketIOServer } from "./socketAdapter";
 import logger from "./utils/logger";
 import { initializeSocketIO, setIO } from "./socket";
 import { resumeActiveSessions } from "./services/spotify.service";
 import jwt from "jsonwebtoken";
-import { validateBackendEnv } from "@currently/shared";
-import { app } from "./app";
 
-// Validate backend environment variables
-const env = validateBackendEnv(process.env);
-
-// Add these lines after the imports and before the app definition
 let apiHitCount = 0;
 let lastResetTime = Date.now();
 
@@ -36,7 +29,6 @@ if (!process.env.CLERK_JWT_VERIFICATION_KEY) {
   process.exit(1);
 }
 
-// Add this function at the top level
 const updateUserActivity = async (userId: string) => {
   try {
     await prisma.userProfile.update({
