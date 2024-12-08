@@ -7,16 +7,23 @@ export default defineConfig({
   plugins: [remix(), TanStackRouterVite(), tsconfigPaths()],
   ssr: {
     noExternal: ["@uiw/react-color", "@uiw/react-color-chrome"],
-    // Add this to handle window is not defined errors
     optimizeDeps: {
       include: ["@uiw/react-color", "@uiw/react-color-chrome"],
     },
   },
-  // Add this to handle SSR modules that need window
   resolve: {
     alias: {
       "@uiw/react-color": "@uiw/react-color/dist/esm",
       "@uiw/react-color-chrome": "@uiw/react-color-chrome/dist/esm",
+    },
+  },
+  optimizeDeps: {
+    include: ["@uiw/react-color", "@uiw/react-color-chrome"],
+    exclude: ["@currently/shared"],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/, /shared/],
     },
   },
 });

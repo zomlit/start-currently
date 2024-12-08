@@ -60,6 +60,7 @@ import { lyricsSchema, type LyricsSettings } from "@/schemas/lyrics";
 import { Separator } from "@/components/ui/separator";
 import { FeatureBadge } from "@/components/ui/feature-badge";
 import { lazy } from "react";
+import { Slider } from "@radix-ui/react-slider";
 
 // Dynamically import the color picker to avoid SSR issues
 const ColorPicker = lazy(() =>

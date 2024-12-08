@@ -1,12 +1,8 @@
-/// <reference types="vite/client" />
+import { z } from "zod";
+import { envSchema } from "../env";
 
-interface ImportMetaEnv {
-  readonly VITE_API_URL: string;
-  readonly VITE_WEBSOCKET_URL: string;
-  readonly VITE_CLERK_PUBLISHABLE_KEY: string;
-  // Add other env variables here
-}
+export type Environment = z.infer<typeof envSchema>;
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+declare global {
+  interface ImportMetaEnv extends Environment {}
 }

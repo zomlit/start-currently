@@ -1,6 +1,7 @@
 {
   "name": "@currently/backend",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "./server",
     "dev": "bun --watch src/server.ts",

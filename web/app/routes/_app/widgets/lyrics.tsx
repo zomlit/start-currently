@@ -27,6 +27,7 @@ import { LyricsSettings } from "@/types/lyrics";
 import { supabase } from "@/utils/supabase/client";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { cn } from "@/lib/utils";
+import { fetchFonts, type GoogleFont } from "@/utils/fonts";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: () => (
@@ -134,6 +135,7 @@ function LyricsSection() {
   const [isVideoAvailable, setIsVideoAvailable] = useState(false);
   const [previewSettings, setPreviewSettings] =
     useState<LyricsSettings>(settings);
+  const [fonts, setFonts] = useState<GoogleFont[]>([]);
 
   const {
     track: currentTrack,
@@ -377,29 +379,13 @@ function LyricsSection() {
 
   // Add font loading effect
   useEffect(() => {
-    const fetchFonts = async () => {
-      if (fontFamilies.length === 0) {
-        setIsFontLoading(true);
-        try {
-          const response = await fetch(
-            `https://www.googleapis.com/webfonts/v1/webfonts?key=${
-              import.meta.env.VITE_PUBLIC_GOOGLE_FONTS_API_KEY
-            }&sort=popularity`
-          );
-          const data = await response.json();
-          setFontFamilies([
-            ...data.items.slice(0, 100).map((font: any) => font.family),
-            "Sofia Sans Condensed",
-          ]);
-        } catch (error) {
-          console.error("Error fetching fonts:", error);
-        } finally {
-          setIsFontLoading(false);
-        }
-      }
+    const loadFonts = async () => {
+      const fontList = await fetchFonts();
+      setFonts(fontList.slice(0, 20)); // Get top 20 fonts
     };
-    fetchFonts();
-  }, [fontFamilies.length]);
+
+    loadFonts();
+  }, []);
 
   // Add font injection logic
   const injectFont = useCallback(

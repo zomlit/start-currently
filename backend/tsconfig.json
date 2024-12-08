@@ -1,13 +1,15 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "strict": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["bun-types"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "references": [{ "path": "../shared" }]
 }

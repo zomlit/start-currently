@@ -8,8 +8,7 @@
     "web",
     "backend",
     "shared",
-    "native",
-    "extensions/*"
+    "native"
   ],
   "scripts": {
     "dev": "turbo run dev",

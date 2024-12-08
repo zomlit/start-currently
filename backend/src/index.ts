@@ -11,6 +11,11 @@ import logger from "./utils/logger";
 import { initializeSocketIO, setIO } from "./socket";
 import { resumeActiveSessions } from "./services/spotify.service";
 import jwt from "jsonwebtoken";
+import { validateBackendEnv } from "@currently/shared";
+import { app } from "./app";
+
+// Validate backend environment variables
+const env = validateBackendEnv(process.env);
 
 // Add these lines after the imports and before the app definition
 let apiHitCount = 0;
@@ -47,12 +52,12 @@ const updateUserActivity = async (userId: string) => {
 };
 
 const app = new Elysia()
-  .use(
-    staticPlugin({
-      assets: "public", // This will serve files from the public directory
-      prefix: "/", // Serve at root path
-    })
-  )
+  // .use(
+  //   staticPlugin({
+  //     assets: "public", // This will serve files from the public directory
+  //     prefix: "/", // Serve at root path
+  //   })
+  // )
   .use(
     cors({
       origin: (origin) => {
