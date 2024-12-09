@@ -12,10 +12,10 @@ interface UseLyricsProps {
   onError?: (error: Error) => void;
 }
 
-interface LyricsLine {
+export type LyricsLine = {
   startTimeMs: number;
   words: string;
-}
+};
 
 type VisualizerWidget = Database["public"]["Tables"]["VisualizerWidget"]["Row"];
 

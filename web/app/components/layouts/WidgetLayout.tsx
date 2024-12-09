@@ -20,10 +20,10 @@ export function WidgetLayout({
   className,
   isLoading = false,
 }: WidgetLayoutProps) {
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isDesktop = useMediaQuery("(min-width: 1400px)");
 
   return (
-    <div className="min-h-[calc(100vh-var(--header-height)-var(--nav-height))] h-full overflow-auto">
+    <div className="min-h-[calc(100vh-var(--header-height)-var(--nav-height))] h-full">
       {isDesktop ? (
         <ResizablePanelGroup
           direction="horizontal"

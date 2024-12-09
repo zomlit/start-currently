@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Chrome, Copy, Download, Gauge } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import _ from "lodash";
 
 import { GamepadSettingsForm } from "@/components/widget-settings/GamepadSettingsForm";
 import { defaultGamepadSettings } from "@/lib/gamepad-settings";
@@ -18,14 +19,89 @@ import {
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 import { useGamepadContext } from "@/providers/GamepadProvider";
 import { WidgetCTA } from "@/components/WidgetCTA";
+import { cn } from "@/lib/utils";
 
 export function GamepadSection() {
   const { user } = useUser();
-  const { gamepadState, isConnected } = useGamepadContext();
+  const { gamepadState, isConnected, isExtensionEnabled, toggleExtension } =
+    useGamepadContext();
+  const { mutateAsync: updateSettings } = useUpdateGamepadSettings();
+  const { data: savedSettings, isLoading } = useGamepadSettings(user?.id);
+
+  // Initialize states with defaults
   const [settings, setSettings] = useState<GamepadSettings>(
     defaultGamepadSettings
   );
-  const [extensionError, setExtensionError] = useState<string | null>(null);
+  const [previewSettings, setPreviewSettings] = useState<GamepadSettings>(
+    defaultGamepadSettings
+  );
+  const [pendingSettings, setPendingSettings] = useState<
+    Partial<GamepadSettings>
+  >({});
+
+  // Debounced save function
+  const debouncedSave = useCallback(
+    _.debounce(async (newSettings: GamepadSettings) => {
+      try {
+        await updateSettings({
+          userId: user?.id,
+          settings: newSettings,
+        });
+      } catch (error) {
+        console.error("Failed to save settings:", error);
+        toast.error("Failed to save settings");
+      }
+    }, 1000),
+    [user?.id]
+  );
+
+  // Handle settings changes
+  const handleSettingsChange = useCallback(
+    async (newSettings: Partial<GamepadSettings>) => {
+      const mergedSettings: GamepadSettings = {
+        ...settings,
+        ...newSettings,
+        debugMode: settings.debugMode, // Preserve debug mode
+      };
+
+      setSettings(mergedSettings);
+      setPreviewSettings(mergedSettings);
+
+      // Debounced save
+      debouncedSave(mergedSettings);
+    },
+    [settings, debouncedSave]
+  );
+
+  // Load saved settings only once when they're available
+  useEffect(() => {
+    if (savedSettings?.settings) {
+      const loadedSettings = {
+        ...defaultGamepadSettings,
+        ...savedSettings.settings,
+      };
+      setSettings(loadedSettings);
+      setPreviewSettings(loadedSettings);
+    }
+  }, [savedSettings]);
+
+  // Handle debug mode toggle
+  const handleDebugModeToggle = useCallback(() => {
+    const newDebugMode = !settings.debugMode;
+    const newSettings = {
+      ...settings,
+      debugMode: newDebugMode,
+    };
+
+    setSettings(newSettings);
+    setPreviewSettings(newSettings);
+
+    // Save immediately
+    updateSettings({
+      userId: user?.id,
+      settings: newSettings,
+    }).catch(console.error);
+  }, [settings, user?.id, updateSettings]);
 
   // Get the public URL
   const publicUrl = user?.username
@@ -56,48 +132,9 @@ export function GamepadSection() {
   const lastFrameTimeRef = useRef<number>(0);
   const MIN_FRAME_TIME = 1000 / 60; // Target 60fps
 
-  const { mutateAsync: updateSettings } = useUpdateGamepadSettings();
-  const { data: savedSettings, isLoading } = useGamepadSettings(user?.id);
-
-  const handleSettingsChange = async (
-    newSettings: Partial<GamepadSettings>
-  ) => {
-    try {
-      const mergedSettings: GamepadSettings = {
-        ...settings,
-        ...newSettings,
-      };
-
-      setSettings(mergedSettings);
-
-      await updateSettings({
-        userId: user?.id,
-        settings: mergedSettings,
-      });
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-      toast.error("Failed to save settings");
-    }
-  };
-
-  // Load saved settings
-  useEffect(() => {
-    if (savedSettings?.settings) {
-      setSettings({
-        ...defaultGamepadSettings,
-        ...savedSettings.settings,
-      });
-    } else if (!isLoading && user?.id) {
-      updateSettings({
-        userId: user.id,
-        settings: defaultGamepadSettings,
-      }).catch((error) => {
-        console.error("Error creating default settings:", error);
-      });
-    }
-  }, [savedSettings, isLoading, user?.id]);
-
   // Extension message handling
+  const [extensionError, setExtensionError] = useState<string | null>(null);
+
   useEffect(() => {
     const handleExtensionMessage = (event: MessageEvent) => {
       if (event.data.source !== "GAMEPAD_EXTENSION") return;
@@ -137,11 +174,12 @@ export function GamepadSection() {
     <div className="flex h-full flex-col">
       <div className="flex-1">
         <GamepadViewer
-          settings={settings}
+          settings={previewSettings}
           username={user?.username || undefined}
           gamepadState={gamepadState}
           isPublicView={false}
           onSettingsChange={handleSettingsChange}
+          onDebugToggle={handleDebugModeToggle}
         />
       </div>
     </div>
@@ -168,14 +206,11 @@ export function GamepadSection() {
 
         <div className="mt-4">
           <Button
-            onClick={() =>
-              handleSettingsChange({ debugMode: !settings.debugMode })
-            }
-            variant={settings.debugMode ? "default" : "outline"}
-            className="w-full"
+            onClick={handleDebugModeToggle}
+            className={cn("w-full", settings.debugMode ? "bg-pink-950" : "")}
             disabled={!isConnected}
           >
-            <Gauge className="mr-2 h-4 w-4" />
+            <Gauge className="h-4 w-4" />
             {!isConnected
               ? "No Controller Detected"
               : settings.debugMode
@@ -189,6 +224,9 @@ export function GamepadSection() {
         <GamepadSettingsForm
           settings={settings}
           onSettingsChange={handleSettingsChange}
+          onPreviewUpdate={handleSettingsChange}
+          isExtensionEnabled={isExtensionEnabled}
+          toggleExtension={toggleExtension}
         />
       </div>
     </div>

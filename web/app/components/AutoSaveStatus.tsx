@@ -39,7 +39,7 @@ interface AutosaveStatusProps {
   lastSaved: Date | null;
   isSaving: boolean;
   className?: string;
-  changingField?: string;
+  changingField: string | null | undefined;
 }
 
 const AutosaveStatus: React.FC<AutosaveStatusProps> = ({

@@ -3,8 +3,9 @@ import { UseFormReturn } from "react-hook-form";
 import { useDebouncedCallback } from "use-debounce";
 import { toast } from "@/utils/toast";
 import { z } from "zod";
+import type { UseSettingsFormConfig } from "@/utils/form";
 
-interface UseSettingsFormProps<T> {
+interface UseSettingsFormProps<T extends Record<string, any>> {
   form: UseFormReturn<T>;
   settings: T;
   onSettingsChange: (settings: T) => Promise<void>;
@@ -13,7 +14,7 @@ interface UseSettingsFormProps<T> {
   defaultSettings: T;
 }
 
-export function useSettingsForm<T>({
+export function useSettingsForm<T extends object>({
   form,
   settings,
   onSettingsChange,
@@ -21,142 +22,75 @@ export function useSettingsForm<T>({
   schema,
   defaultSettings,
 }: UseSettingsFormProps<T>) {
-  const dialogRef = useRef<HTMLButtonElement>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [changingField, setChangingField] = useState<string>("");
-  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [state, setState] = useState({
+    isSaving: false,
+    lastSaved: null as Date | null,
+    changingField: null as string | null,
+    hasPendingChanges: false,
+  });
 
-  // Handle debounced settings changes
-  const debouncedSettingsChange = useDebouncedCallback(
-    async (updatedSettings: T, fieldName: string) => {
-      try {
-        setIsSaving(true);
-        setChangingField(fieldName);
-        await onSettingsChange(updatedSettings);
-        setLastSaved(new Date());
-        setHasPendingChanges(false);
-      } catch (error) {
-        console.error("Error saving settings:", error);
-        setHasPendingChanges(true);
-        toast.error({
-          title: "Error saving settings",
-          description: "Your changes couldn't be saved. Please try again.",
-        });
-      } finally {
-        setIsSaving(false);
-        setChangingField("");
-      }
-    },
+  const dialogRef = useRef<HTMLButtonElement>(null);
+
+  // Debounced save with memoized callback
+  const debouncedSave = useDebouncedCallback(
+    useCallback(
+      async (data: T) => {
+        try {
+          setState((prev) => ({ ...prev, isSaving: true }));
+          await onSettingsChange(data);
+          setState((prev) => ({
+            ...prev,
+            lastSaved: new Date(),
+            isSaving: false,
+            hasPendingChanges: false,
+          }));
+        } catch (error) {
+          console.error("Failed to save settings:", error);
+          setState((prev) => ({ ...prev, isSaving: false }));
+        }
+      },
+      [onSettingsChange]
+    ),
     500
   );
 
+  // Optimized setting change handler
   const handleSettingChange = useCallback(
-    async (field: string, value: any) => {
-      try {
-        // Update form state
-        form.setValue(field, value, {
-          shouldDirty: true,
-          shouldTouch: true,
-        });
+    (name: string, value: any) => {
+      setState((prev) => ({
+        ...prev,
+        changingField: name,
+        hasPendingChanges: true,
+      }));
 
-        // Create updated settings by handling nested paths
-        const updateNestedValue = (
-          obj: any,
-          path: string[],
-          value: any
-        ): any => {
-          const [current, ...rest] = path;
-          if (rest.length === 0) {
-            return { ...obj, [current]: value };
-          }
-          return {
-            ...obj,
-            [current]: updateNestedValue(obj[current], rest, value),
-          };
-        };
+      // Batch updates
+      form.setValue(name, value, { shouldDirty: true });
+      const newSettings = {
+        ...form.getValues(),
+        [name]: value,
+      };
 
-        const pathParts = field.split(".");
-        const updatedSettings = updateNestedValue(settings, pathParts, value);
-
-        // Immediately update preview
-        onPreviewUpdate(updatedSettings);
-
-        // Mark as having pending changes until debounced save completes
-        setHasPendingChanges(true);
-
-        // Debounce the save
-        debouncedSettingsChange(updatedSettings, field);
-      } catch (error) {
-        console.error("Error in handleSettingChange:", error);
-      }
+      onPreviewUpdate(newSettings);
+      debouncedSave(newSettings);
     },
-    [settings, form, debouncedSettingsChange, onPreviewUpdate]
-  );
-
-  const handleResetToDefaults = useCallback(async () => {
-    try {
-      // Close dialog
-      dialogRef.current?.click();
-
-      // Reset form to defaults
-      form.reset(defaultSettings);
-
-      // Update server state with all default settings
-      await onSettingsChange(defaultSettings);
-
-      // Update preview
-      onPreviewUpdate(defaultSettings);
-
-      setHasPendingChanges(false);
-      setLastSaved(new Date());
-
-      toast.success({
-        title: "Settings Reset",
-        description: "Your settings have been reset to defaults",
-      });
-    } catch (error) {
-      console.error("Failed to reset settings:", error);
-      toast.error({
-        title: "Reset Failed",
-        description: "Failed to reset settings. Please try again.",
-      });
-    }
-  }, [defaultSettings, form, onSettingsChange, onPreviewUpdate]);
-
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!hasPendingChanges) return;
-
-      try {
-        const data = form.getValues();
-        await onSettingsChange(data);
-        setHasPendingChanges(false);
-        setLastSaved(new Date());
-        toast.success({
-          title: "Settings saved",
-          description: "Your changes have been saved successfully.",
-        });
-      } catch (error) {
-        console.error("Error saving settings:", error);
-        toast.error({
-          title: "Error saving settings",
-          description: "Your changes couldn't be saved. Please try again.",
-        });
-      }
-    },
-    [form, onSettingsChange, hasPendingChanges]
+    [form, debouncedSave, onPreviewUpdate]
   );
 
   return {
+    ...state,
     handleSettingChange,
-    handleResetToDefaults,
-    handleSubmit,
+    handleResetToDefaults: useCallback(() => {
+      form.reset(defaultSettings);
+      onPreviewUpdate(defaultSettings);
+      debouncedSave(defaultSettings);
+      dialogRef.current?.click();
+      setState((prev) => ({
+        ...prev,
+        hasPendingChanges: false,
+        changingField: null,
+      }));
+    }, [form, defaultSettings, onPreviewUpdate, debouncedSave]),
+    handleSubmit: form.handleSubmit((data: T) => debouncedSave(data)),
     dialogRef,
-    isSaving,
-    lastSaved,
-    changingField,
-    hasPendingChanges,
   };
 }

@@ -73,10 +73,11 @@ const safeFormatColor = (color: any): string => {
 interface GamepadViewerProps {
   settings: GamepadSettings;
   username?: string;
-  gamepadState?: GamepadState | null;
+  gamepadState: GamepadState | null;
   isPublicView?: boolean;
   disableDirectInput?: boolean;
   onSettingsChange?: (settings: Partial<GamepadSettings>) => void;
+  onDebugToggle?: () => void;
 }
 
 // Update the formatStickValue function to show 2 decimal places
@@ -446,6 +447,7 @@ export function GamepadViewer({
   isPublicView = false,
   disableDirectInput = false,
   onSettingsChange,
+  onDebugToggle,
 }: GamepadViewerProps): ReactElement {
   // 1. All hooks must be at the top level and called unconditionally
   const { gamepadState: contextGamepadState, isConnected } =
@@ -897,11 +899,7 @@ export function GamepadViewer({
                       <Crosshair className="mr-2 h-4 w-4" />
                       Calibrate
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onSettingsChange?.({ debugMode: false })}
-                    >
+                    <Button size="sm" variant="outline" onClick={onDebugToggle}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1041,9 +1039,9 @@ export function GamepadViewer({
                       max={0.4}
                       step={0.01}
                       value={[deadzone ?? 0.05]}
-                      onValueChange={([value]) =>
-                        onSettingsChange?.({ deadzone: value })
-                      }
+                      onValueChange={([value]) => {
+                        onSettingsChange?.({ deadzone: value });
+                      }}
                       className="py-2"
                     />
                     <div className="relative mt-1 h-6 m-[10px]">

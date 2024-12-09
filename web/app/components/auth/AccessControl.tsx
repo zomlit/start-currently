@@ -20,9 +20,7 @@ function AccessControlContent({ children }: AccessControlProps) {
   const { pathname } = useLocation();
   const { theme } = useTheme();
 
-  if (!isLoaded) {
-    return null;
-  }
+  if (!isLoaded) return null;
 
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
@@ -36,16 +34,12 @@ function AccessControlContent({ children }: AccessControlProps) {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center">
       <h1
-        className={`mb-4 text-2xl font-bold ${
-          theme === "dark" ? "text-purple-400" : "text-purple-700"
-        }`}
+        className={`mb-4 text-2xl font-bold ${theme === "dark" ? "text-purple-400" : "text-purple-700"}`}
       >
         Access Restricted
       </h1>
       <p
-        className={`text-center ${
-          theme === "dark" ? "text-gray-400" : "text-gray-700"
-        }`}
+        className={`text-center ${theme === "dark" ? "text-gray-400" : "text-gray-700"}`}
       >
         This content is currently not available. Please contact the
         administrator for access.

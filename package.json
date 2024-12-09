@@ -47,19 +47,20 @@
     "concurrently": "^9.1.0",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
-    "husky": "^8.0.0",
-    "nodemon": "^3.0.0",
+    "husky": "^8.0.3",
+    "nodemon": "^3.1.7",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "turbo": "^2.3.3"
   },
   "dependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
     "husky": "^9.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.53.2",
+    "react-hook-form": "^7.54.0",
     "tailwindcss-spring": "^1.0.1"
   },
   "packageManager": "bun@1.0.26"

@@ -23,8 +23,6 @@ export const SliderWithInput = React.forwardRef<
   const ticks = Array.from({ length: tickCount }, (_, i) =>
     (min + i * step).toFixed(1)
   );
-
-  // Determine the interval for displaying ticks based on the number of ticks
   const displayInterval = tickCount > 20 ? Math.ceil(tickCount / 20) : 1;
 
   return (
@@ -48,12 +46,12 @@ export const SliderWithInput = React.forwardRef<
         />
       </div>
       <Slider
-        defaultValue={[value]}
+        value={[value]}
         max={max}
         min={min}
         step={step}
         onValueChange={(vals) => onChange(vals[0])}
-        onValueCommit={onBlur ? () => onBlur() : undefined}
+        onValueCommit={onBlur}
         className="mt-2"
       />
       {showTicks && (

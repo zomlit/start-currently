@@ -23,10 +23,15 @@ import { Dialog } from "@/components/ui/dialog";
 import { SpotifyKeysDialog } from "@/components/SpotifyKeysDialog";
 import _ from "lodash";
 import { motion } from "framer-motion";
-import { LyricsSettings } from "@/types/lyrics";
+import {
+  lyricsSchema,
+  type LyricsSettings,
+  defaultLyricsSettings,
+} from "@/schemas/lyrics";
 import { supabase } from "@/utils/supabase/client";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { cn } from "@/lib/utils";
+import { PublicUrlHeader } from "@/components/widget-settings/PublicUrlHeader";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: () => (
@@ -101,26 +106,6 @@ const ANIMATION_VARIANTS: AnimationVariants = {
   },
 };
 
-// Create a client-only wrapper for the color picker
-const ClientOnlyColorPicker = lazy(() =>
-  import("@uiw/react-color").then((mod) => ({
-    default: mod.ChromePicker,
-  }))
-);
-
-// Use Suspense to handle the lazy loading
-const ColorPickerWrapper = (props: any) => {
-  if (typeof window === "undefined") {
-    return null; // Return null during SSR
-  }
-
-  return (
-    <Suspense fallback={<div>Loading color picker...</div>}>
-      <ClientOnlyColorPicker {...props} />
-    </Suspense>
-  );
-};
-
 function LyricsSection() {
   const { user } = useUser();
   const [isSpotifyTokenDialogOpen, setIsSpotifyTokenDialogOpen] =
@@ -129,11 +114,17 @@ function LyricsSection() {
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [publicUrl, setPublicUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [mockTime, setMockTime] = useState(0);
   const [hideExampleLyrics, setHideExampleLyrics] = useState(true);
   const [isVideoAvailable, setIsVideoAvailable] = useState(false);
-  const [previewSettings, setPreviewSettings] =
-    useState<LyricsSettings>(settings);
+  const [previewSettings, setPreviewSettings] = useState<LyricsSettings>(
+    settings ?? defaultLyricsSettings
+  );
+
+  useEffect(() => {
+    console.log("📊 Current Settings:", settings);
+  }, [settings]);
 
   const {
     track: currentTrack,
@@ -155,6 +146,8 @@ function LyricsSection() {
   // Move helper function inside component where formatColor is available
   const getBackgroundStyle = useCallback(
     (color: string) => {
+      if (!color) return { backgroundColor: "rgba(0, 0, 0, 1)" };
+
       if (color.includes("gradient")) {
         return { backgroundImage: color };
       }
@@ -269,7 +262,8 @@ function LyricsSection() {
               "py-1",
               isExample && "opacity-50",
               !isExample &&
-                "cursor-pointer hover:opacity-80 transition-opacity",
+                previewSettings.hideExplicitContent &&
+                censorExplicitContent(line.words),
               previewSettings.textAlign === "left" && "text-left",
               previewSettings.textAlign === "center" && "text-center",
               previewSettings.textAlign === "right" && "text-right"
@@ -280,14 +274,10 @@ function LyricsSection() {
               color: isCurrentLine
                 ? formatColor(previewSettings.currentTextColor)
                 : formatColor(previewSettings.textColor),
-              textShadow: previewSettings.glowEffect
-                ? `0 0 ${previewSettings.glowIntensity}px ${formatColor(
-                    previewSettings.glowColor
-                  )}`
+              textShadow: `${previewSettings.textShadowOffsetX}px ${previewSettings.textShadowOffsetY}px ${previewSettings.textShadowBlur}px ${formatColor(previewSettings.textShadowColor)}`,
+              filter: previewSettings.glowEffect
+                ? `drop-shadow(0 0 ${previewSettings.glowIntensity}px ${formatColor(previewSettings.glowColor)})`
                 : "none",
-              transform: isCurrentLine
-                ? `scale(${previewSettings.currentLineScale})`
-                : "scale(1)",
               transformOrigin:
                 previewSettings.textAlign === "left"
                   ? "left center"
@@ -297,14 +287,20 @@ function LyricsSection() {
             }}
             initial="initial"
             animate="animate"
-            variants={ANIMATION_VARIANTS[previewSettings.animationStyle]}
-            custom={isCurrentLine}
-            transition={{
-              duration: previewSettings.animationSpeed / 1000,
-              ease: previewSettings.animationEasing,
+            variants={{
+              initial: { scale: 1 },
+              animate: {
+                scale: isCurrentLine ? previewSettings.currentLineScale : 1,
+                transition: {
+                  duration: previewSettings.animationSpeed / 1000,
+                  ease: previewSettings.animationEasing,
+                },
+              },
             }}
           >
-            {line.words}
+            {previewSettings.hideExplicitContent
+              ? censorExplicitContent(line.words)
+              : line.words}
           </motion.div>
         );
       });
@@ -441,60 +437,66 @@ function LyricsSection() {
   const FadeOverlay = useMemo(
     () =>
       previewSettings.showFade && !previewSettings.greenScreenMode ? (
-        <>
+        <div className="absolute z-40 inset-x-0 pointer-events-none">
           <div
-            className="absolute z-40 left-0 right-0 pointer-events-none"
+            className="absolute top-0 left-0 right-0"
             style={{
               top: `${previewSettings.padding}px`,
               height: `${previewSettings.fadeDistance}px`,
               background: `linear-gradient(to bottom, ${
                 previewSettings.backgroundColor.includes("gradient")
-                  ? "rgba(0,0,0,1)" // Use black for gradient backgrounds
+                  ? "rgba(0,0,0,1)"
                   : formatColor(previewSettings.backgroundColor)
-              }, rgba(0,0,0,0))`,
+              }, transparent)`,
             }}
           />
           <div
-            className="absolute z-40 left-0 right-0 pointer-events-none"
+            className="absolute bottom-0 left-0 right-0"
             style={{
               bottom: `${previewSettings.padding}px`,
               height: `${previewSettings.fadeDistance}px`,
               background: `linear-gradient(to top, ${
                 previewSettings.backgroundColor.includes("gradient")
-                  ? "rgba(0,0,0,1)" // Use black for gradient backgrounds
+                  ? "rgba(0,0,0,1)"
                   : formatColor(previewSettings.backgroundColor)
-              }, rgba(0,0,0,0))`,
+              }, transparent)`,
             }}
           />
-        </>
+        </div>
       ) : null,
-    [previewSettings, formatColor]
+    [
+      previewSettings.showFade,
+      previewSettings.greenScreenMode,
+      previewSettings.padding,
+      previewSettings.fadeDistance,
+      previewSettings.backgroundColor,
+      formatColor,
+    ]
   );
 
-  // Update the no lyrics message
   const NoLyricsMessage = useMemo(() => {
+    const LoadingSpinner = (
+      <div className="flex items-center justify-center h-full opacity-0 animate-in fade-in duration-300">
+        <Spinner className="w-8 h-8 dark:fill-white" />
+      </div>
+    );
+
+    const NoLyricsText = (text: string) => (
+      <p className="text-muted-foreground opacity-0 animate-in fade-in duration-300">
+        {text}
+      </p>
+    );
+
     if (isLyricsLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <Spinner className="w-[30px] h-[30px] dark:fill-white" />
-        </div>
-      );
+      return LoadingSpinner;
     }
 
     if (noLyricsAvailable && currentTrack?.title) {
-      return (
-        <p className="text-muted-foreground">
-          No lyrics available for "{currentTrack.title}"
-        </p>
-      );
+      return NoLyricsText(`No lyrics available for "${currentTrack.title}"`);
     }
 
     if (!lyrics?.length) {
-      return (
-        <p className="text-muted-foreground">
-          Play a song on Spotify to see lyrics
-        </p>
-      );
+      return NoLyricsText("Play a song on Spotify to see lyrics");
     }
 
     return null;
@@ -544,19 +546,30 @@ function LyricsSection() {
     ]
   );
 
-  // Create a wrapped version of updateSettings that includes the user ID
+  // Separate handlers for preview and save
+  const handlePreviewUpdate = useCallback(
+    (newSettings: Partial<LyricsSettings>) => {
+      setPreviewSettings((currentSettings) => ({
+        ...currentSettings,
+        ...newSettings,
+      }));
+    },
+    []
+  );
+
   const handleSettingsUpdate = useCallback(
     async (newSettings: Partial<LyricsSettings>) => {
-      if (!user?.id) throw new Error("No user found");
-      return updateSettings(newSettings, user.id);
+      if (!user?.id) return;
+
+      try {
+        await updateSettings(newSettings, user.id);
+      } catch (error) {
+        console.error("Failed to update settings:", error);
+        toast.error("Failed to save settings");
+      }
     },
     [user?.id, updateSettings]
   );
-
-  // Add handler for preview updates
-  const handlePreviewUpdate = useCallback((newSettings: LyricsSettings) => {
-    setPreviewSettings(newSettings);
-  }, []);
 
   // Pass the preview settings to components that need it
   const LyricsSettings = (
@@ -615,6 +628,7 @@ function LyricsSection() {
     async function loadSettings() {
       if (!user?.id) return;
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
           .from("VisualizerWidget")
           .select("lyrics_settings")
@@ -624,17 +638,22 @@ function LyricsSection() {
         if (error) throw error;
 
         if (data?.lyrics_settings) {
-          await updateSettings(data.lyrics_settings, user.id);
-          // Also update preview settings with loaded data
-          setPreviewSettings(data.lyrics_settings);
+          const mergedSettings = {
+            ...defaultLyricsSettings,
+            ...data.lyrics_settings,
+          };
+          useLyricsStore.setState({ settings: mergedSettings });
         }
       } catch (error) {
-        console.error("Error loading settings:", error);
+        console.error("Failed to load Lyrics settings:", error);
+        toast.error("Failed to load settings");
+      } finally {
+        setIsLoading(false);
       }
     }
 
     loadSettings();
-  }, [user?.id, updateSettings]);
+  }, [user?.id]);
 
   // Add broadcast function
   const broadcastLyrics = useCallback(
@@ -685,23 +704,37 @@ function LyricsSection() {
     currentTrack,
   ]);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Spinner className="w-8 h-8 dark:fill-white" />
+      </div>
+    );
+  }
+
   return (
     <div>
       <WidgetLayout
         preview={LyricsPreview}
         settings={
-          <LyricsSettingsForm
-            settings={settings}
-            onSettingsChange={handleSettingsUpdate}
-            onPreviewUpdate={handlePreviewUpdate}
-            publicUrl={publicUrl}
-            onCopyPublicUrl={handleCopyPublicUrl}
-            fontFamilies={fontFamilies}
-            isFontLoading={isFontLoading}
-            injectFont={injectFont}
-            isVideoAvailable={isVideoAvailable}
-            isLyricsLoading={isLyricsLoading}
-          />
+          <div className="flex flex-col">
+            <PublicUrlHeader publicUrl={publicUrl} />
+            <div className="flex-1">
+              <LyricsSettingsForm
+                settings={settings}
+                onSettingsChange={handleSettingsUpdate}
+                onPreviewUpdate={handlePreviewUpdate}
+                publicUrl={publicUrl}
+                onCopyPublicUrl={handleCopyPublicUrl}
+                fontFamilies={fontFamilies}
+                isFontLoading={isFontLoading}
+                injectFont={injectFont}
+                isVideoAvailable={isVideoAvailable}
+                isLyricsLoading={isLyricsLoading}
+              />
+            </div>
+          </div>
         }
       />
       <Dialog

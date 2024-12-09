@@ -15,39 +15,37 @@ interface VisualizerStore {
   setIsLoading: (loading: boolean) => void;
 }
 
-export const useVisualizerStore = create<VisualizerStore>((set) => ({
+export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
   settings: defaultSettings,
   isLoading: true,
 
-  updateSettings: async (newSettings, userId) => {
+  updateSettings: async (
+    newSettings: Partial<VisualizerSettings>,
+    userId: string
+  ) => {
     try {
-      set((state) => ({
-        settings: {
-          ...state.settings,
-          ...newSettings,
-        },
-      }));
-
-      const { data: currentData } = await supabase
-        .from("VisualizerWidget")
-        .select("visualizer_settings")
-        .eq("user_id", userId)
-        .single();
-
+      const currentSettings = get().settings;
       const mergedSettings = {
-        ...defaultSettings,
-        ...((currentData?.visualizer_settings as VisualizerSettings) || {}),
+        ...currentSettings,
         ...newSettings,
       };
 
-      const { error } = await supabase
-        .from("VisualizerWidget")
-        .update({
+      const { error } = await supabase.from("VisualizerWidget").upsert(
+        {
+          user_id: userId,
+          type: "visualizer",
           visualizer_settings: mergedSettings,
-        })
-        .eq("user_id", userId);
+          sensitivity: 1.0,
+          colorScheme: "default",
+        },
+        {
+          onConflict: "user_id",
+        }
+      );
 
       if (error) throw error;
+
+      set({ settings: mergedSettings });
     } catch (error) {
       console.error("Failed to update settings:", error);
       throw error;

@@ -1,14 +1,6 @@
-import React, { useRef, useState, useCallback } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem } from "@/components/ui/form";
 import {
   Accordion,
   AccordionContent,
@@ -19,24 +11,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SliderWithInput } from "@/components/ui/slider-with-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Type, Palette, Settings2, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/utils/toast";
-import { useDebouncedCallback } from "use-debounce";
 import AutosaveStatus from "@/components/AutoSaveStatus";
-import { useIsClient } from "@/hooks/useIsClient";
 import {
   visualizerSchema,
   type VisualizerSettings,
   defaultVisualizerSettings,
 } from "@/schemas/visualizer";
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui/spinner";
 import { useSettingsForm } from "@/hooks/useSettingsForm";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { SettingsFormFooter } from "@/components/ui/settings-form-footer";
+import { IconAdjustmentsCog } from "@tabler/icons-react";
+import { createFormConfig } from "@/utils/form";
 
 interface SettingsFormProps {
   settings: VisualizerSettings;
@@ -45,10 +30,10 @@ interface SettingsFormProps {
   isLoading?: boolean;
 }
 
-type FieldProps = {
+type FieldProps<T> = {
   field: {
-    value: number;
-    onChange: (value: number) => void;
+    value: T;
+    onChange: (value: T) => void;
     onBlur: () => void;
   };
 };
@@ -59,17 +44,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
   onPreviewUpdate,
   isLoading = false,
 }) => {
-  const isClient = useIsClient();
-
-  const form = useForm<VisualizerSettings>({
-    resolver: zodResolver(visualizerSchema),
+  const form = useForm({
+    resolver: zodResolver(visualizerSchema) as any,
     defaultValues: settings,
-    disabled: !isClient,
-    mode: "onChange",
-    reValidateMode: "onChange",
-    shouldFocusError: false,
-    criteriaMode: "firstError",
-  });
+    ...createFormConfig(),
+  }) as UseFormReturn<VisualizerSettings>;
 
   const {
     handleSettingChange,
@@ -85,7 +64,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
     settings,
     onSettingsChange,
     onPreviewUpdate,
-    schema: visualizerSchema,
+    schema: visualizerSchema as any,
     defaultSettings: defaultVisualizerSettings,
   });
 
@@ -110,11 +89,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
           />
         </div>
         <div className={cn("flex flex-col space-y-6 relative")}>
-          <Card className="border-border/0 bg-transparent">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Settings2 className="h-5 w-5" />
-                Visualizer Settings
+          <Card className="border-border/0 bg-transparent rounded-none p-0">
+            <CardHeader className="pl-0">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2 p-0">
+                <div className="rounded-full p-2">
+                  <IconAdjustmentsCog className="h-5 w-5" />
+                </div>
+                Settings
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -147,7 +128,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                     <FormField
                       control={form.control}
                       name="commonSettings.fontSize"
-                      render={({ field }: FieldProps) => (
+                      render={({
+                        field,
+                      }: {
+                        field: FieldProps<number>["field"];
+                      }) => (
                         <FormItem>
                           <SliderWithInput
                             label="Font Size"
@@ -161,12 +146,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                                 value
                               );
                             }}
-                            onBlur={() => {
-                              handleSettingChange(
-                                "commonSettings.fontSize",
-                                field.value
-                              );
-                            }}
+                            onBlur={field.onBlur}
                           />
                         </FormItem>
                       )}
@@ -175,7 +155,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                     <FormField
                       control={form.control}
                       name="commonSettings.lineHeight"
-                      render={({ field }: FieldProps) => (
+                      render={({
+                        field,
+                      }: {
+                        field: FieldProps<number>["field"];
+                      }) => (
                         <FormItem>
                           <SliderWithInput
                             label="Line Height"
@@ -189,12 +173,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                                 value
                               );
                             }}
-                            onBlur={() => {
-                              handleSettingChange(
-                                "commonSettings.lineHeight",
-                                field.value
-                              );
-                            }}
+                            onBlur={field.onBlur}
                           />
                         </FormItem>
                       )}
@@ -205,32 +184,16 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
             </CardContent>
           </Card>
 
-          <div className="flex items-center space-x-4">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  ref={dialogRef}
-                >
-                  <RotateCcw className="size-4" />
-                  Reset to Defaults
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                {/* ... Alert dialog content ... */}
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!hasPendingChanges}
-            >
-              Save Changes
-            </Button>
-          </div>
+          <SettingsFormFooter
+            onReset={handleResetToDefaults}
+            hasPendingChanges={hasPendingChanges}
+            dialogRef={dialogRef}
+            resetDialogTitle="Reset Visualizer Settings?"
+            resetDialogDescription="This will reset all visualizer settings to their default values. This action cannot be undone."
+            isSaving={isSaving}
+            saveError={null}
+            lastSaved={lastSaved}
+          />
         </div>
       </div>
     </Form>

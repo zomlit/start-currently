@@ -150,6 +150,7 @@ module.exports = {
     require("tailwind-scrollbar-hide"),
     require('tailwindcss-spring'),
     require("@tailwindcss/typography"),
+    require('@tailwindcss/container-queries'),
     scrollbarPlugin({ nocompatible: true }),
     addVariablesForColors,
     plugin(function ({ addUtilities, theme }) {

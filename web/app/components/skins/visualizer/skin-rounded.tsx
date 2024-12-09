@@ -345,7 +345,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
   if (!track) {
     return (
       <div className="flex items-center justify-center">
-        <Spinner className="mr-2 h-4 w-4 fill-white" />
+        <Spinner className="mr-2 h-8 w-8 fill-white" />
       </div>
     );
   }
@@ -447,7 +447,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                                 specificSettings?.canvasEnabled &&
                                 specificSettings?.albumCanvas && (
                                   <div className="absolute z-20 flex h-full w-full items-center justify-center">
-                                    <Spinner className="h-6 w-6 fill-white drop-shadow-[2px_2px_0_rgb(139,92,246)]" />
+                                    <Spinner className="h-8 w-8 fill-white drop-shadow-[2px_2px_0_rgb(139,92,246)]" />
                                   </div>
                                 )}
                               {videoError && (

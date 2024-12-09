@@ -43,6 +43,14 @@ export const widgetConfigs = [
     href: "/widgets/lyrics",
   },
   {
+    id: "gamepad",
+    title: "Gamepad",
+    text: "Gamepad",
+    description: "Show controller inputs and game interactions",
+    icon: Gamepad2,
+    href: "/widgets/gamepad",
+  },
+  {
     id: "chat",
     title: "Chat",
     text: "Chat",
@@ -65,14 +73,6 @@ export const widgetConfigs = [
     description: "Display real-time statistics and metrics",
     icon: BarChart3,
     href: "/widgets/stats",
-  },
-  {
-    id: "gamepad",
-    title: "Gamepad",
-    text: "Gamepad",
-    description: "Show controller inputs and game interactions",
-    icon: Gamepad2,
-    href: "/widgets/gamepad",
   },
 ] as const;
 

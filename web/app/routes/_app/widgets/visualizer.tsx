@@ -6,15 +6,13 @@ import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 import { useVisualizerStore } from "@/store/visualizerStore";
 import { supabase } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { Copy } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { VisualizerPreview } from "@/components/widget-settings/visualizer/VisualizerPreview";
 import { defaultSettings } from "@/types/visualizer";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { VisualizerSettingsForm } from "@/components/widget-settings/visualizer/VisualizerSettingsForm";
-import { useForm } from "react-hook-form";
 import type { VisualizerSettings } from "@/types/visualizer";
+import { Spinner } from "@/components/ui/spinner";
+import { PublicUrlHeader } from "@/components/widget-settings/PublicUrlHeader";
 
 export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: () => (
@@ -30,11 +28,44 @@ function VisualizerSection() {
   const [publicUrl, setPublicUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Update public URL
+  useEffect(() => {
+    if (user?.username) {
+      const formattedUrl = `${window.location.origin}/${user.username}/visualizer`;
+      setPublicUrl(formattedUrl);
+    }
+  }, [user?.username]);
+
+  // Handlers
+  const handlePreviewUpdate = useCallback(
+    (newSettings: Partial<VisualizerSettings>) => {
+      useVisualizerStore.setState((state) => ({
+        settings: {
+          ...state.settings,
+          ...newSettings,
+        },
+      }));
+    },
+    []
+  );
+
+  const handleSettingsUpdate = useCallback(
+    async (newSettings: Partial<VisualizerSettings>) => {
+      if (!user?.id) return;
+      try {
+        await updateSettings(newSettings, user.id);
+      } catch (error) {
+        console.error("Failed to update settings:", error);
+        toast.error("Failed to save settings");
+      }
+    },
+    [user?.id, updateSettings]
+  );
+
   // Load initial settings
   useEffect(() => {
     async function loadSettings() {
       if (!user?.id) return;
-
       try {
         setIsLoading(true);
         const { data, error } = await supabase
@@ -46,12 +77,11 @@ function VisualizerSection() {
         if (error) throw error;
 
         if (data?.visualizer_settings) {
-          useVisualizerStore.setState((state) => ({
-            settings: {
-              ...defaultSettings,
-              ...data.visualizer_settings,
-            },
-          }));
+          const mergedSettings = {
+            ...defaultSettings,
+            ...data.visualizer_settings,
+          };
+          useVisualizerStore.setState({ settings: mergedSettings });
         }
       } catch (error) {
         console.error("Failed to load visualizer settings:", error);
@@ -64,94 +94,21 @@ function VisualizerSection() {
     loadSettings();
   }, [user?.id]);
 
-  // Separate handlers for preview and save
-  const handlePreviewUpdate = useCallback(
-    (newSettings: Partial<VisualizerSettings>) => {
-      // Preserve existing settings structure
-      useVisualizerStore.setState((state) => {
-        if ("commonSettings" in newSettings) {
-          return {
-            settings: {
-              ...state.settings,
-              commonSettings: {
-                ...state.settings.commonSettings,
-                ...newSettings.commonSettings,
-              },
-            },
-          };
-        }
-        return {
-          settings: {
-            ...state.settings,
-            ...newSettings,
-          },
-        };
-      });
-    },
-    []
-  );
-
-  const handleSettingsUpdate = useCallback(
-    async (newSettings: Partial<VisualizerSettings>) => {
-      if (!user?.id) return;
-
-      try {
-        // This will now properly merge with existing settings
-        await updateSettings(newSettings, user.id);
-      } catch (error) {
-        console.error("Failed to update settings:", error);
-        toast.error("Failed to save settings");
-      }
-    },
-    [user?.id, updateSettings]
-  );
-
-  // Log when settings change
-  useEffect(() => {
-    console.log("📊 Current Settings:", settings);
-  }, [settings]);
-
-  // Update public URL
-  useEffect(() => {
-    if (user?.username) {
-      const formattedUrl = `${window.location.origin}/${user.username}/visualizer`;
-      setPublicUrl(formattedUrl);
-    }
-  }, [user?.username]);
-
-  const handleCopyPublicUrl = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      navigator.clipboard.writeText(publicUrl);
-      toast.success("The public URL has been copied to your clipboard.");
-    },
-    [publicUrl]
-  );
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Spinner className="w-8 h-8 dark:fill-white" />
+      </div>
+    );
+  }
 
   return (
     <WidgetLayout
       preview={<VisualizerPreview settings={settings} />}
       settings={
         <div className="flex flex-col">
-          <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex items-center space-x-2">
-              <Input
-                key={publicUrl}
-                value={publicUrl}
-                readOnly
-                className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-              />
-              <Button
-                onClick={handleCopyPublicUrl}
-                size="icon"
-                variant="outline"
-                className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
+          <PublicUrlHeader publicUrl={publicUrl} />
           <div className="flex-1">
             <VisualizerSettingsForm
               settings={settings}

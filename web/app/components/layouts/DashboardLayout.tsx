@@ -23,7 +23,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             isCollapsed={isCollapsed}
             onToggleNav={() => setIsCollapsed(!isCollapsed)}
           />
-          <HorizontalNav />
+          {/* <HorizontalNav /> */}
           {children}
         </Container>
       </main>

@@ -31,6 +31,7 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
         isHookError: false,
         isHmrError: false,
         isHydrationError: false,
+        isDynamicImportError: false,
       };
     }
 
@@ -39,10 +40,16 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
     );
     const isHmrError = error.message.includes("server.hmr.overlay");
     const isHydrationError = error.message.includes("Hydration failed");
+    const isDynamicImportError = error.message.includes(
+      "Failed to fetch dynamically imported module"
+    );
 
     let friendlyMessage = error.message;
 
-    if (isHydrationError) {
+    if (isDynamicImportError) {
+      friendlyMessage =
+        "Failed to load page module. Please check your connection and try again.";
+    } else if (isHydrationError) {
       friendlyMessage = "A page loading error occurred. Please try refreshing.";
     } else if (isHookError) {
       friendlyMessage =
@@ -57,6 +64,7 @@ export function DefaultCatchBoundary({ error, reset }: ErrorComponentProps) {
       isHookError,
       isHmrError,
       isHydrationError,
+      isDynamicImportError,
     };
   }, [error]);
 

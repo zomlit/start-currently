@@ -1,45 +1,50 @@
 # Full-Stack Development Guidelines
+You are an expert full-stack developer proficient in TypeScript, React, Tanstack Start, Tanstack Query, ElysiaJS, Eden, Clerk, Supabase, Prisma, and modern UI/UX frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI). Your task is to produce the most optimized and maintainable Tanstack Start code, following best practices and adhering to the principles of clean code and robust architecture.
+
+### Objective
+- Create a Tanstack Start solution that is not only functional but also adheres to the best practices in performance, security, and maintainability.
 
 ## Project Architecture Overview
-
 - **Frontend**: TanStack Start + React (web folder)
 - **Backend**: ElysiaJS + Bun (backend folder)
 - **Database**: Prisma + Supabase
 - **Authentication**: Clerk
-- **Type Safety**: End-to-end type safety with Prisma + Supabase types
+- **Type Safety**: End-to-end type safety with Eden + Prisma + Supabase types 
 
 ## Project Structure
 
 ```
 /
-├── web/                      # Frontend application
+├── web/                            # Frontend application
 │   ├── app/
-│   │   ├── components/       # Reusable components
-│   │   │   ├── ui/          # Shadcn UI components
-│   │   │   ├── auth/        # Auth-related components
-│   │   │   └── widget-settings/ # Widget configuration
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── routes/          # TanStack Router routes
-│   │   ├── store/           # State management
-│   │   ├── types/           # TypeScript types
-│   │   └── utils/           # Utility functions
-│   └── public/              # Static assets
+│   │   ├── components/             # Reusable components
+│   │   │   ├── ui/                 # Shadcn UI components
+│   │   │   ├── auth/               # Auth-related components
+│   │   │   ├── layouts/            # Layout components
+│   │   │   └── widget-settings/    # Widget settings & configuration
+│   │   ├── hooks/                  # Custom React hooks
+│   │   ├── routes/                 # TanStack Router routes
+│   │   ├── schemas/                # Zod schemas
+│   │   ├── store/                  # State management
+│   │   ├── types/                  # TypeScript types
+│   │   └── utils/                  # Utility functions
+│   └── public/                     # Static assets
 │
-├── backend/                  # Backend application
+├── backend/                        # Backend application
 │   ├── src/
-│   │   ├── routes/          # API routes
-│   │   │   ├── spotify/     # Spotify integration
-│   │   │   └── twitch/      # Twitch integration
-│   │   ├── services/        # Business logic
-│   │   ├── middleware/      # Custom middleware
-│   │   └── utils/           # Utility functions
-│   └── prisma/              # Database schema and migrations
+│   │   ├── routes/                 # API routes
+│   │   │   ├── spotify/            # Spotify integration
+│   │   │   └── twitch/             # Twitch integration
+│   │   ├── services/               # Business logic
+│   │   ├── middleware/             # Custom middleware
+│   │   └── utils/                  # Utility functions
+│   └── prisma/                     # Database schema and migrations
 │       ├── schema.prisma
 │       └── migrations/
 │
-└── shared/                  # Shared code between packages
-    ├── types/              # Shared TypeScript types
-    └── utils/              # Shared utilities
+└── shared/                         # Shared code between packages
+    ├── types/                      # Shared TypeScript types
+    └── utils/                      # Shared utilities
 ```
 
 ## Core Technologies
@@ -54,9 +59,9 @@
 
 ### Backend
 - ElysiaJS + Bun
+- Eden for type safety
 - Prisma ORM
 - Supabase
-- Socket.IO for real-time
 - Spotify & Twitch APIs
 
 ## Type Generation
@@ -94,10 +99,14 @@ bun run prisma:migrate
 
 ### Frontend
 1. Use TanStack Router for routing
-2. Implement Shadcn UI components
-3. Follow atomic design principles
-4. Use TypeScript strict mode
-5. Implement proper error boundaries
+2. Use Tanstack Query for server state management
+3. Use Zustand for state management
+4. Eden for type safety
+5. Use React Hook Form and zod for form handling
+6. Implement Shadcn UI components
+7. Follow atomic design principles
+8. Use TypeScript strict mode
+9. Implement proper error boundaries
 
 ### Backend
 1. Use ElysiaJS decorators

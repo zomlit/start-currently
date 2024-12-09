@@ -31,7 +31,7 @@ export function WidgetContent({ type, selected }: WidgetContentProps) {
     if (isLyricsLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Spinner className="w-[20px] h-[20px]" />
+          <Spinner className="w-8 h-8" />
         </div>
       );
     }

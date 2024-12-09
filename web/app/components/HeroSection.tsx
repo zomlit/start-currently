@@ -22,7 +22,7 @@ export default function HeroSection() {
           </p>
           <div className="!my-16 flex justify-center">
             {!isLoaded ? (
-              <Spinner className="w-8 fill-violet-300 text-white" />
+              <Spinner className="w-8 h-8 fill-violet-300 text-white" />
             ) : isSignedIn ? (
               <AnimatedLink
                 to="/dashboard"

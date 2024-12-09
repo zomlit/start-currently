@@ -55,7 +55,7 @@ export function VisualizerPreview({ settings }: VisualizerPreviewProps) {
     : undefined;
 
   return (
-    <div className="flex-1 p-4">
+    <div className="flex-1">
       <SkinRounded
         track={transformedTrack}
         commonSettings={{

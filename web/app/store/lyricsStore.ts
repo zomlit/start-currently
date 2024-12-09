@@ -1,37 +1,6 @@
 import { create } from "zustand";
-import { LyricsSettings } from "@/schemas/lyrics";
+import { type LyricsSettings, defaultLyricsSettings } from "@/schemas/lyrics";
 import { supabase } from "@/utils/supabase/client";
-
-// Define default settings here since we can't import from routes
-export const defaultLyricsSettings: LyricsSettings = {
-  backgroundColor: "rgba(0, 0, 0, 1)",
-  textColor: "rgba(255, 255, 255, 1)",
-  currentTextColor: "rgba(220, 40, 220, 1)",
-  fontSize: 24,
-  padding: 20,
-  currentLineScale: 1.2,
-  showFade: true,
-  fadeDistance: 64,
-  lineHeight: 1.5,
-  fontFamily: "Sofia Sans Condensed",
-  greenScreenMode: false,
-  colorSync: false,
-  showVideoCanvas: false,
-  videoCanvasOpacity: 0.2,
-  textAlign: "left",
-  textShadowColor: "rgba(0, 0, 0, 0.5)",
-  textShadowBlur: 2,
-  textShadowOffsetX: 1,
-  textShadowOffsetY: 1,
-  animationEasing: "easeOut",
-  animationSpeed: 300,
-  glowEffect: false,
-  glowColor: "rgba(255, 255, 255, 0.5)",
-  glowIntensity: 5,
-  hideExplicitContent: false,
-  animationStyle: "scale",
-  margin: 8,
-};
 
 interface LyricsStore {
   settings: LyricsSettings;
@@ -53,21 +22,24 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
     userId: string
   ) => {
     try {
-      const { data, error } = await supabase.from("VisualizerWidget").upsert(
+      // Update Supabase
+      const { error } = await supabase.from("VisualizerWidget").upsert(
         {
           user_id: userId,
           type: "lyrics",
-          lyrics_settings: newSettings,
+          lyrics_settings: {
+            ...defaultLyricsSettings,
+            ...newSettings,
+          },
           sensitivity: 1.0,
           colorScheme: "default",
         },
-        {
-          onConflict: "user_id",
-        }
+        { onConflict: "user_id" }
       );
 
       if (error) throw error;
 
+      // Update local state
       set((state) => ({
         settings: {
           ...state.settings,
@@ -75,7 +47,7 @@ export const useLyricsStore = create<LyricsStore>((set) => ({
         },
       }));
     } catch (error) {
-      console.error("Error in updateSettings:", error);
+      console.error("Failed to update settings:", error);
       throw error;
     }
   },
