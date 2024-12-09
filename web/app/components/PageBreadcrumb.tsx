@@ -8,9 +8,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import {
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+} from "@tabler/icons-react";
 
 interface PageBreadcrumbProps {
   className?: string;
@@ -27,11 +31,11 @@ export function PageBreadcrumb({
   const breadcrumbs = matches.filter((match) => match.pathname !== "/");
 
   return (
-    <div className="flex items-center gap-4 pt-16 relative">
-      <div className="flex h-12 items-center justify-between absolute top-0 left-0">
+    <div className="flex items-center gap-4 pt-10 relative">
+      <div className="flex h-12 items-center justify-between">
         {onToggleNav && (
           <motion.button
-            // animate={{ rotate: isCollapsed ? 180 : 0 }}
+            animate={{ scaleX: isCollapsed ? -1 : 1 }}
             transition={{
               type: "spring",
               stiffness: 400,
@@ -39,14 +43,17 @@ export function PageBreadcrumb({
               mass: 0.2,
               bounce: 0.1,
             }}
-            className="h-8 w-8 absolute left-0"
+            className="flex items-center justify-center fill-violet-500 stroke-violet-500 text-violet-500"
             onClick={onToggleNav}
           >
-            <ChevronRight className="h-4 w-4" />
+            <IconLayoutSidebarLeftCollapse
+              stroke={1.5}
+              className="h-6 w-6 text-muted-foreground stroke-violet-600 dark:stroke-violet-200"
+            />
           </motion.button>
         )}
       </div>
-      <Breadcrumb className={cn("mb-2 font-light", className)}>
+      <Breadcrumb className={cn("font-light", className)}>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>

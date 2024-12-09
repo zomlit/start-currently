@@ -250,9 +250,9 @@ export const GradientColorPicker: React.FC<GradientColorPickerProps> = ({
         <PopoverContent
           side="left"
           align="center"
-          sideOffset={55}
+          sideOffset={50}
           className={cn(
-            "z-50 w-auto mb-4 rounded-lg",
+            "z-10 w-auto mb-4",
             "bg-white/95 dark:bg-black/95",
             "shadow-lgp-4",
             "data-[state=open]:animate-in data-[state=closed]:animate-out scale-105",

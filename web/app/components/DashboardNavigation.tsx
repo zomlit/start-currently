@@ -9,7 +9,7 @@ import {
 } from "@clerk/tanstack-start";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavItem, navItems, NavSubItem } from "@/config/navigation";
+import { navItems, NavSubItem } from "@/config/navigation";
 import { ChevronRight, LucideIcon, Menu, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { Suspense, useCallback } from "react";
 import { useIsClient } from "@/hooks/useIsClient";
 
 const NAV_WIDTH_EXPANDED = 280;
@@ -77,8 +77,8 @@ const DashboardNavigation: React.FC<DashboardNavigationProps> = ({
         }}
         className={cn(
           "hidden md:flex h-[calc(100vh-var(--nav-height))] flex-col gap-4 p-3 sticky top-[var(--nav-height)]",
-          "bg-white/40 dark:bg-black/40 backdrop-blur-2xl",
-          "shadow-2xl",
+          "bg-white/40 dark:bg-black/40",
+          "shadow-none",
           "overflow-hidden",
           "will-change-[width,transform,opacity] transform-gpu"
         )}
@@ -427,7 +427,7 @@ const NavContent = ({
                 "w-full p-2 flex items-center min-h-[52px]",
                 "transition-colors duration-200",
                 "hover:bg-violet-50 dark:hover:bg-violet-900/20",
-                "rounded-none",
+                "rounded-none ring-0 focus:ring-0 focus:outline-none",
                 isCollapsed ? "" : "justify-between"
               )}
             >
@@ -464,16 +464,16 @@ const NavContent = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            side="top"
+            side="left"
             alignOffset={-8}
             sideOffset={4}
-            className="w-56 p-1 ml-3 border-0 dark:bg-black/40 backdrop-blur-md !rounded-none md:ml-3"
+            className="w-64 p-1 ml-3 border-0 bg-white/40 dark:bg-black/40 backdrop-blur-lg shadow-none !rounded-none md:ml-3"
           >
             {menuItems.map((item) => (
               <DropdownMenuItem
                 key={item.label}
                 onClick={item.onClick}
-                className="flex items-center gap-2 py-2 focus:bg-violet-900/20 rounded-none"
+                className="flex items-center gap-2 py-2 focus:bg-violet-900/10 rounded-none"
               >
                 <div className="flex flex-col flex-1 cursor-pointer">
                   <span className="text-sm font-medium">{item.label}</span>
@@ -484,7 +484,7 @@ const NavContent = ({
               </DropdownMenuItem>
             ))}
 
-            <div className="h-px bg-border my-1" />
+            <div className="h-px border-t border-white/10 relative my-1 before:w-full before:h-[1px] before:bg-black/10 before:absolute before:bottom-[1px] before:left-0" />
 
             <DropdownMenuItem
               asChild
@@ -492,7 +492,7 @@ const NavContent = ({
             >
               <div className="w-full">
                 <SignOutButton>
-                  <div className="cursor-pointer w-full flex items-center justify-center text-red-500 hover:text-red-600 font-medium">
+                  <div className="cursor-pointer w-full flex items-center justify-center text-pink-500 hover:text-pink-600 font-medium">
                     Sign out
                   </div>
                 </SignOutButton>

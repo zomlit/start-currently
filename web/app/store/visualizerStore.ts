@@ -1,32 +1,25 @@
 import { create } from "zustand";
 import { defaultSettings, type VisualizerSettings } from "@/types/visualizer";
 import { supabase } from "@/utils/supabase/client";
-import type { Tables } from "@/types/supabase";
+import type { Database } from "@/types/supabase";
 
-type Profile = Tables<"Profiles">;
+type VisualizerWidget = Database["public"]["Tables"]["VisualizerWidget"]["Row"];
 
 interface VisualizerStore {
   settings: VisualizerSettings;
-  currentProfile: Profile | null;
-  profiles: Profile[];
   isLoading: boolean;
   updateSettings: (
     newSettings: Partial<VisualizerSettings>,
     userId: string
   ) => Promise<void>;
-  setCurrentProfile: (profile: Profile | null) => void;
-  setProfiles: (profiles: Profile[]) => void;
   setIsLoading: (loading: boolean) => void;
 }
 
-export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
+export const useVisualizerStore = create<VisualizerStore>((set) => ({
   settings: defaultSettings,
-  currentProfile: null,
-  profiles: [],
   isLoading: true,
 
   updateSettings: async (newSettings, userId) => {
-    console.log("🏪 Store Update:", { newSettings, userId }); // Log store updates
     try {
       set((state) => ({
         settings: {
@@ -35,40 +28,31 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
         },
       }));
 
-      // Log before database update
-      console.log("💾 Saving to database...", newSettings);
+      const { data: currentData } = await supabase
+        .from("VisualizerWidget")
+        .select("visualizer_settings")
+        .eq("user_id", userId)
+        .single();
 
-      const { error } = await supabase.from("VisualizerWidget").upsert({
-        user_id: userId,
-        settings: newSettings,
-      });
+      const mergedSettings = {
+        ...defaultSettings,
+        ...((currentData?.visualizer_settings as VisualizerSettings) || {}),
+        ...newSettings,
+      };
 
-      if (error) {
-        console.error("❌ Database Error:", error); // Log database errors
-        throw error;
-      }
+      const { error } = await supabase
+        .from("VisualizerWidget")
+        .update({
+          visualizer_settings: mergedSettings,
+        })
+        .eq("user_id", userId);
 
-      console.log("✅ Database Updated Successfully");
+      if (error) throw error;
     } catch (error) {
-      console.error("❌ Store Update Error:", error);
+      console.error("Failed to update settings:", error);
       throw error;
     }
   },
 
-  setCurrentProfile: (profile) => {
-    if (profile?.settings) {
-      set({
-        currentProfile: profile,
-        settings: profile.settings as VisualizerSettings,
-      });
-    } else {
-      set({
-        currentProfile: profile,
-        settings: defaultSettings,
-      });
-    }
-  },
-
-  setProfiles: (profiles) => set({ profiles }),
   setIsLoading: (loading) => set({ isLoading: loading }),
 }));

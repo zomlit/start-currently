@@ -143,6 +143,14 @@ function RootDocument({ children }: { children: ReactNode }) {
             position="bottom-center"
             richColors
             closeButton
+            toastOptions={{
+              classNames: {
+                closeButton: "!bg-white/80 backdrop-blur-sm !text-black",
+              },
+              style: {
+                fontSize: "14px",
+              },
+            }}
           />
         </div>
       </body>

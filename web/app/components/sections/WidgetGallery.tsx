@@ -1,7 +1,16 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, BarChart2, Gamepad, MessageCircle } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart2,
+  Gamepad,
+  MessageCircle,
+  Music,
+  Music2,
+  Target,
+  Bell,
+} from "lucide-react";
 
 interface WidgetCardProps {
   className?: string;
@@ -33,7 +42,7 @@ export const WidgetCard = ({
     <Link
       to={link}
       className={cn(
-        "group relative overflow-hidden rounded-3xl p-6 hover:shadow-2xl",
+        "group relative overflow-hidden rounded-3xl p-6 hover:shadow-lg",
         "bg-white/40 dark:bg-gray-950/40 backdrop-blur-xl",
         "border border-gray-200 dark:border-gray-800",
         "transition-all duration-300",
@@ -89,7 +98,7 @@ export const WidgetCard = ({
 
 export function WidgetGallery() {
   return (
-    <div className="space-y-8 py-2">
+    <div className="space-y-8 py-10">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
         <WidgetCard
           featured
@@ -106,11 +115,46 @@ export function WidgetGallery() {
         />
 
         <WidgetCard
+          title="Lyrics Widget"
+          description="Real-time synchronized lyrics display with beautiful animations"
+          icon={<Music className="h-5 w-5 text-violet-500" />}
+          image="/images/widgets/lyrics-preview.webp"
+          stats={[
+            { value: "Live", label: "Sync" },
+            { value: "10+", label: "Effects" },
+          ]}
+          link="/widgets/lyrics"
+        />
+
+        <WidgetCard
+          title="Visualizer"
+          description="Audio visualizer with multiple styles and customization options"
+          icon={<Music className="h-5 w-5 text-violet-500" />}
+          image="/images/widgets/visualizer-preview.webp"
+          stats={[
+            { value: "5+", label: "Styles" },
+            { value: "Real-time", label: "Audio" },
+          ]}
+          link="/widgets/visualizer"
+        />
+
+        <WidgetCard
           size="sm"
           title="Chat Widget"
           description="Stylish chat overlay with custom emotes and badges"
           icon={<MessageCircle className="h-5 w-5 text-violet-500" />}
           link="/widgets/chat"
+        />
+
+        <WidgetCard
+          title="Now Playing"
+          description="Display current track info with album artwork and progress"
+          icon={<Music2 className="h-5 w-5 text-violet-500" />}
+          stats={[
+            { value: "Live", label: "Updates" },
+            { value: "5+", label: "Layouts" },
+          ]}
+          link="/widgets/now-playing"
         />
 
         <WidgetCard
@@ -125,7 +169,27 @@ export function WidgetGallery() {
           link="/widgets/analytics"
         />
 
-        {/* Add more widgets */}
+        <WidgetCard
+          title="Goal Tracker"
+          description="Customizable goal trackers with animations"
+          icon={<Target className="h-5 w-5 text-violet-500" />}
+          stats={[
+            { value: "10+", label: "Themes" },
+            { value: "Auto", label: "Updates" },
+          ]}
+          link="/widgets/goals"
+        />
+
+        <WidgetCard
+          title="Alerts"
+          description="Customizable alerts for follows, subs, and donations"
+          icon={<Bell className="h-5 w-5 text-violet-500" />}
+          stats={[
+            { value: "15+", label: "Events" },
+            { value: "Custom", label: "Sounds" },
+          ]}
+          link="/widgets/alerts"
+        />
       </div>
     </div>
   );

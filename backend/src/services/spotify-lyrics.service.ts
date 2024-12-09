@@ -66,12 +66,6 @@ export class SpotifyLyricsService {
         logger.error(
           `Response headers: ${JSON.stringify(error.response?.headers)}`
         );
-        logger.error(`Response data: ${JSON.stringify(error.response?.data)}`);
-        if (error.response?.status === 401) {
-          throw new Error(
-            "Spotify authentication failed. Please update your SPOTIFY_SP_DC in the .env file."
-          );
-        }
       } else if (axios.isAxiosError(error) && error.response?.status === 404) {
         throw new NoLyricsAvailableError(trackId, "Unknown Artist");
       } else {

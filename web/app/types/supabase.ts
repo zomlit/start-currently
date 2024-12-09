@@ -1,14 +1,52 @@
-[?25l
-    Select a project:                                                                               
-                                                                                                    
-  >  1. aojscokajnwqclxpsdsa [name: payload, org: dpjabvqpofgchlpyvwbn, region: us-east-1]          
-    2. bktjckkcccpwwwipcgpt [name: livestreamingtools, org: dfswpgiywjqnpvnfmusx, region: us-east-1]
-    3. aliddllzqrcpzhiouryw [name: lstio, org: dfswpgiywjqnpvnfmusx, region: us-east-1]             
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-    ↑/k up • ↓/j down • / filter • q quit • ? more                                                  
-                                                                                                    [0D[2K[?25h[?1002l[?1003l[?1006l
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      VisualizerWidget: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+          visualizer_settings: Json | null;
+          is_active: boolean;
+          is_current: boolean;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id: string;
+          visualizer_settings?: Json | null;
+          is_active?: boolean;
+          is_current?: boolean;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id?: string;
+          visualizer_settings?: Json | null;
+          is_active?: boolean;
+          is_current?: boolean;
+        };
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+  };
+}

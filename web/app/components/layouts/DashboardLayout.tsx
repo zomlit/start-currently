@@ -17,7 +17,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
       />
-      <main className="flex-1 relative ml-8">
+      <main className="flex-1 relative mx-8">
         <Container maxWidth="full">
           <PageBreadcrumb
             isCollapsed={isCollapsed}

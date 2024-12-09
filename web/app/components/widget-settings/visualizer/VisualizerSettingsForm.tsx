@@ -5,18 +5,26 @@ import type { VisualizerSettings } from "@/types/visualizer";
 
 interface VisualizerSettingsFormProps {
   settings: VisualizerSettings;
-  onSettingsChange: (newSettings: Partial<VisualizerSettings>) => void;
+  onSettingsChange: (settings: Partial<VisualizerSettings>) => Promise<void>;
+  onPreviewUpdate?: (settings: Partial<VisualizerSettings>) => void;
+  isLoading?: boolean;
 }
 
-export const VisualizerSettingsForm: React.FC<VisualizerSettingsFormProps> = ({
+export function VisualizerSettingsForm({
   settings,
   onSettingsChange,
-}) => {
+  onPreviewUpdate,
+  isLoading,
+}: VisualizerSettingsFormProps) {
   return (
     <FormProvider>
       <div className="space-y-4">
-        <SettingsForm settings={settings} onSettingsChange={onSettingsChange} />
+        <SettingsForm
+          settings={settings}
+          onSettingsChange={onSettingsChange}
+          onPreviewUpdate={onPreviewUpdate}
+        />
       </div>
     </FormProvider>
   );
-};
+}

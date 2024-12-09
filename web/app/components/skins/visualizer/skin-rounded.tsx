@@ -234,64 +234,31 @@ const computeTextStyle = (
 };
 
 const TrackInfo = memo<TrackInfoProps>(
-  ({
-    track,
-    textStyle,
-    specificSettings,
-    palette,
-    commonSettings,
-    audioMotionRef,
-  }) => {
-    const artistName = useMemo(() => {
-      if (!track?.artist) return "Artist N/A";
+  ({ track, commonSettings, specificSettings, palette }) => {
+    const containerStyle = useMemo(
+      () => computeContainerStyle(commonSettings, specificSettings, palette),
+      [commonSettings, specificSettings, palette]
+    );
 
-      if (Array.isArray(track.artist)) {
-        return track.artist.join(", ");
-      }
-
-      const artistStr = String(track.artist);
-
-      return artistStr
-        .replace(/ feat\. /gi, ", ")
-        .replace(/ ft\. /gi, ", ")
-        .replace(/ & /g, ", ")
-        .replace(/ \+ /g, ", ")
-        .replace(/ x /gi, ", ")
-        .replace(/\s*,\s*/g, ", ")
-        .replace(/\s*\(\s*/g, ", ")
-        .replace(/\s*\)\s*/g, "")
-        .split(", ")
-        .filter(Boolean)
-        .filter((name, index, array) => array.indexOf(name) === index)
-        .join(", ");
-    }, [track?.artist]);
+    const textStyle = useMemo(
+      () => computeTextStyle(specificSettings, palette),
+      [specificSettings, palette]
+    );
 
     return (
       <div
-        className="whitespace relative overflow-x-clip rounded-lg px-3 py-1"
+        className="flex flex-col justify-center"
         style={{
-          backgroundColor: specificSettings?.colorSync
-            ? palette?.DarkVibrant?.hex
-            : commonSettings?.backgroundColor || "transparent",
-          borderRadius: `${commonSettings?.borderRadius || 0}px`,
+          ...containerStyle,
+          ...textStyle,
         }}
       >
-        <p
-          className="track-name relative z-10 truncate"
-          style={{ ...textStyle, fontWeight: "600" }}
-        >
+        <div className="font-medium truncate">
           {track?.title || "No track playing"}
-        </p>
-        <p className="artist-name relative z-10 truncate" style={textStyle}>
-          {artistName}
-        </p>
-        {specificSettings?.micEnabled && (
-          <div
-            ref={audioMotionRef}
-            className="absolute -bottom-[1px] left-0 z-0 h-full w-full rounded-lg [&_canvas]:rounded-lg"
-            id="container"
-          />
-        )}
+        </div>
+        <div className="text-sm opacity-75 truncate">
+          {track?.artist || "Unknown Artist"}
+        </div>
       </div>
     );
   }
@@ -504,7 +471,7 @@ const SkinRounded: React.FC<SkinRoundedProps> = ({
                     <div
                       className={cn(
                         "z-0 flex w-full min-w-0 flex-col",
-                        `gap-${commonSettings?.gap || 0}`
+                        `gap-${commonSettings?.gap || 2}`
                       )}
                     >
                       {specificSettings?.canvasEnabled &&

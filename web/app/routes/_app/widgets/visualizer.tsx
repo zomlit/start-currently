@@ -13,8 +13,8 @@ import { VisualizerPreview } from "@/components/widget-settings/visualizer/Visua
 import { defaultSettings } from "@/types/visualizer";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { VisualizerSettingsForm } from "@/components/widget-settings/visualizer/VisualizerSettingsForm";
+import { useForm } from "react-hook-form";
 import type { VisualizerSettings } from "@/types/visualizer";
-import { usePlaybackPolling } from "@/hooks/usePlaybackPolling";
 
 export const Route = createFileRoute("/_app/widgets/visualizer")({
   component: () => (
@@ -24,63 +24,83 @@ export const Route = createFileRoute("/_app/widgets/visualizer")({
   ),
 });
 
-// Update the WidgetProfile type to match the form requirements
-type WidgetProfile = {
-  id: string;
-  name: string;
-  color: string;
-  is_active: boolean;
-  is_current: boolean;
-  settings: {
-    commonSettings: {
-      backgroundColor?: string;
-      textColor?: string;
-      fontSize?: number;
-      padding?: number;
-      fontFamily?: string;
-    };
-    specificSettings: {
-      mode: number;
-      colorSync: boolean;
-      canvasEnabled: boolean;
-      micEnabled: boolean;
-      backgroundOpacity: number;
-      albumCanvas: boolean;
-      backgroundCanvas: boolean;
-      backgroundCanvasOpacity: number;
-      pauseEnabled: boolean;
-      hideOnDisabled: boolean;
-      selectedSkin: string;
-      progressBarForegroundColor: string;
-      progressBarBackgroundColor?: string;
-      gradient?: boolean;
-      fillAlpha?: number;
-      lineWidth?: number;
-    };
-  };
-  widgetType: "visualizer" | "timer" | "lyrics";
-};
-
 function VisualizerSection() {
   const { user } = useUser();
   const { settings, updateSettings } = useVisualizerStore();
-  const { track } = usePlaybackPolling();
   const [publicUrl, setPublicUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Create a wrapped version of updateSettings that includes the user ID
+  // Load initial settings
+  useEffect(() => {
+    async function loadSettings() {
+      if (!user?.id) return;
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from("VisualizerWidget")
+          .select("visualizer_settings")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.visualizer_settings) {
+          useVisualizerStore.setState((state) => ({
+            settings: {
+              ...defaultSettings,
+              ...data.visualizer_settings,
+            },
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to load visualizer settings:", error);
+        toast.error("Failed to load settings");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadSettings();
+  }, [user?.id]);
+
+  // Separate handlers for preview and save
+  const handlePreviewUpdate = useCallback(
+    (newSettings: Partial<VisualizerSettings>) => {
+      // Preserve existing settings structure
+      useVisualizerStore.setState((state) => {
+        if ("commonSettings" in newSettings) {
+          return {
+            settings: {
+              ...state.settings,
+              commonSettings: {
+                ...state.settings.commonSettings,
+                ...newSettings.commonSettings,
+              },
+            },
+          };
+        }
+        return {
+          settings: {
+            ...state.settings,
+            ...newSettings,
+          },
+        };
+      });
+    },
+    []
+  );
+
   const handleSettingsUpdate = useCallback(
     async (newSettings: Partial<VisualizerSettings>) => {
-      console.log("🔃 Updating Settings:", newSettings); // Log settings updates
-      if (!user?.id) {
-        console.error("❌ No user found"); // Log error if no user
-        throw new Error("No user found");
-      }
+      if (!user?.id) return;
+
       try {
+        // This will now properly merge with existing settings
         await updateSettings(newSettings, user.id);
-        console.log("✨ Settings Updated Successfully"); // Log success
       } catch (error) {
-        console.error("❌ Error updating settings:", error); // Log errors
-        throw error;
+        console.error("Failed to update settings:", error);
+        toast.error("Failed to save settings");
       }
     },
     [user?.id, updateSettings]
@@ -108,42 +128,40 @@ function VisualizerSection() {
     [publicUrl]
   );
 
-  // Pass the wrapped version to VisualizerSettingsForm
-  const VisualizerSettings = (
-    <div className="flex flex-col">
-      {/* Header with URL input */}
-      <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center space-x-2">
-          <Input
-            key={publicUrl}
-            value={publicUrl}
-            readOnly
-            className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-          />
-          <Button
-            onClick={handleCopyPublicUrl}
-            size="icon"
-            variant="outline"
-            className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex-1">
-        <VisualizerSettingsForm
-          settings={settings as VisualizerSettings}
-          onSettingsChange={handleSettingsUpdate}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <WidgetLayout
       preview={<VisualizerPreview settings={settings} />}
-      settings={VisualizerSettings}
+      settings={
+        <div className="flex flex-col">
+          <div className="flex-none p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center space-x-2">
+              <Input
+                key={publicUrl}
+                value={publicUrl}
+                readOnly
+                className="flex-grow ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+              />
+              <Button
+                onClick={handleCopyPublicUrl}
+                size="icon"
+                variant="outline"
+                className="ring-offset-0 focus:ring-offset-0 focus-visible:ring-offset-0"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <VisualizerSettingsForm
+              settings={settings}
+              onSettingsChange={handleSettingsUpdate}
+              onPreviewUpdate={handlePreviewUpdate}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+      }
     />
   );
 }
