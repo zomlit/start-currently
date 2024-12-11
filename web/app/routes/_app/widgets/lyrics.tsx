@@ -32,6 +32,7 @@ import { supabase } from "@/utils/supabase/client";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { cn } from "@/lib/utils";
 import { PublicUrlHeader } from "@/components/widget-settings/PublicUrlHeader";
+import { loadGoogleFont } from "@/lib/fonts";
 
 export const Route = createFileRoute("/_app/widgets/lyrics")({
   component: () => (
@@ -516,8 +517,8 @@ function LyricsSection() {
           padding: `${previewSettings.padding}px`,
         }}
       >
-        {VideoBackground}
         {FadeOverlay}
+        {VideoBackground}
         <div
           ref={lyricsContainerRef}
           className="w-full overflow-visible scrollbar-hide relative z-20"
@@ -704,14 +705,48 @@ function LyricsSection() {
     currentTrack,
   ]);
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner className="w-8 h-8 dark:fill-white" />
-      </div>
-    );
-  }
+  // Load font when settings change or on initial load
+  useEffect(() => {
+    if (settings.fontFamily && settings.fontFamily !== "system-ui") {
+      loadGoogleFont(settings.fontFamily).catch((error) => {
+        console.error("Failed to load font:", error);
+      });
+    }
+  }, [settings.fontFamily]);
+
+  // Load initial settings
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const loadInitialSettings = async () => {
+      try {
+        // Load settings from database
+        const response = await fetch(`/api/lyrics/settings/${user.id}`);
+        if (!response.ok) throw new Error("Failed to load settings");
+
+        const data = await response.json();
+        if (data?.settings) {
+          const mergedSettings = {
+            ...defaultLyricsSettings,
+            ...data.settings,
+          };
+          useLyricsStore.setState({ settings: mergedSettings });
+
+          // Load font immediately if needed
+          if (
+            mergedSettings.fontFamily &&
+            mergedSettings.fontFamily !== "system-ui"
+          ) {
+            await loadGoogleFont(mergedSettings.fontFamily);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load lyrics settings:", error);
+      }
+    };
+
+    loadInitialSettings();
+  }, [user?.id]);
 
   return (
     <div>

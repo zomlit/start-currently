@@ -10,7 +10,7 @@ export const commonSettingsSchema = z.object({
   underline: z.boolean().default(false),
   strikethrough: z.boolean().default(false),
   textAlignment: z.enum(["left", "center", "right", "justify"]).default("left"),
-  lineHeight: z.number().min(0.5).max(3).default(1.5),
+  lineHeight: z.number().min(0.5).max(3).default(1.8),
   letterSpacing: z.number().min(-5).max(10).default(0),
   wordSpacing: z.number().min(-10).max(10).default(0),
   borderColor: z.string().default("#000000"),
@@ -27,7 +27,9 @@ export const commonSettingsSchema = z.object({
   gap: z.number().min(0).max(100).default(0),
   matchArtworkColors: z.boolean().default(false),
   matchArtworkOpacity: z.number().min(0).max(1).default(0.5),
-  textTransform: z.enum(["none", "capitalize", "uppercase", "lowercase"]).default("none"),
+  textTransform: z
+    .enum(["none", "capitalize", "uppercase", "lowercase"])
+    .default("none"),
   textShadowColor: z.string().default("rgba(0, 0, 0, 0.5)"),
   textShadowHorizontal: z.number().default(0),
   textShadowVertical: z.number().default(0),

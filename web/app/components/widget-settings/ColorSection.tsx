@@ -8,7 +8,7 @@ import { FormField, FormItem, FormLabel } from "@/components/ui/form";
 import IconColorSwatch from "@icons/outline/color-swatch.svg?react";
 import { GradientColorPicker } from "@/components/GradientColorPicker";
 import { useDebounce } from "@/hooks/useDebounce";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
 import { UseFormReturn } from "react-hook-form";
 import { useProfile } from "@/hooks/useProfile";
 import { WidgetType } from "@/types/widget";

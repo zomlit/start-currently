@@ -1,107 +1,179 @@
-import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
+import { SliderWithInput } from "@/components/ui/slider-with-input";
+import { GradientColorPicker } from "@/components/GradientColorPicker";
+import { useSettingsForm } from "@/hooks/useSettingsForm";
+import { cn } from "@/lib/utils";
+import { SettingsFormFooter } from "@/components/ui/settings-form-footer";
+import type { AlertsSettings } from "@/types/alerts";
 
-const alertsSettingsSchema = z.object({
-  sound: z.boolean(),
-  volume: z.number().min(0).max(1),
-  duration: z.number().min(1),
-  // Add more fields as needed
+const alertsSchema = z.object({
+  backgroundColor: z.string(),
+  textColor: z.string(),
+  fontSize: z.number(),
+  fontFamily: z.string(),
+  padding: z.number(),
+  showBorders: z.boolean(),
+  borderColor: z.string(),
+  borderWidth: z.number(),
+  borderRadius: z.number(),
+  opacity: z.number(),
+  animationDuration: z.number(),
+  soundEnabled: z.boolean(),
+  soundVolume: z.number(),
 });
 
-type AlertsSettings = z.infer<typeof alertsSettingsSchema>;
-
 interface AlertsSettingsFormProps {
-  specificSettings: AlertsSettings;
-  onSettingsChange: (newSettings: Partial<AlertsSettings>) => void;
+  settings: AlertsSettings;
+  onSettingsChange: (settings: Partial<AlertsSettings>) => Promise<void>;
+  onPreviewUpdate?: (settings: Partial<AlertsSettings>) => void;
+  isLoading?: boolean;
 }
 
-const AlertsSettingsForm: React.FC<AlertsSettingsFormProps> = ({
-  specificSettings,
+export function AlertsSettingsForm({
+  settings,
   onSettingsChange,
-}) => {
-  const form = useForm<AlertsSettings>({
-    resolver: zodResolver(alertsSettingsSchema),
-    defaultValues: specificSettings,
+  onPreviewUpdate,
+  isLoading = false,
+}: AlertsSettingsFormProps) {
+  const form = useForm({
+    resolver: zodResolver(alertsSchema),
+    defaultValues: settings,
   });
 
-  useEffect(() => {
-    if (specificSettings) {
-      // Update form values when specificSettings change
-      Object.entries(specificSettings).forEach(([key, value]) => {
-        form.setValue(key as keyof AlertsSettings, value);
-      });
-    }
-  }, [specificSettings, form]);
+  const {
+    handleSettingChange,
+    handleResetToDefaults,
+    handleSubmit,
+    dialogRef,
+    isSaving,
+    lastSaved,
+    changingField,
+    hasPendingChanges,
+  } = useSettingsForm<AlertsSettings>({
+    form,
+    settings,
+    onSettingsChange,
+    onPreviewUpdate: onPreviewUpdate || (() => {}),
+    schema: alertsSchema,
+    defaultSettings: settings,
+  });
 
-  const handleSettingChange = (key: keyof AlertsSettings, value: any) => {
-    const newSettings = { ...form.getValues(), [key]: value };
-    form.setValue(key, value);
-    onSettingsChange(newSettings);
-  };
+  const soundEnabled = form.watch("soundEnabled");
 
   return (
-    <Form {...form}>
-      <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="sound"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between">
-              <FormLabel>Enable Sound</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={(checked) => handleSettingChange("sound", checked)}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="volume"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Volume</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  {...field}
-                  onChange={(e) => handleSettingChange("volume", parseFloat(e.target.value))}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="duration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Duration (seconds)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  {...field}
-                  onChange={(e) => handleSettingChange("duration", parseInt(e.target.value, 10))}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        {/* Add more form fields for other specific settings */}
-      </form>
-    </Form>
-  );
-};
+    <FormProvider {...form}>
+      <Form {...form} onSubmit={handleSubmit}>
+        <div className="relative">
+          <div
+            className={cn(
+              "flex flex-col",
+              isLoading && "opacity-50 pointer-events-none"
+            )}
+          >
+            <div className="space-y-6">
+              <Card className="border-border/0 bg-transparent rounded-none p-0">
+                <CardContent className="p-0 space-y-4">
+                  {/* Animation Duration */}
+                  <FormField
+                    control={form.control}
+                    name="animationDuration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <SliderWithInput
+                          label="Animation Duration (ms)"
+                          value={field.value}
+                          onChange={(value) =>
+                            handleSettingChange("animationDuration", value)
+                          }
+                          onBlur={field.onBlur}
+                          min={500}
+                          max={10000}
+                          step={100}
+                        />
+                      </FormItem>
+                    )}
+                  />
 
-export default AlertsSettingsForm;
+                  {/* Sound Enabled */}
+                  <FormField
+                    control={form.control}
+                    name="soundEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>Enable Sound</FormLabel>
+                          <FormDescription>
+                            Play sound with alerts
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={(value) =>
+                              handleSettingChange("soundEnabled", value)
+                            }
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Sound Volume (only when sound is enabled) */}
+                  {soundEnabled && (
+                    <FormField
+                      control={form.control}
+                      name="soundVolume"
+                      render={({ field }) => (
+                        <FormItem>
+                          <SliderWithInput
+                            label="Sound Volume"
+                            value={field.value}
+                            onChange={(value) =>
+                              handleSettingChange("soundVolume", value)
+                            }
+                            onBlur={field.onBlur}
+                            min={0}
+                            max={100}
+                            step={1}
+                            formatValue={(value) => `${value}%`}
+                          />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Include all the common styling fields (background, text, borders, etc.) */}
+                  {/* ... (similar to StatsSettingsForm) ... */}
+                </CardContent>
+              </Card>
+
+              <SettingsFormFooter
+                onReset={handleResetToDefaults}
+                hasPendingChanges={hasPendingChanges}
+                dialogRef={dialogRef}
+                resetDialogTitle="Reset Alerts Settings?"
+                resetDialogDescription="This will reset all alerts settings to their default values. This action cannot be undone."
+                isSaving={isSaving}
+                saveError={null}
+                lastSaved={lastSaved}
+              />
+            </div>
+          </div>
+        </div>
+      </Form>
+    </FormProvider>
+  );
+}

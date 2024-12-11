@@ -15,7 +15,6 @@ export function ClientWrapper({ children }: ClientWrapperProps) {
           alt="Description of your image"
           opacity={0.4}
           zIndex={-10}
-          className=""
         />
         {children}
       </ThemeProvider>

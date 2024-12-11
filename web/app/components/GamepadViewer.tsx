@@ -6,7 +6,16 @@ import React, {
   useCallback,
 } from "react";
 import { cn } from "@/lib/utils";
-import { Gamepad, Gamepad2, Gauge, Crosshair, Circle, X } from "lucide-react";
+import {
+  Gamepad,
+  Gamepad2,
+  Gauge,
+  Crosshair,
+  Circle,
+  X,
+  Chrome,
+  Download,
+} from "lucide-react";
 import DS4Base from "@/icons/gamepad/ds4-base.svg?react";
 import MachoBase from "@/icons/gamepad/macho-base.svg?react";
 import DS4Buttons from "@/icons/gamepad/ds4-base-buttons.svg?react";
@@ -46,6 +55,7 @@ import { DPad } from "./gamepad/DPad";
 import { Triggers } from "./gamepad/Triggers";
 import { useGamepadContext } from "@/providers/GamepadProvider";
 import type { ReactElement } from "react";
+import { WidgetCTA } from "./WidgetCTA";
 
 const safeFormatColor = (color: any): string => {
   if (!color) return "rgba(0, 0, 0, 1)";
@@ -407,11 +417,9 @@ const getStableDriftValue = (drift: number): string => {
   return drift.toFixed(3);
 };
 
-// Add these helpers at the top with other constants
 const GAMEPAD_UPDATE_INTERVAL = 1000 / 60; // 60fps update rate
 const MOVEMENT_THRESHOLD = 0.01; // Minimum change to consider movement
 
-// Add this helper function
 const hasSignificantChange = (
   currentState: GamepadState,
   lastState: GamepadState | null
@@ -432,7 +440,6 @@ const hasSignificantChange = (
   return axisChanged;
 };
 
-// Add these constants at the top of the file
 const PS_BUTTON_COLORS = {
   cross: "#5989FF", // Blue
   circle: "#FF4242", // Red
@@ -449,7 +456,6 @@ export function GamepadViewer({
   onSettingsChange,
   onDebugToggle,
 }: GamepadViewerProps): ReactElement {
-  // 1. All hooks must be at the top level and called unconditionally
   const { gamepadState: contextGamepadState, isConnected } =
     useGamepadContext();
   const { axes: rawAxes, isUserInteracting } = useRawGamepad();
@@ -464,6 +470,41 @@ export function GamepadViewer({
     left: { values: [], timestamp: Date.now() },
     right: { values: [], timestamp: Date.now() },
   });
+
+  const [extensionError, setExtensionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+      switch (event.data.type) {
+        case "EXTENSION_ERROR":
+          if (event.data.error?.message === "Monitoring is disabled") {
+            setExtensionError(null);
+          } else {
+            setExtensionError(
+              event.data.error?.message || "Extension communication failed"
+            );
+            toast.error(
+              "Gamepad extension error: " + event.data.error?.message
+            );
+          }
+          break;
+        case "MONITORING_STATE_CHANGED":
+          if (event.data.enabled) {
+            setExtensionError(null);
+          }
+          break;
+        case "CONTENT_SCRIPT_READY":
+          setExtensionError(null);
+          console.log("Extension connected with ID:", event.data.extensionId);
+          break;
+      }
+    };
+
+    window.addEventListener("message", handleExtensionMessage);
+    return () => window.removeEventListener("message", handleExtensionMessage);
+  }, []);
 
   // Refs
   const buttonStateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -862,6 +903,31 @@ export function GamepadViewer({
           } as React.CSSProperties
         }
       >
+        <WidgetCTA
+          className=""
+          title="Chrome Extension"
+          description={
+            extensionError
+              ? `Extension error: ${extensionError}. Please check if the extension is installed and enabled.`
+              : "Install our Chrome extension to keep gamepad inputs working when minimized (great for dual streaming setups!)"
+          }
+          icon={Chrome}
+          primaryAction={{
+            label: extensionError
+              ? "Troubleshoot Extension"
+              : "Download Extension",
+            icon: Download,
+            onClick: () =>
+              window.open(
+                extensionError && window.chrome?.runtime?.id
+                  ? `chrome://extensions/?id=${window.chrome.runtime.id}`
+                  : import.meta.env.VITE_CHROME_STORE_URL ||
+                      "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
+                "_blank"
+              ),
+          }}
+        />
+
         <div className="w-full h-full flex items-center justify-center lg:min-h-[687px]">
           {/* Debug overlay with animation */}
           <AnimatePresence>

@@ -178,7 +178,7 @@ export const TextSettings: React.FC<TextSettingsProps> = ({
                   <FormControl>
                     <Slider
                       value={[field.value]}
-                      min={0.5}
+                      min={0.8}
                       max={2}
                       step={0.1}
                       onValueChange={([value]) =>

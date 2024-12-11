@@ -1,6 +1,6 @@
-import { useFormContext } from "react-hook-form";
+import { useForm } from "@tanstack/react-form";
 import { Accordion } from "@/components/ui/accordion";
-import type { VisualizerSettings } from "@/types/visualizer";
+import type { VisualizerSettings } from "@/schemas/visualizer";
 import { AppearanceSection } from "./sections/AppearanceSection";
 import { AudioSection } from "./sections/AudioSection";
 import { VisualsSection } from "./sections/VisualsSection";
@@ -19,13 +19,8 @@ export function SettingsForm({
   currentProfile,
   colorSyncEnabled = false,
 }: SettingsFormProps) {
-  const methods = useFormContext<VisualizerSettings>();
-
-  if (!methods) {
-    throw new Error("SettingsForm must be used within a FormProvider");
-  }
-
-  const { watch, control } = methods;
+  const form = useForm<VisualizerSettings>();
+  const { watch, control } = form;
 
   return (
     <Accordion type="multiple" className="w-full space-y-4">

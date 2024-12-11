@@ -17,8 +17,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
       />
-      <main className="flex-1 relative mx-8">
-        <Container maxWidth="full">
+      <main className="flex-1 relative mx-8 md:ml-8 xl:mr-0">
+        <Container maxWidth="full" padded={false}>
           <PageBreadcrumb
             isCollapsed={isCollapsed}
             onToggleNav={() => setIsCollapsed(!isCollapsed)}

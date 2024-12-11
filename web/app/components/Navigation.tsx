@@ -35,7 +35,7 @@ export function Navigation({ isDashboard }: NavigationProps) {
           : "bg-transparent"
       )}
     >
-      <div className="container max-w-full px-6">
+      <div className="container max-w-full px-8 md:px-6">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
             <Link

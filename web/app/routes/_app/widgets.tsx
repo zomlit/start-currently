@@ -20,9 +20,7 @@ function SectionsLayout() {
         title={content.title}
         description={content.description}
       />
-      <div className="">
-        <Outlet />
-      </div>
+      <Outlet />
     </DashboardLayout>
   );
 }

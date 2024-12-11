@@ -9,7 +9,7 @@ const DynamicBackground = ({ videoLink, opacity }) => {
       autoPlay
       loop
       muted
-      className="absolute left-0 top-0 h-full w-full object-cover blur-sm"
+      className="absolute left-0 top-0 h-full w-full object-cover blur-sm -z-10"
       style={{ opacity }}
     >
       <source src={videoLink} type="video/mp4" />

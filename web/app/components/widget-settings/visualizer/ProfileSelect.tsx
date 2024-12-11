@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { VisualizerProfile } from "@/types/visualizer";
+import type { VisualizerProfile } from "@/schemas/visualizer";
 import { useVisualizerStore } from "@/store/visualizerStore";
 
 interface ProfileSelectProps {

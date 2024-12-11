@@ -31,21 +31,21 @@ export function WidgetCTA({
         label: "Disable Extension",
         variant: "default" as const,
         className:
-          "gap-2 whitespace-nowrap bg-pink-500/20 hover:bg-pink-500/20 text-white w-full mt-4 md:mt-0",
+          "w-full gap-2 whitespace-nowrap bg-pink-500/20 hover:bg-pink-500/20 text-white w-full mt-4 md:mt-0",
         onClick: toggleExtension,
       }
     : {
         label: primaryAction.label,
         variant: "ghost" as const,
         className:
-          "gap-2 whitespace-nowrap bg-blue-500/10 hover:bg-blue-500/20",
+          "w-full gap-2 whitespace-nowrap bg-blue-500/10 hover:bg-blue-500/20",
         onClick: primaryAction.onClick,
       };
 
   return (
     <div
       className={cn(
-        "w-full relative overflow-hidden shadow-md my-2 dark:my-2 rounded-lg transition-all duration-300 hover:shadow-lg group",
+        "w-auto lg:!mr-6 relative overflow-hidden shadow-md rounded-md transition-all duration-300 hover:shadow-lg group",
         className
       )}
     >
@@ -53,7 +53,7 @@ export function WidgetCTA({
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/15 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity animate-gradient" />
 
       <div className="relative py-3 px-4">
-        <div className="md:flex items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
               <Icon className="h-8 w-8 text-blue-500" />

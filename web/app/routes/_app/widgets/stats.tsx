@@ -1,29 +1,69 @@
 import React from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { WidgetLayout } from "@/components/layouts/WidgetLayout";
-import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useUser } from "@clerk/tanstack-start";
+import { useStatsStore } from "@/store/statsStore";
+import { StatsSettingsForm } from "@/components/widget-settings/StatsSettingsForm";
+import { PublicUrlHeader } from "@/components/widget-settings/PublicUrlHeader";
+import { StatsDisplay } from "@/components/stats/StatsDisplay";
+import type { StatsSettings } from "@/types/stats";
 
 export const Route = createFileRoute("/_app/widgets/stats")({
-  component: () => (
-    <WidgetAuthGuard>
-      <StatsSection />
-    </WidgetAuthGuard>
-  ),
+  component: StatsPage,
+  beforeLoad: ({ context, location }) => {
+    return {
+      layout: {
+        preview: <StatsPreviewSection />,
+        settings: <StatsSettingsSection />,
+      },
+    };
+  },
 });
 
-function StatsSection() {
-  const StatsPreview = (
-    <div className="h-full w-full flex items-center justify-center">
-      <h2 className="text-2xl font-bold text-gray-400">Stats Preview</h2>
+function StatsPage() {
+  return <Outlet />;
+}
+
+function StatsPreviewSection() {
+  const { settings } = useStatsStore();
+
+  return (
+    <div className="h-full w-full">
+      <StatsDisplay settings={settings} />
     </div>
   );
+}
 
-  const StatsSettings = (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Stats Settings</h3>
-      {/* Add stats settings controls here */}
+function StatsSettingsSection() {
+  const { user } = useUser();
+  const { settings, updateSettings } = useStatsStore();
+  const publicUrl = user?.username
+    ? `${window.location.origin}/${user.username}/stats`
+    : "";
+
+  const handleSettingsChange = async (newSettings: Partial<StatsSettings>) => {
+    if (!user?.id) return;
+    await updateSettings(newSettings, user.id);
+  };
+
+  const handlePreviewUpdate = (newSettings: Partial<StatsSettings>) => {
+    useStatsStore.setState((state) => ({
+      settings: {
+        ...state.settings,
+        ...newSettings,
+      },
+    }));
+  };
+
+  return (
+    <div className="flex flex-col">
+      <PublicUrlHeader publicUrl={publicUrl} />
+      <div className="flex-1">
+        <StatsSettingsForm
+          settings={settings}
+          onSettingsChange={handleSettingsChange}
+          onPreviewUpdate={handlePreviewUpdate}
+        />
+      </div>
     </div>
   );
-
-  return <WidgetLayout preview={StatsPreview} settings={StatsSettings} />;
 }

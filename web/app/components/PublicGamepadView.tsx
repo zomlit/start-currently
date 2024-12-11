@@ -17,7 +17,7 @@ import type {
 import { useGamepadStore } from "@/store/gamepadStore";
 import { Gamepad } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
 import debounce from "lodash/debounce";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useGamepadProvider } from "@/providers/GamepadProvider";

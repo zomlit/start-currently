@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/accordion";
 import { FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Palette } from "lucide-react";
-import type { VisualizerSettings } from "@/types/visualizer";
+import type { VisualizerSettings } from "@/schemas/visualizer";
 
 interface AppearanceSectionProps {
   control: Control<VisualizerSettings>;

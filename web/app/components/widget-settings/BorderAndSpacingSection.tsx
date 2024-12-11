@@ -12,7 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
-import { VisualizerProfile } from "@/types/visualizer";
+import { VisualizerProfile } from "@/schemas/visualizer";
 
 interface BorderAndSpacingSectionProps {
   form: UseFormReturn<any>;

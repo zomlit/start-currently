@@ -44,14 +44,14 @@ const DashboardNavigation: React.FC<DashboardNavigationProps> = ({
       {/* Mobile Trigger */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             className="md:hidden fixed left-4 top-4 z-40"
           >
             <Menu className="h-4 w-4" />
             <span className="sr-only">Toggle Menu</span>
-          </Button>
+          </Button> */}
         </SheetTrigger>
         <SheetContent side="left" className="p-0">
           <nav className="flex flex-col h-full gap-4 p-2">
@@ -201,7 +201,7 @@ const NavContent = ({
                       "text-gray-700 dark:text-gray-300",
                       "hover:text-violet-600 dark:hover:text-violet-400",
                       isActive &&
-                        "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
+                        "bg-violet-100 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
                     )}
                   >
                     <div className="flex items-center">
@@ -339,7 +339,7 @@ const NavContent = ({
                                   "text-gray-600 dark:text-gray-400",
                                   "hover:text-violet-600 dark:hover:text-violet-400",
                                   pathname === subItem.link && [
-                                    "bg-violet-50 dark:bg-violet-900/20",
+                                    "bg-violet-100 dark:bg-violet-900/20",
                                     "text-violet-600 dark:text-violet-400",
                                     "font-medium",
                                   ]
@@ -366,7 +366,7 @@ const NavContent = ({
                     "transition-colors duration-200",
                     "hover:text-violet-600 dark:hover:text-violet-400",
                     isActive &&
-                      "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
+                      "bg-violet-100 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
                   )}
                 >
                   <div className="w-8 flex-shrink-0 flex items-center justify-center">
@@ -426,7 +426,7 @@ const NavContent = ({
               className={cn(
                 "w-full p-2 flex items-center min-h-[52px]",
                 "transition-colors duration-200",
-                "hover:bg-violet-50 dark:hover:bg-violet-900/20",
+                "hover:bg-violet-100 dark:hover:bg-violet-900/20",
                 "rounded-none ring-0 focus:ring-0 focus:outline-none",
                 isCollapsed ? "" : "justify-between"
               )}

@@ -9,14 +9,6 @@ interface WidgetAuthGuardProps {
 export function WidgetAuthGuard({ children }: WidgetAuthGuardProps) {
   const { isLoaded, isSignedIn } = useUser();
 
-  if (!isLoaded) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Spinner />
-      </div>
-    );
-  }
-
   if (!isSignedIn) {
     return <Navigate to="/sign-in" />;
   }

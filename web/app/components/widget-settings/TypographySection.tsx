@@ -14,7 +14,7 @@ import IconTypography from "@icons/outline/microphone-2.svg?react";
 
 import { Slider } from "@/components/ui/slider";
 import { UseFormReturn } from "react-hook-form";
-import { VisualizerProfile } from "@/types/visualizer";
+import { VisualizerProfile } from "@/schemas/visualizer";
 import {
   Select,
   SelectContent,

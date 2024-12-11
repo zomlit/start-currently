@@ -5,12 +5,12 @@ import { WidgetLayout } from "@/components/layouts/WidgetLayout";
 
 import { useVisualizerStore } from "@/store/visualizerStore";
 import { supabase } from "@/utils/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast";
 import { VisualizerPreview } from "@/components/widget-settings/visualizer/VisualizerPreview";
-import { defaultSettings } from "@/types/visualizer";
+import { defaultSettings } from "@/schemas/visualizer";
 import { WidgetAuthGuard } from "@/components/auth/WidgetAuthGuard";
 import { VisualizerSettingsForm } from "@/components/widget-settings/visualizer/VisualizerSettingsForm";
-import type { VisualizerSettings } from "@/types/visualizer";
+import type { VisualizerSettings } from "@/schemas/visualizer";
 import { Spinner } from "@/components/ui/spinner";
 import { PublicUrlHeader } from "@/components/widget-settings/PublicUrlHeader";
 
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_app/widgets/visualizer")({
 
 function VisualizerSection() {
   const { user } = useUser();
-  const { settings, updateSettings } = useVisualizerStore();
+  const { settings, loadSettings, updateSettings } = useVisualizerStore();
   const [publicUrl, setPublicUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,44 +64,21 @@ function VisualizerSection() {
 
   // Load initial settings
   useEffect(() => {
-    async function loadSettings() {
+    async function initializeSettings() {
       if (!user?.id) return;
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from("VisualizerWidget")
-          .select("visualizer_settings")
-          .eq("user_id", user.id)
-          .single();
-
-        if (error) throw error;
-
-        if (data?.visualizer_settings) {
-          const mergedSettings = {
-            ...defaultSettings,
-            ...data.visualizer_settings,
-          };
-          useVisualizerStore.setState({ settings: mergedSettings });
-        }
+        await loadSettings(user.id);
       } catch (error) {
-        console.error("Failed to load visualizer settings:", error);
+        console.error("Failed to load settings:", error);
         toast.error("Failed to load settings");
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadSettings();
-  }, [user?.id]);
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner className="w-8 h-8 dark:fill-white" />
-      </div>
-    );
-  }
+    initializeSettings();
+  }, [user?.id, loadSettings]);
 
   return (
     <WidgetLayout
@@ -110,12 +87,13 @@ function VisualizerSection() {
         <div className="flex flex-col">
           <PublicUrlHeader publicUrl={publicUrl} />
           <div className="flex-1">
-            <VisualizerSettingsForm
-              settings={settings}
-              onSettingsChange={handleSettingsUpdate}
-              onPreviewUpdate={handlePreviewUpdate}
-              isLoading={isLoading}
-            />
+            {!isLoading && (
+              <VisualizerSettingsForm
+                settings={settings}
+                onSettingsChange={handleSettingsUpdate}
+                onPreviewUpdate={handlePreviewUpdate}
+              />
+            )}
           </div>
         </div>
       }
