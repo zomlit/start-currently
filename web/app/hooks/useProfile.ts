@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/tanstack-start";
 import { apiMethods } from "@/lib/api";
-import type { VisualizerProfile } from "@/schemas/visualizer";
+import type { VisualizerProfile } from "@/types/visualizer";
 
 export function useProfiles(sectionId: string, options?: any) {
   const { getToken } = useAuth();

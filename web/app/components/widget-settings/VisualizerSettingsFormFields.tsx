@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 // import { VisualizerStyleOptions } from "./VisualizerStyleOptions";
 // import { VisualizerDisplayOptions } from "./VisualizerDisplayOptions";
 import { UseFormReturn } from "react-hook-form";
-import { VisualizerSettingsFormProps } from "@/schemas/visualizer";
+import { VisualizerSettingsFormProps } from "@/types/visualizer";
 
 // Add these type definitions
 type NestedKeyOf<ObjectType extends object> = {

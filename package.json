@@ -59,7 +59,6 @@
     "@types/react-dom": "^19.0.1",
     "husky": "^9.1.7",
     "react": "^19.0.0",
-    "react-colorful": "^5.6.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.0",
     "tailwindcss-spring": "^1.0.1"

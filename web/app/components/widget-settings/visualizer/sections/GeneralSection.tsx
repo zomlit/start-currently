@@ -14,7 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { UseFormReturn } from "react-hook-form";
-import { VisualizerProfile } from "@/schemas/visualizer";
+import { VisualizerProfile } from "@/types/visualizer";
 
 interface GeneralSectionProps {
   form: UseFormReturn<any>;

@@ -5,7 +5,7 @@ import { GamepadViewer } from "@/components/GamepadViewer";
 import { Button } from "@/components/ui/button";
 import { Chrome, Copy, Download, Gauge } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/utils/toast";
+import { toast } from "sonner";
 import _ from "lodash";
 
 import { GamepadSettingsForm } from "@/components/widget-settings/GamepadSettingsForm";
@@ -18,6 +18,7 @@ import {
 
 import { useVisibilityChange } from "@/hooks/useVisibilityChange";
 import { useGamepadContext } from "@/providers/GamepadProvider";
+import { WidgetCTA } from "@/components/WidgetCTA";
 import { cn } from "@/lib/utils";
 
 export function GamepadSection() {
@@ -132,6 +133,40 @@ export function GamepadSection() {
   const MIN_FRAME_TIME = 1000 / 60; // Target 60fps
 
   // Extension message handling
+  const [extensionError, setExtensionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (event.data.source !== "GAMEPAD_EXTENSION") return;
+
+      switch (event.data.type) {
+        case "EXTENSION_ERROR":
+          if (event.data.error?.message === "Monitoring is disabled") {
+            setExtensionError(null);
+          } else {
+            setExtensionError(
+              event.data.error?.message || "Extension communication failed"
+            );
+            toast.error(
+              "Gamepad extension error: " + event.data.error?.message
+            );
+          }
+          break;
+        case "MONITORING_STATE_CHANGED":
+          if (event.data.enabled) {
+            setExtensionError(null);
+          }
+          break;
+        case "CONTENT_SCRIPT_READY":
+          setExtensionError(null);
+          console.log("Extension connected with ID:", event.data.extensionId);
+          break;
+      }
+    };
+
+    window.addEventListener("message", handleExtensionMessage);
+    return () => window.removeEventListener("message", handleExtensionMessage);
+  }, []);
 
   if (!user || !settings) return null;
 
@@ -199,6 +234,29 @@ export function GamepadSection() {
 
   return (
     <>
+      <WidgetCTA
+        title="Chrome Extension"
+        description={
+          extensionError
+            ? `Extension error: ${extensionError}. Please check if the extension is installed and enabled.`
+            : "Install our Chrome extension to keep gamepad inputs working when minimized (great for dual streaming setups!)"
+        }
+        icon={Chrome}
+        primaryAction={{
+          label: extensionError
+            ? "Troubleshoot Extension"
+            : "Download Extension",
+          icon: Download,
+          onClick: () =>
+            window.open(
+              extensionError && window.chrome?.runtime?.id
+                ? `chrome://extensions/?id=${window.chrome.runtime.id}`
+                : import.meta.env.VITE_CHROME_STORE_URL ||
+                    "https://livestreaming.tools/downloads/currently-gamepad-tracker.zip",
+              "_blank"
+            ),
+        }}
+      />
       <div className="h-full overflow-hidden">
         <WidgetLayout
           preview={GamepadPreview}

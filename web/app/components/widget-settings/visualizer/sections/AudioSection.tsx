@@ -23,21 +23,12 @@ import {
 import { UseFormReturn } from "react-hook-form";
 import IconMicrophone from "@icons/outline/microphone-2.svg?react";
 import MicrophoneSelect from "@/components/MicrophoneSelect";
-import type { Control, UseFormWatch } from "@tanstack/react-form";
 
 interface AudioSectionProps {
-  control: Control<VisualizerSettings>;
-  watch: UseFormWatch<VisualizerSettings>;
-  onSettingChange: (key: keyof VisualizerSettings, value: any) => void;
-  onSettingCommit: (key: keyof VisualizerSettings, value: any) => void;
+  form: UseFormReturn<any>;
 }
 
-export function AudioSection({
-  control,
-  watch,
-  onSettingChange,
-  onSettingCommit,
-}: AudioSectionProps) {
+export function AudioSection({ form }: AudioSectionProps) {
   return (
     <AccordionItem value="audio">
       <AccordionTrigger>
@@ -48,7 +39,7 @@ export function AudioSection({
       </AccordionTrigger>
       <AccordionContent className="space-y-4 p-2">
         <FormField
-          control={control}
+          control={form.control}
           name="specificSettings.micEnabled"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
@@ -68,9 +59,9 @@ export function AudioSection({
           )}
         />
 
-        {watch("specificSettings.micEnabled") && (
+        {form.watch("specificSettings.micEnabled") && (
           <FormField
-            control={control}
+            control={form.control}
             name="specificSettings.selectedMicId"
             render={({ field }) => (
               <FormItem>
@@ -85,7 +76,7 @@ export function AudioSection({
         )}
 
         <FormField
-          control={control}
+          control={form.control}
           name="specificSettings.channelLayout"
           render={({ field }) => (
             <FormItem>
@@ -110,7 +101,7 @@ export function AudioSection({
         />
 
         <FormField
-          control={control}
+          control={form.control}
           name="specificSettings.frequencyScale"
           render={({ field }) => (
             <FormItem>
@@ -133,7 +124,7 @@ export function AudioSection({
         />
 
         <FormField
-          control={control}
+          control={form.control}
           name="specificSettings.weightingFilter"
           render={({ field }) => (
             <FormItem>
@@ -157,7 +148,7 @@ export function AudioSection({
         />
 
         <FormField
-          control={control}
+          control={form.control}
           name="specificSettings.linearAmplitude"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
@@ -177,9 +168,9 @@ export function AudioSection({
           )}
         />
 
-        {watch("specificSettings.linearAmplitude") && (
+        {form.watch("specificSettings.linearAmplitude") && (
           <FormField
-            control={control}
+            control={form.control}
             name="specificSettings.linearBoost"
             render={({ field }) => (
               <FormItem>

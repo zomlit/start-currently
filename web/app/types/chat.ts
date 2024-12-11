@@ -45,37 +45,3 @@ export interface ChatMessage {
   avatar: string;
   timestamp: string;
 }
-
-export interface ChatSettings {
-  backgroundColor: string;
-  textColor: string;
-  fontSize: number;
-  fontFamily: string;
-  padding: number;
-  showBorders: boolean;
-  borderColor: string;
-  borderWidth: number;
-  borderRadius: number;
-  opacity: number;
-  showUsernames: boolean;
-  showTimestamps: boolean;
-  showBadges: boolean;
-  chatLayout: "default" | "compact" | "bubble";
-}
-
-export const defaultChatSettings: ChatSettings = {
-  backgroundColor: "#000000",
-  textColor: "#ffffff",
-  fontSize: 16,
-  fontFamily: "Inter",
-  padding: 16,
-  showBorders: true,
-  borderColor: "#ffffff",
-  borderWidth: 1,
-  borderRadius: 8,
-  opacity: 100,
-  showUsernames: true,
-  showTimestamps: true,
-  showBadges: true,
-  chatLayout: "default",
-};

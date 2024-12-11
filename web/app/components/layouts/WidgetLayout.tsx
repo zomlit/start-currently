@@ -20,16 +20,19 @@ export function WidgetLayout({
   className,
   isLoading = false,
 }: WidgetLayoutProps) {
-  const isDesktop = useMediaQuery("(min-width: 1279px)");
+  const isDesktop = useMediaQuery("(min-width: 1400px)");
 
   return (
-    <div className="h-full flex-1">
+    <div className="min-h-[calc(100vh-var(--header-height)-var(--nav-height))] h-full">
       {isDesktop ? (
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full min-h-full"
+        >
           <ResizablePanel
             defaultSize={72}
             minSize={28}
-            className="relative min-h-full mr-8"
+            className="relative min-h-full"
           >
             {preview}
           </ResizablePanel>
@@ -37,7 +40,7 @@ export function WidgetLayout({
           <ResizablePanel
             defaultSize={28}
             minSize={28}
-            className="bg-white/40 dark:bg-black/40 z-50 relative overflow-visible"
+            className="bg-white/40 dark:bg-black/40 min-h-full z-50 relative overflow-visible"
           >
             <div className="h-full flex flex-col min-h-full">
               <div className="flex-1 overflow-y-auto">
@@ -56,17 +59,19 @@ export function WidgetLayout({
         </ResizablePanelGroup>
       ) : (
         <div className="flex flex-col min-h-full">
-          <div className="flex-1">{preview}</div>
-          <div className="h-full flex flex-col">
-            <div className="flex-1 overflow-y-auto h-full">
-              <div className="my-8">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Spinner className="w-[30px] h-[30px] dark:fill-white" />
-                  </div>
-                ) : (
-                  settings
-                )}
+          <div className="flex-1 bg-gradient/5 p-10">{preview}</div>
+          <div className="bg-white/5">
+            <div className="h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-6">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Spinner className="w-[30px] h-[30px] dark:fill-white" />
+                    </div>
+                  ) : (
+                    settings
+                  )}
+                </div>
               </div>
             </div>
           </div>

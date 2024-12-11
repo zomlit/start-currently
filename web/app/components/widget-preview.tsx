@@ -29,7 +29,7 @@ const defaultSettings: ProfileSettings = {
     underline: false,
     strikethrough: false,
     textAlignment: "left",
-    lineHeight: 1.8,
+    lineHeight: 1.4,
     letterSpacing: 0,
     wordSpacing: 0,
     borderColor: "rgba(0, 0, 0, 1)",
@@ -225,7 +225,7 @@ export function WidgetPreview({
         : `${commonSettings.paddingTop || "0"}px ${commonSettings.paddingRight || "0"}px ${
             commonSettings.paddingBottom || "0"
           }px ${commonSettings.paddingLeft || "0"}px`,
-      lineHeight: commonSettings.lineHeight || "1.8",
+      lineHeight: commonSettings.lineHeight || "1.5",
       letterSpacing: `${commonSettings.letterSpacing || "0"}px`,
       gap: `${commonSettings.gap || "0"}px`,
       transition: "all 0.3s ease",

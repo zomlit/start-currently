@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { UseFormReturn } from "react-hook-form";
-import type { WidgetProfile } from "@/types/widget";
+import { UseFormReturn } from "react-hook-form";
+import { WidgetProfile } from "@/types/widget";
 
-// Schema definitions
+// Common settings that apply to all skins
 export const commonSettingsSchema = z.object({
   backgroundColor: z.string().default("#000000"),
   padding: z.number().min(0).max(100).default(20),
@@ -19,6 +19,7 @@ export const commonSettingsSchema = z.object({
   gap: z.number().min(0).max(20).default(2),
 });
 
+// Specific settings for the visualizer
 export const visualSettingsSchema = z.object({
   chartType: z.enum(["bar", "wave", "circle"]).default("bar"),
   barWidth: z.number().min(1).max(50).default(2),
@@ -28,7 +29,7 @@ export const visualSettingsSchema = z.object({
   sensitivity: z.number().min(0).max(2).default(1),
   colorSync: z.boolean().default(true),
   canvasEnabled: z.boolean().default(true),
-  micEnabled: z.boolean().default(false),
+  micEnabled: z.boolean().default(true),
   mode: z.number().min(0).max(10).default(0),
   backgroundOpacity: z.number().min(0).max(1).default(0.6),
   albumCanvas: z.boolean().default(true),
@@ -38,30 +39,26 @@ export const visualSettingsSchema = z.object({
   hideOnDisabled: z.boolean().default(false),
 });
 
-export const audioSettingsSchema = z.object({
-  fftSize: z.number().default(2048),
-  minDecibels: z.number().min(-100).max(0).default(-90),
-  maxDecibels: z.number().min(-100).max(0).default(-10),
-});
-
-export const visualizerSchema = z.object({
+export const visualizerSettingsSchema = z.object({
   commonSettings: commonSettingsSchema,
   visualSettings: visualSettingsSchema,
-  audioSettings: audioSettingsSchema,
+  audioSettings: z.object({
+    fftSize: z.number().default(2048),
+    minDecibels: z.number().min(-100).max(0).default(-90),
+    maxDecibels: z.number().min(-100).max(0).default(-10),
+  }),
 });
 
-// Types
-export type VisualizerSettings = z.infer<typeof visualizerSchema>;
+export type VisualizerSettings = z.infer<typeof visualizerSettingsSchema>;
 export type CommonSettings = z.infer<typeof commonSettingsSchema>;
 export type VisualSettings = z.infer<typeof visualSettingsSchema>;
 
-// Default settings
-export const defaultVisualizerSettings: VisualizerSettings = {
+export const defaultSettings: VisualizerSettings = {
   commonSettings: {
     backgroundColor: "#000000",
     padding: 20,
     showBorders: false,
-    fontFamily: "Sofia Sans Condensed",
+    fontFamily: "Inter",
     fontSize: 16,
     textColor: "#ffffff",
     borderColor: "#ffffff",
@@ -81,13 +78,13 @@ export const defaultVisualizerSettings: VisualizerSettings = {
     sensitivity: 1,
     colorSync: true,
     canvasEnabled: true,
-    micEnabled: false,
+    micEnabled: true,
     mode: 0,
     backgroundOpacity: 0.6,
     albumCanvas: true,
     backgroundCanvas: true,
     backgroundCanvasOpacity: 0.5,
-    pauseEnabled: true,
+    pauseEnabled: false,
     hideOnDisabled: false,
   },
   audioSettings: {

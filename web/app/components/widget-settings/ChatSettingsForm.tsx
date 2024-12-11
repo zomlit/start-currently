@@ -1,22 +1,16 @@
-import React from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import * as z from "zod";
 import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent } from "@/components/ui/card";
-import { SliderWithInput } from "@/components/ui/slider-with-input";
-import { GradientColorPicker } from "@/components/GradientColorPicker";
-import { useSettingsForm } from "@/hooks/useSettingsForm";
-import { cn } from "@/lib/utils";
-import { SettingsFormFooter } from "@/components/ui/settings-form-footer";
 import {
   Select,
   SelectContent,
@@ -24,193 +18,338 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ChatSettings } from "@/types/chat";
+import { Switch } from "@/components/ui/switch";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUser, useSession } from "@clerk/tanstack-start";
+import { supabase } from "@/utils/supabase/client";
+import { GradientColorPicker } from "@/components/GradientColorPicker";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ChatSettings } from "@/types/Widget";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/utils/toast";
 
-const chatSchema = z.object({
-  backgroundColor: z.string(),
-  textColor: z.string(),
-  fontSize: z.number(),
-  fontFamily: z.string(),
-  padding: z.number(),
-  showBorders: z.boolean(),
-  borderColor: z.string(),
-  borderWidth: z.number(),
-  borderRadius: z.number(),
-  opacity: z.number(),
-  showUsernames: z.boolean(),
-  showTimestamps: z.boolean(),
-  showBadges: z.boolean(),
-  chatLayout: z.enum(["default", "compact", "bubble"]),
-});
-
+// Define the props interface
 interface ChatSettingsFormProps {
   settings: ChatSettings;
-  onSettingsChange: (settings: Partial<ChatSettings>) => Promise<void>;
-  onPreviewUpdate?: (settings: Partial<ChatSettings>) => void;
-  isLoading?: boolean;
+  onSettingsChange: (settings: Partial<ChatSettings>) => void;
+  onBroadcastChannelChange?: (channel: string) => void; // Make this optional
 }
 
-export function ChatSettingsForm({
+// Define the schema for chat settings
+const chatSettingsSchema = z.object({
+  broadcastChannel: z.string().min(1, "Broadcast channel is required"),
+  selectedUsername: z.string().min(1, "Username is required"),
+  selectedUsernameToken: z.string().optional(),
+  showAvatars: z.boolean().default(true),
+  showBadges: z.boolean().default(true),
+  showPlatform: z.boolean().default(true),
+  chatSkin: z.enum(["default", "compact", "bubble"]),
+  chatBubbleColor: z.string(),
+  maxHeight: z.number().min(100).max(2000), // Add this line
+});
+
+export default function ChatSettingsForm({
   settings,
   onSettingsChange,
-  onPreviewUpdate,
-  isLoading = false,
+  onBroadcastChannelChange,
 }: ChatSettingsFormProps) {
-  const form = useForm({
-    resolver: zodResolver(chatSchema),
+  const { user } = useUser();
+  const queryClient = useQueryClient();
+
+  const form = useForm<z.infer<typeof chatSettingsSchema>>({
+    resolver: zodResolver(chatSettingsSchema),
     defaultValues: settings,
   });
 
-  const {
-    handleSettingChange,
-    handleResetToDefaults,
-    handleSubmit,
-    dialogRef,
-    isSaving,
-    lastSaved,
-    changingField,
-    hasPendingChanges,
-  } = useSettingsForm<ChatSettings>({
-    form,
-    settings,
-    onSettingsChange,
-    onPreviewUpdate: onPreviewUpdate || (() => {}),
-    schema: chatSchema,
-    defaultSettings: settings,
+  useEffect(() => {
+    form.reset(settings);
+  }, [settings, form]);
+
+  const { session } = useSession();
+  const { data: twitchAccounts } = useQuery({
+    queryKey: ["twitchAccounts", user?.id],
+    queryFn: async () => {
+      if (!session?.user) return [];
+
+      return (session.user.externalAccounts || [])
+        .filter((account) => account.provider === "twitch")
+        .map((account) => ({
+          providerUserId: account.id,
+          label: account.username,
+          avatar: account.imageUrl,
+        }));
+    },
+    enabled: !!session?.user,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60, // 1 hour (renamed from cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
+  const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) throw new Error("User not authenticated");
+      const { data, error } = await supabase
+        .from("UserProfile")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 60, // 1 hour (renamed from cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  const handleFormChange = (
+    field: keyof z.infer<typeof chatSettingsSchema>
+  ) => {
+    return (value: any) => {
+      form.setValue(field, value);
+      if (field === "broadcastChannel" && onBroadcastChannelChange) {
+        onBroadcastChannelChange(value);
+      }
+      onSettingsChange({ [field]: value });
+    };
+  };
+
   return (
-    <FormProvider {...form}>
-      <Form {...form} onSubmit={handleSubmit}>
-        <div className="relative">
-          <div
-            className={cn(
-              "flex flex-col",
-              isLoading && "opacity-50 pointer-events-none"
-            )}
-          >
-            <div className="space-y-6">
-              <Card className="border-border/0 bg-transparent rounded-none p-0">
-                <CardContent className="p-0 space-y-4">
-                  {/* Chat Layout */}
-                  <FormField
-                    control={form.control}
-                    name="chatLayout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Chat Layout</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) =>
-                            handleSettingChange("chatLayout", value)
-                          }
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select layout" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="default">Default</SelectItem>
-                            <SelectItem value="compact">Compact</SelectItem>
-                            <SelectItem value="bubble">Bubble</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Show Usernames */}
-                  <FormField
-                    control={form.control}
-                    name="showUsernames"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Show Usernames</FormLabel>
-                          <FormDescription>
-                            Display usernames in chat
-                          </FormDescription>
+    <Form {...form}>
+      <form className="my-8 space-y-4">
+        <FormField
+          control={form.control}
+          name="broadcastChannel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Broadcast Channel</FormLabel>
+              <Select
+                onValueChange={handleFormChange("broadcastChannel")}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select broadcast channel" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {twitchAccounts && twitchAccounts.length > 0 ? (
+                    twitchAccounts.map((account) => (
+                      <SelectItem
+                        key={account.providerUserId}
+                        value={account.label || ""}
+                      >
+                        <div className="flex items-center">
+                          <Avatar className="mr-2 h-6 w-6">
+                            <AvatarImage
+                              src={account.avatar}
+                              alt={account.label}
+                            />
+                            <AvatarFallback>
+                              {account.label?.[0]?.toUpperCase() || ""}
+                            </AvatarFallback>
+                          </Avatar>
+                          {account.label}
                         </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("showUsernames", value)
-                            }
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-accounts">
+                      No Twitch accounts found
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="selectedUsername"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Broadcast Account (Custom Bot)</FormLabel>
+              <Select
+                onValueChange={handleFormChange("selectedUsername")}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select broadcast account" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {twitchAccounts?.map((account) => (
+                    <SelectItem
+                      key={account.providerUserId}
+                      value={account.label || ""}
+                    >
+                      <div className="flex items-center">
+                        <Avatar className="mr-2 h-6 w-6">
+                          <AvatarImage
+                            src={account.avatar}
+                            alt={account.label}
                           />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                          <AvatarFallback>
+                            {account.label?.[0]?.toUpperCase() || ""}
+                          </AvatarFallback>
+                        </Avatar>
+                        {account.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-                  {/* Show Timestamps */}
-                  <FormField
-                    control={form.control}
-                    name="showTimestamps"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Show Timestamps</FormLabel>
-                          <FormDescription>
-                            Display message timestamps
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("showTimestamps", value)
-                            }
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+        <FormField
+          control={form.control}
+          name="showAvatars"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg bg-white/10 p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Show Avatars</FormLabel>
+                <FormDescription>
+                  Display user avatars next to chat messages.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleFormChange("showAvatars")}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-                  {/* Show Badges */}
-                  <FormField
-                    control={form.control}
-                    name="showBadges"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Show Badges</FormLabel>
-                          <FormDescription>
-                            Display user badges and emotes
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) =>
-                              handleSettingChange("showBadges", value)
-                            }
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+        <FormField
+          control={form.control}
+          name="showBadges"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg bg-white/10 p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Show Badges</FormLabel>
+                <FormDescription>
+                  Display user badges next to usernames.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleFormChange("showBadges")}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-                  {/* Include all the common styling fields (background, text, borders, etc.) */}
-                  {/* ... (similar to StatsSettingsForm) ... */}
-                </CardContent>
-              </Card>
+        <FormField
+          control={form.control}
+          name="showPlatform"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Show Platform</FormLabel>
+                <FormDescription>
+                  Display the platform icon next to usernames.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleFormChange("showPlatform")}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-              <SettingsFormFooter
-                onReset={handleResetToDefaults}
-                hasPendingChanges={hasPendingChanges}
-                dialogRef={dialogRef}
-                resetDialogTitle="Reset Chat Settings?"
-                resetDialogDescription="This will reset all chat settings to their default values. This action cannot be undone."
-                isSaving={isSaving}
-                saveError={null}
-                lastSaved={lastSaved}
-              />
-            </div>
-          </div>
-        </div>
-      </Form>
-    </FormProvider>
+        <FormField
+          control={form.control}
+          name="chatSkin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chat Skin</FormLabel>
+              <Select
+                onValueChange={handleFormChange("chatSkin")}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a chat skin" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="compact">Compact</SelectItem>
+                  <SelectItem value="bubble">Bubble</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="chatBubbleColor"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chat Bubble Color</FormLabel>
+              <FormControl>
+                <GradientColorPicker
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    onSettingsChange({ chatBubbleColor: value });
+                  }}
+                />
+              </FormControl>
+              <FormDescription>
+                Choose the color or gradient for chat bubbles
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="maxHeight"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Max Height (px)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    field.onChange(value);
+                    onSettingsChange({ maxHeight: value });
+                  }}
+                  min={100}
+                  max={2000}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </FormControl>
+              <FormDescription>
+                Set the maximum height for the chat widget (100-2000px)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
   );
 }

@@ -138,7 +138,7 @@ export function GamepadSettingsForm({
                       value="controller"
                       className="border rounded-md"
                     >
-                      <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:rounded-t-lg [&[data-state=closed]]:rounded-md">
                         <div className="flex items-center gap-2">
                           <Gamepad2 className="h-4 w-4" />
                           <span className="font-medium">

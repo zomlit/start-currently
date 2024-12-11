@@ -53,7 +53,7 @@ import {
 import { navItems } from "@/config/navigation";
 import { LiveStatusCard } from "@/components/widget-settings/visualizer/LiveStatusCard";
 import type { Event, Alert } from "@/types/events";
-import type { TrackData } from "@/schemas/visualizer";
+import type { TrackData } from "@/types/visualizer";
 
 const IconButton = forwardRef<
   HTMLButtonElement,

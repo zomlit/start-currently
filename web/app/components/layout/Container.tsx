@@ -31,8 +31,7 @@ export const Container: React.FC<ContainerProps> = ({
       "max-w-5xl": maxWidth === "5xl",
       "max-w-7xl": maxWidth === "7xl",
       "max-w-full": maxWidth === "full",
-      "px-4": padded,
-      "px-0": !padded,
+      "px-4": padded, // Add horizontal padding when padded is true
     },
     className
   );

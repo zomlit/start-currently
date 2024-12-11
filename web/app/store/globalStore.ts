@@ -6,7 +6,7 @@ import { TwitchApi } from "ts-twitch-api";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useAuth } from "@clerk/tanstack-start";
 import { useElysiaSession } from "@/hooks/useElysiaSession";
-import type { Track } from "@/schemas/visualizer";
+import type { Track } from "@/types/visualizer";
 import { ensureUserProfile } from "@/utils/authHelpers";
 
 // Types

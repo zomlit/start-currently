@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useUser } from "@clerk/tanstack-start";
 import { useCombinedStore } from "@/store";
 import { supabase } from "@/utils/supabase/client";
-import { toast } from "@/utils/toast";
+import { toast } from "sonner";
 
 interface AuthContextType {
   isLoading: boolean;

@@ -5,7 +5,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import type { Database } from "@/types/supabase";
-import type { TrackData } from "@/schemas/visualizer";
+import type { TrackData } from "@/types/visualizer";
 
 type TwitchUser = Database["public"]["Tables"]["TwitchUserCache"]["Row"];
 

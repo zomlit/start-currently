@@ -1,5 +1,5 @@
 import React from "react";
-import { type VisualizerSettings } from "@/schemas/visualizer";
+import { type VisualizerSettings } from "@/types/visualizer";
 import SkinRounded from "@/components/skins/visualizer/skin-rounded";
 import { useDatabaseStore } from "@/store/supabaseCacheStore";
 import { useElysiaSessionContext } from "@/contexts/ElysiaSessionContext";

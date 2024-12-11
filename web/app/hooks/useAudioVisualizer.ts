@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 import { rgbaToString } from "@/utils/index";
 
@@ -12,7 +12,7 @@ interface CustomizationState {
   userGradientEnd?: { r: number; g: number; b: number; a: number };
   mode?: number;
   gradient?: string;
-  mirror?: number;
+  mirror?: string;
   barSpace?: string;
   ledBars?: boolean;
   lumiBars?: boolean;
@@ -33,66 +33,55 @@ interface AlbumColors {
   lightVibrant?: string;
 }
 
-interface AudioMotionElement extends HTMLDivElement {
-  audioMotion?: AudioMotionAnalyzer;
-}
-
 export const useAudioVisualizer = (
   customizationState: CustomizationState = {},
   track: any,
-  albumColors: AlbumColors = {}
+  albumColors: AlbumColors = {},
 ) => {
-  const audioMotionRef = useRef<AudioMotionElement>(null!);
-  const [audioMotionInstance, setAudioMotionInstance] =
-    useState<AudioMotionAnalyzer | null>(null);
+  const [audioMotionInstance, setAudioMotionInstance] = useState<AudioMotionAnalyzer | null>(null);
 
-  useEffect(() => {
-    if (audioMotionRef.current && !audioMotionRef.current.audioMotion) {
-      const instance = new AudioMotionAnalyzer(audioMotionRef.current, {
-        overlay: true,
-        showBgColor: false,
-        showScaleX: false,
-      });
-      (audioMotionRef.current as any).audioMotion = instance;
+  const audioMotionRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (node !== null && !node.audioMotion) {
+        const instance = new AudioMotionAnalyzer(node, {
+          overlay: true,
+          showBgColor: false,
+          showScaleX: false,
+        });
+        (node as any).audioMotion = instance;
 
-      setAudioMotionInstance(instance);
-      instance.registerGradient("Custom", {
-        bgColor: "transparent",
-        colorStops: [
-          {
-            color: customizationState.matchArtworkColors
-              ? albumColors.darkVibrant || rgbaToString(defaultGradientStart)
-              : rgbaToString(
-                  customizationState.userGradientStart || defaultGradientStart
-                ),
-            pos: 0,
-          },
-          {
-            color: customizationState.matchArtworkColors
-              ? albumColors.lightVibrant || rgbaToString(defaultGradientEnd)
-              : rgbaToString(
-                  customizationState.userGradientEnd || defaultGradientEnd
-                ),
-            pos: 1,
-          },
-        ],
-      });
-      instance.setOptions({
-        mode: 10,
-        gradient: "Custom",
-      });
-    }
-  }, []);
+        setAudioMotionInstance(instance);
+        instance.registerGradient("Custom", {
+          bgColor: "transparent",
+          colorStops: [
+            {
+              color: customizationState.matchArtworkColors
+                ? albumColors.darkVibrant || rgbaToString(defaultGradientStart)
+                : rgbaToString(customizationState.userGradientStart || defaultGradientStart),
+              pos: 0,
+            },
+            {
+              color: customizationState.matchArtworkColors
+                ? albumColors.lightVibrant || rgbaToString(defaultGradientEnd)
+                : rgbaToString(customizationState.userGradientEnd || defaultGradientEnd),
+              pos: 1,
+            },
+          ],
+        });
+        instance.setOptions({
+          mode: 10,
+          gradient: "Custom",
+        });
+      }
+    },
+    [customizationState, albumColors],
+  );
 
   useEffect(() => {
     if (audioMotionInstance) {
       let gradientToUse = customizationState.gradient || "rainbow";
 
-      const applyGradient = (
-        gradientName: string,
-        startColor: string,
-        endColor: string
-      ) => {
+      const applyGradient = (gradientName: string, startColor: string, endColor: string) => {
         audioMotionInstance.registerGradient(gradientName, {
           bgColor: "transparent",
           colorStops: [
@@ -105,17 +94,13 @@ export const useAudioVisualizer = (
 
       if (gradientToUse === "custom") {
         const startColor = rgbaToString(
-          customizationState.userGradientStart || defaultGradientStart
+          customizationState.userGradientStart || defaultGradientStart,
         );
-        const endColor = rgbaToString(
-          customizationState.userGradientEnd || defaultGradientEnd
-        );
+        const endColor = rgbaToString(customizationState.userGradientEnd || defaultGradientEnd);
         applyGradient("custom", startColor, endColor);
       } else if (gradientToUse === "Color Sync") {
-        const startColor =
-          albumColors.lightVibrant || rgbaToString(defaultGradientStart);
-        const endColor =
-          albumColors.darkVibrant || rgbaToString(defaultGradientEnd);
+        const startColor = albumColors.lightVibrant || rgbaToString(defaultGradientStart);
+        const endColor = albumColors.darkVibrant || rgbaToString(defaultGradientEnd);
         applyGradient("ColorSync", startColor, endColor);
       } else {
         // For predefined gradients (rainbow, classic, prism)
@@ -134,10 +119,8 @@ export const useAudioVisualizer = (
     if (audioMotionInstance) {
       const options: Partial<AudioMotionAnalyzer["options"]> = {
         mode: customizationState.mode,
-        mirror: customizationState.mirror,
-        barSpace: customizationState.barSpace
-          ? parseFloat(customizationState.barSpace)
-          : undefined,
+        mirror: customizationState.mirror ? parseInt(customizationState.mirror) : undefined,
+        barSpace: customizationState.barSpace ? parseFloat(customizationState.barSpace) : undefined,
         ledBars: customizationState.ledBars,
         lumiBars: customizationState.lumiBars,
         lineWidth: customizationState.lineWidth,
@@ -169,17 +152,13 @@ export const useAudioVisualizer = (
             : { audio: true };
 
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          const micStreamRef =
-            audioMotionInstance.audioCtx.createMediaStreamSource(stream);
+          const micStreamRef = audioMotionInstance.audioCtx.createMediaStreamSource(stream);
           audioMotionInstance.connectInput(micStreamRef);
           audioMotionInstance.volume = 0;
         } catch (err) {
           console.error("Microphone access was denied or failed", err);
         }
-      } else if (
-        audioMotionInstance &&
-        customizationState.micEnabled === false
-      ) {
+      } else if (audioMotionInstance && customizationState.micEnabled === false) {
         audioMotionInstance.disconnectInput();
       }
     };
@@ -191,11 +170,7 @@ export const useAudioVisualizer = (
         audioMotionInstance.disconnectInput();
       }
     };
-  }, [
-    audioMotionInstance,
-    customizationState.micEnabled,
-    customizationState.selectedMicId,
-  ]);
+  }, [audioMotionInstance, customizationState.micEnabled, customizationState.selectedMicId]);
 
   return audioMotionRef;
 };

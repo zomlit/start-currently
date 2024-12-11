@@ -9,9 +9,9 @@ import { useVisualizerStore } from "@/store/visualizerStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/tanstack-start";
 import { MoreVertical } from "lucide-react";
-import { toast } from "@/utils/toast";
+import { toast } from "sonner";
 import apiMethods from "@/lib/api";
-import type { VisualizerProfile } from "@/schemas/visualizer";
+import type { VisualizerProfile } from "@/types/visualizer";
 
 interface ProfileActionsProps {
   profile: VisualizerProfile;

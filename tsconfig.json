@@ -13,9 +13,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@currently/backend": ["../backend/src/index.ts"],
-      "@currently/backend/*": ["../backend/src/*"],
-      "@currently/shared/*": ["../shared/src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

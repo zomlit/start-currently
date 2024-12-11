@@ -1,41 +1,38 @@
-import { useEffect, useState } from "react";
-import Vibrant from "node-vibrant";
+import { useState, useEffect } from "react";
+import * as Vibrant from "node-vibrant";
+import { SpotifyTrack } from "@/types/spotify";
 
-interface DynamicColorsOptions {
-  enabled?: boolean;
-}
+export function useDynamicColors(track: SpotifyTrack | null, settings: any) {
+  const [palette, setPalette] = useState<Vibrant.Palette | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
-export function useDynamicColors(
-  artwork?: string,
-  options: DynamicColorsOptions = {}
-) {
-  const [palette, setPalette] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const colorSyncSetting = settings?.colorSync ?? false;
+  const hasTrackImage = !!track?.artwork;
+  const colorSyncEnabled = colorSyncSetting && hasTrackImage;
 
   useEffect(() => {
-    if (!artwork || !options.enabled) return;
+    const currentArtwork = track?.artwork;
+    if (colorSyncEnabled && currentArtwork) {
+      setIsLoading(true);
+      Vibrant.from(currentArtwork)
+        .getPalette()
+        .then((extractedPalette) => {
+          setPalette(extractedPalette);
+          setIsLoading(false);
+          setIsReady(true);
+        })
+        .catch((error) => {
+          console.error("Error extracting palette:", error);
+          setIsLoading(false);
+          setIsReady(true);
+        });
+    } else {
+      setIsLoading(false);
+      setIsReady(true);
+      setPalette(null);
+    }
+  }, [track?.artwork, colorSyncEnabled]);
 
-    setIsLoading(true);
-    Vibrant.from(artwork)
-      .getPalette()
-      .then((result) => {
-        setPalette(result);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setIsLoading(false);
-      });
-  }, [artwork, options.enabled]);
-
-  const colors = {
-    primary: palette?.Vibrant?.hex || "#000000",
-    secondary: palette?.Muted?.hex || "#ffffff",
-  };
-
-  return {
-    palette,
-    colors,
-    isLoading,
-    isReady: !!palette && !isLoading,
-  };
+  return { palette, isLoading, colorSyncEnabled, isReady };
 }
