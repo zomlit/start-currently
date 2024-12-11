@@ -1,14 +1,18 @@
 // components/GradientColorPicker.tsx
-import * as React from "react";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
+import React, { Suspense, lazy } from "react";
 import { Button } from "@/components/ui/button";
-import { Sketch, type ColorResult } from "@uiw/react-color";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { cn } from "@/lib/utils";
-import { useIsClient } from "@/hooks/useIsClient";
+import type { ColorResult, HsvaColor, SketchProps } from "@uiw/react-color";
 
 const Popover = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
 const PopoverContent = PopoverPrimitive.Content;
+
+// Dynamically import the color picker
+const Sketch = lazy(() =>
+  import("@uiw/react-color").then((mod) => ({ default: mod.Sketch }))
+);
 
 interface GradientColorPickerProps {
   color?: string;
@@ -18,6 +22,72 @@ interface GradientColorPickerProps {
   disabled?: boolean;
 }
 
+interface ParsedColor {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+function parseColor(color: string): ParsedColor {
+  const match = color.match(
+    /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d*\.?\d+))?\)/
+  );
+  if (match) {
+    const [, r, g, b, a = "1"] = match;
+    return {
+      r: parseInt(r, 10),
+      g: parseInt(g, 10),
+      b: parseInt(b, 10),
+      a: parseFloat(a),
+    };
+  }
+  return { r: 0, g: 0, b: 0, a: 1 };
+}
+
+function colorToString(color: ParsedColor): string {
+  const { r, g, b, a } = color;
+  return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${Number(a.toFixed(2))})`;
+}
+
+function colorResultToRgba(color: ColorResult): string {
+  const { r, g, b, a = 1 } = color.rgba;
+  return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${Number(a.toFixed(2))})`;
+}
+
+function parsedColorToHsva(color: ParsedColor): HsvaColor {
+  const { r, g, b, a } = color;
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const diff = max - min;
+
+  let h = 0;
+  const s = max === 0 ? 0 : diff / max;
+  const v = max;
+
+  if (diff !== 0) {
+    if (max === rNorm) {
+      h = (gNorm - bNorm) / diff + (gNorm < bNorm ? 6 : 0);
+    } else if (max === gNorm) {
+      h = (bNorm - rNorm) / diff + 2;
+    } else {
+      h = (rNorm - gNorm) / diff + 4;
+    }
+    h *= 60;
+  }
+
+  return {
+    h,
+    s: s * 100,
+    v: v * 100,
+    a,
+  };
+}
+
 export function GradientColorPicker({
   color = "rgba(0, 0, 0, 1)",
   onChange,
@@ -25,91 +95,42 @@ export function GradientColorPicker({
   currentProfile,
   disabled = false,
 }: GradientColorPickerProps) {
-  const isOpen = React.useRef(false);
-  const colorRef = React.useRef(color);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [isMounted, setIsMounted] = React.useState(false);
+  const [currentColor, setCurrentColor] = React.useState(parseColor(color));
+  const isChangingRef = React.useRef(false);
 
-  const isClient = useIsClient();
-
-  // Convert rgba to hex
-  const rgbaToHex = (rgba: string) => {
-    const values = rgba.match(/\d+(\.\d+)?/g);
-    if (values && values.length >= 4) {
-      const [r, g, b, a] = values.map((v) => parseFloat(v));
-      const hex = `#${Math.round(r).toString(16).padStart(2, "0")}${Math.round(g).toString(16).padStart(2, "0")}${Math.round(b).toString(16).padStart(2, "0")}`;
-      const alpha = Math.round(a * 255)
-        .toString(16)
-        .padStart(2, "0");
-      return `${hex}${alpha}`;
-    }
-    return "#000000ff";
-  };
-
-  // Single state for color management
-  const [colorState, setColorState] = React.useState(() => {
-    const values = color.match(/\d+(\.\d+)?/g);
-    if (values && values.length >= 4) {
-      const [r, g, b, a] = values.map((v) => parseFloat(v));
-      return {
-        hex: rgbaToHex(`rgba(${r},${g},${b},${a})`),
-        rgba: { r, g, b, a },
-      };
-    }
-    return {
-      hex: "#000000ff",
-      rgba: { r: 0, g: 0, b: 0, a: 1 },
-    };
-  });
-
-  // Update state when color prop changes
+  // Update internal color state when prop changes
   React.useEffect(() => {
-    colorRef.current = color;
-    const values = color.match(/\d+(\.\d+)?/g);
-    if (values && values.length >= 4) {
-      const [r, g, b, a] = values.map((v) => parseFloat(v));
-      setColorState({
-        hex: rgbaToHex(color),
-        rgba: { r, g, b, a },
-      });
-    }
+    setCurrentColor(parseColor(color));
   }, [color]);
 
-  const handleSketchChange = React.useCallback(
-    (colorResult: ColorResult) => {
-      const { r, g, b, a = 1 } = colorResult.rgba;
-      const alpha = Number(a).toFixed(2);
-      const rgbaString = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      colorRef.current = rgbaString;
-      setColorState({
-        hex: rgbaToHex(rgbaString),
-        rgba: { r, g, b, a: parseFloat(alpha) },
-      });
-      onChange(rgbaString);
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleChange = React.useCallback(
+    (color: ColorResult) => {
+      const newColor = colorResultToRgba(color);
+      setCurrentColor(parseColor(newColor));
+      onChange(newColor);
+      isChangingRef.current = true;
     },
     [onChange]
   );
 
-  // Helper to determine if a color string is a gradient
-  const isGradient = (color: string = "") => color.includes("gradient");
-
-  // Fix the style conflict by using a single style property
-  const getPreviewStyle = (color: string = "") => {
-    if (isGradient(color)) {
-      return { backgroundImage: color };
-    }
-    return { backgroundColor: color || "rgba(0, 0, 0, 1)" };
-  };
-
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
-      if (!open && colorRef.current !== color) {
-        onChangeComplete(colorRef.current);
+      setIsOpen(open);
+      if (!open && isChangingRef.current) {
+        onChangeComplete(colorToString(currentColor));
+        isChangingRef.current = false;
       }
-      isOpen.current = open;
     },
-    [onChangeComplete, color]
+    [currentColor, onChangeComplete]
   );
 
-  if (!isClient) {
+  if (!isMounted) {
     return (
       <Button
         variant="outline"
@@ -127,8 +148,8 @@ export function GradientColorPicker({
   }
 
   return (
-    <Popover onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild className="relative">
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
         <Button
           variant="outline"
           className={cn(
@@ -140,10 +161,10 @@ export function GradientColorPicker({
         >
           <div
             className="m-2 h-4 min-w-4 self-center truncate rounded-full border-[1px] dark:border-white/20"
-            style={getPreviewStyle(colorRef.current)}
+            style={{ backgroundColor: colorToString(currentColor) }}
           />
           <span className={cn(disabled ? "opacity-20" : "")}>
-            {colorRef.current || "rgba(0, 0, 0, 1)"}
+            {colorToString(currentColor)}
           </span>
         </Button>
       </PopoverTrigger>
@@ -163,34 +184,40 @@ export function GradientColorPicker({
           "spring-duration-500 spring-bounce-15"
         )}
       >
-        <Sketch
-          className={cn(
-            "!shadow-none !border-0 !bg-transparent",
-            "[&_input]:!ring-0 [&_input]:!border-0 [&_input]:!outline-none",
-            "[&_.divider]:!border-white/20",
-            "[&_input]:dark:!text-white [&_input]:!text-black [&_input]:!text-sm",
-            "[&_div[title]]:!rounded-full"
-          )}
-          color={colorState.hex}
-          onChange={handleSketchChange}
-          presetColors={[
-            "#D0021B",
-            "#F5A623",
-            "#F8E71C",
-            "#8B572A",
-            "#7ED321",
-            "#417505",
-            "#BD10E0",
-            "#9013FE",
-            "#4A90E2",
-            "#50E3C2",
-            "#B8E986",
-            "#000000",
-            "#4A4A4A",
-            "#9B9B9B",
-            "#FFFFFF",
-          ]}
-        />
+        <Suspense
+          fallback={
+            <div className="h-[225px] w-[225px] animate-pulse bg-gray-200 dark:bg-gray-800" />
+          }
+        >
+          <Sketch
+            className={cn(
+              "!shadow-none !border-0 !bg-transparent",
+              "[&_input]:!ring-0 [&_input]:!border-0 [&_input]:!outline-none [&_input]:!text-center",
+              "[&_.divider]:!border-white/20",
+              "[&_input]:dark:!text-white [&_input]:!text-black [&_input]:!text-sm",
+              "[&_div[title]]:!rounded-full"
+            )}
+            color={parsedColorToHsva(currentColor)}
+            onChange={handleChange}
+            presetColors={[
+              "#D0021B",
+              "#F5A623",
+              "#F8E71C",
+              "#8B572A",
+              "#7ED321",
+              "#417505",
+              "#BD10E0",
+              "#9013FE",
+              "#4A90E2",
+              "#50E3C2",
+              "#B8E986",
+              "#000000",
+              "#4A4A4A",
+              "#9B9B9B",
+              "#FFFFFF",
+            ]}
+          />
+        </Suspense>
       </PopoverContent>
     </Popover>
   );

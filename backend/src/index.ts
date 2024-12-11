@@ -11,6 +11,7 @@ import logger from "./utils/logger";
 import { initializeSocketIO, setIO } from "./socket";
 import { resumeActiveSessions } from "./services/spotify.service";
 import jwt from "jsonwebtoken";
+import { createServer } from "http";
 
 // Add these lines after the imports and before the app definition
 let apiHitCount = 0;
@@ -46,11 +47,16 @@ const updateUserActivity = async (userId: string) => {
   }
 };
 
+const httpServer = createServer();
+const io = createSocketIOServer(httpServer);
+
 const app = new Elysia()
   .use(
     staticPlugin({
-      assets: "public", // This will serve files from the public directory
-      prefix: "/", // Serve at root path
+      assets: "public", // This directory must exist
+      prefix: "/static", // Change to /static to avoid conflicts
+      alwaysStatic: true, // Only serve static files
+      ignorePatterns: ["*.ts", "*.map"], // Ignore certain file types
     })
   )
   .use(
@@ -240,9 +246,6 @@ const app = new Elysia()
   })
   .get("/favicon.ico", () => new Response(null, { status: 204 }));
 
-const { httpServer, io } = createSocketIOServer(app as any);
-setIO(io);
-
 // Add logging for Socket.IO connections
 io.use((socket, next) => {
   // You can add more authentication logic here if needed
@@ -329,3 +332,10 @@ export const startServer = async () => {
 
 export default app;
 export type App = typeof app;
+
+// Add error handling for static files
+app.onError(({ code, error }) => {
+  if (code === "NOT_FOUND" && error.syscall === "open") {
+    return new Response("File not found", { status: 404 });
+  }
+});
